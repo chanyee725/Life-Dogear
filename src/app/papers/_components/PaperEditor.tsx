@@ -8,7 +8,8 @@ import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
-import { Button, buttonClass, Field, Input } from "@/components/ui";
+import { Properties, Property } from "@/components/fields/Properties";
+import { Button, buttonClass, cn, Input } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import type { Paper } from "@/lib/repo/papers";
@@ -134,28 +135,33 @@ export function PaperEditor({
   );
 
   return (
+    // Same structure as the other detail pages (ItemForm): back link and actions,
+    // title, label/value property rows, then the body.
     <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4 text-[13px] text-muted">
-          <Link href="/papers" className="hover:text-fg">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/papers" className="text-[13px] text-muted hover:text-fg">
             ← 논문
           </Link>
           <div className="flex items-center gap-2">
             <span
               aria-live="polite"
-              className={state === "error" || tagsError ? "text-danger" : "text-faint"}
+              className={cn(
+                "text-xs",
+                state === "error" || tagsError ? "text-danger" : "text-faint",
+              )}
             >
               {/* A failed tag save stays visible even after field saves succeed. */}
               {tagsError && state !== "error" ? "태그 저장 실패" : SAVE_LABEL[state]}
             </span>
-            <Button variant="secondary" size="sm" onClick={saveNow}>
+            <DeletePaperButton paperId={paper.id} title={paper.title} />
+            <Button variant="primary" onClick={saveNow}>
               저장
             </Button>
-            <DeletePaperButton paperId={paper.id} title={paper.title} />
           </div>
         </div>
         {error || tagsError ? (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="rounded-lg bg-tone-red-bg px-3 py-2 text-sm text-tone-red-fg">
             {error ?? tagsError}
           </p>
         ) : null}
@@ -185,8 +191,8 @@ export function PaperEditor({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="저자" htmlFor="paper-authors" className="sm:col-span-2">
+      <Properties>
+        <Property label="저자" htmlFor="paper-authors">
           <AuthorsField
             id="paper-authors"
             defaultValue={paper.authors}
@@ -196,7 +202,7 @@ export function PaperEditor({
               }
             }}
           />
-        </Field>
+        </Property>
         <TextField
           id="paper-year"
           label="연도"
@@ -243,38 +249,39 @@ export function PaperEditor({
             ) : null
           }
         />
-        <Field label="읽기 상태" htmlFor="paper-status">
+        <Property label="읽기 상태" htmlFor="paper-status">
           <EnumSelect
             id="paper-status"
             options={READ_STATUS.options}
             defaultValue={paper.readStatus}
             onChange={(value) => value && change({ readStatus: value })}
+            className="w-auto"
           />
-        </Field>
-        <Field label="중요도" htmlFor="paper-importance">
+        </Property>
+        <Property label="중요도" htmlFor="paper-importance">
           <EnumSelect
             id="paper-importance"
             options={IMPORTANCE.options}
             defaultValue={paper.importance}
             onChange={(value) => value && change({ importance: value })}
+            className="w-auto"
           />
-        </Field>
+        </Property>
         <TextField
           id="paper-summary"
           label="한 줄 요약"
           defaultValue={paper.summary}
-          className="sm:col-span-2"
           onChange={(summary) => change({ summary })}
         />
-        <Field label="태그" htmlFor="paper-tags" className="sm:col-span-2">
+        <Property label="태그" htmlFor="paper-tags">
           <TagInput
             id="paper-tags"
             defaultValue={paper.tags}
             suggestions={tagSuggestions}
             onChange={(names) => void saveTags(names)}
           />
-        </Field>
-      </div>
+        </Property>
+      </Properties>
 
       {pdfSlot}
 
@@ -338,18 +345,24 @@ function TextField({
   error?: string;
 }) {
   return (
-    <Field label={label} htmlFor={id} className={className} error={error}>
-      <div className="flex items-center gap-1.5">
+    <Property label={label} htmlFor={id}>
+      <div className={cn("flex items-center gap-1.5", className)}>
         <Input
           id={id}
           defaultValue={defaultValue}
           placeholder={placeholder}
           inputMode={inputMode}
           aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
         {after}
       </div>
-    </Field>
+      {error ? (
+        <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
+    </Property>
   );
 }
