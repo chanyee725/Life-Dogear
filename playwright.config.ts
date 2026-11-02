@@ -17,9 +17,9 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     // Dedicated data dir (DB + PDFs) so the run never touches data/local.db or data/pdfs.
-    // Wipe the e2e data folder first so every run starts from a fresh DB + PDFs.
+    // Wipe and recreate the e2e data folder so every run starts from a fresh DB + PDFs.
     command:
-      "node -e \"require('fs').rmSync('data/e2e',{recursive:true,force:true})\" && npm run db:migrate && npm run db:seed && npm run dev",
+      "node -e \"require('fs').rmSync('data/e2e',{recursive:true,force:true});require('fs').mkdirSync('data/e2e',{recursive:true})\" && npm run db:migrate && npm run db:seed && npm run dev",
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 180_000,
