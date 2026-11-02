@@ -1,9 +1,10 @@
 import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
-import { goals as goalsTable, projects as projectsTable, reviews } from "@/db/schema";
+import { goals as goalsTable, reviews } from "@/db/schema";
 import { ITEM_TYPE, REVIEW_KIND, type ReviewKind } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { goalPeriodsFor, isValidPeriod, reviewTitle, shiftPeriod } from "@/lib/reviews/period";
 import { reviewTemplate } from "@/lib/reviews/templates";
+import { progressFor } from "./goals";
 import { removeLinksFor } from "./links";
 import {
   archiveFilter,
@@ -149,65 +150,6 @@ export async function goalsForPeriod(kind: ReviewKind, period: string, exec: Exe
       ),
     )
     .orderBy(desc(goalsTable.horizon), asc(goalsTable.period), asc(goalsTable.createdAt));
-}
-
-/**
- * TEMPORARY until A's `goals.progressFor` lands (same rules, PLAN-GRAPH 2): life → null,
- * achieved → 100, manual → manual_progress, quarter auto → share of done non-archived
- * projects (none → manual_progress or null), year auto → mean of child goals that are
- * not dropped and have a value. Fixed number of queries.
- */
-async function progressFor(ids: readonly string[]): Promise<GoalProgressSnapshot> {
-  const all = await db()
-    .select({
-      id: goalsTable.id,
-      horizon: goalsTable.horizon,
-      status: goalsTable.status,
-      parentId: goalsTable.parentId,
-      progressMode: goalsTable.progressMode,
-      manualProgress: goalsTable.manualProgress,
-    })
-    .from(goalsTable)
-    .where(isNull(goalsTable.archivedAt));
-  const projectRows = await db()
-    .select({ goalId: projectsTable.goalId, status: projectsTable.status })
-    .from(projectsTable)
-    .where(isNull(projectsTable.archivedAt));
-  const counts = new Map<string, { done: number; total: number }>();
-  for (const p of projectRows) {
-    if (!p.goalId) continue;
-    const c = counts.get(p.goalId) ?? { done: 0, total: 0 };
-    c.total++;
-    if (p.status === "done") c.done++;
-    counts.set(p.goalId, c);
-  }
-  const byId = new Map(all.map((g) => [g.id, g]));
-  const children = new Map<string, string[]>();
-  for (const g of all) {
-    if (g.parentId) children.set(g.parentId, [...(children.get(g.parentId) ?? []), g.id]);
-  }
-  const memo = new Map<string, number | null>();
-  const value = (id: string): number | null => {
-    if (memo.has(id)) return memo.get(id)!;
-    const g = byId.get(id);
-    let v: number | null = null;
-    if (!g || g.horizon === "life") v = null;
-    else if (g.status === "achieved") v = 100;
-    else if (g.progressMode === "manual") v = g.manualProgress ?? null;
-    else if (g.horizon === "quarter") {
-      const c = counts.get(id);
-      v = c && c.total ? Math.round((c.done / c.total) * 100) : (g.manualProgress ?? null);
-    } else {
-      const vals = (children.get(id) ?? [])
-        .filter((cid) => byId.get(cid)?.status !== "dropped")
-        .map(value)
-        .filter((x): x is number => x !== null);
-      v = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-    }
-    memo.set(id, v);
-    return v;
-  };
-  return Object.fromEntries(ids.map((id) => [id, value(id)]));
 }
 
 async function snapshot(kind: ReviewKind, period: string): Promise<GoalProgressSnapshot> {
