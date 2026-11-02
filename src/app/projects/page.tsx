@@ -11,7 +11,7 @@ import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate } from "@/components/ui/format";
+import { formatDate, formatRelative } from "@/components/ui/format";
 import { PROJECT_STAGE } from "@/lib/enums";
 import { projects } from "@/lib/repo";
 import type { Project, ProjectSort } from "@/lib/repo/projects";
@@ -46,7 +46,7 @@ const columns: Column<Project>[] = [
     key: "updated",
     header: "수정",
     className: "text-muted tabular-nums whitespace-nowrap",
-    render: (p) => formatDate(p.updatedAt),
+    render: (p) => formatRelative(p.updatedAt),
   },
 ];
 

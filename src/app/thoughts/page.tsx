@@ -11,7 +11,7 @@ import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate } from "@/components/ui/format";
+import { formatRelative } from "@/components/ui/format";
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import { thoughts } from "@/lib/repo";
 import type { Thought, ThoughtSort } from "@/lib/repo/thoughts";
@@ -52,7 +52,7 @@ const columns: Column<Thought>[] = [
     key: "updated",
     header: "수정",
     className: "text-muted tabular-nums whitespace-nowrap",
-    render: (t) => formatDate(t.updatedAt),
+    render: (t) => formatRelative(t.updatedAt),
   },
 ];
 
