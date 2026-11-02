@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/components/ui/cn";
 import { addTags } from "./tags";
 
@@ -35,10 +35,31 @@ export function TagInput({
   const listId = useId();
   const inputId = id ?? `${listId}-input`;
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   function update(next: string[]) {
     if (value === undefined) setInternal(next);
     onChange?.(next);
+    // Removing a chip is a click, not typing; tell the surrounding form it changed.
+    inputRef.current?.dispatchEvent(new Event("input", { bubbles: true }));
   }
+
+  // On submit (button or Cmd+S), include a typed-but-uncommitted tag and commit it.
+  useEffect(() => {
+    const form = inputRef.current?.form;
+    if (!name || !form) return;
+    const onFormData = (event: FormDataEvent) => {
+      if (!draft.trim()) return;
+      const next = addTags(tags, draft);
+      event.formData.delete(name);
+      for (const tag of next) event.formData.append(name, tag);
+      if (value === undefined) setInternal(next);
+      onChange?.(next);
+      setDraft("");
+    };
+    form.addEventListener("formdata", onFormData);
+    return () => form.removeEventListener("formdata", onFormData);
+  }, [name, draft, tags, value, onChange]);
 
   function commit() {
     if (!draft.trim()) return;
@@ -84,6 +105,7 @@ export function TagInput({
         </span>
       ))}
       <input
+        ref={inputRef}
         id={inputId}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

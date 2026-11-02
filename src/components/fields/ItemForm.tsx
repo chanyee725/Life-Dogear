@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import type { ActionResult } from "@/app/_actions/result";
+import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 
@@ -13,7 +14,10 @@ export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: stri
  * Create/edit form for an item, with a top bar (back link, status, extra actions, 저장).
  * - create: on success navigates to `${basePath}/${id}`
  * - edit: on success shows "저장됨" and refreshes server data
- * Cmd/Ctrl+S submits. Errors from the action are shown inline.
+ * Cmd/Ctrl+S submits. Errors (including network failures) are shown inline.
+ * Unsaved edits show "저장 안 됨" and trigger the browser's leave-page warning.
+ * Fields signal edits with bubbling `input`/`change` events (the editor and TagInput
+ * dispatch `input` for changes that don't come from typing).
  */
 export function ItemForm({
   mode,
@@ -40,6 +44,34 @@ export function ItemForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [dirty, setDirty] = useState(false);
+  // Bumped on every edit, so a save only clears `dirty` if nothing changed meanwhile.
+  const editVersion = useRef(0);
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const onEdit = () => {
+      editVersion.current += 1;
+      setDirty(true);
+    };
+    form.addEventListener("input", onEdit);
+    form.addEventListener("change", onEdit);
+    return () => {
+      form.removeEventListener("input", onEdit);
+      form.removeEventListener("change", onEdit);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = ""; // Older browsers need returnValue set.
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -55,15 +87,18 @@ export function ItemForm({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
-    // `new FormData(form)` fires the `formdata` event the editor uses to write its exact value.
+    // `new FormData(form)` fires the `formdata` event the editor and TagInput use to
+    // write their exact values (unsaved tag draft included).
     const data = new FormData(event.currentTarget);
+    const submittedVersion = editVersion.current;
     setError(null);
     startTransition(async () => {
-      const result = await action(data);
+      const result = await safeAction(() => action(data));
       if (!result.ok) {
         setError(result.error);
         return;
       }
+      if (editVersion.current === submittedVersion) setDirty(false);
       if (mode === "create") {
         router.push(`${basePath}/${result.data.id}`);
       } else {
@@ -72,6 +107,14 @@ export function ItemForm({
       }
     });
   }
+
+  const status = pending
+    ? "저장 중…"
+    : dirty
+      ? "저장 안 됨"
+      : savedAt
+        ? `저장됨 · ${formatTime(savedAt)}`
+        : null;
 
   return (
     <form
@@ -85,8 +128,11 @@ export function ItemForm({
           ← {backLabel}
         </Link>
         <div className="flex items-center gap-2">
-          <span aria-live="polite" className="text-xs text-faint">
-            {pending ? "저장 중…" : savedAt ? `저장됨 · ${formatTime(savedAt)}` : null}
+          <span
+            aria-live="polite"
+            className={cn("text-xs", dirty && !pending ? "text-tone-amber-fg" : "text-faint")}
+          >
+            {status}
           </span>
           {actions}
           <Button type="submit" variant="primary" disabled={pending}>
