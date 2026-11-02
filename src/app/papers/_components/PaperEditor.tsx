@@ -113,10 +113,12 @@ export function PaperEditor({
     void queue.flush();
   }
 
-  // Unsaved = waiting for autosave, saving, kept after a failed save, or tags whose
-  // last save failed. Asks before leaving via in-app links, reload or tab close.
+  // Unsaved = waiting for autosave, saving, kept after a failed save, or tags being
+  // saved or whose last save failed. Asks before leaving via in-app links, reload or tab close.
   const [tagsError, setTagsError] = useState<string | null>(null);
+  const [tagsSaving, setTagsSaving] = useState(false);
   const dirty =
+    tagsSaving ||
     tagsError !== null ||
     ((state === "pending" || state === "saving" || state === "error") && queue.dirty());
   useUnsavedChangesGuard(dirty);
@@ -127,6 +129,7 @@ export function PaperEditor({
     createLatestSender<string[]>(
       (names) => safeAction(() => setItemTags({ type: "paper", id: paperId }, names)),
       (outcome) => setTagsError(outcome.ok ? null : outcome.error),
+      setTagsSaving,
     ),
   );
 
