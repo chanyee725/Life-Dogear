@@ -15,6 +15,11 @@ export type SaveQueue<P extends object> = {
   flush: () => Promise<void>;
   /** True while there are unsent fields or a save is in flight. */
   dirty: () => boolean;
+  /**
+   * Replaces the server baseline (e.g. after a refresh) when nothing is unsaved.
+   * Returns false, leaving the baseline alone, while edits are pending or saving.
+   */
+  resetBaseline: (baseline: P) => boolean;
   pending: () => P;
 };
 
@@ -84,6 +89,11 @@ export function createSaveQueue<P extends object>(
       return chain;
     },
     dirty: () => busy || !isEmpty(pending),
+    resetBaseline(baseline) {
+      if (busy || !isEmpty(pending)) return false;
+      saved = { ...(baseline as Record<string, unknown>) };
+      return true;
+    },
     pending: () => pending,
   };
 }

@@ -141,5 +141,19 @@ describe("createSaveQueue", () => {
       await queue.flush();
       expect(save).toHaveBeenLastCalledWith({ title: "제목" });
     });
+
+    it("adopts a refreshed baseline only when nothing is unsaved", async () => {
+      const save = vi.fn(async () => ({ ok: true }) as const);
+      const queue = createSaveQueue<Patch>(save, () => {}, baseline);
+      // Another tab saved "서버 제목"; the page refreshes with it.
+      expect(queue.resetBaseline({ ...baseline, title: "서버 제목" })).toBe(true);
+      queue.add({ title: "서버 제목" });
+      expect(queue.dirty()).toBe(false);
+
+      queue.add({ title: "내 편집" });
+      expect(queue.resetBaseline({ ...baseline, title: "또 다른 값" })).toBe(false);
+      await queue.flush();
+      expect(save).toHaveBeenCalledExactlyOnceWith({ title: "내 편집" });
+    });
   });
 });
