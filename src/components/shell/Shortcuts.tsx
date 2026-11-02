@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { confirmLeave } from "@/components/fields/unsaved-guard";
 import { isTypingTarget, QUICK_INPUT_ID, resolveShortcut } from "./shortcuts";
 
 function focusQuickInput(): boolean {
@@ -33,8 +34,9 @@ export function Shortcuts() {
       if (!action) return;
       event.preventDefault();
       if (action.kind === "navigate") {
-        router.push(action.href);
+        if (confirmLeave()) router.push(action.href);
       } else if (!focusQuickInput()) {
+        if (!confirmLeave()) return;
         pendingFocus.current = true;
         router.push("/");
       }
