@@ -5,7 +5,7 @@
 import type { GoalHorizon } from "@/lib/enums";
 import {
   DEFAULT_GRAPH_NODE_TYPES,
-  GRAPH_NODE_TYPES,
+  GRAPH_NODE_TYPE_ORDER,
   graphNodeId,
   type GraphData,
   type GraphEdge,
@@ -59,7 +59,7 @@ export type GraphSource = {
   itemTags?: SourceTagging[];
 };
 
-export const ITEM_NODE_TYPES = GRAPH_NODE_TYPES.filter((t): t is ItemNodeType => t !== "tag");
+export const ITEM_NODE_TYPES = GRAPH_NODE_TYPE_ORDER.filter((t): t is ItemNodeType => t !== "tag");
 
 const edgeKey = (a: string, b: string, kind: GraphEdgeKind) =>
   a < b ? `${kind}|${a}|${b}` : `${kind}|${b}|${a}`;

@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { graphLayout } from "@/db/schema";
-import type { GraphNodeId, GraphPosition } from "@/lib/graph/types";
-import { db, nowIso, serializeWrite, withTx, type ItemType } from "./shared";
+import type { GraphNodeId, GraphNodeType, GraphPosition } from "@/lib/graph/types";
+import { db, nowIso, serializeWrite, withTx } from "./shared";
 
 /** Rows per INSERT, well under SQLite's bound-variable limit (5 columns each). */
 const CHUNK = 500;
@@ -22,8 +22,8 @@ export async function savePositions(positions: readonly GraphPosition[]): Promis
   const rows = positions.map((p) => {
     const at = p.node.indexOf(":");
     return {
-      // `node_type` is plain text in SQL; topic nodes (`tag`) are stored alongside items.
-      nodeType: p.node.slice(0, at) as ItemType,
+      // Item types and topic nodes (`tag`); ids were validated by `parseLayoutBody`.
+      nodeType: p.node.slice(0, at) as GraphNodeType,
       nodeId: p.node.slice(at + 1),
       x: p.x,
       y: p.y,

@@ -1,7 +1,7 @@
 /** Parsing and validation of graph API inputs. Pure; shared by the routes and tests. */
 import { isValidItemId } from "@/lib/ids";
 import {
-  GRAPH_NODE_TYPES,
+  GRAPH_NODE_TYPE_ORDER,
   parseGraphNodeId,
   type GraphFilter,
   type GraphNodeId,
@@ -26,7 +26,7 @@ export function parseGraphFilter(params: URLSearchParams): GraphFilter {
   const typesParam = params.get("types");
   if (typesParam !== null) {
     const wanted = new Set(typesParam.split(",").map((t) => t.trim()));
-    filter.types = GRAPH_NODE_TYPES.filter((t) => wanted.has(t));
+    filter.types = GRAPH_NODE_TYPE_ORDER.filter((t) => wanted.has(t));
   }
 
   const area = params.get("area");

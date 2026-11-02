@@ -4,10 +4,19 @@
  *
  * Node ids are `"<type>:<id>"`, e.g. `"project:3f2c…"`, `"tag:9a1b…"`.
  */
+// Type-only import: the schema module never reaches client bundles from here.
+import type { GRAPH_NODE_TYPES } from "@/db/schema";
 import type { GoalHorizon } from "@/lib/enums";
 
-/** Item kinds that can appear as graph nodes. `tag` is a topic node (off by default). */
-export const GRAPH_NODE_TYPES = [
+/** Item kinds that can appear as graph nodes (`graph_layout.node_type`). `tag` = topic node. */
+export type GraphNodeType = (typeof GRAPH_NODE_TYPES)[number];
+
+/**
+ * Every node type in display order — the PARA flow from life goals to notes, for filter
+ * checkboxes and PARA columns. Same members as the schema's `GRAPH_NODE_TYPES`; the
+ * `satisfies` check below fails to compile if a type is missing.
+ */
+export const GRAPH_NODE_TYPE_ORDER = [
   "goal",
   "area",
   "project",
@@ -16,8 +25,12 @@ export const GRAPH_NODE_TYPES = [
   "thought",
   "review",
   "tag",
-] as const;
-export type GraphNodeType = (typeof GRAPH_NODE_TYPES)[number];
+] as const satisfies readonly GraphNodeType[];
+
+type MissingFromOrder = Exclude<GraphNodeType, (typeof GRAPH_NODE_TYPE_ORDER)[number]>;
+// Compile-time: `never` unless a schema node type is missing from the order above.
+const ORDER_IS_COMPLETE: MissingFromOrder extends never ? true : never = true;
+void ORDER_IS_COMPLETE;
 
 /** Types shown when the `types` filter is not given (topics and reviews are opt-in). */
 export const DEFAULT_GRAPH_NODE_TYPES: readonly GraphNodeType[] = [
@@ -116,6 +129,6 @@ export function parseGraphNodeId(value: unknown): { type: GraphNodeType; id: str
   if (at <= 0) return null;
   const type = value.slice(0, at);
   const id = value.slice(at + 1);
-  if (!id || !(GRAPH_NODE_TYPES as readonly string[]).includes(type)) return null;
+  if (!id || !(GRAPH_NODE_TYPE_ORDER as readonly string[]).includes(type)) return null;
   return { type: type as GraphNodeType, id };
 }
