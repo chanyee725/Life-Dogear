@@ -87,6 +87,7 @@ type Lifecycle = Pick<typeof projects.$inferSelect, "kind" | "stage" | "status" 
  * Keeps stage, status and completion time consistent (pure; exported for tests).
  * Research: stage `submitted` ⇔ status `done`. Setting the stage wins over a status in
  * the same patch; reopening a submitted project via status moves it back to `revising`.
+ * Without stage or status in the patch (e.g. a kind change), status decides.
  * Any kind: `completedAt` is stamped when the project becomes done and cleared otherwise.
  */
 export function deriveLifecycle(
@@ -105,9 +106,11 @@ export function deriveLifecycle(
     } else if (patch.status !== undefined) {
       if (status === "done") stage = "submitted";
       else if (stage === "submitted") stage = "revising";
-    } else if (stage === "submitted" || status === "done") {
+    } else if (status === "done") {
+      // Kind-only change (e.g. general → research): status is the source of truth.
       stage = "submitted";
-      status = "done";
+    } else if (stage === "submitted") {
+      stage = "revising";
     }
   }
 

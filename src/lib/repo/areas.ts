@@ -85,6 +85,42 @@ export async function createMany(inputs: readonly AreaInput[]): Promise<Area[]> 
   return ids.map((id) => all.find((a) => a.id === id)!);
 }
 
+export type SkippedArea = { title: string; archived: boolean };
+
+const titleKey = (title: string) => title.normalize("NFC").trim().toLowerCase();
+
+/**
+ * Creates the areas whose titles don't exist yet (case-insensitive), in one serialized
+ * transaction so concurrent calls can't create duplicates. Existing titles are
+ * reported in `skipped`; `archived: true` means the match is in the archive.
+ */
+export async function createMissing(
+  inputs: readonly AreaInput[],
+): Promise<{ created: Area[]; skipped: SkippedArea[] }> {
+  const { ids, skipped } = await withTx(async (tx) => {
+    const existing = new Map(
+      (await tx.select({ title: areas.title, archivedAt: areas.archivedAt }).from(areas)).map(
+        (a) => [titleKey(a.title), a.archivedAt !== null] as const,
+      ),
+    );
+    const ids: string[] = [];
+    const skipped: SkippedArea[] = [];
+    for (const input of inputs) {
+      const key = titleKey(input.title);
+      const archived = existing.get(key);
+      if (archived !== undefined) {
+        skipped.push({ title: input.title, archived });
+        continue;
+      }
+      ids.push(await createWith(tx, input));
+      existing.set(key, false);
+    }
+    return { ids, skipped };
+  });
+  const all = await list({ includeArchived: true });
+  return { created: ids.map((id) => all.find((a) => a.id === id)!), skipped };
+}
+
 async function createWith(exec: Executor, input: AreaInput): Promise<string> {
   const now = nowIso();
   const id = newId();

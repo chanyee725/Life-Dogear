@@ -64,6 +64,7 @@ describe("area actions", () => {
     expect(list[0].standard).not.toBe("");
     const again = await createRecommendedAreas(["건강", "학위"]);
     expect(again.ok && again.data.ids.length).toBe(1);
+    expect(again.ok && again.data.skipped).toEqual([{ title: "건강", archived: false }]);
     expect(await areas.list()).toHaveLength(3);
     expect((await createRecommendedAreas(["취미"])).ok).toBe(false);
     expect((await createRecommendedAreas([])).ok).toBe(false);
