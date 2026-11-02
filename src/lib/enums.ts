@@ -3,7 +3,7 @@
  * Badge tones are semantic tokens; the design system maps them to colors.
  */
 
-export type BadgeTone = "gray" | "blue" | "green" | "amber" | "red" | "purple" | "teal";
+export type BadgeTone = "gray" | "blue" | "green" | "amber" | "red" | "violet" | "teal" | "rose";
 
 export type EnumOption<V extends string> = {
   readonly value: V;
@@ -24,7 +24,7 @@ function defineEnum<const V extends string>(options: readonly EnumOption<V>[]) {
 }
 
 export const ITEM_TYPE = defineEnum([
-  { value: "project", label: "연구", tone: "purple" },
+  { value: "project", label: "연구", tone: "violet" },
   { value: "paper", label: "논문", tone: "blue" },
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
@@ -42,7 +42,7 @@ export const ITEM_ROUTE: Record<ItemType, string> = {
 export const PROJECT_STAGE = defineEnum([
   { value: "exploring", label: "주제 탐색", tone: "gray" },
   { value: "topic_set", label: "주제 확정", tone: "blue" },
-  { value: "proposal", label: "제안서 작성", tone: "purple" },
+  { value: "proposal", label: "제안서 작성", tone: "violet" },
   { value: "lit_review", label: "문헌 검토", tone: "teal" },
   { value: "data_collection", label: "데이터 수집", tone: "amber" },
   { value: "drafting", label: "초안 작성", tone: "blue" },
@@ -67,7 +67,7 @@ export type Importance = (typeof IMPORTANCE.values)[number];
 
 export const SEMINAR_KIND = defineEnum([
   { value: "seminar", label: "세미나", tone: "teal" },
-  { value: "conference_talk", label: "학회 발표", tone: "purple" },
+  { value: "conference_talk", label: "학회 발표", tone: "violet" },
   { value: "lecture", label: "강의", tone: "blue" },
   { value: "webinar", label: "웨비나", tone: "amber" },
   { value: "other", label: "기타", tone: "gray" },
@@ -78,7 +78,7 @@ export const THOUGHT_KIND = defineEnum([
   { value: "idea", label: "아이디어", tone: "amber" },
   { value: "question", label: "질문", tone: "blue" },
   { value: "critique", label: "비판·반론", tone: "red" },
-  { value: "connection", label: "연결 발견", tone: "purple" },
+  { value: "connection", label: "연결 발견", tone: "violet" },
   { value: "memo", label: "메모", tone: "gray" },
 ] as const);
 export type ThoughtKind = (typeof THOUGHT_KIND.values)[number];
