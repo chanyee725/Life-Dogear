@@ -15,6 +15,7 @@ import { getDb, resolveDbConfig } from "../src/db/client";
 import { loadEnvIfPresent } from "../src/db/env";
 import { pdfDirSetting } from "../src/lib/data-dir";
 import {
+  areas,
   highlights,
   itemTags,
   links,
@@ -41,10 +42,26 @@ const fill = (template: string, answers: Record<string, string>) =>
     template,
   );
 
+// Fictional areas (the same titles as the recommended ones, with sample standards).
+const areaRows: (typeof areas.$inferInsert)[] = [
+  { title: "연구 분야", standard: "관심 분야의 새 논문·세미나를 꾸준히 따라간다." },
+  { title: "학위", standard: "학기별 요건과 마감을 놓치지 않는다." },
+  { title: "건강", standard: "잠·운동·식사를 무너지지 않게 유지한다." },
+  { title: "커리어", standard: "이력과 다음 진로 선택지를 분기마다 정리한다." },
+].map((a, i) => ({
+  id: `seed-area-${i + 1}`,
+  ...a,
+  sortOrder: i,
+  body: "",
+  ...stamps(600 - i),
+}));
+
 const projectRows: (typeof projects.$inferInsert)[] = [
   {
     id: "seed-project-1",
     title: "대학원생 연구 노트 습관 연구",
+    areaId: "seed-area-2",
+    nextAction: "선행 연구 5편 요약 정리",
     researchQuestion: "디지털 노트 도구는 문헌 검토의 깊이에 어떤 영향을 주는가?",
     stage: "lit_review",
     startDate: daysFromNow(-60),
@@ -57,6 +74,8 @@ const projectRows: (typeof projects.$inferInsert)[] = [
   },
   {
     id: "seed-project-2",
+    areaId: "seed-area-1",
+    nextAction: "평가 지표 표 초안 만들기",
     title: "소규모 언어모델 요약 품질 비교",
     researchQuestion: "작은 모델도 도메인 요약에서 충분한 품질을 낼 수 있는가?",
     stage: "drafting",
@@ -67,6 +86,7 @@ const projectRows: (typeof projects.$inferInsert)[] = [
   },
   {
     id: "seed-project-3",
+    areaId: "seed-area-1",
     title: "온라인 세미나 참여 동기 탐색",
     researchQuestion: "",
     stage: "exploring",
@@ -74,6 +94,18 @@ const projectRows: (typeof projects.$inferInsert)[] = [
     dueDate: null,
     body: PROJECT_TEMPLATE,
     ...stamps(100),
+  },
+  {
+    id: "seed-project-4",
+    title: "연구실 세미나 발표 준비",
+    kind: "general",
+    status: "active",
+    areaId: "seed-area-4",
+    nextAction: "발표 슬라이드 목차 정하기",
+    startDate: daysFromNow(-5),
+    dueDate: daysFromNow(10),
+    body: "",
+    ...stamps(40),
   },
 ];
 
@@ -142,6 +174,7 @@ const paperRows: (typeof papers.$inferInsert)[] = [
   },
   {
     id: "seed-paper-5",
+    archivedAt: hoursAgo(20), // sample archived item (보관함)
     title: "A Short History of Commonplace Books",
     authors: JSON.stringify(["정임시"]),
     year: 2019,
@@ -247,9 +280,16 @@ const tagAssignments: [ItemRef, string[]][] = [
   [{ type: "seminar", id: "seed-seminar-2" }, ["NLP"]],
   [{ type: "seminar", id: "seed-seminar-3" }, ["질적연구"]],
   [{ type: "thought", id: "seed-thought-2" }, ["평가"]],
+  // seed-thought-1 and seed-thought-4 stay untagged and unlinked: they are the inbox.
+  [{ type: "thought", id: "seed-thought-5" }, ["미팅"]],
+  [{ type: "area", id: "seed-area-1" }, ["NLP"]],
 ];
 
 const linkPairs: [ItemRef, ItemRef][] = [
+  [
+    { type: "seminar", id: "seed-seminar-2" },
+    { type: "area", id: "seed-area-1" },
+  ],
   [
     { type: "paper", id: "seed-paper-1" },
     { type: "project", id: "seed-project-1" },
@@ -325,8 +365,12 @@ async function main() {
     for (const table of [projects, papers, seminars, thoughts]) {
       await tx.delete(table).where(like(table.id, seeded));
     }
+    // User projects may sit in a sample area: unassign before removing the areas.
+    await tx.update(projects).set({ areaId: null }).where(like(projects.areaId, seeded));
+    await tx.delete(areas).where(like(areas.id, seeded));
     await pruneOrphanTags(tx);
 
+    await tx.insert(areas).values(areaRows);
     await tx.insert(projects).values(projectRows);
     await tx.insert(papers).values(
       paperRows.map((p) => ({
@@ -359,7 +403,7 @@ async function main() {
   }
 
   console.log(
-    `Seeded (${target}): ${projectRows.length} projects, ${paperRows.length} papers, ` +
+    `Seeded (${target}): ${areaRows.length} areas, ${projectRows.length} projects, ${paperRows.length} papers, ` +
       `${seminarRows.length} seminars, ${thoughtRows.length} thoughts, ${linkPairs.length} links, ` +
       `${PAPERS_WITH_PDF.length} dummy PDFs.`,
   );
