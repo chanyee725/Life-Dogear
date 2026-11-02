@@ -52,6 +52,16 @@ describe("tags", () => {
     expect((await thoughts.list({ tag: "survey" })).map((t) => t.title)).toEqual(["B"]);
   });
 
+  it("treats decomposed (NFD) and composed (NFC) Hangul as the same tag", async () => {
+    const nfd = "방법론".normalize("NFD");
+    const a = await thoughts.create({ title: "A", tags: [nfd] });
+    expect(a.tags).toEqual(["방법론"]);
+    const b = await thoughts.create({ title: "B", tags: ["방법론"] });
+    expect(b.tags).toEqual(["방법론"]);
+    expect(await tags.listAll()).toEqual([{ name: "방법론", count: 2 }]);
+    expect(await thoughts.list({ tag: nfd })).toHaveLength(2);
+  });
+
   it("drops unused tags when replaced", async () => {
     const a = await thoughts.create({ title: "A", tags: ["old"] });
     await thoughts.update(a.id, { tags: ["new"] });

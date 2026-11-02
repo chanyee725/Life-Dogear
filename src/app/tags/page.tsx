@@ -7,7 +7,7 @@ import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "태그 · Research Brain" };
+export const metadata: Metadata = { title: "태그" };
 
 const SORTS: { value: TagSort; label: string }[] = [
   { value: "count", label: "많이 쓴 순" },
