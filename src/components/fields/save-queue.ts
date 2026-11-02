@@ -1,6 +1,3 @@
-// Generalized copy of src/app/papers/_components/save-queue.ts for the shared item editors.
-// Keep the two in sync until papers move to this module.
-
 export type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
 export type SaveOutcome = { ok: true } | { ok: false; error: string };
