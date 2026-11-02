@@ -17,4 +17,11 @@ describe("safeAction", () => {
       await safeAction(() => Promise.reject(new Error("boom")), "검색하지 못했습니다."),
     ).toEqual({ ok: false, error: "검색하지 못했습니다." });
   });
+
+  it("rethrows Next.js redirect and notFound errors", async () => {
+    for (const digest of ["NEXT_REDIRECT;replace;/x;307;", "NEXT_HTTP_ERROR_FALLBACK;404"]) {
+      const err = Object.assign(new Error(digest), { digest });
+      await expect(safeAction(() => Promise.reject(err))).rejects.toBe(err);
+    }
+  });
 });
