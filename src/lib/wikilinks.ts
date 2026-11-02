@@ -72,7 +72,12 @@ function scan(markdown: string): Line[] {
   for (const line of lines) {
     const m = FENCE_RE.exec(line);
     if (fence !== null) {
-      if (m && m[1][0] === fence[0] && m[1].length >= fence.length && !line.slice(m[0].length).trim()) {
+      if (
+        m &&
+        m[1][0] === fence[0] &&
+        m[1].length >= fence.length &&
+        !line.slice(m[0].length).trim()
+      ) {
         fence = null;
       }
       out.push({ segments: [{ text: line, live: false }] });
