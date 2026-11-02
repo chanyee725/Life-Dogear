@@ -24,7 +24,7 @@ export function parentOptionsFor(
   return all
     .filter((g) => g.horizon !== "quarter" && g.id !== self)
     .filter((g) => !g.archivedAt || g.id === currentParent)
-    .map((g) => ({ value: g.id, label: labelFor(g), horizon: g.horizon }));
+    .map((g) => ({ value: g.id, label: labelFor(g), horizon: g.horizon, period: g.period }));
 }
 
 /** Goal select options for projects; keeps the current goal even if archived. */

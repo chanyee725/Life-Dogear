@@ -72,6 +72,7 @@ export default async function GoalDetailPage({ params }: Props) {
           </p>
           <GoalFields
             editorKey={goal.id}
+            hasChildren={goalList.some((g) => g.parentId === goal.id)}
             tagSuggestions={allTags.map((t) => t.name)}
             parentOptions={parentOptionsFor(goalList, goal.id, goal.parentId)}
             areaOptions={areaOptionsFor(areaList, goal.areaId)}

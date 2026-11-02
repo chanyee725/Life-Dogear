@@ -15,9 +15,9 @@ describe("goal form helpers", () => {
     const all = [g("L", "life"), g("Y", "year"), g("Q", "quarter"), g("old", "life", "x")];
     expect(parentOptionsFor(all, "Y", null).map((o) => o.value)).toEqual(["L"]);
     expect(parentOptionsFor(all, "Q", "old")).toEqual([
-      { value: "L", label: "L", horizon: "life" },
-      { value: "Y", label: "2027 · Y", horizon: "year" },
-      { value: "old", label: "old (보관됨)", horizon: "life" },
+      { value: "L", label: "L", horizon: "life", period: null },
+      { value: "Y", label: "2027 · Y", horizon: "year", period: "2027" },
+      { value: "old", label: "old (보관됨)", horizon: "life", period: null },
     ]);
     expect(goalOptionsFor(all, null).map((o) => o.value)).toEqual(["L", "Y", "Q"]);
   });

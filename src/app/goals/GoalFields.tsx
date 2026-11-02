@@ -32,7 +32,12 @@ export type GoalFormValues = {
 };
 
 /** Possible parents; `horizon` filters them to the level above the edited goal. */
-export type ParentOption = { value: string; label: string; horizon: GoalHorizon };
+export type ParentOption = {
+  value: string;
+  label: string;
+  horizon: GoalHorizon;
+  period: string | null;
+};
 
 const PARENT_OF: Record<GoalHorizon, GoalHorizon | null> = {
   life: null,
@@ -53,12 +58,15 @@ export function GoalFields({
   parentOptions,
   areaOptions,
   editorKey,
+  hasChildren = false,
 }: {
   values: GoalFormValues;
   tagSuggestions: string[];
   parentOptions: ParentOption[];
   areaOptions: { value: string; label: string }[];
   editorKey: string;
+  /** Child goals pin the horizon (and a year goal's year) — the repo refuses changes. */
+  hasChildren?: boolean;
 }) {
   const [horizon, setHorizon] = useState<GoalHorizon>(values.horizon);
   const initial = splitPeriod(values.period);
@@ -84,6 +92,8 @@ export function GoalFields({
               label: `${o.label} 목표`,
             }))}
             defaultValue={values.horizon}
+            disabled={hasChildren}
+            aria-describedby={hasChildren ? "goal-horizon-why" : undefined}
             onChange={(value) => {
               if (!value) return;
               setHorizon(value);
@@ -95,6 +105,11 @@ export function GoalFields({
             }}
             className="w-auto"
           />
+          {hasChildren ? (
+            <span id="goal-horizon-why" className="ml-2 text-xs text-muted">
+              하위 목표가 있어 바꿀 수 없습니다.
+            </span>
+          ) : null}
         </Property>
         <Property label="기간" htmlFor={horizon === "life" ? undefined : "goal-year"}>
           <input type="hidden" name="period" value={period} />
@@ -105,6 +120,7 @@ export function GoalFields({
               <Input
                 id="goal-year"
                 aria-label="연도"
+                disabled={hasChildren && horizon === "year"}
                 inputMode="numeric"
                 maxLength={4}
                 value={year}
@@ -132,7 +148,12 @@ export function GoalFields({
               options={parents}
               emptyLabel="없음"
               value={parentId}
-              onChange={setParentId}
+              onChange={(value) => {
+                setParentId(value);
+                // A quarter goal lives in its year goal's year.
+                const parent = parentOptions.find((p) => p.value === value);
+                if (horizon === "quarter" && parent?.period) setYear(parent.period);
+              }}
               className="w-auto max-w-full"
             />
           </Property>

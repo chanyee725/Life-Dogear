@@ -9,6 +9,7 @@ import {
   type GoalStatus,
 } from "@/lib/enums";
 import { isAssignable as isAssignableArea } from "./areas";
+import { getHeads, refKey } from "./items";
 import { removeLinksFor } from "./links";
 import {
   archiveFilter,
@@ -24,6 +25,7 @@ import {
   withTx,
   type ArchiveOptions,
   type Executor,
+  type ItemRef,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -133,14 +135,19 @@ const blankToNull = (v: string | null | undefined) => (v === "" ? null : v);
  */
 async function validateShape(
   exec: Executor,
-  state: { horizon: GoalHorizon; parentId: string | null; areaId: string | null },
+  state: {
+    horizon: GoalHorizon;
+    period: string | null;
+    parentId: string | null;
+    areaId: string | null;
+  },
   current: { parentId: string | null; areaId: string | null } | null,
 ) {
   const wanted = PARENT_HORIZON[state.horizon];
   if (state.parentId !== null) {
     if (wanted === null) throw new RepoError("invalid", "인생 목표에는 상위 목표가 없습니다.");
     const [parent] = await exec
-      .select({ horizon: goals.horizon, archivedAt: goals.archivedAt })
+      .select({ horizon: goals.horizon, period: goals.period, archivedAt: goals.archivedAt })
       .from(goals)
       .where(eq(goals.id, state.parentId));
     if (!parent || (parent.archivedAt && current?.parentId !== state.parentId)) {
@@ -152,6 +159,12 @@ async function validateShape(
         state.horizon === "year"
           ? "연 목표의 상위 목표는 인생 목표여야 합니다."
           : "분기 목표의 상위 목표는 연 목표여야 합니다.",
+      );
+    }
+    if (state.horizon === "quarter" && !state.period?.startsWith(`${parent.period}-`)) {
+      throw new RepoError(
+        "invalid",
+        `분기 목표의 연도는 상위 연 목표(${parent.period})와 같아야 합니다.`,
       );
     }
   }
@@ -206,7 +219,7 @@ export async function create(input: GoalInput): Promise<Goal> {
   const areaId = blankToNull(input.areaId) ?? null;
   const columns = toColumns({ ...input, title: undefined });
   await withTx(async (tx) => {
-    await validateShape(tx, { horizon, parentId, areaId }, null);
+    await validateShape(tx, { horizon, period, parentId, areaId }, null);
     await tx.insert(goals).values({
       id,
       title: requireTitle(input.title),
@@ -256,7 +269,18 @@ export async function update(id: string, patch: GoalPatch): Promise<Goal | null>
     if (parentId === id) throw new RepoError("invalid", "자기 자신을 상위 목표로 둘 수 없습니다.");
     const areaId =
       patch.areaId === undefined ? current.areaId : (blankToNull(patch.areaId) ?? null);
-    await validateShape(tx, { horizon, parentId, areaId }, current);
+    await validateShape(tx, { horizon, period, parentId, areaId }, current);
+    if (horizon === "year" && period !== current.period) {
+      // Child quarter goals carry the year in their period.
+      const [child] = await tx
+        .select({ id: goals.id })
+        .from(goals)
+        .where(eq(goals.parentId, id))
+        .limit(1);
+      if (child) {
+        throw new RepoError("invalid", "하위 분기 목표가 있으면 연도를 바꿀 수 없습니다.");
+      }
+    }
     await tx
       .update(goals)
       .set({ ...columns, horizon, period, parentId, areaId, updatedAt: nowIso() })
@@ -385,14 +409,19 @@ async function resourceCounts(projectIds: string[]): Promise<Map<string, number>
       ),
     );
   const isResource = (t: string) => t === "paper" || t === "seminar";
+  const pairs: { project: string; resource: ItemRef }[] = [];
   for (const l of rows) {
-    const id =
-      l.sourceType === "project" && isResource(l.targetType)
-        ? l.sourceId
-        : l.targetType === "project" && isResource(l.sourceType)
-          ? l.targetId
-          : null;
-    if (id) out.set(id, (out.get(id) ?? 0) + 1);
+    if (l.sourceType === "project" && isResource(l.targetType)) {
+      pairs.push({ project: l.sourceId, resource: { type: l.targetType, id: l.targetId } });
+    } else if (l.targetType === "project" && isResource(l.sourceType)) {
+      pairs.push({ project: l.targetId, resource: { type: l.sourceType, id: l.sourceId } });
+    }
+  }
+  // Archived papers and seminars don't count.
+  const heads = await getHeads(pairs.map((p) => p.resource));
+  for (const p of pairs) {
+    const head = heads.get(refKey(p.resource));
+    if (head && !head.archived) out.set(p.project, (out.get(p.project) ?? 0) + 1);
   }
   return out;
 }

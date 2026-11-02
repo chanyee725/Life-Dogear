@@ -41,6 +41,13 @@ describe("goals repo", () => {
       tags: ["논문"],
     });
     expect(quarter.tags).toEqual(["논문"]);
+    // A quarter goal sits in its year goal's year; that year is then fixed.
+    await expect(
+      goals.create({ title: "x", horizon: "quarter", period: "2028-Q1", parentId: year.id }),
+    ).rejects.toThrow("상위 연 목표(2027)");
+    await expect(goals.update(year.id, { period: "2028" })).rejects.toThrow(
+      "연도를 바꿀 수 없습니다",
+    );
 
     await expect(
       goals.create({ title: "x", horizon: "quarter", period: "2027-Q1", parentId: life.id }),
@@ -118,8 +125,11 @@ describe("goals repo", () => {
     const open = await projects.create({ title: "진행 일", goalId: q1.id });
     const paper = await papers.create({ title: "논문" });
     const seminar = await seminars.create({ title: "세미나" });
+    const oldPaper = await papers.create({ title: "보관 논문" });
     await links.link({ type: "paper", id: paper.id }, { type: "project", id: open.id });
     await links.link({ type: "project", id: open.id }, { type: "seminar", id: seminar.id });
+    await links.link({ type: "project", id: open.id }, { type: "paper", id: oldPaper.id });
+    await archive.archive({ type: "paper", id: oldPaper.id });
 
     const [root] = await goals.listTree();
     expect(root.goal.id).toBe(life.id);
