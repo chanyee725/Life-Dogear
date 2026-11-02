@@ -1,4 +1,4 @@
-export { Sidebar, NAV_ITEMS, isActivePath } from "./Sidebar";
+export { NAV_SECTIONS, isActivePath } from "./nav";
 export { ThemeToggle } from "./ThemeToggle";
 export { Page, PageHeader } from "./PageHeader";
 export { Shortcuts } from "./Shortcuts";

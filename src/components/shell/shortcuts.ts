@@ -1,7 +1,7 @@
 export const QUICK_INPUT_ID = "quick-input";
 
-const SECTIONS = ["projects", "papers", "seminars", "thoughts"] as const;
-/** Where `N` goes when the current page is not one of the four item sections (home, tags). */
+const SECTIONS = ["projects", "areas", "papers", "seminars", "thoughts"] as const;
+/** Where `N` goes outside the item sections (home, inbox, tags, archive). */
 const DEFAULT_NEW_SECTION = "thoughts";
 
 export type ShortcutAction =
