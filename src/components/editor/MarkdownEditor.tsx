@@ -157,14 +157,14 @@ function Toolbar({ editor }: { editor: Editor }) {
       className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-0.5 bg-bg/90 px-1 py-1 backdrop-blur"
     >
       <Tool
-        label="제목 2"
+        label="머리글 2"
         active={state.h2}
         onClick={() => chain().toggleHeading({ level: 2 }).run()}
       >
         H2
       </Tool>
       <Tool
-        label="제목 3"
+        label="머리글 3"
         active={state.h3}
         onClick={() => chain().toggleHeading({ level: 3 }).run()}
       >
