@@ -1,81 +1,107 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
+import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
+import {
+  AUTOSAVE_READ_ATTR,
+  EDITOR_READY_EVENT,
+  formToPatch,
+  patchToFormData,
+  type FormPatch,
+} from "./form-patch";
+import { DetailHeader, QuietButton, SaveStatus } from "./ItemDetail";
+import { createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
 
 export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: string }>>;
 
-/**
- * Create/edit form for an item, with a top bar (back link, status, extra actions, 저장).
- * - create: on success navigates to `${basePath}/${id}`
- * - edit: on success shows "저장됨" and refreshes server data
- * Cmd/Ctrl+S submits. Errors (including network failures) are shown inline.
- * Unsaved edits show "저장 안 됨"; leaving the page or following an in-app link asks first.
- * Fields signal edits with bubbling `input`/`change` events (the editor and TagInput
- * dispatch `input` for changes that don't come from typing).
- */
-export function ItemForm({
-  mode,
-  action,
-  basePath,
-  backLabel,
-  actions,
-  children,
-  className,
-}: {
-  mode: "create" | "edit";
+/** Pause after the last edit before autosaving (matches the paper editor). */
+export const AUTOSAVE_DELAY = 1000;
+
+type Props = {
   action: ItemFormAction;
   /** Section path, e.g. "/projects". */
   basePath: string;
   /** Back link text, e.g. "연구". */
   backLabel: string;
-  /** Extra controls shown next to 저장 (e.g. a delete button). */
+  /** Extra quiet controls in the header (보관, 삭제). */
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
-}) {
-  const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<Date | null>(null);
-  const [dirty, setDirty] = useState(false);
-  // Bumped on every edit, so a save only clears `dirty` if nothing changed meanwhile.
-  const editVersion = useRef(0);
+};
 
+/**
+ * Item form with the shared detail header.
+ * - `create`: explicit 저장 (button or Cmd/Ctrl+S), then navigates to `${basePath}/${id}`.
+ * - `edit`: autosaves about a second after edits stop; Cmd/Ctrl+S or 저장 saves now.
+ *   Only fields that differ from the last saved values are sent; failed fields are kept
+ *   and retried. Unsaved edits show "저장 안 됨" and guard leaving the page.
+ * Fields signal edits with bubbling `input`/`change` events (the editor and TagInput
+ * dispatch `input` for changes that don't come from typing).
+ */
+export function ItemForm({ mode, ...props }: Props & { mode: "create" | "edit" }) {
+  return mode === "create" ? <CreateForm {...props} /> : <AutosaveForm {...props} />;
+}
+
+function useSaveShortcut(onSave: () => void) {
+  const onSaveRef = useRef(onSave);
   useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-    const onEdit = () => {
-      editVersion.current += 1;
-      setDirty(true);
-    };
-    form.addEventListener("input", onEdit);
-    form.addEventListener("change", onEdit);
-    return () => {
-      form.removeEventListener("input", onEdit);
-      form.removeEventListener("change", onEdit);
-    };
-  }, []);
-
-  useUnsavedChangesGuard(dirty);
-
+    onSaveRef.current = onSave;
+  });
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        formRef.current?.requestSubmit();
+        onSaveRef.current();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+}
+
+/** Calls `onEdit` for every bubbling input/change event inside the form. */
+function useFormEdits(formRef: React.RefObject<HTMLFormElement | null>, onEdit: () => void) {
+  const onEditRef = useRef(onEdit);
+  useEffect(() => {
+    onEditRef.current = onEdit;
+  });
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const handler = () => onEditRef.current();
+    form.addEventListener("input", handler);
+    form.addEventListener("change", handler);
+    return () => {
+      form.removeEventListener("input", handler);
+      form.removeEventListener("change", handler);
+    };
+  }, [formRef]);
+}
+
+function ErrorLine({ error }: { error: string | null }) {
+  return error ? (
+    <p role="alert" className="rounded-lg bg-tone-red-bg px-3 py-2 text-sm text-tone-red-fg">
+      {error}
+    </p>
+  ) : null;
+}
+
+function CreateForm({ action, basePath, backLabel, actions, children, className }: Props) {
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+
+  useFormEdits(formRef, () => setDirty(true));
+  useUnsavedChangesGuard(dirty);
+  useSaveShortcut(() => formRef.current?.requestSubmit());
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,7 +109,6 @@ export function ItemForm({
     // `new FormData(form)` fires the `formdata` event the editor and TagInput use to
     // write their exact values (unsaved tag draft included).
     const data = new FormData(event.currentTarget);
-    const submittedVersion = editVersion.current;
     setError(null);
     startTransition(async () => {
       const result = await safeAction(() => action(data));
@@ -91,80 +116,141 @@ export function ItemForm({
         setError(result.error);
         return;
       }
-      if (editVersion.current === submittedVersion) setDirty(false);
-      if (mode === "create") {
-        router.push(`${basePath}/${result.data.id}`);
-      } else {
-        setSavedAt(new Date());
-        router.refresh();
-      }
+      setDirty(false);
+      router.push(`${basePath}/${result.data.id}`);
     });
   }
 
-  const status = pending
-    ? "저장 중…"
-    : dirty
-      ? "저장 안 됨"
-      : savedAt
-        ? `저장됨 · ${formatTime(savedAt)}`
-        : null;
-
   return (
-    <form
-      ref={formRef}
-      onSubmit={onSubmit}
-
-      className={cn("flex flex-col gap-6", className)}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <Link href={basePath} className="text-[13px] text-muted hover:text-fg">
-          ← {backLabel}
-        </Link>
-        <div className="flex items-center gap-2">
-          <span
-            aria-live="polite"
-            className={cn("text-xs", dirty && !pending ? "text-tone-amber-fg" : "text-faint")}
-          >
-            {status}
-          </span>
-          {actions}
-          <Button type="submit" variant="primary" disabled={pending}>
-            저장
-          </Button>
-        </div>
-      </div>
-      {error ? (
-        <p role="alert" className="rounded-lg bg-tone-red-bg px-3 py-2 text-sm text-tone-red-fg">
-          {error}
-        </p>
-      ) : null}
+    <form ref={formRef} onSubmit={onSubmit} className={cn("flex flex-col gap-6", className)}>
+      <DetailHeader
+        backHref={basePath}
+        backLabel={backLabel}
+        status={<SaveStatus state={pending ? "saving" : dirty ? "pending" : "idle"} />}
+        actions={
+          <>
+            {actions}
+            <Button type="submit" variant="primary" size="sm" disabled={pending} className="ml-1">
+              저장
+            </Button>
+          </>
+        }
+      />
+      <ErrorLine error={error} />
       {children}
     </form>
   );
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+/** Reads the form as a patch. Autosave reads skip submit-only work (TagInput drafts). */
+function readForm(form: HTMLFormElement, autosave: boolean): FormPatch {
+  if (autosave) form.setAttribute(AUTOSAVE_READ_ATTR, "");
+  try {
+    return formToPatch(new FormData(form));
+  } finally {
+    form.removeAttribute(AUTOSAVE_READ_ATTR);
+  }
 }
 
-/** Large borderless title input used at the top of item forms (accessible name "제목"). */
-export function TitleInput({
-  defaultValue,
-  placeholder = "제목 없음",
-}: {
-  defaultValue?: string;
-  placeholder?: string;
-}) {
+function AutosaveForm({ action, basePath, backLabel, actions, children, className }: Props) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [state, setState] = useState<SaveState>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [savedOnce, setSavedOnce] = useState(false);
+  const [titleMissing, setTitleMissing] = useState(false);
+  /** Edited since the form was last read into the queue. */
+  const [unread, setUnread] = useState(false);
+  const unreadRef = useRef(false);
+  useEffect(() => {
+    unreadRef.current = unread;
+  }, [unread]);
+
+  const [queue] = useState(() =>
+    createSaveQueue<FormPatch>(
+      (patch) => safeAction(() => action(patchToFormData(patch))),
+      (next, message) => {
+        setState(next);
+        if (next === "error") setError(message);
+        if (next === "saved") {
+          setError(null);
+          setSavedOnce(true);
+        }
+      },
+    ),
+  );
+
+  // Baseline = what the form shows on load (the server values), read once after mount,
+  // so opening the page never saves.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    queue.resetBaseline(readForm(form, true));
+    // The editor mounts a bit later and may normalise the body; re-read the baseline
+    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
+    const onEditorReady = () => {
+      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
+    };
+    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
+    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
+  }, [queue]);
+
+  function readIntoQueue(autosave: boolean) {
+    const form = formRef.current;
+    if (!form) return;
+    const patch = readForm(form, autosave);
+    // A blank title can't be saved; keep the other fields going and say why.
+    const blank = typeof patch.title === "string" && !patch.title.trim();
+    setTitleMissing(blank);
+    if (blank) delete patch.title;
+    setUnread(false);
+    queue.add(patch);
+    void queue.flush();
+  }
+
+  const autosave = useDebouncedCallback(() => readIntoQueue(true), AUTOSAVE_DELAY, {
+    flushOnUnmount: true,
+  });
+
+  function saveNow() {
+    autosave.cancel();
+    readIntoQueue(false);
+  }
+
+  useFormEdits(formRef, () => {
+    setUnread(true);
+    autosave();
+  });
+  useSaveShortcut(saveNow);
+
+  const dirty = unread || queue.dirty() || state === "error";
+  useUnsavedChangesGuard(dirty);
+  const shown: SaveState = unread && state !== "saving" ? "pending" : state;
+
   return (
-    <input
-      name="title"
-      aria-label="제목"
-      required
-      maxLength={300}
-      defaultValue={defaultValue}
-      placeholder={placeholder}
-      autoComplete="off"
-      className="w-full bg-transparent text-2xl font-semibold tracking-tight text-fg placeholder:text-faint focus:outline-none"
-    />
+    <form
+      ref={formRef}
+      onSubmit={(event) => {
+        event.preventDefault();
+        saveNow();
+      }}
+      className={cn("flex flex-col gap-6", className)}
+    >
+      <DetailHeader
+        backHref={basePath}
+        backLabel={backLabel}
+        status={<SaveStatus state={shown} savedOnce={savedOnce} />}
+        actions={
+          <>
+            {actions}
+            <QuietButton type="submit">저장</QuietButton>
+          </>
+        }
+      />
+      <ErrorLine
+        error={titleMissing ? "제목을 입력하세요. 비어 있는 동안 제목은 저장되지 않습니다." : null}
+      />
+      <ErrorLine error={error} />
+      {children}
+    </form>
   );
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseId } from "@/app/_actions/parse";
+import { formText, parseId } from "@/app/_actions/parse";
 import { runAction, type ActionResult } from "@/app/_actions/result";
 import { RepoError, thoughts } from "@/lib/repo";
 import { parseThoughtForm } from "./form";
@@ -15,7 +15,11 @@ function revalidate(id?: string) {
 
 export async function createThought(form: FormData): Promise<ActionResult<{ id: string }>> {
   return runAction(async () => {
-    const thought = await thoughts.create(parseThoughtForm(form));
+    // A missing title is rejected by the repo ("제목을 입력하세요.").
+    const thought = await thoughts.create({
+      ...parseThoughtForm(form),
+      title: formText(form, "title") ?? "",
+    });
     revalidate();
     return { id: thought.id };
   });

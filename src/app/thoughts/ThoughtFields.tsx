@@ -1,6 +1,6 @@
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
-import { TitleInput } from "@/components/fields/ItemForm";
+import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
 import { Properties, Property } from "@/components/fields/Properties";
 import { TagInput } from "@/components/fields/TagInput";
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
@@ -48,14 +48,14 @@ export function ThoughtFields({
           />
         </Property>
       </Properties>
-      <div className="border-t border-border pt-6">
+      <DetailBody>
         <MarkdownEditor
           key={editorKey}
           name="body"
           value={values.body}
           placeholder="생각을 적어 보세요…"
         />
-      </div>
+      </DetailBody>
     </>
   );
 }
