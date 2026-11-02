@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, notExists, sql } from "drizzle-orm";
-import { itemTags, tags } from "@/db/schema";
+import { areas, itemTags, papers, projects, seminars, tags, thoughts } from "@/db/schema";
 import {
   assertItemRef,
   db,
@@ -102,12 +102,32 @@ export async function getTagsFor(
   return result;
 }
 
-/** All tags in use, with how many items carry each. */
-export async function listAll(): Promise<TagCount[]> {
+/** item_tags row whose item is archived (any type). */
+const onArchivedItem = sql.join(
+  [
+    ["project", projects],
+    ["paper", papers],
+    ["seminar", seminars],
+    ["thought", thoughts],
+    ["area", areas],
+  ].map(
+    ([type, t]) =>
+      sql`(${itemTags.itemType} = ${type} and exists (select 1 from ${t} where ${t}.id = ${itemTags.itemId} and ${t}.archived_at is not null))`,
+  ),
+  sql` or `,
+);
+
+/**
+ * All tags in use, with how many items carry each. With `visibleOnly`, archived items
+ * are not counted and tags used only by archived items are left out (주제 pages);
+ * without it every tag is returned (input suggestions).
+ */
+export async function listAll(options: { visibleOnly?: boolean } = {}): Promise<TagCount[]> {
   const rows = await db()
     .select({ name: tags.name, count: sql<number>`count(*)`.mapWith(Number) })
     .from(tags)
     .innerJoin(itemTags, eq(itemTags.tagId, tags.id))
+    .where(options.visibleOnly ? sql`not (${onArchivedItem})` : undefined)
     .groupBy(tags.id)
     .orderBy(asc(tags.name));
   return rows;

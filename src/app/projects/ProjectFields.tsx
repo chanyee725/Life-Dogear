@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/Input";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { ProjectInput } from "@/lib/repo/projects";
 
-export type ProjectFormValues = Required<Omit<ProjectInput, "startDate" | "dueDate">> & {
+// 1.5 fields (kind, status, areaId, nextAction) are wired up in phase B.
+export type ProjectFormValues = Required<
+  Omit<ProjectInput, "startDate" | "dueDate" | "kind" | "status" | "areaId" | "nextAction">
+> & {
   startDate: string | null;
   dueDate: string | null;
 };

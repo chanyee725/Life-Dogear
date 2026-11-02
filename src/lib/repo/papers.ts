@@ -18,6 +18,8 @@ import {
   orderFor,
   withTx,
   serializeWrite,
+  archiveFilter,
+  type ArchiveOptions,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -41,7 +43,7 @@ export type PaperInput = {
 export type PaperPatch = Partial<PaperInput>;
 
 export type PaperSort = "updated" | "created" | "title" | "year" | "lastRead";
-export type PaperListOptions = {
+export type PaperListOptions = ArchiveOptions & {
   tag?: string;
   status?: ReadStatus;
   importance?: Importance;
@@ -115,15 +117,16 @@ function toColumns(input: PaperPatch) {
   });
 }
 
+/** Non-archived by default; see {@link ArchiveOptions}. */
 export async function list(options: PaperListOptions = {}): Promise<Paper[]> {
-  const where: SQL[] = [];
+  const where: (SQL | undefined)[] = [archiveFilter(papers.archivedAt, options)];
   if (options.status) where.push(eq(papers.readStatus, options.status));
   if (options.importance) where.push(eq(papers.importance, options.importance));
   if (options.tag) where.push(hasTag(db(), "paper", papers.id, options.tag));
   const rows = await db()
     .select()
     .from(papers)
-    .where(where.length ? and(...where) : undefined)
+    .where(and(...where))
     .orderBy(...orderFor(ORDER, options.sort, "updated"));
   return withTags(rows);
 }
@@ -247,7 +250,7 @@ export async function listContinueReading(limit = 6): Promise<Paper[]> {
   const rows = await db()
     .select()
     .from(papers)
-    .where(eq(papers.readStatus, "reading"))
+    .where(and(eq(papers.readStatus, "reading"), archiveFilter(papers.archivedAt)))
     .orderBy(...ORDER.lastRead)
     .limit(limit);
   return withTags(rows);
