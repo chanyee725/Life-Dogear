@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { isValidItemId } from "@/lib/ids";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedItems } from "@/components/links";
@@ -13,12 +14,14 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const project = await projects.get((await params).id);
+  const { id } = await params;
+  const project = isValidItemId(id) ? await projects.get(id) : null;
   return { title: project?.title ?? "연구" };
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
   const { id } = await params;
+  if (!isValidItemId(id)) notFound();
   const [project, allTags] = await Promise.all([projects.get(id), tags.listAll()]);
   if (!project) notFound();
 
