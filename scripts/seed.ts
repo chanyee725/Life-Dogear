@@ -362,6 +362,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err);
+  // Name/code only: driver messages can include query params.
+  const code = (err as { code?: unknown })?.code;
+  console.error(
+    `Seed failed: ${err instanceof Error ? err.name : "unknown error"}${code ? ` (${String(code)})` : ""}`,
+  );
   process.exit(1);
 });
