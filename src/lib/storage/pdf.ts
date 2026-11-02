@@ -3,8 +3,13 @@ import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 
-/** Directory (relative to the project root) holding uploaded PDFs. */
-export const PDF_DIR = "data/pdfs";
+import { pdfDirSetting } from "@/lib/data-dir";
+
+/**
+ * Directory holding uploaded PDFs: `<DATA_DIR>/pdfs`, relative to the project root
+ * unless DATA_DIR is absolute. Read per call so tests and e2e can change DATA_DIR.
+ */
+export const pdfDirPath = (): string => pdfDirSetting();
 
 /** Upper bound for an uploaded PDF. */
 export const MAX_PDF_BYTES = 100 * 1024 * 1024;
@@ -44,12 +49,12 @@ function assertId(id: string): void {
  */
 export function pdfRelativePath(id: string): string {
   assertId(id);
-  return `${PDF_DIR}/${id}.pdf`;
+  return `${pdfDirPath()}/${id}.pdf`;
 }
 
 /** Absolute directory; `root` defaults to the working directory (tests pass a temp dir). */
 export function pdfDir(root: string = process.cwd()): string {
-  return resolve(root, PDF_DIR);
+  return resolve(root, pdfDirPath());
 }
 
 export function pdfAbsolutePath(id: string, root?: string): string {
