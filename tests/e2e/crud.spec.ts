@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createItem, deleteCurrentItem, uniqueTitle, type Section } from "./helpers";
 
 const SECTIONS: { section: Section; label: string }[] = [
-  { section: "projects", label: "연구" },
+  { section: "projects", label: "프로젝트" },
   { section: "papers", label: "논문" },
   { section: "seminars", label: "세미나" },
   { section: "thoughts", label: "생각" },
@@ -15,10 +15,11 @@ for (const { section, label } of SECTIONS) {
 
     await createItem(page, section, title);
 
-    // Edit the title and save; the change survives a reload.
+    // Edit the title; it autosaves (저장 saves at once) and survives a reload.
     const titleField = page.getByLabel("제목", { exact: true });
     await titleField.fill(edited);
-    await page.getByRole("button", { name: "저장" }).click();
+    await page.getByRole("button", { name: "저장", exact: true }).click();
+    await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByLabel("제목", { exact: true })).toHaveValue(edited);
 
@@ -42,29 +43,34 @@ test("빈 제목은 저장되지 않는다", async ({ page }) => {
   await expect(page).toHaveURL(/\/thoughts\/new$/);
 });
 
-test("저장 안 된 수정이 있으면 사이드바 이동 전에 확인한다", async ({ page }) => {
-  const title = uniqueTitle("E2E unsaved");
+test("자동 저장: 편집은 잠시 뒤 저장되고, 바로 떠나도 남는다", async ({ page }) => {
+  const title = uniqueTitle("E2E autosave");
   await createItem(page, "thoughts", title);
   const detailUrl = page.url();
-
   const titleField = page.getByLabel("제목", { exact: true });
-  const edited = `${title} (unsaved)`;
-  await titleField.fill(edited);
+
+  // Typing shows 저장 안 됨, then autosaves about a second later.
+  const first = `${title} (auto)`;
+  await titleField.fill(first);
   await expect(page.getByText("저장 안 됨")).toBeVisible();
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(titleField).toHaveValue(first);
 
-  const sidebarLink = page.getByRole("navigation", { name: "주 메뉴" }).getByRole("link", {
-    name: "논문",
-  });
-
-  // Cancel the confirm: stay on the page and keep the typed value.
-  page.once("dialog", (d) => d.dismiss());
-  await sidebarLink.click();
-  await expect(page).toHaveURL(detailUrl);
-  await expect(titleField).toHaveValue(edited);
-  await expect(page.getByText("저장 안 됨")).toBeVisible();
-
-  // Accept the confirm: navigate away to /papers.
-  page.once("dialog", (d) => d.accept());
-  await sidebarLink.click();
+  // Leaving right after an edit (before the autosave delay) still keeps it.
+  const second = `${title} (leave)`;
+  await titleField.fill(second);
+  page.on("dialog", (d) => d.accept());
+  // The pending edit is sent as a server action when the page unmounts.
+  const saved = page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.request().headers()["next-action"] !== undefined,
+  );
+  await page
+    .getByRole("navigation", { name: "주 메뉴" })
+    .getByRole("link", { name: "논문" })
+    .click();
   await expect(page).toHaveURL(/\/papers$/);
+  await saved;
+  await page.goto(detailUrl);
+  await expect(page.getByLabel("제목", { exact: true })).toHaveValue(second);
 });
