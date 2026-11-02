@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -71,6 +72,15 @@ export type PdfViewerProps = {
   /** Shown at the left of the toolbar (e.g. back link and title). */
   header?: ReactNode;
   className?: string;
+  /** Rendered over each page box (absolute, page-sized). Gets the 1-based page number. */
+  renderPageOverlay?: (page: number) => ReactNode;
+  /** Set to the viewer's controls while it is mounted. */
+  apiRef?: RefObject<PdfViewerApi | null>;
+};
+
+export type PdfViewerApi = {
+  /** Scrolls to a 1-based page, `scroll` (0–1) down within it. */
+  goToPage: (page: number, scroll?: number) => void;
 };
 
 export default function PdfViewerClient({
@@ -83,6 +93,8 @@ export default function PdfViewerClient({
   saveDelay = 800,
   header,
   className = "",
+  renderPageOverlay,
+  apiRef,
 }: PdfViewerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [numPages, setNumPages] = useState(0);
@@ -260,12 +272,24 @@ export default function PdfViewerClient({
     });
   }, [save, syncView]);
 
-  const goToPage = (page: number) => {
+  const goToPage = (page: number, scroll = 0) => {
     const el = scrollRef.current;
     if (!el || !numPages) return;
-    anchorRef.current = { page: Math.min(numPages, Math.max(1, page)), scroll: 0 };
+    anchorRef.current = {
+      page: Math.min(numPages, Math.max(1, page)),
+      scroll: Math.min(1, Math.max(0, scroll)),
+    };
     el.scrollTop = scrollTopFor(layoutRef.current, anchorRef.current);
   };
+
+  // Expose the latest goToPage (it closes over numPages) to the highlight panel.
+  useEffect(() => {
+    if (!apiRef) return;
+    apiRef.current = { goToPage };
+    return () => {
+      apiRef.current = null;
+    };
+  });
 
   const onDocumentLoad = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
@@ -395,6 +419,7 @@ export default function PdfViewerClient({
               {pages.map((i) => (
                 <div
                   key={i}
+                  data-pdf-page={i + 1}
                   className="absolute overflow-hidden rounded-sm bg-white ring-1 ring-border"
                   style={{
                     top: layout.tops[i],
@@ -413,6 +438,7 @@ export default function PdfViewerClient({
                       onPageLoad(i, width, height);
                     }}
                   />
+                  {renderPageOverlay?.(i + 1)}
                 </div>
               ))}
             </div>
