@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/components/ui/cn";
+import { AUTOSAVE_READ_ATTR } from "./form-patch";
 import { addTags } from "./tags";
 
 export type TagInputProps = {
@@ -49,7 +50,9 @@ export function TagInput({
     const form = inputRef.current?.form;
     if (!name || !form) return;
     const onFormData = (event: FormDataEvent) => {
-      if (!draft.trim()) return;
+      // Autosave reads the form while the user may still be typing a tag; only a real
+      // submit (button, Cmd+S) commits the draft.
+      if (form.hasAttribute(AUTOSAVE_READ_ATTR) || !draft.trim()) return;
       const next = addTags(tags, draft);
       event.formData.delete(name);
       for (const tag of next) event.formData.append(name, tag);
