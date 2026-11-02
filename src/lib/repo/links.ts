@@ -40,8 +40,9 @@ const touching = (ref: ItemRef) =>
   );
 
 /**
- * Links `a` (source) → `b` (target). Idempotent: if the pair is already linked in
- * either direction, the existing link is returned unchanged.
+ * Links `a` (source) → `b` (target) by hand. Idempotent: if the pair is already linked
+ * in either direction, that link is kept; a `body` link is promoted to `manual` so
+ * removing the `[[…]]` from the body no longer removes it.
  */
 export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
   assertItemRef(a);
@@ -53,7 +54,11 @@ export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
       throw new RepoError("not_found", "연결할 항목을 찾을 수 없습니다.");
     }
     const [existing] = await tx.select().from(links).where(between(a, b)).limit(1);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.via === "manual") return existing;
+      await tx.update(links).set({ via: "manual" }).where(eq(links.id, existing.id));
+      return { ...existing, via: "manual" };
+    }
 
     const row: Link = {
       id: newId(),
@@ -61,6 +66,7 @@ export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
       sourceId: a.id,
       targetType: b.type,
       targetId: b.id,
+      via: "manual",
       createdAt: nowIso(),
     };
     await tx.insert(links).values(row);
