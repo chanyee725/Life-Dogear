@@ -242,3 +242,14 @@ export async function renameTitleMentions(
     return changed;
   });
 }
+
+/** Re-runs body link sync from the stored body (e.g. after a `[[title]]` target was created). */
+export async function resyncBody(ref: ItemRef): Promise<boolean> {
+  assertItemRef(ref);
+  return withTx(async (tx) => {
+    const body = await getBody(ref, tx);
+    if (body === null) return false;
+    await syncBodyLinks(tx, ref, body);
+    return true;
+  });
+}
