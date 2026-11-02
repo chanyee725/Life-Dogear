@@ -5,7 +5,7 @@ import {
   SAVE_FAILED,
   type SaveOutcome,
   type SaveState,
-} from "@/app/papers/_components/save-queue";
+} from "@/components/fields/save-queue";
 
 type Patch = { title?: string; body?: string };
 
