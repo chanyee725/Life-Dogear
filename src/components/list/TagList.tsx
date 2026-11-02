@@ -9,7 +9,7 @@ export function TagList({ tags, max = 3 }: { tags: readonly string[]; max?: numb
       {shown.map((t) => (
         <TagChip key={t}>#{t}</TagChip>
       ))}
-      {tags.length > max ? <span className="text-xs text-faint">+{tags.length - max}</span> : null}
+      {tags.length > max ? <span className="text-xs text-muted">+{tags.length - max}</span> : null}
     </span>
   );
 }

@@ -106,7 +106,7 @@ export function ViewToggle({
             onClick={() => onChange(o.value)}
             className={cn(
               "flex h-7 w-8 items-center justify-center rounded-md transition-colors",
-              active ? "bg-bg text-fg shadow-sm" : "text-faint hover:text-muted",
+              active ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
             )}
           >
             {o.icon}

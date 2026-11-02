@@ -65,7 +65,7 @@ export function Field({
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-faint">{hint}</p>
+        <p className="text-xs text-muted">{hint}</p>
       ) : null}
     </div>
   );
