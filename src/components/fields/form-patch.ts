@@ -52,3 +52,6 @@ export function patchToFormData(patch: FormPatch): FormData {
 
 /** Set on a form while autosave reads it, so fields can skip submit-only work. */
 export const AUTOSAVE_READ_ATTR = "data-autosave-read";
+
+/** Bubbling event the editor's hidden input fires once it holds the loaded content. */
+export const EDITOR_READY_EVENT = "rb-editor-ready";

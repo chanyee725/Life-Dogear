@@ -6,15 +6,14 @@ import {
   optionalNullableText,
   optionalStringList,
   optionalText,
-  parseText,
 } from "@/app/_actions/parse";
 import { hasListField } from "@/components/fields/form-patch";
 import { SEMINAR_KIND } from "@/lib/enums";
-import type { SeminarInput } from "@/lib/repo/seminars";
+import type { SeminarPatch } from "@/lib/repo/seminars";
 
-export function parseSeminarForm(form: FormData): SeminarInput {
+export function parseSeminarForm(form: FormData): SeminarPatch {
   return {
-    title: parseText(formText(form, "title") ?? "", "제목", MAX_TITLE),
+    title: optionalText(formText(form, "title"), "제목", MAX_TITLE),
     date: optionalNullableText(formText(form, "date"), "날짜"),
     speaker: optionalText(formText(form, "speaker"), "연사"),
     hostVenue: optionalText(formText(form, "hostVenue"), "주최·장소"),

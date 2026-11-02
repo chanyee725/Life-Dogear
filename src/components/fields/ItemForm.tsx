@@ -7,7 +7,13 @@ import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
-import { AUTOSAVE_READ_ATTR, formToPatch, patchToFormData, type FormPatch } from "./form-patch";
+import {
+  AUTOSAVE_READ_ATTR,
+  EDITOR_READY_EVENT,
+  formToPatch,
+  patchToFormData,
+  type FormPatch,
+} from "./form-patch";
 import { DetailHeader, QuietButton, SaveStatus } from "./ItemDetail";
 import { createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
@@ -154,6 +160,10 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   const [titleMissing, setTitleMissing] = useState(false);
   /** Edited since the form was last read into the queue. */
   const [unread, setUnread] = useState(false);
+  const unreadRef = useRef(false);
+  useEffect(() => {
+    unreadRef.current = unread;
+  }, [unread]);
 
   const [queue] = useState(() =>
     createSaveQueue<FormPatch>(
@@ -173,7 +183,15 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   // so opening the page never saves.
   useEffect(() => {
     const form = formRef.current;
-    if (form) queue.resetBaseline(readForm(form, true));
+    if (!form) return;
+    queue.resetBaseline(readForm(form, true));
+    // The editor mounts a bit later and may normalise the body; re-read the baseline
+    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
+    const onEditorReady = () => {
+      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
+    };
+    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
+    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
   }, [queue]);
 
   function readIntoQueue(autosave: boolean) {
