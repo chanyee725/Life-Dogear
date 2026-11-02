@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { setItemTags } from "@/app/_actions/tags";
 import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
@@ -70,8 +70,30 @@ export function PaperEditor({
         if (next === "error") setError(message);
         else if (next === "saved") setError(null);
       },
+      // Server values: only real differences are saved, so opening the page never writes.
+      {
+        title: paper.title,
+        authors: paper.authors,
+        year: paper.year?.toString() ?? "",
+        venue: paper.venue,
+        doi: paper.doi,
+        url: paper.url,
+        readStatus: paper.readStatus,
+        importance: paper.importance,
+        summary: paper.summary,
+        body: paper.body,
+      },
     ),
   );
+  /**
+   * The editor may re-serialise the stored Markdown right after loading (same
+   * content, different text). Body changes count only once the user has typed,
+   * clicked, pasted or dropped inside the editor.
+   */
+  const bodyTouched = useRef(false);
+  const touchBody = () => {
+    bodyTouched.current = true;
+  };
   const autosave = useDebouncedCallback(() => void queue.flush(), AUTOSAVE_DELAY, {
     flushOnUnmount: true,
   });
@@ -246,13 +268,20 @@ export function PaperEditor({
 
       <section className="flex flex-col gap-2">
         <h2 className="text-[13px] font-semibold text-muted">본문</h2>
-        <MarkdownEditor
-          value={body}
-          onChange={(markdown) => {
-            setBody(markdown);
-            change({ body: markdown });
-          }}
-        />
+        <div
+          onKeyDownCapture={touchBody}
+          onPointerDownCapture={touchBody}
+          onPasteCapture={touchBody}
+          onDropCapture={touchBody}
+        >
+          <MarkdownEditor
+            value={body}
+            onChange={(markdown) => {
+              setBody(markdown);
+              if (bodyTouched.current) change({ body: markdown });
+            }}
+          />
+        </div>
       </section>
     </div>
   );
