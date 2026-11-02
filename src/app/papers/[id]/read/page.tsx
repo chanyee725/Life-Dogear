@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PdfViewer } from "@/components/pdf/PdfViewer";
+import { FocusModeToggle } from "@/components/shell/FocusModeToggle";
 import { Page, PageHeader } from "@/components/shell";
 import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
@@ -28,7 +29,8 @@ export default async function ReadPaperPage({ params }: Props) {
   const back = (
     <Link
       href={`/papers/${paper.id}`}
-      className="shrink-0 rounded-md px-2 py-1 text-muted hover:bg-hover hover:text-fg"
+      // In focus mode the shell's fixed "사이드바 열기" button sits at the top-left corner.
+      className="shrink-0 rounded-md px-2 py-1 text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:ml-9"
       aria-label="논문으로 돌아가기"
     >
       ←
@@ -65,6 +67,8 @@ export default async function ReadPaperPage({ params }: Props) {
         initialPage={paper.lastPage}
         initialScroll={paper.lastScroll}
         initialReadAt={paper.lastReadAt}
+        // Focus mode hides the sidebar (remembered); the reader then fills the width.
+        toolbarEnd={<FocusModeToggle />}
         header={
           <>
             {back}

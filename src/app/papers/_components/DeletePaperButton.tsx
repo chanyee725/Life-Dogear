@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { safeAction } from "@/components/links/safe-action";
-import { Button, ConfirmDialog } from "@/components/ui";
+import { QuietButton } from "@/components/fields/ItemDetail";
+import { ConfirmDialog } from "@/components/ui";
 import { deletePaper } from "../actions";
 
 export function DeletePaperButton({ paperId, title }: { paperId: string; title: string }) {
@@ -13,9 +14,7 @@ export function DeletePaperButton({ paperId, title }: { paperId: string; title: 
 
   return (
     <>
-      <Button variant="ghost" onClick={() => setOpen(true)}>
-        삭제
-      </Button>
+      <QuietButton onClick={() => setOpen(true)}>삭제</QuietButton>
       {error ? (
         <span role="alert" className="text-xs text-danger">
           {error}

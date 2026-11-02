@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { setItemTags } from "@/app/_actions/tags";
 import { safeAction } from "@/components/links/safe-action";
@@ -8,6 +7,7 @@ import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
+import { DetailBody, DetailHeader, SaveStatus, TitleInput } from "@/components/fields/ItemDetail";
 import { Properties, Property } from "@/components/fields/Properties";
 import { Button, buttonClass, cn, Input } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
@@ -16,7 +16,11 @@ import type { Paper } from "@/lib/repo/papers";
 import { updatePaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
 import { DeletePaperButton } from "./DeletePaperButton";
-import { createLatestSender, createSaveQueue, type SaveState } from "./save-queue";
+import {
+  createLatestSender,
+  createSaveQueue,
+  type SaveState,
+} from "@/components/fields/save-queue";
 
 type PatchInput = {
   title?: string;
@@ -29,14 +33,6 @@ type PatchInput = {
   importance?: Importance;
   summary?: string;
   body?: string;
-};
-
-const SAVE_LABEL: Record<SaveState, string> = {
-  idle: "",
-  pending: "저장 대기 중",
-  saving: "저장 중…",
-  saved: "저장됨",
-  error: "저장 실패",
 };
 
 const AUTOSAVE_DELAY = 1000;
@@ -139,40 +135,38 @@ export function PaperEditor({
     // title, label/value property rows, then the body.
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/papers" className="text-[13px] text-muted hover:text-fg">
-            ← 논문
-          </Link>
-          <div className="flex items-center gap-2">
-            <span
-              aria-live="polite"
-              className={cn(
-                "text-xs",
-                state === "error" || tagsError ? "text-danger" : "text-faint",
-              )}
-            >
-              {/* A failed tag save stays visible even after field saves succeed. */}
-              {tagsError && state !== "error" ? "태그 저장 실패" : SAVE_LABEL[state]}
-            </span>
-            <DeletePaperButton paperId={paper.id} title={paper.title} />
-            <Button variant="primary" onClick={saveNow}>
-              저장
-            </Button>
-          </div>
-        </div>
+        <DetailHeader
+          backHref="/papers"
+          backLabel="논문"
+          status={
+            // A failed tag save stays visible even after field saves succeed.
+            tagsError && state !== "error" ? (
+              <span aria-live="polite" className="text-xs text-danger">
+                태그 저장 실패
+              </span>
+            ) : (
+              <SaveStatus state={state} />
+            )
+          }
+          actions={
+            <>
+              <DeletePaperButton paperId={paper.id} title={paper.title} />
+              <Button variant="primary" size="sm" onClick={saveNow} className="ml-1">
+                저장
+              </Button>
+            </>
+          }
+        />
         {error || tagsError ? (
           <p role="alert" className="rounded-lg bg-tone-red-bg px-3 py-2 text-sm text-tone-red-fg">
             {error ?? tagsError}
           </p>
         ) : null}
-        <label htmlFor="paper-title" className="sr-only">
-          제목
-        </label>
-        <input
+        <TitleInput
           id="paper-title"
+          name={undefined}
+          required={false}
           value={title}
-          maxLength={300}
-          placeholder="제목"
           onChange={(e) => {
             const value = e.target.value;
             setTitle(value);
@@ -182,7 +176,6 @@ export function PaperEditor({
           }}
           aria-invalid={titleEmpty || undefined}
           aria-describedby={titleEmpty ? "paper-title-hint" : undefined}
-          className="w-full bg-transparent text-2xl font-semibold tracking-tight text-fg placeholder:text-faint focus:outline-none"
         />
         {titleEmpty ? (
           <p id="paper-title-hint" className="-mt-2 text-xs text-danger">
@@ -285,8 +278,7 @@ export function PaperEditor({
 
       {pdfSlot}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-[13px] font-semibold text-muted">본문</h2>
+      <DetailBody>
         <div
           ref={bodyRef}
           onKeyDownCapture={touchBody}
@@ -302,7 +294,7 @@ export function PaperEditor({
             }}
           />
         </div>
-      </section>
+      </DetailBody>
     </div>
   );
 }
