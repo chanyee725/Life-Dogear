@@ -2,7 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { papers } from "@/lib/repo";
 import { isValidPaperId } from "@/lib/storage/pdf";
 import { MAX_PROGRESS_BODY, parseProgressInput } from "../../_lib/progress-input";
-import { errorResponse, invalidId, jsonError, notFound, type IdParams } from "../../_lib/responses";
+import { isSameOriginRequest } from "../../_lib/origin";
+import {
+  errorResponse,
+  forbidden,
+  invalidId,
+  jsonError,
+  notFound,
+  type IdParams,
+} from "../../_lib/responses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +20,7 @@ export const dynamic = "force-dynamic";
  * `navigator.sendBeacon`, which always POSTs (usually as text/plain).
  */
 async function save(request: NextRequest, { params }: IdParams): Promise<NextResponse> {
+  if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
   if (!isValidPaperId(id)) return invalidId();
 
@@ -21,6 +30,9 @@ async function save(request: NextRequest, { params }: IdParams): Promise<NextRes
   if (!input) return jsonError(400, "읽기 위치 형식이 올바르지 않습니다.");
 
   try {
+    // Reading positions only make sense for a paper with a PDF.
+    const paper = await papers.get(id);
+    if (!paper?.pdfPath) return notFound();
     const saved = await papers.saveProgress(id, input);
     return saved ? new NextResponse(null, { status: 204 }) : notFound();
   } catch (error) {
