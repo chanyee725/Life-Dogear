@@ -6,6 +6,7 @@ import {
   ItemCards,
   ItemTable,
   ListView,
+  SortSelect,
   TagFilter,
   type Column,
   type QueryParams,
@@ -35,7 +36,7 @@ const isSort = (v: unknown): v is PaperSort => SORTS.some((s) => s.value === v);
 
 function readingCell(paper: Paper) {
   if (!paper.pdfPath) return <span className="text-faint">—</span>;
-  if (!paper.lastPage) return <span className="text-faint">안 읽음</span>;
+  if (!paper.lastPage) return <span className="text-muted">안 읽음</span>;
   return <ProgressBar current={paper.lastPage} total={paper.totalPages} className="w-32" />;
 }
 
@@ -61,6 +62,7 @@ const columns: Column<Paper>[] = [
   {
     key: "authors",
     header: "저자",
+    hideBelow: "lg",
     render: (p) => <span className="text-muted">{formatAuthors(p.authors)}</span>,
   },
   {
@@ -79,7 +81,7 @@ const columns: Column<Paper>[] = [
     ),
   },
   { key: "progress", header: "읽기", render: readingCell },
-  { key: "tags", header: "태그", render: (p) => <Tags names={p.tags} /> },
+  { key: "tags", header: "태그", hideBelow: "lg", render: (p) => <Tags names={p.tags} /> },
 ];
 
 function PaperCard({ paper }: { paper: Paper }) {
@@ -101,7 +103,7 @@ function PaperCard({ paper }: { paper: Paper }) {
         <ProgressBar current={paper.lastPage} total={paper.totalPages} />
       ) : null}
       <Tags names={paper.tags} />
-      <p className="mt-auto text-xs text-faint">{formatRelative(paper.updatedAt)} 수정</p>
+      <p className="mt-auto text-xs text-muted">{formatRelative(paper.updatedAt)} 수정</p>
     </>
   );
 }
@@ -126,7 +128,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
 
   const newButton = (
     <Link href="/papers/new" className={buttonClass("primary")}>
-      새 논문 <Kbd className="border-accent-fg/30 bg-transparent text-accent-fg/80">N</Kbd>
+      새 논문 <Kbd>N</Kbd>
     </Link>
   );
 
@@ -153,7 +155,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       <ListView
         storageKey="papers"
         toolbar={
-          <div className="flex flex-col gap-2">
+          <div className="flex w-full flex-col gap-2">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <FilterChips
                 ariaLabel="읽기 상태"
@@ -172,15 +174,14 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 allLabel="모든 중요도"
                 options={IMPORTANCE.options}
               />
-              <FilterChips
-                ariaLabel="정렬"
-                param="sort"
-                basePath={BASE}
-                params={params}
-                selected={isSort(sort) && sort !== "updated" ? sort : undefined}
-                allLabel="최근 수정"
-                options={SORTS.slice(1)}
-              />
+              <div className="ml-auto">
+                <SortSelect
+                  options={SORTS}
+                  value={isSort(sort) ? sort : "updated"}
+                  basePath={BASE}
+                  params={params}
+                />
+              </div>
             </div>
             <TagFilter tags={allTags} selected={tag} basePath={BASE} params={params} />
           </div>

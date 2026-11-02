@@ -139,7 +139,8 @@ export function ListView({
   const [mode, setMode] = useViewMode(key);
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* items-start: the toggle lines up with the first toolbar row (sort select), not the block's middle. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
         <ViewToggle value={mode} onChange={setMode} />
       </div>
