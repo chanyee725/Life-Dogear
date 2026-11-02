@@ -1,3 +1,4 @@
+import type { Client } from "@libsql/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as graphRoute from "@/app/api/graph/route";
@@ -125,7 +126,9 @@ describe("GET /api/graph", () => {
   });
 
   it("uses a fixed number of queries regardless of graph size", async () => {
-    const execute = vi.spyOn(db.$client, "execute");
+    // drizzle keeps the libSQL client on `$client` (not in the `Db` type).
+    const client = (db as unknown as { $client: Client }).$client;
+    const execute = vi.spyOn(client, "execute");
     const count = async () => {
       execute.mockClear();
       await loadGraphSource({ tags: true });
