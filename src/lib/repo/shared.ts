@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { getDb, type Db } from "@/db/client";
 import { itemTags, tags } from "@/db/schema";
@@ -119,3 +119,15 @@ export function hasTag(
 
 export const descNullsLast = (col: SQLiteColumn): SQL => sql`${col} desc nulls last`;
 export const ascNullsLast = (col: SQLiteColumn): SQL => sql`${col} asc nulls last`;
+
+/**
+ * Archive visibility for list queries. Default: archived items are hidden.
+ * `includeArchived` shows both; `onlyArchived` shows just the archived ones.
+ */
+export type ArchiveOptions = { includeArchived?: boolean; onlyArchived?: boolean };
+
+export function archiveFilter(col: SQLiteColumn, options: ArchiveOptions = {}): SQL | undefined {
+  if (options.onlyArchived) return isNotNull(col);
+  if (options.includeArchived) return undefined;
+  return isNull(col);
+}
