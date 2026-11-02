@@ -7,6 +7,7 @@ import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
+import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { Button, buttonClass, Field, Input } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
@@ -112,14 +113,10 @@ export function PaperEditor({
     void queue.flush();
   }
 
-  // Warn before closing the tab with unsaved edits.
-  useEffect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (queue.dirty()) event.preventDefault();
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [queue]);
+  // Unsaved = waiting for autosave, saving, or kept after a failed save. Asks before
+  // leaving via in-app links, reload or tab close.
+  const dirty = (state === "pending" || state === "saving" || state === "error") && queue.dirty();
+  useUnsavedChangesGuard(dirty);
 
   async function saveTags(names: string[]) {
     const result = await safeAction(() => setItemTags({ type: "paper", id: paperId }, names));
