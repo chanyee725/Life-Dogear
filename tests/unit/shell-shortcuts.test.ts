@@ -43,6 +43,21 @@ describe("resolveShortcut", () => {
     });
   });
 
+  it("N opens a new area on area pages and a new thought in the inbox and archive", () => {
+    expect(resolveShortcut(key("n"), "/areas/abc", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/areas/new",
+    });
+    expect(resolveShortcut(key("n"), "/inbox", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/thoughts/new",
+    });
+    expect(resolveShortcut(key("n"), "/archive", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/thoughts/new",
+    });
+  });
+
   it("N does nothing when already on the new form", () => {
     expect(resolveShortcut(key("n"), "/seminars/new", { typing: false })).toBeNull();
   });

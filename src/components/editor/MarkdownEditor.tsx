@@ -136,6 +136,8 @@ function HiddenValue({
     form?.addEventListener("formdata", onFormData);
     return () => {
       clearTimeout(timer);
+      // Leave the final text in the input so a form read during unmount still has it.
+      if (!editor.isDestroyed) input.value = getMarkdown(editor);
       editor.off("update", sync);
       form?.removeEventListener("formdata", onFormData);
     };

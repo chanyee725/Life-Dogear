@@ -1,22 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
-import { countTags, filterByTag, firstParam, type QueryParams } from "@/components/list/query";
+import {
+  buildHref,
+  countTags,
+  filterByTag,
+  firstParam,
+  type QueryParams,
+} from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
+import { LinkTabs } from "@/components/list/Tabs";
+import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate, formatRelative } from "@/components/ui/format";
-import { PROJECT_STAGE } from "@/lib/enums";
-import { projects } from "@/lib/repo";
+import { formatDate } from "@/components/ui/format";
+import { PROJECT_KIND, PROJECT_STAGE, PROJECT_STATUS, type ProjectKind } from "@/lib/enums";
+import { areas, projects } from "@/lib/repo";
 import type { Project, ProjectSort } from "@/lib/repo/projects";
+import { ProgressBadge } from "./ProgressBadge";
 
-export const metadata: Metadata = { title: "연구" };
+export const metadata: Metadata = { title: "프로젝트" };
 export const dynamic = "force-dynamic";
 
 const SORTS: { value: ProjectSort; label: string }[] = [
@@ -26,29 +33,8 @@ const SORTS: { value: ProjectSort; label: string }[] = [
   { value: "title", label: "제목순" },
 ];
 
-const href = (p: Project) => `/projects/${p.id}`;
-
-const columns: Column<Project>[] = [
-  { key: "title", header: "제목", primary: true, render: (p) => p.title },
-  {
-    key: "stage",
-    header: "단계",
-    render: (p) => <Badge tone={PROJECT_STAGE.tone(p.stage)}>{PROJECT_STAGE.label(p.stage)}</Badge>,
-  },
-  {
-    key: "due",
-    header: "마감일",
-    className: "text-muted tabular-nums",
-    render: (p) => formatDate(p.dueDate),
-  },
-  { key: "tags", header: "태그", render: (p) => <TagList tags={p.tags} /> },
-  {
-    key: "updated",
-    header: "수정",
-    className: "text-muted tabular-nums whitespace-nowrap",
-    render: (p) => formatRelative(p.updatedAt),
-  },
-];
+const BASE = "/projects";
+const href = (p: Project) => `${BASE}/${p.id}`;
 
 export default async function ProjectsPage({
   searchParams,
@@ -56,30 +42,74 @@ export default async function ProjectsPage({
   searchParams: Promise<QueryParams>;
 }) {
   const params = await searchParams;
+  const kindParam = firstParam(params, "kind");
+  const kind: ProjectKind = PROJECT_KIND.is(kindParam) ? kindParam : "research";
   const stageParam = firstParam(params, "stage");
-  const stage = PROJECT_STAGE.is(stageParam) ? stageParam : undefined;
+  const stage = kind === "research" && PROJECT_STAGE.is(stageParam) ? stageParam : undefined;
+  const statusParam = firstParam(params, "status");
+  const status = kind === "general" && PROJECT_STATUS.is(statusParam) ? statusParam : undefined;
   const tag = firstParam(params, "tag");
   const sortParam = firstParam(params, "sort");
   const sort = SORTS.find((s) => s.value === sortParam)?.value ?? "updated";
 
-  const all = await projects.list({ stage, sort });
+  const [all, areaList, research, general] = await Promise.all([
+    projects.list({ kind, stage, status, sort }),
+    areas.list({ includeArchived: true }),
+    projects.list({ kind: "research" }),
+    projects.list({ kind: "general" }),
+  ]);
+  const areaTitle = new Map(areaList.map((a) => [a.id, a.title]));
   const items = filterByTag(all, tag);
-  const filtered = Boolean(stage || tag);
+  const filtered = Boolean(stage || status || tag);
+  const kindLabel = PROJECT_KIND.label(kind);
 
+  const columns: Column<Project>[] = [
+    { key: "title", header: "제목", primary: true, render: (p) => p.title },
+    {
+      key: "progress",
+      header: kind === "research" ? "단계" : "상태",
+      render: (p) => <ProgressBadge project={p} />,
+    },
+    {
+      key: "next",
+      header: "다음 할 일",
+      className: "max-w-64 truncate text-muted",
+      render: (p) => p.nextAction,
+    },
+    {
+      key: "area",
+      header: "영역",
+      className: "text-muted whitespace-nowrap",
+      render: (p) => (p.areaId ? (areaTitle.get(p.areaId) ?? "") : ""),
+    },
+    {
+      key: "due",
+      header: "마감일",
+      className: "text-muted tabular-nums",
+      render: (p) => formatDate(p.dueDate),
+    },
+    { key: "tags", header: "태그", render: (p) => <TagList tags={p.tags} /> },
+  ];
+
+  const newHref = kind === "general" ? `${BASE}/new?kind=general` : `${BASE}/new`;
   const empty = (
     <EmptyState
-      title={filtered ? "조건에 맞는 연구가 없습니다" : "아직 연구가 없습니다"}
+      title={filtered ? "조건에 맞는 프로젝트가 없습니다" : `아직 ${kindLabel} 프로젝트가 없습니다`}
       description={
-        filtered ? "필터를 바꾸거나 해제해 보세요." : "진행 중인 연구 프로젝트를 추가해 보세요."
+        filtered
+          ? "필터를 바꾸거나 해제해 보세요."
+          : kind === "research"
+            ? "논문·학위 연구처럼 단계를 밟아 가는 프로젝트를 추가해 보세요."
+            : "연구 외에 끝이 있는 일(발표 준비, 장학금 신청 등)을 추가해 보세요."
       }
       action={
         filtered ? (
-          <Link href="/projects" className={buttonClass("secondary", "sm")}>
+          <Link href={buildHref(BASE, { kind }, {})} className={buttonClass("secondary", "sm")}>
             필터 해제
           </Link>
         ) : (
-          <Link href="/projects/new" className={buttonClass("primary", "sm")}>
-            새 연구
+          <Link href={newHref} className={buttonClass("primary", "sm")}>
+            새 프로젝트
           </Link>
         )
       }
@@ -89,32 +119,52 @@ export default async function ProjectsPage({
   return (
     <Page>
       <PageHeader
-        title="연구"
+        title="프로젝트"
         actions={
-          <Link href="/projects/new" className={buttonClass("primary")}>
-            새 연구
+          <Link href={newHref} className={buttonClass("primary")}>
+            새 프로젝트
           </Link>
         }
+      />
+      <LinkTabs
+        ariaLabel="프로젝트 종류"
+        active={kind}
+        className="mb-5"
+        tabs={[
+          { value: "research", label: "연구", href: BASE, count: research.length },
+          { value: "general", label: "그 외", href: `${BASE}?kind=general`, count: general.length },
+        ]}
       />
       <ListView
         storageKey="projects"
         toolbar={
           <>
-            <FilterChips
-              ariaLabel="단계 필터"
-              param="stage"
-              basePath="/projects"
-              params={params}
-              selected={stage}
-              options={PROJECT_STAGE.options}
-            />
+            {kind === "research" ? (
+              <FilterChips
+                ariaLabel="단계 필터"
+                param="stage"
+                basePath={BASE}
+                params={params}
+                selected={stage}
+                options={PROJECT_STAGE.options}
+              />
+            ) : (
+              <FilterChips
+                ariaLabel="상태 필터"
+                param="status"
+                basePath={BASE}
+                params={params}
+                selected={status}
+                options={PROJECT_STATUS.options}
+              />
+            )}
             <div className="ml-auto">
-              <SortSelect options={SORTS} value={sort} basePath="/projects" params={params} />
+              <SortSelect options={SORTS} value={sort} basePath={BASE} params={params} />
             </div>
             <TagFilter
               tags={countTags(all)}
               selected={tag}
-              basePath="/projects"
+              basePath={BASE}
               params={params}
               className="w-full"
             />
@@ -139,28 +189,28 @@ export default async function ProjectsPage({
               <>
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-medium">{p.title}</span>
-                  <Badge tone={PROJECT_STAGE.tone(p.stage)}>{PROJECT_STAGE.label(p.stage)}</Badge>
+                  <ProgressBadge project={p} />
                 </div>
-                {p.researchQuestion ? (
+                {p.nextAction ? (
+                  <p className="line-clamp-2 text-[13px] text-muted">다음: {p.nextAction}</p>
+                ) : p.researchQuestion ? (
                   <p className="line-clamp-2 text-[13px] text-muted">{p.researchQuestion}</p>
                 ) : null}
-                <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-faint">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-muted">
                   <TagList tags={p.tags} />
-                  {p.dueDate ? (
-                    <span className="tabular-nums">마감 {formatDate(p.dueDate)}</span>
-                  ) : null}
+                  <span className="tabular-nums">
+                    {[
+                      p.areaId ? areaTitle.get(p.areaId) : "",
+                      p.dueDate ? `마감 ${formatDate(p.dueDate)}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </div>
               </>
             )}
           />
         }
-      />
-      <TagFilter
-        tags={countTags(all)}
-        selected={tag}
-        basePath="/projects"
-        params={params}
-        className="mt-6"
       />
     </Page>
   );

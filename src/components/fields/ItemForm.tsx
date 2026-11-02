@@ -194,22 +194,35 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
   }, [queue]);
 
-  function readIntoQueue(autosave: boolean) {
-    const form = formRef.current;
+  function readIntoQueue(autosave: boolean, form: HTMLFormElement | null = formRef.current) {
     if (!form) return;
     const patch = readForm(form, autosave);
     // A blank title can't be saved; keep the other fields going and say why.
     const blank = typeof patch.title === "string" && !patch.title.trim();
     setTitleMissing(blank);
     if (blank) delete patch.title;
+    unreadRef.current = false;
     setUnread(false);
     queue.add(patch);
     void queue.flush();
   }
 
-  const autosave = useDebouncedCallback(() => readIntoQueue(true), AUTOSAVE_DELAY, {
-    flushOnUnmount: true,
+  // Not flushed by the debounce hook on unmount: React clears `formRef` before that
+  // cleanup runs. The effect below keeps its own reference to the form instead.
+  const autosave = useDebouncedCallback(() => readIntoQueue(true), AUTOSAVE_DELAY);
+
+  // Leaving the page (link, back button) within the debounce window must not lose the
+  // last edits: read the still-existing form element and send what changed.
+  const readIntoQueueRef = useRef(readIntoQueue);
+  useEffect(() => {
+    readIntoQueueRef.current = readIntoQueue;
   });
+  useEffect(() => {
+    const form = formRef.current;
+    return () => {
+      if (unreadRef.current) readIntoQueueRef.current(true, form);
+    };
+  }, []);
 
   function saveNow() {
     autosave.cancel();
@@ -217,6 +230,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   }
 
   useFormEdits(formRef, () => {
+    unreadRef.current = true;
     setUnread(true);
     autosave();
   });

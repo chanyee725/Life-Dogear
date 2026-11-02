@@ -10,6 +10,8 @@ function revalidate(id?: string) {
   revalidatePath("/");
   revalidatePath("/projects");
   revalidatePath("/tags", "layout");
+  // Area pages list their projects.
+  revalidatePath("/areas", "layout");
   if (id) revalidatePath(`/projects/${id}`);
 }
 
@@ -32,7 +34,7 @@ export async function updateProject(
   return runAction(async () => {
     const projectId = parseId(id);
     const updated = await projects.update(projectId, parseProjectForm(form));
-    if (!updated) throw new RepoError("not_found", "연구를 찾을 수 없습니다.");
+    if (!updated) throw new RepoError("not_found", "프로젝트를 찾을 수 없습니다.");
     revalidate(projectId);
     return { id: projectId };
   });
@@ -42,7 +44,7 @@ export async function deleteProject(id: unknown): Promise<ActionResult<null>> {
   return runAction(async () => {
     const projectId = parseId(id);
     if (!(await projects.remove(projectId)))
-      throw new RepoError("not_found", "연구를 찾을 수 없습니다.");
+      throw new RepoError("not_found", "프로젝트를 찾을 수 없습니다.");
     revalidate(projectId);
     return null;
   });

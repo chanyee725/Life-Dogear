@@ -7,7 +7,8 @@ import { RepoError, thoughts } from "@/lib/repo";
 import { parseThoughtForm } from "./form";
 
 function revalidate(id?: string) {
-  revalidatePath("/");
+  // The sidebar shows the inbox count (thoughts without tags or links) on every page.
+  revalidatePath("/", "layout");
   revalidatePath("/thoughts");
   revalidatePath("/tags", "layout");
   if (id) revalidatePath(`/thoughts/${id}`);

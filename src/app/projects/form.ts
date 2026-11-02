@@ -8,7 +8,7 @@ import {
   optionalText,
 } from "@/app/_actions/parse";
 import { hasListField } from "@/components/fields/form-patch";
-import { PROJECT_STAGE } from "@/lib/enums";
+import { PROJECT_KIND, PROJECT_STAGE, PROJECT_STATUS } from "@/lib/enums";
 import type { ProjectPatch } from "@/lib/repo/projects";
 
 /**
@@ -19,6 +19,11 @@ import type { ProjectPatch } from "@/lib/repo/projects";
 export function parseProjectForm(form: FormData): ProjectPatch {
   return {
     title: optionalText(formText(form, "title"), "제목", MAX_TITLE),
+    kind: optionalEnum(PROJECT_KIND, formText(form, "kind"), "종류"),
+    status: optionalEnum(PROJECT_STATUS, formText(form, "status"), "상태"),
+    // "" (없음) clears the area.
+    areaId: optionalNullableText(formText(form, "areaId"), "영역"),
+    nextAction: optionalText(formText(form, "nextAction"), "다음 할 일"),
     researchQuestion: optionalText(formText(form, "researchQuestion"), "연구 질문"),
     stage: optionalEnum(PROJECT_STAGE, formText(form, "stage"), "단계"),
     startDate: optionalNullableText(formText(form, "startDate"), "시작일"),

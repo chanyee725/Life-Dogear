@@ -78,3 +78,26 @@ export const SidebarIcon = () => (
     <path d="M5.5 2.5v11" />
   </Icon>
 );
+export const InboxIcon = () => (
+  <Icon>
+    <path d="M2 9.5h3.25l1 1.75h3.5l1-1.75H14" />
+    <path d="M3.6 3.5h8.8L14 9.5V13a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 2 13V9.5Z" />
+  </Icon>
+);
+export const AreaIcon = () => (
+  <Icon>
+    <circle cx="8" cy="8" r="5.75" />
+    <circle cx="8" cy="8" r="2.25" />
+  </Icon>
+);
+export const ArchiveIcon = () => (
+  <Icon>
+    <rect x="1.75" y="2.5" width="12.5" height="3" rx="0.75" />
+    <path d="M2.75 5.5V13a.5.5 0 0 0 .5.5h9.5a.5.5 0 0 0 .5-.5V5.5M6.5 8.5h3" />
+  </Icon>
+);
+export const PlusIcon = () => (
+  <Icon>
+    <path d="M8 3v10M3 8h10" />
+  </Icon>
+);
