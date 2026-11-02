@@ -35,7 +35,7 @@ describe("linkItems / unlinkItems", () => {
       ok: false,
       error: "자기 자신과는 연결할 수 없습니다.",
     });
-    expect(await linkItems(P, { type: "thought", id: "missing" })).toEqual({
+    expect(await linkItems(P, { type: "thought", id: "seed-thought-404" })).toEqual({
       ok: false,
       error: "연결할 항목을 찾을 수 없습니다.",
     });
@@ -62,6 +62,8 @@ describe("tags actions", () => {
     expect(await setItemTags(R, "nlp, 방법론")).toEqual({ ok: true, data: ["NLP", "방법론"] });
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith(`/projects/${R.id}`);
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/projects");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/tags");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
     expect(await listAllTags()).toEqual({
       ok: true,
       data: [

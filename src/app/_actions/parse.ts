@@ -7,6 +7,7 @@
  * updates leave the column alone.
  */
 import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
+import { isValidItemId } from "@/lib/ids";
 import { RepoError, type ItemRef } from "@/lib/repo";
 
 const invalid = (field: string) => new RepoError("invalid", `${field} 값이 올바르지 않습니다.`);
@@ -14,7 +15,6 @@ const invalid = (field: string) => new RepoError("invalid", `${field} 값이 올
 export const MAX_TITLE = 300;
 export const MAX_TEXT = 2_000;
 export const MAX_BODY = 500_000;
-const MAX_ID = 100;
 
 export function parseItemRef(value: unknown, field = "항목"): ItemRef {
   if (!value || typeof value !== "object") throw invalid(field);
@@ -22,11 +22,10 @@ export function parseItemRef(value: unknown, field = "항목"): ItemRef {
   return { type: parseEnum(ITEM_TYPE, type, field), id: parseId(id, field) };
 }
 
+/** Item id in the app's format (UUID or `seed-…`); anything else is rejected. */
 export function parseId(value: unknown, field = "id"): string {
-  if (typeof value !== "string") throw invalid(field);
-  const id = value.trim();
-  if (!id || id.length > MAX_ID) throw invalid(field);
-  return id;
+  if (!isValidItemId(value)) throw invalid(field);
+  return value;
 }
 
 export function parseEnum<V extends string>(
@@ -70,13 +69,23 @@ export function optionalNullableText(
   return parseText(value, field, max);
 }
 
-/** Optional integer; accepts numeric strings from forms, `null`/"" clear it. */
+const INT_RE = /^-?\d+$/;
+
+/**
+ * Optional integer. Form strings must be plain digits (optional leading minus);
+ * `null`, "" and whitespace-only clear the value.
+ */
 export function optionalInt(value: unknown, field: string): number | null | undefined {
   if (value === undefined) return undefined;
-  if (value === null || value === "") return null;
-  const n = typeof value === "string" ? Number(value.trim()) : value;
-  if (typeof n !== "number" || !Number.isInteger(n)) throw invalid(field);
-  return n;
+  if (value === null) return null;
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (!s) return null;
+    if (!INT_RE.test(s)) throw invalid(field);
+    value = Number(s);
+  }
+  if (typeof value !== "number" || !Number.isSafeInteger(value)) throw invalid(field);
+  return value;
 }
 
 /**
