@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, type SQL } from "drizzle-orm";
-import { thoughts } from "@/db/schema";
+import { and, asc, desc, eq, notExists, or, sql, type SQL } from "drizzle-orm";
+import { itemTags, links, thoughts } from "@/db/schema";
 import {
   THOUGHT_KIND,
   THOUGHT_MATURITY,
@@ -18,6 +18,8 @@ import {
   type Executor,
   orderFor,
   withTx,
+  archiveFilter,
+  type ArchiveOptions,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -33,7 +35,7 @@ export type ThoughtInput = {
 export type ThoughtPatch = Partial<ThoughtInput>;
 
 export type ThoughtSort = "updated" | "created" | "title";
-export type ThoughtListOptions = {
+export type ThoughtListOptions = ArchiveOptions & {
   tag?: string;
   kind?: ThoughtKind;
   maturity?: ThoughtMaturity;
@@ -69,15 +71,16 @@ function toColumns(input: ThoughtPatch) {
   });
 }
 
+/** Non-archived by default; see {@link ArchiveOptions}. */
 export async function list(options: ThoughtListOptions = {}): Promise<Thought[]> {
-  const where: SQL[] = [];
+  const where: (SQL | undefined)[] = [archiveFilter(thoughts.archivedAt, options)];
   if (options.kind) where.push(eq(thoughts.kind, options.kind));
   if (options.maturity) where.push(eq(thoughts.maturity, options.maturity));
   if (options.tag) where.push(hasTag(db(), "thought", thoughts.id, options.tag));
   const rows = await db()
     .select()
     .from(thoughts)
-    .where(where.length ? and(...where) : undefined)
+    .where(and(...where))
     .orderBy(...orderFor(ORDER, options.sort, "updated"));
   return withTags(rows);
 }
@@ -87,6 +90,7 @@ export async function listRecent(limit = 5): Promise<Thought[]> {
   const rows = await db()
     .select()
     .from(thoughts)
+    .where(archiveFilter(thoughts.archivedAt))
     .orderBy(...ORDER.created)
     .limit(limit);
   return withTags(rows);
@@ -138,4 +142,40 @@ export async function remove(id: string): Promise<boolean> {
     await removeTagsFor(tx, ref(id));
     return true;
   });
+}
+
+/** Inbox: thoughts not archived, with no tags and no links in either direction. */
+function inboxWhere(): SQL {
+  const linked = db()
+    .select({ one: sql`1` })
+    .from(links)
+    .where(
+      or(
+        and(eq(links.sourceType, "thought"), eq(links.sourceId, thoughts.id)),
+        and(eq(links.targetType, "thought"), eq(links.targetId, thoughts.id)),
+      ),
+    );
+  const tagged = db()
+    .select({ one: sql`1` })
+    .from(itemTags)
+    .where(and(eq(itemTags.itemType, "thought"), eq(itemTags.itemId, thoughts.id)));
+  return and(archiveFilter(thoughts.archivedAt), notExists(linked), notExists(tagged))!;
+}
+
+/** Thoughts waiting to be organized (수집함), newest first. Tagging or linking files them. */
+export async function listInbox(limit?: number): Promise<Thought[]> {
+  const query = db()
+    .select()
+    .from(thoughts)
+    .where(inboxWhere())
+    .orderBy(...ORDER.created);
+  return withTags(limit ? await query.limit(limit) : await query);
+}
+
+export async function countInbox(): Promise<number> {
+  const [row] = await db()
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
+    .from(thoughts)
+    .where(inboxWhere());
+  return row.n;
 }

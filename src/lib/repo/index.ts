@@ -5,4 +5,6 @@ export * as thoughts from "./thoughts";
 export * as links from "./links";
 export * as tags from "./tags";
 export * as items from "./items";
-export { RepoError, type ItemRef, type ItemType } from "./shared";
+export * as areas from "./areas";
+export * as archive from "./archive";
+export { RepoError, type ArchiveOptions, type ItemRef, type ItemType } from "./shared";

@@ -1,6 +1,6 @@
 import { and, desc, eq, or } from "drizzle-orm";
 import { links } from "@/db/schema";
-import { exists, getTitles, refKey, type ItemSummary } from "./items";
+import { exists, getHeads, refKey, type ItemSummary } from "./items";
 import {
   assertItemRef,
   db,
@@ -78,7 +78,7 @@ export async function unlink(a: ItemRef, b: ItemRef): Promise<boolean> {
   return deleted.length > 0;
 }
 
-/** Items connected to `ref` in either direction, newest link first. */
+/** Items connected to `ref` in either direction, newest link first; archived ones flagged. */
 export async function listConnected(ref: ItemRef): Promise<ItemSummary[]> {
   assertItemRef(ref);
   const rows = await db().select().from(links).where(touching(ref)).orderBy(desc(links.createdAt));
@@ -87,10 +87,10 @@ export async function listConnected(ref: ItemRef): Promise<ItemSummary[]> {
       ? { type: l.targetType, id: l.targetId }
       : { type: l.sourceType, id: l.sourceId },
   );
-  const titles = await getTitles(others);
+  const heads = await getHeads(others);
   return others.flatMap((o) => {
-    const title = titles.get(refKey(o));
-    return title === undefined ? [] : [{ ref: o, type: o.type, title }];
+    const head = heads.get(refKey(o));
+    return head ? [{ ref: o, type: o.type, title: head.title, archived: head.archived }] : [];
   });
 }
 

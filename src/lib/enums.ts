@@ -24,20 +24,36 @@ function defineEnum<const V extends string>(options: readonly EnumOption<V>[]) {
 }
 
 export const ITEM_TYPE = defineEnum([
-  { value: "project", label: "연구", tone: "violet" },
+  { value: "project", label: "프로젝트", tone: "violet" },
   { value: "paper", label: "논문", tone: "blue" },
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
+  { value: "area", label: "영역", tone: "rose" },
 ] as const);
 export type ItemType = (typeof ITEM_TYPE.values)[number];
 
 /** URL segment for each item type, e.g. `/papers/<id>`. */
 export const ITEM_ROUTE: Record<ItemType, string> = {
   project: "/projects",
+  area: "/areas",
   paper: "/papers",
   seminar: "/seminars",
   thought: "/thoughts",
 };
+
+/** Project kind: research projects use the 8 stages, general ones only a status. */
+export const PROJECT_KIND = defineEnum([
+  { value: "research", label: "연구", tone: "violet" },
+  { value: "general", label: "일반", tone: "gray" },
+] as const);
+export type ProjectKind = (typeof PROJECT_KIND.values)[number];
+
+export const PROJECT_STATUS = defineEnum([
+  { value: "active", label: "진행 중", tone: "blue" },
+  { value: "on_hold", label: "보류", tone: "amber" },
+  { value: "done", label: "완료", tone: "green" },
+] as const);
+export type ProjectStatus = (typeof PROJECT_STATUS.values)[number];
 
 export const PROJECT_STAGE = defineEnum([
   { value: "exploring", label: "주제 탐색", tone: "gray" },
@@ -89,3 +105,11 @@ export const THOUGHT_MATURITY = defineEnum([
   { value: "refined", label: "정리됨", tone: "green" },
 ] as const);
 export type ThoughtMaturity = (typeof THOUGHT_MATURITY.values)[number];
+
+/** Areas offered when the user has none yet (created only when chosen). */
+export const RECOMMENDED_AREAS = [
+  { title: "연구 분야", standard: "관심 분야의 새 논문·세미나를 꾸준히 따라간다." },
+  { title: "학위", standard: "학기별 요건과 마감을 놓치지 않는다." },
+  { title: "건강", standard: "잠·운동·식사를 무너지지 않게 유지한다." },
+  { title: "커리어", standard: "이력과 다음 진로 선택지를 분기마다 정리한다." },
+] as const;
