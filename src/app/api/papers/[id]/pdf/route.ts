@@ -1,13 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
-import {
-  deletePdf,
-  isValidPaperId,
-  MAX_PDF_BYTES,
-  pdfSize,
-  readPdfStream,
-  writePdf,
-} from "@/lib/storage/pdf";
+import { deletePdf, MAX_PDF_BYTES, pdfSize, readPdfStream, writePdf } from "@/lib/storage/pdf";
 import { parseRange } from "@/lib/storage/range";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -39,7 +33,7 @@ const BASE_HEADERS = {
 /** Streams the paper's PDF, honouring single `Range` requests. */
 export async function GET(request: NextRequest, { params }: IdParams) {
   const { id } = await params;
-  if (!isValidPaperId(id)) return invalidId();
+  if (!isValidItemId(id)) return invalidId();
   try {
     const paper = await papers.get(id);
     if (!paper?.pdfPath) return notFound();
@@ -76,7 +70,7 @@ export async function GET(request: NextRequest, { params }: IdParams) {
 export async function POST(request: NextRequest, { params }: IdParams) {
   if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
-  if (!isValidPaperId(id)) return invalidId();
+  if (!isValidItemId(id)) return invalidId();
 
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_PDF_BYTES + FORM_OVERHEAD) return jsonError(413, "파일이 너무 큽니다.");
@@ -111,7 +105,7 @@ export async function POST(request: NextRequest, { params }: IdParams) {
 export async function DELETE(request: NextRequest, { params }: IdParams) {
   if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
-  if (!isValidPaperId(id)) return invalidId();
+  if (!isValidItemId(id)) return invalidId();
   try {
     const result = await papers.setPdf(id, null);
     if (!result) return notFound();

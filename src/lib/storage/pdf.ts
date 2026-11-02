@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs";
 import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
+import { isValidItemId } from "@/lib/ids";
 
 /** Directory (relative to the project root) holding uploaded PDFs. */
 export const PDF_DIR = "data/pdfs";
@@ -10,9 +11,6 @@ export const PDF_DIR = "data/pdfs";
 export const MAX_PDF_BYTES = 100 * 1024 * 1024;
 
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const SEED_RE = /^seed-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export type PdfStorageErrorCode = "invalid_id" | "empty" | "too_large" | "not_pdf";
 
@@ -26,16 +24,8 @@ export class PdfStorageError extends Error {
   }
 }
 
-/**
- * Paper ids are generated UUIDs, or `seed-…` ids from the sample seed. Anything
- * else is rejected before it can reach a file path.
- */
-export function isValidPaperId(id: unknown): id is string {
-  return typeof id === "string" && id.length <= 80 && (UUID_RE.test(id) || SEED_RE.test(id));
-}
-
 function assertId(id: string): void {
-  if (!isValidPaperId(id)) throw new PdfStorageError("invalid_id", "잘못된 논문 id입니다.");
+  if (!isValidItemId(id)) throw new PdfStorageError("invalid_id", "잘못된 논문 id입니다.");
 }
 
 /**

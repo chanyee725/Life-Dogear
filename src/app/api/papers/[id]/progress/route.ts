@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { papers } from "@/lib/repo";
-import { isValidPaperId } from "@/lib/storage/pdf";
+import { isValidItemId } from "@/lib/ids";
 import { MAX_PROGRESS_BODY, parseProgressInput } from "../../_lib/progress-input";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 async function save(request: NextRequest, { params }: IdParams): Promise<NextResponse> {
   if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
-  if (!isValidPaperId(id)) return invalidId();
+  if (!isValidItemId(id)) return invalidId();
 
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_PROGRESS_BODY) return jsonError(413, "요청이 너무 큽니다.");
