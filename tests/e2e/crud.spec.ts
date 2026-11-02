@@ -41,3 +41,30 @@ test("빈 제목은 저장되지 않는다", async ({ page }) => {
   await expect(page.getByText("제목을 입력하세요.")).toBeVisible();
   await expect(page).toHaveURL(/\/thoughts\/new$/);
 });
+
+test("저장 안 된 수정이 있으면 사이드바 이동 전에 확인한다", async ({ page }) => {
+  const title = uniqueTitle("E2E unsaved");
+  await createItem(page, "thoughts", title);
+  const detailUrl = page.url();
+
+  const titleField = page.getByLabel("제목", { exact: true });
+  const edited = `${title} (unsaved)`;
+  await titleField.fill(edited);
+  await expect(page.getByText("저장 안 됨")).toBeVisible();
+
+  const sidebarLink = page.getByRole("navigation", { name: "주 메뉴" }).getByRole("link", {
+    name: "논문",
+  });
+
+  // Cancel the confirm: stay on the page and keep the typed value.
+  page.once("dialog", (d) => d.dismiss());
+  await sidebarLink.click();
+  await expect(page).toHaveURL(detailUrl);
+  await expect(titleField).toHaveValue(edited);
+  await expect(page.getByText("저장 안 됨")).toBeVisible();
+
+  // Accept the confirm: navigate away to /papers.
+  page.once("dialog", (d) => d.accept());
+  await sidebarLink.click();
+  await expect(page).toHaveURL(/\/papers$/);
+});
