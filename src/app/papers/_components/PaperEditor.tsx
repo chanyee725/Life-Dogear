@@ -113,13 +113,17 @@ export function PaperEditor({
     void queue.flush();
   }
 
-  // Unsaved = waiting for autosave, saving, or kept after a failed save. Asks before
-  // leaving via in-app links, reload or tab close.
-  const dirty = (state === "pending" || state === "saving" || state === "error") && queue.dirty();
+  // Unsaved = waiting for autosave, saving, kept after a failed save, or tags whose
+  // last save failed. Asks before leaving via in-app links, reload or tab close.
+  const [tagsUnsaved, setTagsUnsaved] = useState(false);
+  const dirty =
+    tagsUnsaved ||
+    ((state === "pending" || state === "saving" || state === "error") && queue.dirty());
   useUnsavedChangesGuard(dirty);
 
   async function saveTags(names: string[]) {
     const result = await safeAction(() => setItemTags({ type: "paper", id: paperId }, names));
+    setTagsUnsaved(!result.ok);
     if (!result.ok) {
       setError(result.error);
       setState("error");
