@@ -10,6 +10,7 @@ export function jsonError(status: number, message: string): NextResponse {
 
 export const notFound = () => jsonError(404, "논문을 찾을 수 없습니다.");
 export const invalidId = () => jsonError(400, "잘못된 논문 id입니다.");
+export const forbidden = () => jsonError(403, "허용되지 않은 요청입니다.");
 
 const STORAGE_STATUS: Record<PdfStorageError["code"], number> = {
   invalid_id: 400,
