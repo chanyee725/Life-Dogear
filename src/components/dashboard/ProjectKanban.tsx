@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonClass, TagChip } from "@/components/ui";
+import { buttonClass, cn, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { StageColumn } from "@/lib/repo/projects";
 import { DashboardEmpty, DashboardSection } from "./DashboardSection";
@@ -27,13 +27,19 @@ export function ProjectKanban({ columns }: { columns: StageColumn[] }) {
           </Link>
         </DashboardEmpty>
       ) : (
-        <div className="-mx-1 overflow-x-auto px-1 pb-2">
-          <ol className="flex min-w-max gap-3">
+        // Right-edge fade hints that more stages scroll in; the trailing pr-8 keeps the
+        // last column clear of the fade once scrolled to the end.
+        <div className="-mx-1 overflow-x-auto px-1 pb-2 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]">
+          <ol className="flex min-w-max gap-3 pr-8">
             {columns.map((column) => (
               <li
                 key={column.stage}
                 aria-label={`${PROJECT_STAGE.label(column.stage)} ${column.items.length}건`}
-                className="flex w-52 shrink-0 flex-col gap-2 rounded-lg bg-surface p-2"
+                className={cn(
+                  "flex shrink-0 flex-col gap-2 rounded-lg bg-surface p-2",
+                  // Empty stages stay as slim placeholders so filled ones get the room.
+                  column.items.length ? "w-52" : "w-24",
+                )}
               >
                 <div className="flex items-center justify-between px-1 text-xs">
                   <span className="font-medium text-muted">
