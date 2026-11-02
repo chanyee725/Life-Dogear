@@ -15,6 +15,8 @@ export async function setItemTags(ref: unknown, names: unknown): Promise<ActionR
     const saved = await tags.setTags(item, list);
     revalidatePath(itemPath(item));
     revalidatePath(ITEM_ROUTE[item.type]);
+    revalidatePath("/tags");
+    revalidatePath("/");
     return saved;
   });
 }
