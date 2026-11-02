@@ -14,7 +14,16 @@ import {
 import { listPositions } from "@/lib/repo/graph-layout";
 import { db } from "@/lib/repo/shared";
 import { buildGraph, buildLocalGraph, type GraphSource, type SourceItem } from "./build";
-import type { GraphData, GraphFilter, GraphNodeId, GraphResponse } from "./types";
+import { inArray } from "drizzle-orm";
+import { tableFor } from "@/lib/repo/items";
+import {
+  parseGraphNodeId,
+  type GraphFilter,
+  type GraphNodeId,
+  type GraphNodeType,
+  type GraphResponse,
+  type LocalGraphData,
+} from "./types";
 
 /**
  * Loads every row the graph needs with a fixed number of queries (one per table),
@@ -135,6 +144,33 @@ export async function getGraph(filter: GraphFilter = {}): Promise<GraphResponse>
   return { ...graph, positions: positions.filter((p) => shown.has(p.node)) };
 }
 
-export async function getLocalGraph(center: GraphNodeId, depth: 1 | 2): Promise<GraphData> {
+export async function getLocalGraph(center: GraphNodeId, depth: 1 | 2): Promise<LocalGraphData> {
   return buildLocalGraph(await loadGraphSource(), center, depth);
+}
+
+/** Bound variables per `IN (…)` query. */
+const IN_CHUNK = 500;
+
+/** Which of `nodeIds` exist (items or tags). One query per type and 500 ids, never per node. */
+export async function existingNodeIds(nodeIds: readonly GraphNodeId[]): Promise<Set<GraphNodeId>> {
+  const byType = new Map<GraphNodeType, string[]>();
+  for (const nodeId of nodeIds) {
+    const ref = parseGraphNodeId(nodeId);
+    if (!ref) continue;
+    const list = byType.get(ref.type);
+    if (list) list.push(ref.id);
+    else byType.set(ref.type, [ref.id]);
+  }
+  const found = new Set<GraphNodeId>();
+  for (const [type, ids] of byType) {
+    const t = type === "tag" ? tags : tableFor(type);
+    for (let i = 0; i < ids.length; i += IN_CHUNK) {
+      const rows = await db()
+        .select({ id: t.id })
+        .from(t)
+        .where(inArray(t.id, ids.slice(i, i + IN_CHUNK)));
+      for (const r of rows) found.add(`${type}:${r.id}`);
+    }
+  }
+  return found;
 }

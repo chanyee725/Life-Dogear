@@ -2,9 +2,9 @@
  * Pure graph computation: rows in, `{ nodes, edges }` out. No database access, so it
  * can be unit-tested and stays linear in the number of rows (no per-node queries).
  */
+import type { GoalHorizon } from "@/lib/enums";
 import {
   DEFAULT_GRAPH_NODE_TYPES,
-  type GoalHorizon,
   GRAPH_NODE_TYPES,
   graphNodeId,
   type GraphData,
@@ -14,7 +14,11 @@ import {
   type GraphNode,
   type GraphNodeId,
   type GraphNodeType,
+  type LocalGraphData,
 } from "./types";
+
+/** Node cap for the local graph (a hub's 2-step neighbourhood can be most of the graph). */
+export const MAX_LOCAL_NODES = 500;
 
 export type ItemNodeType = Exclude<GraphNodeType, "tag">;
 
@@ -140,7 +144,10 @@ function adjacency(edges: readonly GraphEdge[]) {
   return adj;
 }
 
-/** Restricts to `keep`, drops dangling edges, and sets `size` to the degree. */
+/**
+ * Restricts to `keep`, drops dangling edges, and sets `size` to the degree. Topic nodes
+ * left without a visible edge (e.g. tags used only by archived items) are dropped.
+ */
 function finish(
   nodes: Map<GraphNodeId, GraphNode>,
   edges: readonly GraphEdge[],
@@ -153,7 +160,8 @@ function finish(
     kept.get(e.source)!.size++;
     kept.get(e.target)!.size++;
   }
-  return { nodes: [...kept.values()], edges: outEdges };
+  const out = [...kept.values()].filter((n) => n.type !== "tag" || n.size > 0);
+  return { nodes: out, edges: outEdges };
 }
 
 /** Ids of items tagged `tagName` (case-insensitive), as node ids. */
@@ -233,11 +241,12 @@ export function buildGraph(source: GraphSource, filter: GraphFilter = {}): Graph
   const inScope = (n: GraphNode) => visible(n) && (scope === null || scope.has(n.id));
 
   if (filter.orphans) {
-    // Topic edges do not count as connections, and topic nodes are not shown here.
-    const scoped = edges.filter(
-      (e) => e.kind !== "topic" && inScope(nodes.get(e.source)!) && inScope(nodes.get(e.target)!),
+    // "Connected" is judged on every edge regardless of the type/archive filters (a link
+    // to an archived or hidden item still counts); topic edges do not count. Only the
+    // shown nodes are filtered.
+    const connected = new Set(
+      all.filter((e) => e.kind !== "topic").flatMap((e) => [e.source, e.target]),
     );
-    const connected = new Set(scoped.flatMap((e) => [e.source, e.target]));
     return finish(nodes, [], (n) => n.type !== "tag" && inScope(n) && !connected.has(n.id));
   }
 
@@ -247,30 +256,42 @@ export function buildGraph(source: GraphSource, filter: GraphFilter = {}): Graph
 /**
  * Neighbourhood of `center` up to `depth` steps, for the local graph on detail screens.
  * Uses every item type except topics; archived neighbours are left out (the center is
- * always included). Returns an empty graph when the center does not exist.
+ * always included). Stops at `maxNodes` (closest first) and sets `truncated`. Empty when
+ * the center does not exist.
  */
-export function buildLocalGraph(source: GraphSource, center: GraphNodeId, depth: 1 | 2): GraphData {
+export function buildLocalGraph(
+  source: GraphSource,
+  center: GraphNodeId,
+  depth: 1 | 2,
+  maxNodes = MAX_LOCAL_NODES,
+): LocalGraphData {
   const { nodes, edges: all } = fullGraph(source, false);
   const c = nodes.get(center);
-  if (!c) return { nodes: [], edges: [] };
+  if (!c) return { nodes: [], edges: [], truncated: false };
 
   const allowed = (n: GraphNode) => n.id === center || !n.archived;
   const edges = all.filter((e) => allowed(nodes.get(e.source)!) && allowed(nodes.get(e.target)!));
   const adj = adjacency(edges);
 
+  // Breadth-first, so when the cap is hit the closer neighbours are the ones kept.
   const reached = new Set<GraphNodeId>([center]);
+  let truncated = false;
   let frontier: GraphNodeId[] = [center];
-  for (let step = 0; step < depth; step++) {
+  for (let step = 0; step < depth && !truncated; step++) {
     const next: GraphNodeId[] = [];
     for (const id of frontier) {
       for (const nb of adj.get(id) ?? []) {
-        if (!reached.has(nb)) {
-          reached.add(nb);
-          next.push(nb);
+        if (reached.has(nb)) continue;
+        if (reached.size >= maxNodes) {
+          truncated = true;
+          break;
         }
+        reached.add(nb);
+        next.push(nb);
       }
+      if (truncated) break;
     }
     frontier = next;
   }
-  return finish(nodes, edges, (n) => reached.has(n.id));
+  return { ...finish(nodes, edges, (n) => reached.has(n.id)), truncated };
 }
