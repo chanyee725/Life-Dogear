@@ -34,10 +34,14 @@ export function OpenInLiner({ title }: { title: string }) {
         target="_blank"
         rel="noopener noreferrer"
         className={buttonClass("secondary", "sm")}
+        // Short text below `lg` keeps the paper header on one line; the name stays full.
+        aria-label="라이너에서 열기 (새 탭)"
+        title="라이너에서 열기"
         // Copy synchronously within the click so the clipboard permission applies.
         onClick={() => void copyTitle()}
       >
-        라이너에서 열기 ↗
+        <span className="hidden lg:inline">라이너에서 열기</span>
+        <span className="lg:hidden">라이너</span> ↗
       </a>
       <span
         aria-live="polite"
