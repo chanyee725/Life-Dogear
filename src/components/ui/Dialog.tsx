@@ -37,7 +37,10 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      onClose={onClose}
+      onClose={() => {
+        // Fired also when we close it ourselves after `open` became false; only report user closes.
+        if (open) onClose();
+      }}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
