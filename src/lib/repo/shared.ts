@@ -108,7 +108,12 @@ export function hasTag(
     .select({ id: itemTags.itemId })
     .from(itemTags)
     .innerJoin(tags, eq(tags.id, itemTags.tagId))
-    .where(and(eq(itemTags.itemType, type), sql`lower(${tags.name}) = lower(${tagName.trim()})`));
+    .where(
+      and(
+        eq(itemTags.itemType, type),
+        sql`lower(${tags.name}) = lower(${tagName.normalize("NFC").trim()})`,
+      ),
+    );
   return inArray(idColumn, sub);
 }
 

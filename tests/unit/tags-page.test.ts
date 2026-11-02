@@ -36,6 +36,7 @@ describe("tag helpers", () => {
     expect(decodeTagParam(tagHref("질적 연구/방법").slice(6))).toBe("질적 연구/방법");
     expect(decodeTagParam("%E0%A4%A")).toBeNull();
     expect(decodeTagParam("%20")).toBeNull();
+    expect(decodeTagParam(encodeURIComponent("방법론".normalize("NFD")))).toBe("방법론");
   });
 });
 
