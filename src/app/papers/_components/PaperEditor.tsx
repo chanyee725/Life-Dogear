@@ -71,29 +71,33 @@ export function PaperEditor({
         else if (next === "saved") setError(null);
       },
       // Server values: only real differences are saved, so opening the page never writes.
-      {
-        title: paper.title,
-        authors: paper.authors,
-        year: paper.year?.toString() ?? "",
-        venue: paper.venue,
-        doi: paper.doi,
-        url: paper.url,
-        readStatus: paper.readStatus,
-        importance: paper.importance,
-        summary: paper.summary,
-        body: paper.body,
-      },
+      serverValues(paper),
     ),
   );
+  // A refresh brings new server values; adopt them as the baseline when nothing is unsaved.
+  useEffect(() => {
+    queue.resetBaseline(serverValues(paper));
+  }, [queue, paper]);
   /**
    * The editor may re-serialise the stored Markdown right after loading (same
    * content, different text). Body changes count only once the user has typed,
-   * clicked, pasted or dropped inside the editor.
+   * clicked, pasted, dropped or otherwise input (dictation, virtual keyboards and
+   * assistive tech fire `beforeinput`) inside the editor.
    */
   const bodyTouched = useRef(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const touchBody = () => {
     bodyTouched.current = true;
   };
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const onBeforeInput = () => {
+      bodyTouched.current = true;
+    };
+    el.addEventListener("beforeinput", onBeforeInput, { capture: true });
+    return () => el.removeEventListener("beforeinput", onBeforeInput, { capture: true });
+  }, []);
   const autosave = useDebouncedCallback(() => void queue.flush(), AUTOSAVE_DELAY, {
     flushOnUnmount: true,
   });
@@ -269,6 +273,7 @@ export function PaperEditor({
       <section className="flex flex-col gap-2">
         <h2 className="text-[13px] font-semibold text-muted">본문</h2>
         <div
+          ref={bodyRef}
           onKeyDownCapture={touchBody}
           onPointerDownCapture={touchBody}
           onPasteCapture={touchBody}
@@ -285,6 +290,22 @@ export function PaperEditor({
       </section>
     </div>
   );
+}
+
+/** Fields as stored on the server, in the editor's patch shape. */
+function serverValues(paper: Paper): PatchInput {
+  return {
+    title: paper.title,
+    authors: paper.authors,
+    year: paper.year?.toString() ?? "",
+    venue: paper.venue,
+    doi: paper.doi,
+    url: paper.url,
+    readStatus: paper.readStatus,
+    importance: paper.importance,
+    summary: paper.summary,
+    body: paper.body,
+  };
 }
 
 function TextField({

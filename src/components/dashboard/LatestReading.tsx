@@ -33,7 +33,10 @@ export function LatestReading({
     <>
       <ProgressBar current={latest.page} total={latest.totalPages} className="mt-auto pt-1" />
       {latest.lastReadAt ? (
-        <span className="text-xs text-faint">{formatRelative(latest.lastReadAt)} 읽음</span>
+        // Relative time depends on "now", which differs between server render and hydration.
+        <span className="text-xs text-faint" suppressHydrationWarning>
+          {formatRelative(latest.lastReadAt)} 읽음
+        </span>
       ) : null}
     </>
   );
