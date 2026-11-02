@@ -97,7 +97,7 @@ export function TagInput({
             type="button"
             aria-label={`${tag} 태그 삭제`}
             onClick={() => update(tags.filter((t) => t !== tag))}
-            className="flex h-4 w-4 items-center justify-center rounded text-faint hover:bg-hover hover:text-fg"
+            className="flex h-4 w-4 items-center justify-center rounded text-muted hover:bg-hover hover:text-fg"
           >
             ×
           </button>
@@ -113,7 +113,7 @@ export function TagInput({
         onBlur={commit}
         list={available.length > 0 ? listId : undefined}
         placeholder={tags.length === 0 ? placeholder : ""}
-        className="h-7 min-w-24 flex-1 bg-transparent px-1 text-sm text-fg placeholder:text-faint focus:outline-none"
+        className="h-7 min-w-24 flex-1 bg-transparent px-1 text-sm text-fg placeholder:text-faint focus:outline-none [&::-webkit-calendar-picker-indicator]:hidden"
       />
       {available.length > 0 ? (
         <datalist id={listId}>
