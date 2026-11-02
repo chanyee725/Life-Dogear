@@ -113,7 +113,7 @@ export function TagInput({
         onBlur={commit}
         list={available.length > 0 ? listId : undefined}
         placeholder={tags.length === 0 ? placeholder : ""}
-        className="h-7 min-w-24 flex-1 bg-transparent px-1 text-sm text-fg placeholder:text-faint focus:outline-none [&::-webkit-calendar-picker-indicator]:hidden"
+        className="h-7 min-w-24 flex-1 bg-transparent px-1 text-sm text-fg placeholder:text-faint focus:outline-none [&::-webkit-calendar-picker-indicator]:hidden!"
       />
       {available.length > 0 ? (
         <datalist id={listId}>
