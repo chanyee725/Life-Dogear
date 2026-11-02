@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { RECOMMENDED_AREAS } from "@/lib/enums";
 import { areas, RepoError } from "@/lib/repo";
+import type { SkippedArea } from "@/lib/repo/areas";
 import { parseAreaForm } from "./area-form";
 import { optionalStringList, parseId } from "./parse";
 import { runAction, type ActionResult } from "./result";
@@ -56,26 +57,22 @@ export async function reorderAreas(ids: unknown): Promise<ActionResult<null>> {
 
 /**
  * Creates the chosen recommended areas (연구 분야·학위·건강·커리어) with their suggested
- * standards. Unknown names are rejected; names that already exist are skipped.
+ * standards. Unknown names are rejected. Titles that already exist are skipped and
+ * reported; `archived: true` means the user can restore it from the archive instead.
  */
 export async function createRecommendedAreas(
   names: unknown,
-): Promise<ActionResult<{ ids: string[] }>> {
+): Promise<ActionResult<{ ids: string[]; skipped: SkippedArea[] }>> {
   return runAction(async () => {
     const chosen = optionalStringList(names, "추천 영역", RECOMMENDED_AREAS.length) ?? [];
     const picks = RECOMMENDED_AREAS.filter((a) => chosen.includes(a.title));
     if (picks.length !== new Set(chosen).size || picks.length === 0) {
       throw new RepoError("invalid", "추천 영역을 골라 주세요.");
     }
-    const existing = new Set(
-      (await areas.list({ includeArchived: true })).map((a) => a.title.toLowerCase()),
-    );
-    const created = await areas.createMany(
-      picks
-        .filter((a) => !existing.has(a.title.toLowerCase()))
-        .map((a) => ({ title: a.title, standard: a.standard })),
+    const { created, skipped } = await areas.createMissing(
+      picks.map((a) => ({ title: a.title, standard: a.standard })),
     );
     revalidateAll();
-    return { ids: created.map((a) => a.id) };
+    return { ids: created.map((a) => a.id), skipped };
   });
 }
