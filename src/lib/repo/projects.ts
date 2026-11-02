@@ -11,7 +11,7 @@ import {
 import { PROJECT_TEMPLATE } from "@/lib/templates";
 import { isAssignable } from "./areas";
 import { isAssignable as isAssignableGoal } from "./goals";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   ascNullsLast,
@@ -213,6 +213,7 @@ export async function create(input: ProjectInput): Promise<Project> {
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -246,6 +247,7 @@ export async function update(id: string, patch: ProjectPatch): Promise<Project |
       })
       .where(eq(projects.id, id));
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

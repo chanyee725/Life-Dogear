@@ -10,7 +10,7 @@ import {
 } from "@/lib/enums";
 import { isAssignable as isAssignableArea } from "./areas";
 import { getHeads, refKey } from "./items";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   db,
@@ -232,6 +232,7 @@ export async function create(input: GoalInput): Promise<Goal> {
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -286,6 +287,7 @@ export async function update(id: string, patch: GoalPatch): Promise<Goal | null>
       .set({ ...columns, horizon, period, parentId, areaId, updatedAt: nowIso() })
       .where(eq(goals.id, id));
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;
