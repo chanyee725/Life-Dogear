@@ -51,7 +51,7 @@ export function createExtensions(placeholder: string) {
     TableCell,
     Placeholder.configure({ placeholder }),
     Markdown.configure({
-      html: true,
+      html: false,
       tightLists: true,
       bulletListMarker: "-",
       linkify: true,

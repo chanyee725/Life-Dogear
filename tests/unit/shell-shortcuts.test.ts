@@ -3,7 +3,15 @@ import { isTypingTarget, resolveShortcut } from "@/components/shell/shortcuts";
 
 const key = (
   k: string,
-  mods: Partial<{ metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }> = {},
+  mods: Partial<{
+    code: string;
+    metaKey: boolean;
+    ctrlKey: boolean;
+    altKey: boolean;
+    shiftKey: boolean;
+    isComposing: boolean;
+    keyCode: number;
+  }> = {},
 ) => ({
   key: k,
   metaKey: false,
@@ -14,41 +22,63 @@ const key = (
 
 describe("resolveShortcut", () => {
   it("N opens the new form of the current section", () => {
-    expect(resolveShortcut(key("n"), "/papers", false)).toEqual({
+    expect(resolveShortcut(key("n"), "/papers", { typing: false })).toEqual({
       kind: "navigate",
       href: "/papers/new",
     });
-    expect(resolveShortcut(key("N"), "/projects/abc", false)).toEqual({
+    expect(resolveShortcut(key("N"), "/projects/abc", { typing: false })).toEqual({
       kind: "navigate",
       href: "/projects/new",
     });
   });
 
   it("N falls back to a new thought outside item sections", () => {
-    expect(resolveShortcut(key("n"), "/", false)).toEqual({
+    expect(resolveShortcut(key("n"), "/", { typing: false })).toEqual({
       kind: "navigate",
       href: "/thoughts/new",
     });
-    expect(resolveShortcut(key("n"), "/tags", false)).toEqual({
+    expect(resolveShortcut(key("n"), "/tags", { typing: false })).toEqual({
       kind: "navigate",
       href: "/thoughts/new",
     });
   });
 
   it("N does nothing when already on the new form", () => {
-    expect(resolveShortcut(key("n"), "/seminars/new", false)).toBeNull();
+    expect(resolveShortcut(key("n"), "/seminars/new", { typing: false })).toBeNull();
   });
 
   it("/ focuses the quick input", () => {
-    expect(resolveShortcut(key("/"), "/papers", false)).toEqual({ kind: "focus-quick-input" });
+    expect(resolveShortcut(key("/"), "/papers", { typing: false })).toEqual({
+      kind: "focus-quick-input",
+    });
+  });
+
+  it("accepts the physical key in a Korean input mode", () => {
+    expect(resolveShortcut(key("ㅜ", { code: "KeyN" }), "/papers", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/papers/new",
+    });
+    expect(resolveShortcut(key("/", { code: "Slash" }), "/", { typing: false })).toEqual({
+      kind: "focus-quick-input",
+    });
+    expect(
+      resolveShortcut(key("?", { code: "Slash", shiftKey: true }), "/", { typing: false }),
+    ).toBeNull();
+  });
+
+  it("ignores shortcuts while a dialog is open", () => {
+    expect(resolveShortcut(key("n"), "/papers", { typing: false, dialogOpen: true })).toBeNull();
   });
 
   it("ignores typing, IME composition and modifier keys", () => {
-    expect(resolveShortcut(key("n"), "/", true)).toBeNull();
-    expect(resolveShortcut(key("n", { isComposing: true }), "/", false)).toBeNull();
-    expect(resolveShortcut(key("n", { metaKey: true }), "/", false)).toBeNull();
-    expect(resolveShortcut(key("/", { ctrlKey: true }), "/", false)).toBeNull();
-    expect(resolveShortcut(key("k"), "/", false)).toBeNull();
+    expect(
+      resolveShortcut(key("Process", { code: "KeyN", keyCode: 229 }), "/", { typing: false }),
+    ).toBeNull();
+    expect(resolveShortcut(key("n"), "/", { typing: true })).toBeNull();
+    expect(resolveShortcut(key("n", { isComposing: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("n", { metaKey: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("/", { ctrlKey: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("k"), "/", { typing: false })).toBeNull();
   });
 });
 

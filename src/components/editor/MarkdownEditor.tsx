@@ -64,9 +64,10 @@ export function MarkdownEditor({
     },
   });
 
-  // External value changes (e.g. switching items, server refresh) replace the content.
+  // External value changes (e.g. a server refresh) replace the content, but never while the
+  // user is typing: that would drop keystrokes. To switch items, remount with `key={id}`.
   useEffect(() => {
-    if (!editor || value === lastMarkdown.current) return;
+    if (!editor || editor.isFocused || value === lastMarkdown.current) return;
     lastMarkdown.current = value;
     editor.commands.setContent(value, { emitUpdate: false });
   }, [editor, value]);
@@ -84,6 +85,13 @@ export function MarkdownEditor({
   );
 }
 
+const HIDDEN_SYNC_MS = 300;
+
+/**
+ * Hidden form field carrying the markdown. Serializing on every keystroke is costly, so the
+ * input is refreshed on a short debounce, and the exact value is written into FormData at
+ * submit time via the `formdata` event (fired by `new FormData(form)`, which React uses).
+ */
 function HiddenValue({
   name,
   editor,
@@ -93,11 +101,34 @@ function HiddenValue({
   editor: Editor | null;
   initial: string;
 }) {
-  const markdown = useEditorState({
-    editor,
-    selector: ({ editor }) => (editor ? getMarkdown(editor) : initial),
-  });
-  return <input type="hidden" name={name} value={markdown ?? initial} />;
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const input = ref.current;
+    if (!editor || !input) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const sync = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        input.value = getMarkdown(editor);
+      }, HIDDEN_SYNC_MS);
+    };
+    const onFormData = (event: FormDataEvent) => {
+      const markdown = getMarkdown(editor);
+      input.value = markdown;
+      event.formData.set(name, markdown);
+    };
+    const form = input.form;
+    editor.on("update", sync);
+    form?.addEventListener("formdata", onFormData);
+    return () => {
+      clearTimeout(timer);
+      editor.off("update", sync);
+      form?.removeEventListener("formdata", onFormData);
+    };
+  }, [editor, name]);
+
+  return <input ref={ref} type="hidden" name={name} defaultValue={initial} />;
 }
 
 function Toolbar({ editor }: { editor: Editor }) {

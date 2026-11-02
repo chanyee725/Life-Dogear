@@ -15,7 +15,8 @@ function focusQuickInput(): boolean {
  * Global keyboard shortcuts (mounted once in the root layout):
  * - `N`  → new item in the current section (`/<type>/new`; home and tags go to a new thought)
  * - `/`  → focus the home quick input (`#quick-input`), navigating home first if needed
- * Ignored while typing in inputs, textareas, selects or the editor, and with modifier keys.
+ * Ignored while typing (inputs, selects, the editor, IME composition), with modifier keys,
+ * and while a modal dialog is open.
  */
 export function Shortcuts() {
   const router = useRouter();
@@ -25,7 +26,10 @@ export function Shortcuts() {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat) return;
-      const action = resolveShortcut(event, pathname, isTypingTarget(event.target));
+      const action = resolveShortcut(event, pathname, {
+        typing: isTypingTarget(event.target),
+        dialogOpen: document.querySelector("dialog[open]") !== null,
+      });
       if (!action) return;
       event.preventDefault();
       if (action.kind === "navigate") {
