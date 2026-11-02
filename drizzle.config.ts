@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { ensureLocalDir, resolveDbConfig } from "./src/db/client";
+import { ensureLocalDir, resolveDbConfig } from "./src/db/config";
 import { loadEnvIfPresent } from "./src/db/env";
 
 loadEnvIfPresent();
