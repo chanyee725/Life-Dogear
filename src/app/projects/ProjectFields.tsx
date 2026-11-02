@@ -1,50 +1,69 @@
+import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { DateField } from "@/components/fields/DateField";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
-import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { Properties, Property } from "@/components/fields/Properties";
 import { TagInput } from "@/components/fields/TagInput";
 import { Input } from "@/components/ui/Input";
-import { PROJECT_STAGE } from "@/lib/enums";
-import type { ProjectInput } from "@/lib/repo/projects";
+import type { ProjectKind, ProjectStage, ProjectStatus } from "@/lib/enums";
+import { ProjectKindFields } from "./ProjectKindFields";
 
-// 1.5 fields (kind, status, areaId, nextAction) are wired up in phase B.
-export type ProjectFormValues = Required<
-  Omit<ProjectInput, "startDate" | "dueDate" | "kind" | "status" | "areaId" | "nextAction">
-> & {
+export type ProjectFormValues = {
+  title: string;
+  kind: ProjectKind;
+  stage: ProjectStage;
+  status: ProjectStatus;
+  areaId: string | null;
+  nextAction: string;
+  researchQuestion: string;
   startDate: string | null;
   dueDate: string | null;
+  body: string;
+  tags: string[];
 };
 
 /** Fields shared by the new and detail pages. `editorKey` remounts the editor per item. */
 export function ProjectFields({
   values,
   tagSuggestions,
+  areaOptions,
   editorKey,
 }: {
   values: ProjectFormValues;
   tagSuggestions: string[];
+  /** Non-archived areas (plus the current one if it is archived). */
+  areaOptions: { value: string; label: string }[];
   editorKey: string;
 }) {
   return (
     <>
       <TitleInput defaultValue={values.title} />
       <Properties>
+        <ProjectKindFields kind={values.kind} stage={values.stage} status={values.status} />
+        <Property label="다음 할 일" htmlFor="project-next">
+          <Input
+            id="project-next"
+            name="nextAction"
+            defaultValue={values.nextAction}
+            placeholder="바로 다음에 할 한 가지"
+          />
+        </Property>
+        <Property label="영역" htmlFor="project-area">
+          <EnumSelect
+            id="project-area"
+            name="areaId"
+            options={areaOptions}
+            emptyLabel="없음"
+            defaultValue={values.areaId ?? ""}
+            className="w-auto"
+          />
+        </Property>
         <Property label="연구 질문" htmlFor="project-question">
           <Input
             id="project-question"
             name="researchQuestion"
             defaultValue={values.researchQuestion}
             placeholder="무엇을 밝히고 싶은가?"
-          />
-        </Property>
-        <Property label="단계" htmlFor="project-stage">
-          <EnumSelect
-            id="project-stage"
-            name="stage"
-            options={PROJECT_STAGE.options}
-            defaultValue={values.stage}
-            className="w-auto"
           />
         </Property>
         <Property label="시작일" htmlFor="project-start">
@@ -67,4 +86,14 @@ export function ProjectFields({
       </DetailBody>
     </>
   );
+}
+
+/** Area select options; keeps the current area visible even if it was archived. */
+export function areaOptionsFor(
+  areas: readonly { id: string; title: string; archivedAt?: string | null }[],
+  current: string | null,
+): { value: string; label: string }[] {
+  return areas
+    .filter((a) => !a.archivedAt || a.id === current)
+    .map((a) => ({ value: a.id, label: a.archivedAt ? `${a.title} (보관됨)` : a.title }));
 }
