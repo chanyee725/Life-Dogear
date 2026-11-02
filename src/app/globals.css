@@ -1,1 +1,331 @@
 @import "tailwindcss";
+
+/* Class-based dark mode: <html class="dark">. The theme script in layout.tsx
+   sets the class before first paint (system default, user override in localStorage). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Design tokens (raw values) ---------- */
+:root {
+  color-scheme: light;
+
+  /* Neutrals */
+  --rb-bg: #ffffff;
+  --rb-surface: #fafafa;
+  --rb-subtle: #f4f4f5;
+  --rb-hover: #efeff1;
+  --rb-border: #e7e7ea;
+  --rb-border-strong: #d4d4d8;
+  --rb-fg: #18181b;
+  --rb-muted: #6b6b73;
+  --rb-faint: #a1a1aa;
+
+  /* Single accent color */
+  --rb-accent: #4f5bd5;
+  --rb-accent-hover: #434ec2;
+  --rb-accent-fg: #ffffff;
+  --rb-accent-soft: #eef0fc;
+  --rb-ring: rgb(79 91 213 / 0.35);
+
+  --rb-danger: #c2410c;
+  --rb-danger-hover: #a8380a;
+
+  /* Quiet badge tones (bg / fg) */
+  --rb-tone-gray-bg: #f1f1f3;
+  --rb-tone-gray-fg: #52525b;
+  --rb-tone-blue-bg: #eaf1fb;
+  --rb-tone-blue-fg: #2f5f9e;
+  --rb-tone-green-bg: #e9f5ee;
+  --rb-tone-green-fg: #2f6f4a;
+  --rb-tone-amber-bg: #fbf3e2;
+  --rb-tone-amber-fg: #8a5a12;
+  --rb-tone-red-bg: #fbecea;
+  --rb-tone-red-fg: #9b3a32;
+  --rb-tone-violet-bg: #f1edfb;
+  --rb-tone-violet-fg: #5b45a0;
+  --rb-tone-teal-bg: #e6f4f3;
+  --rb-tone-teal-fg: #276b66;
+  --rb-tone-rose-bg: #fbedf2;
+  --rb-tone-rose-fg: #94385a;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --rb-bg: #141416;
+  --rb-surface: #19191c;
+  --rb-subtle: #1f1f23;
+  --rb-hover: #26262b;
+  --rb-border: #2a2a2f;
+  --rb-border-strong: #3a3a41;
+  --rb-fg: #ececef;
+  --rb-muted: #9d9da6;
+  --rb-faint: #66666e;
+
+  --rb-accent: #8b94f0;
+  --rb-accent-hover: #9ca4f3;
+  --rb-accent-fg: #141416;
+  --rb-accent-soft: #23253a;
+  --rb-ring: rgb(139 148 240 / 0.4);
+
+  --rb-danger: #f08a5d;
+  --rb-danger-hover: #f39d76;
+
+  --rb-tone-gray-bg: #26262b;
+  --rb-tone-gray-fg: #b4b4bc;
+  --rb-tone-blue-bg: #1c2636;
+  --rb-tone-blue-fg: #8db4e8;
+  --rb-tone-green-bg: #1a2a21;
+  --rb-tone-green-fg: #86c7a0;
+  --rb-tone-amber-bg: #2e2617;
+  --rb-tone-amber-fg: #dcb26a;
+  --rb-tone-red-bg: #311e1c;
+  --rb-tone-red-fg: #e79a90;
+  --rb-tone-violet-bg: #251f36;
+  --rb-tone-violet-fg: #b5a3ec;
+  --rb-tone-teal-bg: #182b2a;
+  --rb-tone-teal-fg: #80c9c2;
+  --rb-tone-rose-bg: #301d25;
+  --rb-tone-rose-fg: #e69ab8;
+}
+
+/* ---------- Tailwind theme mapping ---------- */
+@theme inline {
+  --font-sans:
+    var(--font-inter), var(--font-pretendard), ui-sans-serif, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-bg: var(--rb-bg);
+  --color-surface: var(--rb-surface);
+  --color-subtle: var(--rb-subtle);
+  --color-hover: var(--rb-hover);
+  --color-border: var(--rb-border);
+  --color-border-strong: var(--rb-border-strong);
+  --color-fg: var(--rb-fg);
+  --color-muted: var(--rb-muted);
+  --color-faint: var(--rb-faint);
+  --color-accent: var(--rb-accent);
+  --color-accent-hover: var(--rb-accent-hover);
+  --color-accent-fg: var(--rb-accent-fg);
+  --color-accent-soft: var(--rb-accent-soft);
+  --color-ring: var(--rb-ring);
+  --color-danger: var(--rb-danger);
+  --color-danger-hover: var(--rb-danger-hover);
+
+  --color-tone-gray-bg: var(--rb-tone-gray-bg);
+  --color-tone-gray-fg: var(--rb-tone-gray-fg);
+  --color-tone-blue-bg: var(--rb-tone-blue-bg);
+  --color-tone-blue-fg: var(--rb-tone-blue-fg);
+  --color-tone-green-bg: var(--rb-tone-green-bg);
+  --color-tone-green-fg: var(--rb-tone-green-fg);
+  --color-tone-amber-bg: var(--rb-tone-amber-bg);
+  --color-tone-amber-fg: var(--rb-tone-amber-fg);
+  --color-tone-red-bg: var(--rb-tone-red-bg);
+  --color-tone-red-fg: var(--rb-tone-red-fg);
+  --color-tone-violet-bg: var(--rb-tone-violet-bg);
+  --color-tone-violet-fg: var(--rb-tone-violet-fg);
+  --color-tone-teal-bg: var(--rb-tone-teal-bg);
+  --color-tone-teal-fg: var(--rb-tone-teal-fg);
+  --color-tone-rose-bg: var(--rb-tone-rose-bg);
+  --color-tone-rose-fg: var(--rb-tone-rose-fg);
+
+  /* 8px corners everywhere by default */
+  --radius-DEFAULT: 8px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-sm: 6px;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-overlay: 0 8px 28px rgb(0 0 0 / 0.12);
+}
+
+/* ---------- Base ---------- */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--rb-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--rb-bg);
+    color: var(--rb-fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  ::selection {
+    background: var(--rb-accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--rb-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------- Markdown editor (Tiptap) ---------- */
+@layer components {
+  .rb-prose {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--rb-fg);
+    outline: none;
+    min-height: 8rem;
+  }
+  .rb-prose > * + * {
+    margin-top: 0.6em;
+  }
+  .rb-prose h1,
+  .rb-prose h2,
+  .rb-prose h3 {
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+  .rb-prose h1 {
+    font-size: 1.5em;
+    margin-top: 1.4em;
+  }
+  .rb-prose h2 {
+    font-size: 1.2em;
+    margin-top: 1.6em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--rb-border);
+  }
+  .rb-prose h3 {
+    font-size: 1.05em;
+    margin-top: 1.3em;
+  }
+  .rb-prose > :first-child {
+    margin-top: 0;
+  }
+  .rb-prose ul {
+    list-style: disc;
+    padding-left: 1.4em;
+  }
+  .rb-prose ol {
+    list-style: decimal;
+    padding-left: 1.4em;
+  }
+  .rb-prose li > p {
+    margin: 0;
+  }
+  .rb-prose li + li {
+    margin-top: 0.2em;
+  }
+  .rb-prose ul[data-type="taskList"] {
+    list-style: none;
+    padding-left: 0.1em;
+  }
+  .rb-prose ul[data-type="taskList"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .rb-prose ul[data-type="taskList"] li > label {
+    flex: none;
+    margin-top: 0.3em;
+    user-select: none;
+  }
+  .rb-prose ul[data-type="taskList"] li > div {
+    flex: 1;
+  }
+  .rb-prose ul[data-type="taskList"] li[data-checked="true"] > div {
+    color: var(--rb-muted);
+    text-decoration: line-through;
+  }
+  .rb-prose input[type="checkbox"] {
+    accent-color: var(--rb-accent);
+  }
+  .rb-prose blockquote {
+    border-left: 2px solid var(--rb-border-strong);
+    padding-left: 1em;
+    color: var(--rb-muted);
+  }
+  .rb-prose a {
+    color: var(--rb-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .rb-prose code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--rb-subtle);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+  }
+  .rb-prose pre {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--rb-subtle);
+    border: 1px solid var(--rb-border);
+    border-radius: 8px;
+    padding: 0.8em 1em;
+    overflow-x: auto;
+  }
+  .rb-prose pre code {
+    background: none;
+    padding: 0;
+  }
+  .rb-prose hr {
+    border: none;
+    border-top: 1px solid var(--rb-border);
+    margin: 1.5em 0;
+  }
+  .rb-prose table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    overflow: hidden;
+    font-size: 0.93em;
+  }
+  .rb-prose th,
+  .rb-prose td {
+    border: 1px solid var(--rb-border);
+    padding: 0.4em 0.6em;
+    vertical-align: top;
+    position: relative;
+  }
+  .rb-prose th {
+    background: var(--rb-surface);
+    font-weight: 600;
+    text-align: left;
+  }
+  .rb-prose .selectedCell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--rb-accent-soft);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .rb-prose .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--rb-accent);
+    pointer-events: none;
+  }
+  .rb-prose .tableWrapper {
+    overflow-x: auto;
+  }
+  .rb-prose p.is-editor-empty:first-child::before,
+  .rb-prose .is-empty::before {
+    content: attr(data-placeholder);
+    color: var(--rb-faint);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}
