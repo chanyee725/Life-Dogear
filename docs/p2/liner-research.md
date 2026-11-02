@@ -29,8 +29,8 @@ query parameter (see fallback below).
   Whether individuals are eligible / approval needed: **확인되지 않음** (page says create a key; no eligibility text seen).
 - Pricing is per 1K requests (e.g. Web Search $1, Search Agent $20 per 1K) per the docs page; separate
   "API pricing" page, not read. Individual vs enterprise tiering of the API: **확인되지 않음**.
-- API terms exist: https://liner.com/zh/docs/api-terms-of-service (keys must be confidential, not in client-side code).
-  Full text not read.
+- API terms exist: https://liner.com/en/docs/api-terms-of-service ("Liner Platform Terms of Service"; API keys must be kept
+  confidential, not embedded in front-end code). Only the key-confidentiality clause was read.
 - Scholar MCP: https://liner.com/mcp/scholar — OAuth 2.1 with a Liner account. 9 tools:
   `search_papers`, `search_paper_sections`, `fetch_paper`, `get_paper_citations`,
   `scholar_library_tree`, `scholar_library_ls`, `scholar_library_search`, `scholar_library_read`,
@@ -39,7 +39,8 @@ query parameter (see fallback below).
     but the page does NOT describe them returning the user's highlights, notes or Q&A answers.
 - General MCP (search_web, search_scholar, agents): https://liner.com/developers/docs/mcp — none of the tools
   is described as accessing highlights/library/history. Paper search output: title, authors, year, citation data, source link.
-- Third-party claim (reference only, contradicted by official docs): linkgo.dev FAQ says API docs are non-public.
+- Third-party claim (reference only, contradicted by official docs): linkgo.dev FAQ says API docs are non-public
+  (https://linkgo.dev/faq/liner-offer-an-api-for-integration).
 
 Implication for this app: the Liner API could be used to *search papers*, but it requires the user's own
 API key and costs money; out of Phase 2 scope ("paste" flow is the specified fallback). Do not store keys.
@@ -52,12 +53,15 @@ API key and costs money; out of Phase 2 scope ("paste" flow is the specified fal
 - https://liner.com/terms: no clause about exporting user content; §7.1 says the user owns the content they create.
   §4.1(B) forbids accessing Content "through any technology or means other than the Service itself" —
   **do not scrape or automate Liner**; only user-pasted text.
-- Help center (https://support.liner.com/...) search results show: highlights live in "My Space / My Highlights"
+- Help center (https://support.liner.com/...) — **본문 미확인**; the lines below come only from web-search summaries
+  of article titles/snippets, not from reading the articles: highlights live in "My Space / My Highlights"
   with folders; a highlight can be shared via a link ("Make & Edit Highlights",
   https://support.liner.com/hc/en-us/articles/4408827436825-Make-Edit-Highlights). Export to a file:
   **확인되지 않음** (articles unreadable: 403 from the fetch tool; search snippets mention none).
-- Third-party only (reference, NOT evidence): app-store reviews mention one-click export to Evernote;
-  directory sites (aipure.ai, navtools.ai) claim PDF export. Unverified against official docs.
+- Third-party only (reference, NOT evidence, unverified against official docs):
+  an app-store review mentions one-click export to Evernote (https://cafebazaar.ir/app/com.getliner.Liner?l=en);
+  directory sites claim PDF export (https://aipure.ai/articles/how-to-use-liner-your-ai-powered-research-assistant,
+  https://navtools.ai/tool/liner).
 
 Conclusion: no officially confirmed export (Markdown/CSV/Notion) of highlights, answers or Scholar results.
 Copy-paste by the user is the only confirmed route.
@@ -67,13 +71,14 @@ Copy-paste by the user is the only confirmed route.
 - Product paths seen on liner.com: `/search`, `/scholar`, `/write`, `/pricing`, `/developers`.
   No query-string examples in any official page read; fetching `/search?query=...` returned the marketing homepage
   (no evidence the parameter is honored). Parameter name/format: **확인되지 않음**.
-- Fallback for "라이너에서 열기" (needs product decision, not asserted as working):
-  1. Open `https://liner.com/scholar` (documented path, no query) and put the paper title on the clipboard
-     for the user to paste, or
-  2. Try `https://liner.com/search?query=<title>` only as best effort and tell the user to paste if the box is empty.
+- "라이너에서 열기" — **recommended (and decided) approach**: open `https://liner.com/scholar` (documented path,
+  no query) and copy the paper title to the clipboard for the user to paste.
+- **Do NOT use** `https://liner.com/search?query=<title>`: this is an unverified guess (it only returned the
+  homepage) — usage forbidden until an official format is confirmed.
   Impl should isolate URL building in one function so it can be fixed once a format is confirmed.
 - Suggested manual check before shipping (needs a logged-in browser): open liner.com, search a title, read the address bar.
 
 ## Open items for the lead
 1. Confirm in a logged-in browser: export menu in My Highlights / answer pages; URL after a search.
-2. Whether to support the Liner API (user's own key) later — out of the scope as specified.
+2. "라이너에서 열기" handles the title only via the clipboard; it is never sent to an external site inside a URL.
+3. Whether to support the Liner API (user's own key) later — out of the scope as specified.
