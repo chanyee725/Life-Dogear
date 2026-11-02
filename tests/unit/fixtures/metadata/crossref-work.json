@@ -1,0 +1,19 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message-version": "1.0.0",
+  "message": {
+    "DOI": "10.1234/example.5678",
+    "URL": "https://doi.org/10.1234/example.5678",
+    "type": "journal-article",
+    "title": ["Learning <i>Sparse</i> Representations &amp; Their   Limits"],
+    "container-title": ["Journal of Example Studies"],
+    "author": [
+      { "given": "Alex", "family": "Sample", "sequence": "first" },
+      { "given": "Jordan", "family": "Testwell", "sequence": "additional" },
+      { "name": "Example Research Consortium", "sequence": "additional" }
+    ],
+    "issued": { "date-parts": [[2021, 6, 3]] },
+    "created": { "date-parts": [[2020, 12, 1]] }
+  }
+}
