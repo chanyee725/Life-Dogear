@@ -1,0 +1,69 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ProgressBar } from "@/components/pdf/ProgressBar";
+import { Button, buttonClass, ConfirmDialog, Section } from "@/components/ui";
+import { removePaperPdf } from "./pdf-client";
+import { PdfDropZone, ReplacePdfButton } from "./PdfUploader";
+
+type PdfPanelProps = {
+  paperId: string;
+  hasPdf: boolean;
+  lastPage: number | null;
+  totalPages: number | null;
+};
+
+/** PDF block on the paper page: continue reading, progress, replace/remove, or upload. */
+export function PdfPanel({ paperId, hasPdf, lastPage, totalPages }: PdfPanelProps) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!hasPdf) {
+    return (
+      <Section title="PDF">
+        <PdfDropZone paperId={paperId} />
+      </Section>
+    );
+  }
+
+  return (
+    <Section title="PDF">
+      <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href={`/papers/${paperId}/read`} className={buttonClass("primary")}>
+            {lastPage ? `이어 읽기 · ${lastPage}쪽` : "이어 읽기"}
+          </Link>
+          <ProgressBar current={lastPage} total={totalPages} className="min-w-40 flex-1" />
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <ReplacePdfButton paperId={paperId} />
+          <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+            PDF 제거
+          </Button>
+          {error ? (
+            <span role="alert" className="text-xs text-danger">
+              {error}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      <ConfirmDialog
+        open={confirming}
+        onCancel={() => setConfirming(false)}
+        onConfirm={async () => {
+          const message = await removePaperPdf(paperId);
+          setConfirming(false);
+          setError(message);
+          if (!message) router.refresh();
+        }}
+        title="PDF를 제거할까요?"
+        description="파일과 읽던 위치가 지워집니다. 논문 메모는 그대로 남습니다."
+        confirmLabel="제거"
+        danger
+      />
+    </Section>
+  );
+}
