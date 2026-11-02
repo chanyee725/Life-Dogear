@@ -39,7 +39,9 @@ export function QuickInput() {
             setSaved(false);
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+            // keyCode 229: Safari reports the IME-confirming Enter this way.
+            const composing = e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229;
+            if (e.key === "Enter" && !composing) {
               e.preventDefault();
               submit();
             } else if (e.key === "Escape") {
@@ -50,7 +52,9 @@ export function QuickInput() {
           aria-describedby="quick-input-status"
           placeholder="떠오른 생각을 적고 Enter"
           maxLength={10_000}
-          disabled={pending}
+          // readOnly (not disabled) keeps focus after Enter so the next thought can follow.
+          readOnly={pending}
+          aria-busy={pending || undefined}
           className={cn(controlClass, "h-11 pr-12 text-[15px]")}
         />
         <Kbd className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">/</Kbd>
