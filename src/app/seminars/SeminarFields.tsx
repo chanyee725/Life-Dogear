@@ -53,7 +53,6 @@ export function SeminarFields({
           <Input
             id="seminar-material"
             name="materialUrl"
-
             inputMode="url"
             defaultValue={values.materialUrl}
             placeholder="https://"
