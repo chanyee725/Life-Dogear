@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://arxiv.org/api/xyz</id>
+  <title type="html">ArXiv Query</title>
+  <entry>
+    <id>http://arxiv.org/abs/hep-th/9901001v1</id>
+    <published>1999-01-04T12:00:00Z</published>
+    <title><![CDATA[Strings on a Toy Lattice]]></title>
+    <author><name>Morgan Example</name></author>
+  </entry>
+</feed>
