@@ -15,7 +15,7 @@ import type { Paper } from "@/lib/repo/papers";
 import { updatePaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
 import { DeletePaperButton } from "./DeletePaperButton";
-import { createSaveQueue, type SaveState } from "./save-queue";
+import { createLatestSender, createSaveQueue, type SaveState } from "./save-queue";
 
 type PatchInput = {
   title?: string;
@@ -115,20 +115,20 @@ export function PaperEditor({
 
   // Unsaved = waiting for autosave, saving, kept after a failed save, or tags whose
   // last save failed. Asks before leaving via in-app links, reload or tab close.
-  const [tagsUnsaved, setTagsUnsaved] = useState(false);
+  const [tagsError, setTagsError] = useState<string | null>(null);
   const dirty =
-    tagsUnsaved ||
+    tagsError !== null ||
     ((state === "pending" || state === "saving" || state === "error") && queue.dirty());
   useUnsavedChangesGuard(dirty);
 
-  async function saveTags(names: string[]) {
-    const result = await safeAction(() => setItemTags({ type: "paper", id: paperId }, names));
-    setTagsUnsaved(!result.ok);
-    if (!result.ok) {
-      setError(result.error);
-      setState("error");
-    }
-  }
+  // Tag saves go out one at a time with only the newest list, so a quick second
+  // change can never be overwritten by the first response arriving late.
+  const [saveTags] = useState(() =>
+    createLatestSender<string[]>(
+      (names) => safeAction(() => setItemTags({ type: "paper", id: paperId }, names)),
+      (outcome) => setTagsError(outcome.ok ? null : outcome.error),
+    ),
+  );
 
   return (
     <div className="flex flex-col gap-10">
@@ -138,8 +138,12 @@ export function PaperEditor({
             ← 논문
           </Link>
           <div className="flex items-center gap-2">
-            <span aria-live="polite" className={state === "error" ? "text-danger" : "text-faint"}>
-              {SAVE_LABEL[state]}
+            <span
+              aria-live="polite"
+              className={state === "error" || tagsError ? "text-danger" : "text-faint"}
+            >
+              {/* A failed tag save stays visible even after field saves succeed. */}
+              {tagsError && state !== "error" ? "태그 저장 실패" : SAVE_LABEL[state]}
             </span>
             <Button variant="secondary" size="sm" onClick={saveNow}>
               저장
@@ -147,9 +151,9 @@ export function PaperEditor({
             <DeletePaperButton paperId={paper.id} title={paper.title} />
           </div>
         </div>
-        {error ? (
+        {error || tagsError ? (
           <p role="alert" className="text-sm text-danger">
-            {error}
+            {error ?? tagsError}
           </p>
         ) : null}
         <label htmlFor="paper-title" className="sr-only">
