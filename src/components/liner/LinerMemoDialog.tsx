@@ -26,14 +26,22 @@ export type LinerMemoDialogProps = {
    * `serverLinerMemoSubmit`.
    */
   onSubmit: LinerMemoSubmit;
-  /** Trigger button label. */
+  /** Trigger button label (also the accessible name). */
   label?: string;
+  /**
+   * Label shown below the `lg` breakpoint, where the paper header gets crowded
+   * (archive, delete and save sit next to it). Defaults to "라이너 메모".
+   */
+  shortLabel?: string;
 };
+
+const DEFAULT_LABEL = "라이너 메모 붙여넣기";
 
 /** "라이너 메모 붙여넣기" button + dialog: kind, pasted text, optional source link. */
 export function LinerMemoDialog({
   onSubmit,
-  label = "라이너 메모 붙여넣기",
+  label = DEFAULT_LABEL,
+  shortLabel = label === DEFAULT_LABEL ? "라이너 메모" : label,
 }: LinerMemoDialogProps) {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -75,8 +83,15 @@ export function LinerMemoDialog({
 
   return (
     <>
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        {label}
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setOpen(true)}
+        aria-label={label}
+        title={label}
+      >
+        <span className="hidden lg:inline">{label}</span>
+        <span className="lg:hidden">{shortLabel}</span>
       </Button>
       <Dialog
         open={open}
