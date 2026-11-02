@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PaperHighlights } from "@/components/highlights";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell";
 import { isValidItemId } from "@/lib/ids";
 import { papers, tags } from "@/lib/repo";
+import * as highlightsRepo from "@/lib/repo/highlights";
 import { PaperEditor } from "../_components/PaperEditor";
 import { PdfPanel } from "../_components/PdfPanel";
 
@@ -22,7 +24,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PaperPage({ params }: Props) {
   const { id } = await params;
-  const [paper, allTags] = await Promise.all([load(id), tags.listAll()]);
+  const [paper, allTags, paperHighlights] = await Promise.all([
+    load(id),
+    tags.listAll(),
+    highlightsRepo.listByPaper(id), // [] for an invalid id
+  ]);
   if (!paper) notFound();
 
   return (
@@ -41,6 +47,11 @@ export default async function PaperPage({ params }: Props) {
             lastReadAt={paper.lastReadAt}
           />
         }
+      />
+      <PaperHighlights
+        paperId={paper.id}
+        initialHighlights={paperHighlights}
+        hasPdf={Boolean(paper.pdfPath)}
       />
       <ConnectedItems item={{ type: "paper", id: paper.id }} />
     </Page>

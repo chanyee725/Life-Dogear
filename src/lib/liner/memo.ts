@@ -56,6 +56,18 @@ export function safeSourceUrl(value: string | undefined): string | null {
 }
 
 /**
+ * Link text for a source URL: its real host (without `www.`), so a link that is not
+ * from Liner never reads as "라이너". `URL` already turns IDNs into ASCII punycode.
+ * Markdown-active characters a hostname may still contain — `[` `]` (IPv6) and
+ * `*` `_` `~` `` ` `` — are backslash-escaped so they neither end the link text
+ * nor turn into emphasis, strikethrough or code.
+ */
+export function sourceLabel(url: string): string {
+  const host = new URL(url).hostname.replace(/^www\./, "");
+  return host.replace(/[\\[\]*_~`]/g, (c) => `\\${c}`);
+}
+
+/**
  * Markdown block for one memo:
  *
  * ```
@@ -64,7 +76,7 @@ export function safeSourceUrl(value: string | undefined): string | null {
  * > pasted line 1
  * > pasted line 2
  *
- * 출처: [라이너](https://…)
+ * 출처: [liner.com](https://liner.com/…)
  * ```
  *
  * The pasted text is quoted line by line, so headings inside it (`## …`) cannot
@@ -77,7 +89,7 @@ export function formatLinerMemo(entry: LinerMemoEntry): string {
     .split("\n")
     .map((line) => (line.trim() ? `> ${line}` : ">"));
   const url = safeSourceUrl(entry.sourceUrl);
-  const source = url ? `출처: [라이너](${url})` : "출처: 라이너 스콜라";
+  const source = url ? `출처: [${sourceLabel(url)}](${url})` : "출처: 라이너 스콜라";
   return [
     `### ${LINER_MEMO_KIND_LABEL[entry.kind]} · ${entry.date}`,
     "",
@@ -90,18 +102,40 @@ export function formatLinerMemo(entry: LinerMemoEntry): string {
 const SECTION_RE = /^##\s+라이너 스콜라 메모\s*#*\s*$/;
 /** Headings that close a level-2 section (`#` or `##`). */
 const SECTION_END_RE = /^#{1,2}\s/;
-const FENCE_RE = /^\s{0,3}(```|~~~)/;
+/** Fence line: the run of 3+ backticks or tildes, then anything (info string). */
+const FENCE_RE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+
+type Fence = { char: string; length: number };
+
+/**
+ * CommonMark fences: a fence closes only on the same character, at least as long
+ * as the opening run, with nothing but spaces after it. So "````" containing
+ * "```" or "~~~" stays open.
+ */
+function fenceStep(line: string, open: Fence | null): { fence: boolean; open: Fence | null } {
+  const m = FENCE_RE.exec(line);
+  if (!m) return { fence: false, open };
+  const run = m[1];
+  if (!open) {
+    // A backtick fence's info string may not contain backticks.
+    if (run[0] === "`" && m[2].includes("`")) return { fence: false, open };
+    return { fence: true, open: { char: run[0], length: run.length } };
+  }
+  if (run[0] === open.char && run.length >= open.length && !m[2].trim()) {
+    return { fence: true, open: null };
+  }
+  return { fence: false, open };
+}
 
 /** Index of the memo heading line and the line where its section ends (exclusive). */
 function findSection(lines: string[]): { start: number; end: number } | null {
-  let inFence = false;
+  let fence: Fence | null = null;
   let start = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (FENCE_RE.test(lines[i])) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    const step = fenceStep(lines[i], fence);
+    const wasOpen = fence !== null;
+    fence = step.open;
+    if (step.fence || wasOpen) continue;
     if (start === -1) {
       if (SECTION_RE.test(lines[i])) start = i;
     } else if (SECTION_END_RE.test(lines[i])) {

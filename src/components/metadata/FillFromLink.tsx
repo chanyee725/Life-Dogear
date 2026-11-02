@@ -5,6 +5,7 @@ import type { ActionResult } from "@/app/_actions/result";
 import { lookupPaperMetadata } from "@/app/_actions/metadata";
 import { safeAction } from "@/components/links/safe-action";
 import { Button, cn, Input, Spinner } from "@/components/ui";
+import { METADATA_INPUT_PLACEHOLDER } from "@/lib/metadata/messages";
 import type { PaperMetadata } from "@/lib/metadata/types";
 
 type Lookup = (input: string) => Promise<ActionResult<PaperMetadata>>;
@@ -65,7 +66,7 @@ export function FillFromLink({
               run();
             }
           }}
-          placeholder="DOI 또는 arXiv 링크 (예: 10.1145/…, arxiv.org/abs/…)"
+          placeholder={METADATA_INPUT_PLACEHOLDER}
           maxLength={500}
           aria-invalid={error ? true : undefined}
           aria-describedby={`${inputId}-status`}

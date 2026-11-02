@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
+import { FillFromLink } from "@/components/metadata/FillFromLink";
+import { applyMetadataToForm } from "@/components/metadata/apply";
 import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
@@ -13,6 +15,11 @@ import { createPaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
 
 export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [authors, setAuthors] = useState<{ version: number; list: string[] }>({
+    version: 0,
+    list: [],
+  });
   // safeAction turns a crashed or unreachable action into an inline error (redirects pass through).
   const [state, action, pending] = useActionState(
     (previous: Awaited<ReturnType<typeof createPaper>> | null, form: FormData) =>
@@ -22,6 +29,7 @@ export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
 
   return (
     <form
+      ref={formRef}
       // Submitting manually (not `action={...}`) keeps the fields when saving fails:
       // React resets uncontrolled forms after a form action.
       onSubmit={(event) => {
@@ -31,12 +39,25 @@ export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
       }}
       className="flex flex-col gap-8"
     >
+      <FillFromLink
+        onFill={(meta) => {
+          if (formRef.current) applyMetadataToForm(formRef.current, meta);
+          if (meta.authors.length) {
+            setAuthors((prev) => ({ version: prev.version + 1, list: meta.authors }));
+          }
+        }}
+      />
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field label="제목" htmlFor="paper-title" className="sm:col-span-2">
           <Input id="paper-title" name="title" required autoFocus maxLength={300} />
         </Field>
         <Field label="저자" htmlFor="paper-authors" className="sm:col-span-2">
-          <AuthorsField id="paper-authors" name="authors" />
+          <AuthorsField
+            key={authors.version}
+            id="paper-authors"
+            name="authors"
+            defaultValue={authors.list}
+          />
         </Field>
         <Field label="연도" htmlFor="paper-year">
           <Input

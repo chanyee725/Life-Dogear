@@ -26,10 +26,54 @@ function normalizeArxivId(id: string): string {
   return `${name.toLowerCase()}${subject ? `.${subject.toUpperCase()}` : ""}/${rest.toLowerCase()}`;
 }
 
-/** Drops punctuation that sticks to a DOI copied from running text. */
+const count = (s: string, ch: string) => s.split(ch).length - 1;
+
+/**
+ * Drops punctuation that sticks to a DOI copied from running text, including a
+ * closing `)`/`]` with no partner inside the DOI. Balanced brackets are kept:
+ * DOIs such as `10.1002/(SICI)1097-…` contain them legitimately.
+ */
 function trimDoi(value: string): string {
-  return value.replace(/[.,;:]+$/, "");
+  let doi = value;
+  for (;;) {
+    const next = doi.replace(/[.,;:]+$/, "");
+    const last = next.at(-1);
+    if (last === ")" && count(next, ")") > count(next, "(")) doi = next.slice(0, -1);
+    else if (last === "]" && count(next, "]") > count(next, "[")) doi = next.slice(0, -1);
+    else return next;
+  }
 }
+
+const WRAPPERS: Record<string, string> = {
+  "(": ")",
+  "[": "]",
+  "<": ">",
+  '"': '"',
+  "'": "'",
+  "“": "”",
+  "‘": "’",
+};
+
+/**
+ * `(doi:10.1/x).`, `<https://…>`, `"10.1/x"` → the inner text. Trailing sentence
+ * punctuation goes first, then matching outer pairs; a lone leading `(`/`[`/`<`
+ * whose partner is missing (it was cut off when copying) is dropped too.
+ */
+function unwrap(text: string): string {
+  let t = text.replace(/[.,;:]+$/, "");
+  while (t.length >= 2 && WRAPPERS[t[0]] === t.at(-1)) {
+    t = t
+      .slice(1, -1)
+      .trim()
+      .replace(/[.,;:]+$/, "");
+  }
+  const close = t[0] === "(" ? ")" : t[0] === "[" ? "]" : t[0] === "<" ? ">" : null;
+  if (close && count(t, t[0]) > count(t, close)) t = t.slice(1).trim();
+  return t;
+}
+
+/** `doi.org/…`, `www.arxiv.org/abs/…`: a known host typed without a scheme. */
+const SCHEMELESS_RE = /^(?:www\.|dx\.|export\.)?(?:doi\.org|arxiv\.org)\//i;
 
 function fromDoi(raw: string): Identifier | null {
   const doi = trimDoi(raw);
@@ -74,16 +118,22 @@ function fromUrl(text: string): Identifier | null {
 
 /**
  * Recognises a DOI or arXiv identifier in what the user pasted:
- * `10.1234/abc`, `doi:10.1234/abc`, `https://doi.org/10.1234/abc`,
+ * `10.1234/abc`, `doi:10.1234/abc`, `https://doi.org/10.1234/abc`, `doi.org/10.1234/abc`,
  * `https://arxiv.org/abs/2101.00001v2`, `https://arxiv.org/pdf/2101.00001.pdf`,
- * `arXiv:2101.00001`, `2101.00001`, `hep-th/9901001`.
+ * `arxiv.org/abs/2101.00001`, `arXiv:2101.00001`, `2101.00001`, `hep-th/9901001`,
+ * also wrapped in brackets or quotes as in `(doi:10.1234/abc)`.
  * arXiv DOIs (`10.48550/arXiv.…`) are routed to arXiv. Returns null otherwise.
  */
 export function parseIdentifier(input: string): Identifier | null {
-  const text = input.trim();
-  if (!text || text.length > MAX_INPUT_LENGTH) return null;
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (trimmed.length > MAX_INPUT_LENGTH) return null;
+  const text = unwrap(trimmed);
+  if (!text) return null;
 
   if (/^https?:\/\//i.test(text)) return fromUrl(text);
+  // Hosts stay fixed: fromUrl only accepts the DOI and arXiv hosts listed above.
+  if (SCHEMELESS_RE.test(text)) return fromUrl(`https://${text}`);
 
   const doiPrefixed = /^doi:\s*(.+)$/i.exec(text);
   if (doiPrefixed) return fromDoi(doiPrefixed[1]);

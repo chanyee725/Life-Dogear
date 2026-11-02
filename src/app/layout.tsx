@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { CommandPalette } from "@/components/search/CommandPalette";
+import { SearchButton } from "@/components/search/SearchButton";
 import { Shortcuts } from "@/components/shell/Shortcuts";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { themeInitScript } from "@/components/shell/theme";
@@ -32,9 +34,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="flex min-h-dvh">
-        <Sidebar />
+        <Sidebar searchSlot={<SearchButton />} />
         <main className="min-w-0 flex-1">{children}</main>
         <Shortcuts />
+        <CommandPalette />
       </body>
     </html>
   );

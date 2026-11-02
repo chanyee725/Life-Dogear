@@ -23,7 +23,7 @@ describe("addLinerMemo", () => {
     const saved = await papers.get(id);
     expect(result.ok && result.data.body).toBe(saved?.body);
     expect(saved?.body).toMatch(
-      /## 라이너 스콜라 메모\n\n### 요약 · \d{4}-\d{2}-\d{2}\n\n> 핵심 요약\n\n출처: \[라이너\]\(https:\/\/liner\.com\/x\)\n$/,
+      /## 라이너 스콜라 메모\n\n### 요약 · \d{4}-\d{2}-\d{2}\n\n> 핵심 요약\n\n출처: \[liner\.com\]\(https:\/\/liner\.com\/x\)\n$/,
     );
     // The rest of the template is untouched.
     expect(saved?.body.startsWith("## 왜 읽나")).toBe(true);
@@ -47,5 +47,28 @@ describe("addLinerMemo", () => {
       ok: false,
       error: "논문을 찾을 수 없습니다.",
     });
+  });
+
+  it("keeps both memos when two are saved at the same time", async () => {
+    const { id } = await papers.create({ title: "동시 저장" });
+    const results = await Promise.all([
+      addLinerMemo(id, { kind: "answer", text: "첫 번째 답변" }),
+      addLinerMemo(id, { kind: "highlight", text: "두 번째 하이라이트" }),
+    ]);
+    expect(results.every((r) => r.ok)).toBe(true);
+    const body = (await papers.get(id))!.body;
+    expect(body).toContain("> 첫 번째 답변");
+    expect(body).toContain("> 두 번째 하이라이트");
+    expect(body.match(/## 라이너 스콜라 메모/g)).toHaveLength(1);
+  });
+
+  it("rejects a memo that would make the body too long, leaving it unchanged", async () => {
+    const { id } = await papers.create({ title: "긴 본문" });
+    await papers.update(id, { body: "가".repeat(499_990) });
+    expect(await addLinerMemo(id, { kind: "summary", text: "넘치는 요약" })).toEqual({
+      ok: false,
+      error: "본문이 너무 길어 저장할 수 없습니다.",
+    });
+    expect((await papers.get(id))!.body).toHaveLength(499_990);
   });
 });

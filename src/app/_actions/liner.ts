@@ -3,13 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { MAX_BODY, parseId } from "@/app/_actions/parse";
 import { runAction, type ActionResult } from "@/app/_actions/result";
-import {
-  appendLinerMemoEntry,
-  LINER_MEMO_INPUT_MESSAGES,
-  validateLinerMemoInput,
-  type LinerMemoKind,
-} from "@/lib/liner";
-import { papers, RepoError } from "@/lib/repo";
+import { LINER_MEMO_INPUT_MESSAGES, validateLinerMemoInput, type LinerMemoKind } from "@/lib/liner";
+import { appendLinerMemoToPaper } from "@/lib/liner/store";
+import { RepoError } from "@/lib/repo";
 
 export type LinerMemoInput = { kind: LinerMemoKind; text: string; sourceUrl?: string };
 
@@ -28,19 +24,21 @@ export async function addLinerMemo(
     const problem = validateLinerMemoInput({ kind: v.kind, text: v.text, sourceUrl: v.sourceUrl });
     if (problem) throw new RepoError("invalid", LINER_MEMO_INPUT_MESSAGES[problem]);
 
-    const paper = await papers.get(id);
-    if (!paper) throw new RepoError("not_found", "논문을 찾을 수 없습니다.");
-
-    const body = appendLinerMemoEntry(paper.body, {
-      kind: v.kind as LinerMemoKind,
-      text: v.text as string,
-      sourceUrl: typeof v.sourceUrl === "string" ? v.sourceUrl : undefined,
-    });
-    if (body.length > MAX_BODY)
-      throw new RepoError("invalid", "본문이 너무 길어 저장할 수 없습니다.");
-
-    const updated = await papers.update(id, { body });
-    if (!updated) throw new RepoError("not_found", "논문을 찾을 수 없습니다.");
+    const saved = await appendLinerMemoToPaper(
+      id,
+      {
+        kind: v.kind as LinerMemoKind,
+        text: v.text as string,
+        sourceUrl: typeof v.sourceUrl === "string" ? v.sourceUrl : undefined,
+      },
+      { maxBody: MAX_BODY },
+    );
+    if (!saved.ok) {
+      throw saved.reason === "not_found"
+        ? new RepoError("not_found", "논문을 찾을 수 없습니다.")
+        : new RepoError("invalid", "본문이 너무 길어 저장할 수 없습니다.");
+    }
+    const { body } = saved;
     revalidatePath(`/papers/${id}`);
     revalidatePath("/papers");
     return { body };

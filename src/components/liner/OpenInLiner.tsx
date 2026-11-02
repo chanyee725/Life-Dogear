@@ -27,7 +27,8 @@ export function OpenInLiner({ title }: { title: string }) {
   }
 
   return (
-    <span className="inline-flex flex-col items-start gap-1">
+    // The notice floats under the button so it never shifts the row it sits in.
+    <span className="relative inline-flex">
       <a
         href={buildLinerSearchUrl(trimmed)}
         target="_blank"
@@ -38,7 +39,10 @@ export function OpenInLiner({ title }: { title: string }) {
       >
         라이너에서 열기 ↗
       </a>
-      <span aria-live="polite" className="text-xs text-faint">
+      <span
+        aria-live="polite"
+        className="absolute top-full right-0 z-10 mt-1 text-xs whitespace-nowrap text-faint"
+      >
         {message}
       </span>
     </span>

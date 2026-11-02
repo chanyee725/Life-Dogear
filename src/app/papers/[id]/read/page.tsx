@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PdfViewer } from "@/components/pdf/PdfViewer";
+import { HighlightReader } from "@/components/highlights";
 import { FocusModeToggle } from "@/components/shell/FocusModeToggle";
 import { Page, PageHeader } from "@/components/shell";
+import { parseJumpParams } from "@/lib/highlights";
 import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
+import * as highlightsRepo from "@/lib/repo/highlights";
 import { PdfDropZone } from "../../_components/PdfUploader";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 async function load(id: string) {
   return isValidItemId(id) ? papers.get(id) : null;
@@ -21,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: paper ? `${paper.title} 읽기` : "논문" };
 }
 
-export default async function ReadPaperPage({ params }: Props) {
+export default async function ReadPaperPage({ params, searchParams }: Props) {
   const { id } = await params;
   const paper = await load(id);
   if (!paper) notFound();
@@ -57,15 +62,21 @@ export default async function ReadPaperPage({ params }: Props) {
   // setPdf bumps updatedAt, so a replaced file gets a fresh viewer and URL;
   // saving the reading position does not.
   const version = encodeURIComponent(paper.updatedAt);
+  // `?page=N[&scroll=0–1]` (highlight list, search palette) overrides the saved position.
+  const jump = parseJumpParams(await searchParams);
+  const highlights = await highlightsRepo.listByPaper(paper.id);
 
   return (
     <div className="flex h-dvh flex-col">
-      <PdfViewer
-        key={paper.updatedAt}
+      <HighlightReader
+        // A new ?page= jump (e.g. from the search palette) remounts at that position.
+        key={`${paper.updatedAt}:${jump?.page ?? ""}:${jump?.scroll ?? ""}`}
+        paperId={paper.id}
+        initialHighlights={highlights}
         file={`/api/papers/${paper.id}/pdf?v=${version}`}
         progressUrl={`/api/papers/${paper.id}/progress`}
-        initialPage={paper.lastPage}
-        initialScroll={paper.lastScroll}
+        initialPage={jump?.page ?? paper.lastPage}
+        initialScroll={jump ? jump.scroll : paper.lastScroll}
         initialReadAt={paper.lastReadAt}
         // Focus mode hides the sidebar (remembered); the reader then fills the width.
         toolbarEnd={<FocusModeToggle />}

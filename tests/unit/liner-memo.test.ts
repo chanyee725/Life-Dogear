@@ -4,6 +4,7 @@ import {
   appendLinerMemoEntry,
   buildLinerSearchUrl,
   formatLinerMemo,
+  sourceLabel,
   formatLocalDate,
   LINER_SCHOLAR_URL,
   LINER_SECTION_HEADING,
@@ -32,7 +33,7 @@ describe("formatLinerMemo", () => {
         ">",
         "> ## 머리말처럼 보이는 줄",
         "",
-        "출처: [라이너](https://liner.com/review/abc%281%29%20x)",
+        "출처: [liner.com](https://liner.com/review/abc%281%29%20x)",
       ].join("\n"),
     );
   });
@@ -43,6 +44,32 @@ describe("formatLinerMemo", () => {
         "### 답변 · 2026-01-02\n\n> 답\n\n출처: 라이너 스콜라",
       );
     }
+  });
+});
+
+describe("sourceLabel", () => {
+  it("shows the real host, so non-Liner links never read as Liner", () => {
+    expect(sourceLabel("https://liner.com/x")).toBe("liner.com");
+    expect(sourceLabel("https://www.liner.com/x")).toBe("liner.com");
+    expect(sourceLabel("https://getliner.com/a")).toBe("getliner.com");
+    expect(sourceLabel("https://example.org/liner")).toBe("example.org");
+    expect(sourceLabel("http://[::1]:3000/x")).toBe("\\[::1\\]");
+    // Hostnames may legally contain * _ ~ ` (the URL parser keeps them).
+    expect(sourceLabel("https://my_site*x~y`z.example/p")).toBe("my\\_site\\*x\\~y\\`z.example");
+    // IDN hosts come out as ASCII punycode (no lookalike Hangul "라이너" text).
+    expect(sourceLabel(new URL("https://라이너.example/x").href)).toMatch(
+      /^xn--[a-z0-9-]+\.example$/,
+    );
+  });
+
+  it("is used as the link text of the source line", () => {
+    const block = formatLinerMemo({
+      kind: "answer",
+      text: "답",
+      date: "2026-11-02",
+      sourceUrl: "https://example.org/page",
+    });
+    expect(block.endsWith("출처: [example.org](https://example.org/page)")).toBe(true);
   });
 });
 
@@ -97,6 +124,22 @@ describe("appendLinerMemo", () => {
     expect(appendLinerMemo(body, BLOCK)).toBe(
       `## 라이너 스콜라 메모\n\n\`\`\`md\n## not a heading\n\`\`\`\n\n${BLOCK}\n\n## 다음\n`,
     );
+  });
+
+  it.each([
+    ["a shorter run", "````\n```\n## 라이너 스콜라 메모\n````\n"],
+    ["the other fence character", "```\n~~~\n## 라이너 스콜라 메모\n```\n"],
+    ["a run followed by text", "~~~\n~~~ not closing\n## 라이너 스콜라 메모\n~~~\n"],
+  ])("does not close a fence on %s", (_label, body) => {
+    // The look-alike heading stays inside the fence, so a new section is added at the end.
+    const out = appendLinerMemo(body, BLOCK);
+    expect(out.startsWith(body.trimEnd())).toBe(true);
+    expect(out.endsWith(`\n\n${LINER_SECTION_HEADING}\n\n${BLOCK}\n`)).toBe(true);
+  });
+
+  it("closes a fence on a longer run of the same character", () => {
+    const body = "```\ncode\n`````\n\n## 라이너 스콜라 메모\n\n### 이전\n";
+    expect(appendLinerMemo(body, BLOCK)).toBe(`${body.trimEnd()}\n\n${BLOCK}\n`);
   });
 
   it("normalises CRLF bodies", () => {

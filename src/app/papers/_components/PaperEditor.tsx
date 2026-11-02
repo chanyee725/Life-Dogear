@@ -9,8 +9,12 @@ import { TagInput } from "@/components/fields/TagInput";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { DetailBody, DetailHeader, SaveStatus, TitleInput } from "@/components/fields/ItemDetail";
 import { Properties, Property } from "@/components/fields/Properties";
+import { LinerMemoDialog, OpenInLiner } from "@/components/liner";
+import { FillFromLink } from "@/components/metadata/FillFromLink";
+import { metadataToFields } from "@/components/metadata/apply";
 import { Button, buttonClass, cn, Input } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
+import { appendLinerMemoEntry } from "@/lib/liner";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import type { Paper } from "@/lib/repo/papers";
 import { updatePaper } from "../actions";
@@ -57,6 +61,17 @@ export function PaperEditor({
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [titleEmpty, setTitleEmpty] = useState(false);
+  // "링크로 채우기": filled values replace the defaults; uncontrolled fields remount.
+  const [fillVersion, setFillVersion] = useState(0);
+  const [filled, setFilled] = useState<Partial<PatchInput>>({});
+  const current = {
+    authors: paper.authors,
+    year: paper.year?.toString() ?? "",
+    venue: paper.venue,
+    doi: paper.doi,
+    url: paper.url,
+    ...filled,
+  };
   const [yearInvalid, setYearInvalid] = useState(false);
   const paperId = paper.id;
 
@@ -151,6 +166,15 @@ export function PaperEditor({
           }
           actions={
             <>
+              <OpenInLiner title={title} />
+              <LinerMemoDialog
+                onSubmit={(input) => {
+                  const next = appendLinerMemoEntry(body, input);
+                  setBody(next);
+                  change({ body: next });
+                  return null;
+                }}
+              />
               <ArchivePaperButton paperId={paper.id} archived={Boolean(paper.archivedAt)} />
               <DeletePaperButton paperId={paper.id} title={paper.title} />
               <Button variant="primary" size="sm" onClick={saveNow} className="ml-1">
@@ -191,11 +215,23 @@ export function PaperEditor({
         ) : null}
       </div>
 
+      <FillFromLink
+        onFill={(meta) => {
+          const f = metadataToFields(meta);
+          setTitle(f.title);
+          setTitleEmpty(false);
+          setFilled((prev) => ({ ...prev, ...f }));
+          setFillVersion((v) => v + 1);
+          change(f);
+        }}
+      />
+
       <Properties>
         <Property label="저자" htmlFor="paper-authors">
           <AuthorsField
+            key={`authors-${fillVersion}`}
             id="paper-authors"
-            defaultValue={paper.authors}
+            defaultValue={current.authors}
             onCommit={(authors) => {
               if (authors.join("\n") !== (queue.pending().authors ?? paper.authors).join("\n")) {
                 change({ authors });
@@ -204,9 +240,10 @@ export function PaperEditor({
           />
         </Property>
         <TextField
+          key={`year-${fillVersion}`}
           id="paper-year"
           label="연도"
-          defaultValue={paper.year?.toString() ?? ""}
+          defaultValue={current.year}
           inputMode="numeric"
           placeholder="2024"
           // Queue only complete values so a half-typed year doesn't block other saves.
@@ -218,22 +255,25 @@ export function PaperEditor({
           }}
         />
         <TextField
+          key={`venue-${fillVersion}`}
           id="paper-venue"
           label="학술지·학회"
-          defaultValue={paper.venue}
+          defaultValue={current.venue}
           onChange={(venue) => change({ venue })}
         />
         <TextField
+          key={`doi-${fillVersion}`}
           id="paper-doi"
           label="DOI"
-          defaultValue={paper.doi}
+          defaultValue={current.doi}
           placeholder="10.xxxx/xxxxx"
           onChange={(doi) => change({ doi })}
         />
         <TextField
+          key={`url-${fillVersion}`}
           id="paper-url"
           label="링크"
-          defaultValue={paper.url}
+          defaultValue={current.url}
           placeholder="https://"
           onChange={(url) => change({ url })}
           after={

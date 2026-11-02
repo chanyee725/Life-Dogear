@@ -4,19 +4,48 @@ import { parseIdentifier, stripArxivVersion } from "./parse";
 import type { FetchLike, Identifier, MetadataResult } from "./types";
 
 export const DEFAULT_TIMEOUT_MS = 8_000;
-/** Larger bodies are not bibliographic records we want to parse. */
-export const MAX_RESPONSE_BYTES = 5_000_000;
+/** Larger bodies are not bibliographic records we want to parse (a record is a few KB). */
+export const MAX_RESPONSE_BYTES = 2_000_000;
 /** Polite identification for Crossref/arXiv. App name only — no contact address. */
 export const USER_AGENT = "ResearchBrain/0.1 (personal research notes app)";
 
 export type LookupOptions = {
   fetch?: FetchLike;
   timeoutMs?: number;
+  /** Byte limit for one response body (default MAX_RESPONSE_BYTES). */
+  maxBytes?: number;
 };
 
 type Fetched = { ok: true; status: number; text: string } | Extract<MetadataResult, { ok: false }>;
 
 class TooLarge extends Error {}
+
+/**
+ * Reads the body as UTF-8, stopping (and cancelling the stream) as soon as more than
+ * `maxBytes` arrived, so an oversized or endless response never sits in memory whole.
+ */
+async function readCapped(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) {
+    const text = await res.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) throw new TooLarge();
+    return text;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let received = 0;
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new TooLarge();
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
 
 /** One GET with a deadline covering both the request and reading the body. */
 async function get(url: string, accept: string, opts: LookupOptions): Promise<Fetched> {
@@ -36,10 +65,13 @@ async function get(url: string, accept: string, opts: LookupOptions): Promise<Fe
       redirect: "follow",
       cache: "no-store",
     });
+    const maxBytes = opts.maxBytes ?? MAX_RESPONSE_BYTES;
     const declared = Number(res.headers.get("content-length") ?? 0);
-    if (declared > MAX_RESPONSE_BYTES) throw new TooLarge();
-    const text = await res.text();
-    if (text.length > MAX_RESPONSE_BYTES) throw new TooLarge();
+    if (declared > maxBytes) {
+      await res.body?.cancel().catch(() => undefined);
+      throw new TooLarge();
+    }
+    const text = await readCapped(res, maxBytes);
     return { ok: true, status: res.status, text };
   } catch (error) {
     if (timedOut) return { ok: false, code: "timeout" };

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { parseArxivAtom } from "@/lib/metadata/arxiv";
 import { crossrefUrl, normalizeCrossref } from "@/lib/metadata/crossref";
-import { lookupMetadata, USER_AGENT } from "@/lib/metadata/lookup";
+import { lookupMetadata, MAX_RESPONSE_BYTES, USER_AGENT } from "@/lib/metadata/lookup";
 import { METADATA_ERROR_MESSAGES } from "@/lib/metadata/messages";
 import type { FetchLike } from "@/lib/metadata/types";
 
@@ -195,6 +195,55 @@ describe("lookupMetadata", () => {
     });
     expect(
       await lookupMetadata("10.1000/x", respond("{}", 200, { "content-length": "99999999" })),
+    ).toEqual({ ok: false, code: "parse_error" });
+  });
+
+  it("stops reading a streamed body past the byte limit, without content-length", async () => {
+    let pulled = 0;
+    let cancelled = false;
+    const chunk = new Uint8Array(64 * 1024).fill(0x20);
+    // An endless stream: only the cap can end the read.
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled++;
+        controller.enqueue(chunk);
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const fetch: FetchLike = async () => new Response(endless, { status: 200 });
+    expect(await lookupMetadata("10.1000/x", { fetch })).toEqual({
+      ok: false,
+      code: "parse_error",
+    });
+    expect(cancelled).toBe(true);
+    expect(pulled * chunk.byteLength).toBeLessThan(MAX_RESPONSE_BYTES + 4 * chunk.byteLength);
+  });
+
+  it("counts bytes, not characters, and decodes characters split across chunks", async () => {
+    const body = JSON.stringify(JSON.parse(CROSSREF));
+    const bytes = new TextEncoder().encode(body.replace("Learning", "학습"));
+    const chunked = (data: Uint8Array) =>
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          // 1-byte chunks split every multi-byte Hangul syllable.
+          for (const b of data) controller.enqueue(new Uint8Array([b]));
+          controller.close();
+        },
+      });
+    const ok = await lookupMetadata("10.1000/x", {
+      fetch: async () => new Response(chunked(bytes)),
+    });
+    expect(ok).toMatchObject({ ok: true, data: { title: expect.stringContaining("학습") } });
+
+    // Hangul is 3 bytes in UTF-8: fewer characters than the limit, more bytes.
+    const hangul = new TextEncoder().encode("가".repeat(400));
+    expect(
+      await lookupMetadata("10.1000/x", {
+        fetch: async () => new Response(chunked(hangul)),
+        maxBytes: 1_000,
+      }),
     ).toEqual({ ok: false, code: "parse_error" });
   });
 
