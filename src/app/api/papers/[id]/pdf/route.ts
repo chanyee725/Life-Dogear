@@ -9,7 +9,15 @@ import {
   writePdf,
 } from "@/lib/storage/pdf";
 import { parseRange } from "@/lib/storage/range";
-import { errorResponse, invalidId, jsonError, notFound, type IdParams } from "../../_lib/responses";
+import { isSameOriginRequest } from "../../_lib/origin";
+import {
+  errorResponse,
+  forbidden,
+  invalidId,
+  jsonError,
+  notFound,
+  type IdParams,
+} from "../../_lib/responses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +32,8 @@ const BASE_HEADERS = {
   // The file can be replaced under the same URL.
   "Cache-Control": "private, no-cache",
   "X-Content-Type-Options": "nosniff",
+  // Neutralises scripts if the file is ever opened directly as a document.
+  "Content-Security-Policy": "sandbox",
 };
 
 /** Streams the paper's PDF, honouring single `Range` requests. */
@@ -64,6 +74,7 @@ export async function GET(request: NextRequest, { params }: IdParams) {
 
 /** Uploads or replaces the PDF (multipart field `file`). */
 export async function POST(request: NextRequest, { params }: IdParams) {
+  if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
   if (!isValidPaperId(id)) return invalidId();
 
@@ -97,7 +108,8 @@ export async function POST(request: NextRequest, { params }: IdParams) {
 }
 
 /** Detaches and deletes the PDF. */
-export async function DELETE(_request: NextRequest, { params }: IdParams) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
+  if (!isSameOriginRequest(request.headers)) return forbidden();
   const { id } = await params;
   if (!isValidPaperId(id)) return invalidId();
   try {
