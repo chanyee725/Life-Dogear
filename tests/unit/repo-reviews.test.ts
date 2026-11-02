@@ -25,21 +25,19 @@ async function seedGoals() {
     updatedAt: T,
     ...extra,
   });
-  await db
-    .insert(goals)
-    .values([
-      goal("seed-life", { horizon: "life", title: "좋은 연구자" }),
-      goal("seed-y2026", {
-        horizon: "year",
-        period: "2026",
-        parentId: "seed-life",
-        title: "논문 게재",
-      }),
-      goal("seed-q4", { period: "2026-Q4", parentId: "seed-y2026", title: "학회 제출본" }),
-      goal("seed-q3", { period: "2026-Q3", parentId: "seed-y2026", status: "achieved" }),
-      goal("seed-q1-next", { period: "2027-Q1" }),
-      goal("seed-q4-manual", { period: "2026-Q4", progressMode: "manual", manualProgress: 40 }),
-    ]);
+  await db.insert(goals).values([
+    goal("seed-life", { horizon: "life", title: "좋은 연구자" }),
+    goal("seed-y2026", {
+      horizon: "year",
+      period: "2026",
+      parentId: "seed-life",
+      title: "논문 게재",
+    }),
+    goal("seed-q4", { period: "2026-Q4", parentId: "seed-y2026", title: "학회 제출본" }),
+    goal("seed-q3", { period: "2026-Q3", parentId: "seed-y2026", status: "achieved" }),
+    goal("seed-q1-next", { period: "2027-Q1" }),
+    goal("seed-q4-manual", { period: "2026-Q4", progressMode: "manual", manualProgress: 40 }),
+  ]);
   const a = await projects.create({ title: "A" });
   const b = await projects.create({ title: "B" });
   await db.update(projectsTable).set({ goalId: "seed-q4" });
