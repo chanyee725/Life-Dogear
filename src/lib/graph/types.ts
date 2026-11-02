@@ -31,8 +31,8 @@ export const DEFAULT_GRAPH_NODE_TYPES: readonly GraphNodeType[] = [
 /** `"<type>:<id>"`. */
 export type GraphNodeId = `${GraphNodeType}:${string}`;
 
-/** Goal horizon: `"life"`, a year (`"2027"`) or a quarter (`"2027-Q1"`). */
-export type GoalHorizon = string;
+/** Goal horizon (`goals.horizon`). */
+export type GoalHorizon = "life" | "year" | "quarter";
 
 export type GraphNode = {
   id: GraphNodeId;
@@ -45,6 +45,8 @@ export type GraphNode = {
   areaId?: string;
   /** Goals only. */
   horizon?: GoalHorizon;
+  /** Goals (`2027`, `2027-Q1`; absent for life goals) and reviews (`2026-W45`, `2026-11`, …). */
+  period?: string;
 };
 
 /**
