@@ -4,6 +4,7 @@
  *
  * Node ids are `"<type>:<id>"`, e.g. `"project:3f2c…"`, `"tag:9a1b…"`.
  */
+import type { GoalHorizon } from "@/lib/enums";
 
 /** Item kinds that can appear as graph nodes. `tag` is a topic node (off by default). */
 export const GRAPH_NODE_TYPES = [
@@ -31,8 +32,7 @@ export const DEFAULT_GRAPH_NODE_TYPES: readonly GraphNodeType[] = [
 /** `"<type>:<id>"`. */
 export type GraphNodeId = `${GraphNodeType}:${string}`;
 
-/** Goal horizon (`goals.horizon`). */
-export type GoalHorizon = "life" | "year" | "quarter";
+export type { GoalHorizon };
 
 export type GraphNode = {
   id: GraphNodeId;
@@ -84,11 +84,17 @@ export type GraphFilter = {
   orphans?: boolean;
 };
 
-/** Query of `GET /api/graph/local?node=<type>:<id>&depth=1|2`. Response: `GraphData`. */
+/**
+ * Query of `GET /api/graph/local?node=<type>:<id>&depth=1|2` (item nodes only; `tag:` → 400).
+ * Response: `LocalGraphData`.
+ */
 export type LocalGraphQuery = {
   node: GraphNodeId;
   depth: 1 | 2;
 };
+
+/** Local graph response; capped at 500 nodes, `truncated` when neighbours were left out. */
+export type LocalGraphData = GraphData & { truncated: boolean };
 
 /** Saved node position (`graph_layout`). */
 export type GraphPosition = { node: GraphNodeId; x: number; y: number };

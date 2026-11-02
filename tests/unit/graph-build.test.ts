@@ -138,11 +138,50 @@ describe("buildGraph", () => {
     expect(buildGraph(SOURCE, { area: "missing" }).nodes).toEqual([]);
   });
 
-  it("orphans: items with no connections, ignoring topic edges", () => {
+  it("orphans: judged on every non-topic edge, whatever the filters", () => {
     const g = buildGraph(SOURCE, { orphans: true, types: ["area", "seminar", "paper", "tag"] });
-    // area A loses its members (not requested); paper has only hidden-type links.
-    expect(ids(g)).toEqual(["area:A", "area:B", "paper:x", "seminar:s"]);
+    // area A has members (hidden type) and paper x has links: both count as connected.
+    // seminar s only has a topic edge, area B nothing.
+    expect(ids(g)).toEqual(["area:B", "seminar:s"]);
     expect(g.edges).toEqual([]);
+
+    // A link to an archived item is still a connection.
+    const lone = buildGraph(
+      {
+        items: [
+          item("paper", "a"),
+          item("thought", "gone", { archived: true }),
+          item("paper", "b"),
+        ],
+        links: [{ sourceType: "paper", sourceId: "a", targetType: "thought", targetId: "gone" }],
+      },
+      { orphans: true },
+    );
+    expect(ids(lone)).toEqual(["paper:b"]);
+  });
+
+  it("drops topic nodes with no visible edge (tags used only by archived items)", () => {
+    const source: GraphSource = {
+      items: [item("paper", "live"), item("paper", "old", { archived: true })],
+      links: [],
+      tags: [
+        { id: "t1", name: "살아 있음" },
+        { id: "t2", name: "보관만" },
+      ],
+      itemTags: [
+        { itemType: "paper", itemId: "live", tagId: "t1" },
+        { itemType: "paper", itemId: "old", tagId: "t2" },
+      ],
+    };
+    expect(ids(buildGraph(source, { types: ["paper", "tag"] }))).toEqual(["paper:live", "tag:t1"]);
+    expect(ids(buildGraph(source, { types: ["paper", "tag"], archived: true }))).toEqual([
+      "paper:live",
+      "paper:old",
+      "tag:t1",
+      "tag:t2",
+    ]);
+    // Tag nodes without any visible item (papers hidden) are dropped too.
+    expect(ids(buildGraph(source, { types: ["thought", "tag"] }))).toEqual([]);
   });
 
   it("dedupes edges in either direction", () => {
@@ -178,6 +217,27 @@ describe("buildGraph", () => {
 });
 
 describe("buildLocalGraph", () => {
+  it("caps the node count, keeping the closest neighbours, and flags truncation", () => {
+    const items = [item("project", "hub")];
+    const links: GraphSource["links"] = [];
+    for (let i = 0; i < 10; i++) {
+      items.push(item("paper", `n${i}`), item("thought", `m${i}`));
+      links.push(
+        { sourceType: "project", sourceId: "hub", targetType: "paper", targetId: `n${i}` },
+        { sourceType: "paper", sourceId: `n${i}`, targetType: "thought", targetId: `m${i}` },
+      );
+    }
+    const full = buildLocalGraph({ items, links }, "project:hub", 2);
+    expect(full.nodes).toHaveLength(21);
+    expect(full.truncated).toBe(false);
+
+    const capped = buildLocalGraph({ items, links }, "project:hub", 2, 15);
+    expect(capped.nodes).toHaveLength(15);
+    expect(capped.truncated).toBe(true);
+    // All ten 1-step neighbours made it in before any 2-step one.
+    expect(capped.nodes.filter((n) => n.type === "paper")).toHaveLength(10);
+  });
+
   it("returns 1-step neighbours without archived ones", () => {
     const g = buildLocalGraph(SOURCE, "paper:x", 1);
     expect(ids(g)).toEqual(["paper:x", "project:p", "thought:t"]);
@@ -199,6 +259,10 @@ describe("buildLocalGraph", () => {
 
   it("keeps an archived center and returns nothing for an unknown one", () => {
     expect(ids(buildLocalGraph(SOURCE, "thought:old", 1))).toEqual(["paper:x", "thought:old"]);
-    expect(buildLocalGraph(SOURCE, "paper:none", 2)).toEqual({ nodes: [], edges: [] });
+    expect(buildLocalGraph(SOURCE, "paper:none", 2)).toEqual({
+      nodes: [],
+      edges: [],
+      truncated: false,
+    });
   });
 });

@@ -147,6 +147,18 @@ describe("GET /api/graph", () => {
   });
 });
 
+describe("graph reads are same-origin only", () => {
+  it("rejects cross-site GETs with 403", async () => {
+    await seedGoals();
+    const cross = (path: string) =>
+      new NextRequest(`http://localhost:3000/api/graph${path}`, { headers: CROSS_SITE });
+    expect((await graphRoute.GET(cross(""))).status).toBe(403);
+    expect((await localRoute.GET(cross(`/local?node=goal:${LIFE}`))).status).toBe(403);
+    const same = new NextRequest("http://localhost:3000/api/graph", { headers: SAME_ORIGIN });
+    expect((await graphRoute.GET(same)).status).toBe(200);
+  });
+});
+
 describe("GET /api/graph/local", () => {
   it("returns the neighbourhood, 400 for bad ids and 404 for missing nodes", async () => {
     await seedGoals();
@@ -155,6 +167,8 @@ describe("GET /api/graph/local", () => {
     const body = (await res.json()) as GraphResponse;
     expect(body.nodes.map((n) => n.id).sort()).toEqual([`goal:${LIFE}`, `goal:${YEAR}`]);
 
+    res = await localRoute.GET(get(`/local?node=tag:${LIFE}`));
+    expect(res.status).toBe(400);
     res = await localRoute.GET(get("/local?node=goal:nope"));
     expect(res.status).toBe(400);
     res = await localRoute.GET(get("/local?node=paper:seed-missing"));
@@ -184,13 +198,17 @@ describe("/api/graph/layout", () => {
         await put({
           positions: [
             { node: `goal:${LIFE}`, x: 10, y: 20 },
-            // A deleted item's stale position is stored but never returned.
+            // Positions of items that do not exist are dropped on save.
             { node: "paper:seed-deleted", x: 5, y: 5 },
           ],
         })
       ).status,
     ).toBe(204);
-    expect(await db.select().from(graphLayout)).toHaveLength(2);
+    expect(await db.select().from(graphLayout)).toHaveLength(1);
+    // A stale row (item deleted after saving) is never returned.
+    await db
+      .insert(graphLayout)
+      .values({ nodeType: "paper", nodeId: "seed-deleted", x: 0, y: 0, updatedAt: T });
 
     const body = (await (await graphRoute.GET(get(""))).json()) as GraphResponse;
     expect(body.positions).toEqual([{ node: `goal:${LIFE}`, x: 10, y: 20 }]);
@@ -205,6 +223,10 @@ describe("/api/graph/layout", () => {
     expect((await del(CROSS_SITE)).status).toBe(403);
     expect((await put("{not json")).status).toBe(400);
     expect((await put({ positions: [{ node: "x", x: 1, y: 2 }] })).status).toBe(400);
+    // Byte limit, not string length: 2-byte characters push it over.
+    const big = JSON.stringify({ positions: [], pad: "가".repeat(700_000) });
+    expect(big.length).toBeLessThan(2_000_000);
+    expect((await put(big)).status).toBe(413);
     expect(await db.select().from(graphLayout)).toHaveLength(0);
   });
 });

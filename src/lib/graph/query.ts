@@ -48,7 +48,8 @@ export function parseNodeRef(value: unknown): { type: GraphNodeType; id: string 
 
 export function parseLocalQuery(params: URLSearchParams): LocalGraphQuery | null {
   const ref = parseNodeRef(params.get("node"));
-  if (!ref) return null;
+  // Topic nodes have no detail screen, so no local graph.
+  if (!ref || ref.type === "tag") return null;
   const depth = params.get("depth") === "2" ? 2 : 1;
   return { node: `${ref.type}:${ref.id}` as GraphNodeId, depth };
 }
