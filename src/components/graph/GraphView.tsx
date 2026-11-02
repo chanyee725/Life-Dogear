@@ -462,7 +462,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
               배치 초기화
             </Button>
           ) : null}
-          <Link href="/goals" className={buttonClass("ghost", "sm")}>
+          <Link href="/goals?view=map" className={buttonClass("ghost", "sm")}>
             목표 지도로 보기
           </Link>
         </div>

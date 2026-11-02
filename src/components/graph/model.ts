@@ -5,7 +5,7 @@
  */
 import {
   DEFAULT_GRAPH_NODE_TYPES,
-  GRAPH_NODE_TYPES,
+  GRAPH_NODE_TYPE_ORDER,
   type GraphData,
   type GraphEdge,
   type GraphFilter,
@@ -28,7 +28,7 @@ export const GRAPH_TYPE_LABEL: Record<GraphNodeType, string> = {
 };
 
 /** Filter chip order; reviews and topics come after a divider and start off. */
-export const GRAPH_TYPE_ORDER: readonly GraphNodeType[] = GRAPH_NODE_TYPES;
+export const GRAPH_TYPE_ORDER: readonly GraphNodeType[] = GRAPH_NODE_TYPE_ORDER;
 export const OPT_IN_TYPES: readonly GraphNodeType[] = ["review", "tag"];
 
 /** Goal label with its horizon, e.g. "연 목표 2027". */
@@ -97,7 +97,7 @@ export function paraColumns(shown: Iterable<GraphNodeType>): ParaColumn[] {
 
 /** Column x per type (types without a column map to 0). */
 export function paraXByType(columns: readonly ParaColumn[]): Record<GraphNodeType, number> {
-  const out = Object.fromEntries(GRAPH_NODE_TYPES.map((t) => [t, 0])) as Record<
+  const out = Object.fromEntries(GRAPH_NODE_TYPE_ORDER.map((t) => [t, 0])) as Record<
     GraphNodeType,
     number
   >;
