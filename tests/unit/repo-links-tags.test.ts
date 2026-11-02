@@ -20,8 +20,12 @@ describe("links", () => {
     expect(await links.link(R, P)).toEqual(first);
     expect(await db.select().from(linksTable)).toHaveLength(1);
 
-    expect(await links.listConnected(P)).toEqual([{ ref: R, type: "project", title: "연구" }]);
-    expect(await links.listConnected(R)).toEqual([{ ref: P, type: "paper", title: "논문" }]);
+    expect(await links.listConnected(P)).toEqual([
+      { ref: R, type: "project", title: "연구", archived: false },
+    ]);
+    expect(await links.listConnected(R)).toEqual([
+      { ref: P, type: "paper", title: "논문", archived: false },
+    ]);
 
     await expect(links.link(P, P)).rejects.toBeInstanceOf(RepoError);
     await expect(links.link(P, { type: "thought", id: "missing" })).rejects.toMatchObject({

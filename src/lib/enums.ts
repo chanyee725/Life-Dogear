@@ -24,20 +24,36 @@ function defineEnum<const V extends string>(options: readonly EnumOption<V>[]) {
 }
 
 export const ITEM_TYPE = defineEnum([
-  { value: "project", label: "연구", tone: "violet" },
+  { value: "project", label: "프로젝트", tone: "violet" },
   { value: "paper", label: "논문", tone: "blue" },
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
+  { value: "area", label: "영역", tone: "rose" },
 ] as const);
 export type ItemType = (typeof ITEM_TYPE.values)[number];
 
 /** URL segment for each item type, e.g. `/papers/<id>`. */
 export const ITEM_ROUTE: Record<ItemType, string> = {
   project: "/projects",
+  area: "/areas",
   paper: "/papers",
   seminar: "/seminars",
   thought: "/thoughts",
 };
+
+/** Project kind: research projects use the 8 stages, general ones only a status. */
+export const PROJECT_KIND = defineEnum([
+  { value: "research", label: "연구", tone: "violet" },
+  { value: "general", label: "일반", tone: "gray" },
+] as const);
+export type ProjectKind = (typeof PROJECT_KIND.values)[number];
+
+export const PROJECT_STATUS = defineEnum([
+  { value: "active", label: "진행 중", tone: "blue" },
+  { value: "on_hold", label: "보류", tone: "amber" },
+  { value: "done", label: "완료", tone: "green" },
+] as const);
+export type ProjectStatus = (typeof PROJECT_STATUS.values)[number];
 
 export const PROJECT_STAGE = defineEnum([
   { value: "exploring", label: "주제 탐색", tone: "gray" },

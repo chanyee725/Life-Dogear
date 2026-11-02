@@ -1,11 +1,18 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
-import { papers, projects, seminars, thoughts } from "@/db/schema";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { areas, papers, projects, seminars, thoughts } from "@/db/schema";
 import { ITEM_TYPE } from "@/lib/enums";
 import { assertItemRef, db, type Executor, type ItemRef, type ItemType } from "./shared";
 
-export type ItemSummary = { ref: ItemRef; type: ItemType; title: string };
+/** `archived` is set only where it matters (connected items); pickers never return archived items. */
+export type ItemSummary = { ref: ItemRef; type: ItemType; title: string; archived?: boolean };
 
-const TABLES = { project: projects, paper: papers, seminar: seminars, thought: thoughts } as const;
+const TABLES = {
+  project: projects,
+  paper: papers,
+  seminar: seminars,
+  thought: thoughts,
+  area: areas,
+} as const;
 
 export const tableFor = (type: ItemType) => TABLES[type];
 
@@ -16,20 +23,36 @@ export async function exists(ref: ItemRef, exec: Executor = db()): Promise<boole
   return rows.length > 0;
 }
 
+export type ItemHead = { title: string; archived: boolean };
+
+/** Title and archived flag for a mixed list of refs, keyed `type:id`. Missing items are absent. */
+export async function getHeads(
+  refs: readonly ItemRef[],
+  exec: Executor = db(),
+): Promise<Map<string, ItemHead>> {
+  const out = new Map<string, ItemHead>();
+  for (const type of ITEM_TYPE.values) {
+    const ids = refs.filter((r) => r.type === type).map((r) => r.id);
+    if (!ids.length) continue;
+    const t = tableFor(type);
+    const rows = await exec
+      .select({ id: t.id, title: t.title, archivedAt: t.archivedAt })
+      .from(t)
+      .where(inArray(t.id, ids));
+    for (const r of rows) {
+      out.set(refKey({ type, id: r.id }), { title: r.title, archived: r.archivedAt !== null });
+    }
+  }
+  return out;
+}
+
 /** Titles for a mixed list of refs, keyed `type:id`. Missing items are absent. */
 export async function getTitles(
   refs: readonly ItemRef[],
   exec: Executor = db(),
 ): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  for (const type of ITEM_TYPE.values) {
-    const ids = refs.filter((r) => r.type === type).map((r) => r.id);
-    if (!ids.length) continue;
-    const t = tableFor(type);
-    const rows = await exec.select({ id: t.id, title: t.title }).from(t).where(inArray(t.id, ids));
-    for (const r of rows) out.set(refKey({ type, id: r.id }), r.title);
-  }
-  return out;
+  const heads = await getHeads(refs, exec);
+  return new Map([...heads].map(([k, h]) => [k, h.title]));
 }
 
 export const refKey = (ref: ItemRef): string => `${ref.type}:${ref.id}`;
@@ -37,8 +60,9 @@ export const refKey = (ref: ItemRef): string => `${ref.type}:${ref.id}`;
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /**
- * Title search across all four types for the link picker (not body search).
- * Prefix matches rank first, then most recently updated. Empty query returns recent items.
+ * Title search across all item types (areas included) for the link picker — not body
+ * search. Archived items are left out. Prefix matches rank first, then most recently
+ * updated. Empty query returns recent items.
  */
 export async function searchTitles(
   query: string,
@@ -54,7 +78,12 @@ export async function searchTitles(
     const found = await db()
       .select({ id: t.id, title: t.title, updatedAt: t.updatedAt })
       .from(t)
-      .where(q ? sql`lower(${t.title}) like ${pattern} escape '\\'` : undefined)
+      .where(
+        and(
+          isNull(t.archivedAt),
+          q ? sql`lower(${t.title}) like ${pattern} escape '\\'` : undefined,
+        ),
+      )
       .orderBy(desc(t.updatedAt))
       .limit(limit + 1);
     for (const r of found) {

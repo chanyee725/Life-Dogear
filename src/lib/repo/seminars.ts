@@ -17,6 +17,8 @@ import {
   type Executor,
   orderFor,
   withTx,
+  archiveFilter,
+  type ArchiveOptions,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -37,7 +39,11 @@ export type SeminarInput = {
 export type SeminarPatch = Partial<SeminarInput>;
 
 export type SeminarSort = "date" | "updated" | "created" | "title";
-export type SeminarListOptions = { tag?: string; kind?: SeminarKind; sort?: SeminarSort };
+export type SeminarListOptions = ArchiveOptions & {
+  tag?: string;
+  kind?: SeminarKind;
+  sort?: SeminarSort;
+};
 
 const ORDER: Record<SeminarSort, SQL[]> = {
   date: [descNullsLast(seminars.date), desc(seminars.createdAt)],
@@ -71,14 +77,15 @@ function toColumns(input: SeminarPatch) {
 }
 
 /** Default order: event date, newest first. */
+/** Non-archived by default; see {@link ArchiveOptions}. */
 export async function list(options: SeminarListOptions = {}): Promise<Seminar[]> {
-  const where: SQL[] = [];
+  const where: (SQL | undefined)[] = [archiveFilter(seminars.archivedAt, options)];
   if (options.kind) where.push(eq(seminars.kind, options.kind));
   if (options.tag) where.push(hasTag(db(), "seminar", seminars.id, options.tag));
   const rows = await db()
     .select()
     .from(seminars)
-    .where(where.length ? and(...where) : undefined)
+    .where(and(...where))
     .orderBy(...orderFor(ORDER, options.sort, "date"));
   return withTags(rows);
 }
@@ -88,6 +95,7 @@ export async function listRecent(limit = 5): Promise<Seminar[]> {
   const rows = await db()
     .select()
     .from(seminars)
+    .where(archiveFilter(seminars.archivedAt))
     .orderBy(...ORDER.date)
     .limit(limit);
   return withTags(rows);
