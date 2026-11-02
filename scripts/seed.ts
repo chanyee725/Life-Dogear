@@ -2,6 +2,9 @@
  * Sample data for trying the app (`npm run db:seed`).
  * Only rows whose id starts with `seed-` are replaced; user data is left alone.
  * All people are fictional; no e-mail addresses.
+ *
+ * Runs with `--conditions=react-server` (so `server-only` resolves). Do not import
+ * React or React-related modules here: they would load their server builds.
  */
 import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
