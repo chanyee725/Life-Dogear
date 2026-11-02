@@ -33,7 +33,7 @@ export function LatestReading({
     <>
       <ProgressBar current={latest.page} total={latest.totalPages} className="mt-auto pt-1" />
       {latest.lastReadAt ? (
-        <span className="text-xs text-faint">{formatRelative(latest.lastReadAt)} 읽음</span>
+        <span className="text-xs text-muted">{formatRelative(latest.lastReadAt)} 읽음</span>
       ) : null}
     </>
   );

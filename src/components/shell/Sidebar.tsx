@@ -51,7 +51,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="flex flex-col gap-3 px-4 pb-4">
-        <div className="flex flex-col gap-1 text-xs text-faint">
+        <div className="flex flex-col gap-1 text-xs text-muted">
           <span className="flex items-center gap-1.5">
             <Kbd>N</Kbd> 새 항목
           </span>

@@ -39,7 +39,7 @@ export function ProjectKanban({ columns }: { columns: StageColumn[] }) {
                   <span className="font-medium text-muted">
                     {PROJECT_STAGE.label(column.stage)}
                   </span>
-                  <span className="text-faint tabular-nums">{column.items.length}</span>
+                  <span className="text-muted tabular-nums">{column.items.length}</span>
                 </div>
                 {column.items.map((project) => (
                   <Link

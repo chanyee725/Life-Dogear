@@ -58,7 +58,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             onClick={() => choose(value)}
             className={cn(
               "flex h-6 flex-1 items-center justify-center rounded-md transition-colors",
-              active ? "bg-bg text-fg shadow-sm" : "text-faint hover:text-muted",
+              active ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
             )}
           >
             <Icon />
