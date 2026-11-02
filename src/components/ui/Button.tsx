@@ -8,7 +8,9 @@ const base =
   "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap transition-colors select-none disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-accent-fg hover:bg-accent-hover",
+  // A <Kbd> hint inside a primary button switches to an on-accent style so it stays legible.
+  primary:
+    "bg-accent text-accent-fg hover:bg-accent-hover [&_kbd]:border-transparent [&_kbd]:bg-accent-fg/15 [&_kbd]:text-accent-fg",
   secondary: "border border-border bg-bg text-fg hover:bg-hover",
   ghost: "text-muted hover:bg-hover hover:text-fg",
   danger: "bg-danger text-white hover:bg-danger-hover dark:text-bg",
