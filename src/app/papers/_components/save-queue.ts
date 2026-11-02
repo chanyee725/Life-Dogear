@@ -108,23 +108,30 @@ export function createSaveQueue<P extends object>(
 export function createLatestSender<T>(
   send: (value: T) => Promise<SaveOutcome>,
   onSettled: (outcome: SaveOutcome) => void,
+  /** Called with true when sending starts and false when the last send ends. */
+  onBusy: (busy: boolean) => void = () => {},
 ): (value: T) => Promise<void> {
   let running: Promise<void> | null = null;
   let next: { value: T } | null = null;
 
   async function drain() {
-    while (next) {
-      const { value } = next;
-      next = null;
-      let outcome: SaveOutcome;
-      try {
-        outcome = await send(value);
-      } catch {
-        outcome = { ok: false, error: SAVE_FAILED };
+    onBusy(true);
+    try {
+      while (next) {
+        const { value } = next;
+        next = null;
+        let outcome: SaveOutcome;
+        try {
+          outcome = await send(value);
+        } catch {
+          outcome = { ok: false, error: SAVE_FAILED };
+        }
+        if (!next) onSettled(outcome);
       }
-      if (!next) onSettled(outcome);
+    } finally {
+      running = null;
+      onBusy(false);
     }
-    running = null;
   }
 
   return (value: T) => {

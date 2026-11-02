@@ -195,9 +195,15 @@ describe("createLatestSender", () => {
       .mockRejectedValueOnce(new Error("down"))
       .mockResolvedValue({ ok: true });
     const settled: SaveOutcome[] = [];
-    const sendValue = createLatestSender(send, (o) => settled.push(o));
+    const busy: boolean[] = [];
+    const sendValue = createLatestSender(
+      send,
+      (o) => settled.push(o),
+      (b) => busy.push(b),
+    );
     await sendValue(1);
     await sendValue(2);
     expect(settled).toEqual([{ ok: false, error: SAVE_FAILED }, { ok: true }]);
+    expect(busy).toEqual([true, false, true, false]);
   });
 });
