@@ -107,7 +107,13 @@ function HiddenValue({
     const input = ref.current;
     if (!editor || !input) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // Tiptap can emit an `update` right after mount (normalization) without a real edit.
+    const loadedDoc = editor.state.doc;
     const sync = () => {
+      // Toolbar commands change the document without a DOM input event; announce real
+      // edits so the surrounding form can track unsaved changes.
+      if (!editor.state.doc.eq(loadedDoc))
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       clearTimeout(timer);
       timer = setTimeout(() => {
         input.value = getMarkdown(editor);

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { isValidItemId } from "@/lib/ids";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedItems } from "@/components/links";
@@ -13,12 +14,14 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const thought = await thoughts.get((await params).id);
+  const { id } = await params;
+  const thought = isValidItemId(id) ? await thoughts.get(id) : null;
   return { title: thought?.title ?? "생각" };
 }
 
 export default async function ThoughtDetailPage({ params }: Props) {
   const { id } = await params;
+  if (!isValidItemId(id)) notFound();
   const [thought, allTags] = await Promise.all([thoughts.get(id), tags.listAll()]);
   if (!thought) notFound();
 

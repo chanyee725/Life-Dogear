@@ -11,7 +11,10 @@ import {
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { ProjectInput } from "@/lib/repo/projects";
 
-/** Reads the project form. Every field the form renders is required to be present except tags. */
+/**
+ * Reads the project form. Absent fields stay undefined (left unchanged on update);
+ * tags always come back as a list, so a form without tag inputs clears them.
+ */
 export function parseProjectForm(form: FormData): ProjectInput {
   return {
     title: parseText(formText(form, "title") ?? "", "제목", MAX_TITLE),

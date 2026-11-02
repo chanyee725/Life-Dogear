@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ActionResult } from "@/app/_actions/result";
+import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 
@@ -23,7 +24,7 @@ export function DeleteItemButton({
 
   async function confirm() {
     setError(null);
-    const result = await action();
+    const result = await safeAction(action);
     if (!result.ok) {
       setError(result.error);
       return;
