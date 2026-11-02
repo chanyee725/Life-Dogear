@@ -1,5 +1,5 @@
 import { and, desc, eq, or } from "drizzle-orm";
-import { links } from "@/db/schema";
+import { graphLayout, links } from "@/db/schema";
 import { exists, getHeads, refKey, type ItemSummary } from "./items";
 import {
   assertItemRef,
@@ -100,6 +100,13 @@ export async function listConnected(ref: ItemRef): Promise<ItemSummary[]> {
   });
 }
 
+/**
+ * Delete-time clean-up of an item's connections: its links and its pinned graph
+ * position. Every repo `remove` calls this inside its transaction.
+ */
 export async function removeLinksFor(exec: Executor, ref: ItemRef): Promise<void> {
   await exec.delete(links).where(touching(ref));
+  await exec
+    .delete(graphLayout)
+    .where(and(eq(graphLayout.nodeType, ref.type), eq(graphLayout.nodeId, ref.id)));
 }

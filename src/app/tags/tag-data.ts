@@ -1,4 +1,6 @@
 import {
+  GOAL_HORIZON,
+  GOAL_STATUS,
   IMPORTANCE,
   ITEM_ROUTE,
   ITEM_TYPE,
@@ -12,7 +14,7 @@ import {
   type BadgeTone,
   type ItemType,
 } from "@/lib/enums";
-import { areas, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
+import { areas, goals, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 
 export type TagSort = "count" | "name";
@@ -70,7 +72,8 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
   );
   if (!tag) return null;
 
-  const [projectRows, areaRows, paperRows, seminarRows, thoughtRows] = await Promise.all([
+  const [goalRows, projectRows, areaRows, paperRows, seminarRows, thoughtRows] = await Promise.all([
+    goals.list({ tag: tag.name }),
     projects.list({ tag: tag.name, sort: "updated" }),
     areas.list({ tag: tag.name }),
     papers.list({ tag: tag.name, sort: "updated" }),
@@ -79,6 +82,17 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
   ]);
 
   const groups: TaggedGroup[] = [
+    {
+      type: "goal",
+      label: ITEM_TYPE.label("goal"),
+      items: goalRows.map((g) => ({
+        id: g.id,
+        href: href("goal", g.id),
+        title: g.title,
+        badges: [badge(GOAL_HORIZON, g.horizon), badge(GOAL_STATUS, g.status)],
+        meta: g.period ?? undefined,
+      })),
+    },
     {
       type: "project",
       label: ITEM_TYPE.label("project"),

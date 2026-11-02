@@ -260,11 +260,15 @@ export const reviews = sqliteTable(
   ],
 );
 
+/** Graph node kinds: every item type plus tag (topic) nodes. */
+export const GRAPH_NODE_TYPES = [...ITEM_TYPE.values, "tag"] as const;
+
 /** Pinned node positions on `/graph` (the only graph-specific table). */
 export const graphLayout = sqliteTable(
   "graph_layout",
   {
-    nodeType: text("node_type", { enum: ITEM_TYPE.values }).notNull(),
+    /** An item type or "tag" (tag nodes use the tag id). */
+    nodeType: text("node_type", { enum: GRAPH_NODE_TYPES }).notNull(),
     nodeId: text("node_id").notNull(),
     x: real("x").notNull(),
     y: real("y").notNull(),
