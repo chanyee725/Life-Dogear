@@ -34,6 +34,8 @@ export async function createQuickThought(
     const thought = await thoughts.create({ title, body, kind: "memo", maturity: "seed" });
     revalidatePath("/");
     revalidatePath("/thoughts");
+    // New thoughts land in the inbox; its count is in the sidebar (layout).
+    revalidatePath("/", "layout");
     return { id: thought.id };
   });
 }

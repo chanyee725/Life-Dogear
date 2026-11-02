@@ -17,6 +17,8 @@ export async function setItemTags(ref: unknown, names: unknown): Promise<ActionR
     revalidatePath(ITEM_ROUTE[item.type]);
     revalidatePath("/tags");
     revalidatePath("/");
+    // Tagging files a thought out of the inbox; the sidebar count lives in the layout.
+    if (item.type === "thought") revalidatePath("/", "layout");
     return saved;
   });
 }
