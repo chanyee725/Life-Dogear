@@ -32,10 +32,20 @@ describe("parseProjectForm", () => {
     });
   });
 
-  it("leaves absent optional fields undefined and tags empty", () => {
+  it("leaves absent optional fields and tags undefined", () => {
     const input = parseProjectForm(form([["title", "제목"]]));
     expect(input.stage).toBeUndefined();
     expect(input.body).toBeUndefined();
+    expect(input.tags).toBeUndefined();
+  });
+
+  it("treats the tags presence marker as a cleared tag list", () => {
+    const input = parseProjectForm(
+      form([
+        ["title", "제목"],
+        ["__present:tags", "1"],
+      ]),
+    );
     expect(input.tags).toEqual([]);
   });
 

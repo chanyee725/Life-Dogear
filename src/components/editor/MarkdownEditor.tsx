@@ -3,6 +3,7 @@
 import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { useEffect, useRef, type ReactNode } from "react";
+import { EDITOR_READY_EVENT } from "@/components/fields/form-patch";
 import { cn } from "@/components/ui/cn";
 import { createExtensions } from "./extensions";
 
@@ -127,6 +128,10 @@ function HiddenValue({
       event.formData.set(name, markdown);
     };
     const form = input.form;
+    // The editor may re-serialise the stored Markdown (same content, different text).
+    // Publish that form once it is ready so autosave can use it as the baseline.
+    input.value = getMarkdown(editor);
+    input.dispatchEvent(new Event(EDITOR_READY_EVENT, { bubbles: true }));
     editor.on("update", sync);
     form?.addEventListener("formdata", onFormData);
     return () => {

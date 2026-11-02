@@ -1,7 +1,7 @@
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { DateField } from "@/components/fields/DateField";
 import { EnumSelect } from "@/components/fields/EnumSelect";
-import { TitleInput } from "@/components/fields/ItemForm";
+import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
 import { Properties, Property } from "@/components/fields/Properties";
 import { TagInput } from "@/components/fields/TagInput";
 import { Input } from "@/components/ui/Input";
@@ -67,9 +67,9 @@ export function SeminarFields({
           />
         </Property>
       </Properties>
-      <div className="border-t border-border pt-6">
+      <DetailBody>
         <MarkdownEditor key={editorKey} name="body" value={values.body} />
-      </div>
+      </DetailBody>
     </>
   );
 }
