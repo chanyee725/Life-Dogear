@@ -35,6 +35,13 @@ describe("resolvePdfjsAsset", () => {
     expect(resolvePdfjsAsset([version, "wasm", "LICENSE_JBIG2"], version)).toBeNull();
   });
 
+  it("resolves the CMYK ICC profile", () => {
+    expect(
+      resolvePdfjsAsset([version, "iccs", "CGATS001Compat-v2-micro.icc"], version)?.contentType,
+    ).toBe("application/vnd.iccprofile");
+    expect(resolvePdfjsAsset([version, "iccs", "LICENSE"], version)).toBeNull();
+  });
+
   it.each([
     [["0.0.0", "cmaps", "UniKS-UCS2-H.bcmap"]],
     [[version, "build", "pdf.mjs"]],

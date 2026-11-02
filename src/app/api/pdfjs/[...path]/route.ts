@@ -8,7 +8,7 @@ export const runtime = "nodejs";
  * Serves pdf.js cMaps, standard fonts and wasm image decoders from
  * node_modules/pdfjs-dist so Korean/CJK PDFs without embedded fonts and scanned
  * PDFs render, without a CDN or copying files into public/.
- * URL: /api/pdfjs/<version>/<cmaps|standard_fonts|wasm>/<file>.
+ * URL: /api/pdfjs/<version>/<cmaps|standard_fonts|wasm|iccs>/<file>.
  */
 export async function GET(
   _request: NextRequest,

@@ -6,6 +6,8 @@ const ALLOWED: Record<string, Record<string, string>> = {
   cmaps: { ".bcmap": "application/octet-stream" },
   standard_fonts: { ".pfb": "application/x-font-type1", ".ttf": "font/ttf" },
   wasm: { ".wasm": "application/wasm", ".js": "text/javascript" },
+  // CMYK colour profile used when converting CMYK images.
+  iccs: { ".icc": "application/vnd.iccprofile" },
 };
 
 /**

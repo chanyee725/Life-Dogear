@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { papers } from "@/lib/repo";
 import { isValidItemId } from "@/lib/ids";
+import { getPaperPdfPath } from "../../_lib/paper-pdf";
 import { MAX_PROGRESS_BODY, parseProgressInput } from "../../_lib/progress-input";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -31,8 +32,7 @@ async function save(request: NextRequest, { params }: IdParams): Promise<NextRes
 
   try {
     // Reading positions only make sense for a paper with a PDF.
-    const paper = await papers.get(id);
-    if (!paper?.pdfPath) return notFound();
+    if (!(await getPaperPdfPath(id))) return notFound();
     const saved = await papers.saveProgress(id, input);
     return saved ? new NextResponse(null, { status: 204 }) : notFound();
   } catch (error) {

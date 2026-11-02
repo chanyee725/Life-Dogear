@@ -32,6 +32,7 @@ const DOCUMENT_OPTIONS = {
   standardFontDataUrl: `${PDFJS_ASSETS}/standard_fonts/`,
   // Decoders for JPEG 2000 / JBIG2 images common in scanned papers.
   wasmUrl: `${PDFJS_ASSETS}/wasm/`,
+  iccUrl: `${PDFJS_ASSETS}/iccs/`,
 };
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
