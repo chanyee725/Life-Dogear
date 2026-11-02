@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { setItemTags } from "@/app/_actions/tags";
+import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
@@ -13,6 +14,7 @@ import type { Paper } from "@/lib/repo/papers";
 import { updatePaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
 import { DeletePaperButton } from "./DeletePaperButton";
+import { createSaveQueue, type SaveState } from "./save-queue";
 
 type PatchInput = {
   title?: string;
@@ -26,8 +28,6 @@ type PatchInput = {
   summary?: string;
   body?: string;
 };
-
-type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
 const SAVE_LABEL: Record<SaveState, string> = {
   idle: "",
@@ -57,55 +57,46 @@ export function PaperEditor({
   const [body, setBody] = useState(paper.body);
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
-  const pending = useRef<PatchInput>({});
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const busy = useRef(false);
+  const [titleEmpty, setTitleEmpty] = useState(false);
+  const [yearInvalid, setYearInvalid] = useState(false);
+  const paperId = paper.id;
 
-  const persist = () => {
-    queue.current = queue.current.then(async () => {
-      const patch = pending.current;
-      if (Object.keys(patch).length === 0) return;
-      pending.current = {};
-      busy.current = true;
-      setState("saving");
-      const result = await updatePaper(paper.id, patch);
-      busy.current = false;
-      if (result.ok) {
-        setError(null);
-        setState(Object.keys(pending.current).length ? "pending" : "saved");
-      } else {
-        // Keep the failed fields unless they were edited again meanwhile.
-        pending.current = { ...patch, ...pending.current };
-        setError(result.error);
-        setState("error");
-      }
-    });
-  };
-
-  const autosave = useDebouncedCallback(persist, AUTOSAVE_DELAY, { flushOnUnmount: true });
+  // One queue per editor; failures keep the fields for the next save (see save-queue.ts).
+  const [queue] = useState(() =>
+    createSaveQueue<PatchInput>(
+      (patch) => safeAction(() => updatePaper(paperId, patch)),
+      (next, message) => {
+        setState(next);
+        if (next === "error") setError(message);
+        else if (next === "saved") setError(null);
+      },
+    ),
+  );
+  const autosave = useDebouncedCallback(() => void queue.flush(), AUTOSAVE_DELAY, {
+    flushOnUnmount: true,
+  });
 
   function change(patch: PatchInput) {
-    Object.assign(pending.current, patch);
-    setState("pending");
+    queue.add(patch);
     autosave();
   }
 
   function saveNow() {
     autosave.cancel();
-    persist();
+    void queue.flush();
   }
 
   // Warn before closing the tab with unsaved edits.
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (Object.keys(pending.current).length || busy.current) event.preventDefault();
+      if (queue.dirty()) event.preventDefault();
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  }, [queue]);
 
   async function saveTags(names: string[]) {
-    const result = await setItemTags({ type: "paper", id: paper.id }, names);
+    const result = await safeAction(() => setItemTags({ type: "paper", id: paperId }, names));
     if (!result.ok) {
       setError(result.error);
       setState("error");
@@ -143,12 +134,21 @@ export function PaperEditor({
           maxLength={300}
           placeholder="제목"
           onChange={(e) => {
-            setTitle(e.target.value);
+            const value = e.target.value;
+            setTitle(value);
             // An empty title would be rejected and hold back the other fields.
-            if (e.target.value.trim()) change({ title: e.target.value });
+            setTitleEmpty(!value.trim());
+            if (value.trim()) change({ title: value });
           }}
+          aria-invalid={titleEmpty || undefined}
+          aria-describedby={titleEmpty ? "paper-title-hint" : undefined}
           className="w-full bg-transparent text-2xl font-semibold tracking-tight text-fg placeholder:text-faint focus:outline-none"
         />
+        {titleEmpty ? (
+          <p id="paper-title-hint" className="-mt-2 text-xs text-danger">
+            제목을 입력하세요. 비어 있는 동안 제목은 저장되지 않습니다.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -157,7 +157,7 @@ export function PaperEditor({
             id="paper-authors"
             defaultValue={paper.authors}
             onCommit={(authors) => {
-              if (authors.join("\n") !== (pending.current.authors ?? paper.authors).join("\n")) {
+              if (authors.join("\n") !== (queue.pending().authors ?? paper.authors).join("\n")) {
                 change({ authors });
               }
             }}
@@ -170,8 +170,11 @@ export function PaperEditor({
           inputMode="numeric"
           placeholder="2024"
           // Queue only complete values so a half-typed year doesn't block other saves.
+          error={yearInvalid ? "4자리 연도로 입력하세요. 예: 2024" : undefined}
           onChange={(year) => {
-            if (/^(\d{4})?$/.test(year.trim())) change({ year });
+            const valid = /^(\d{4})?$/.test(year.trim());
+            setYearInvalid(!valid);
+            if (valid) change({ year });
           }}
         />
         <TextField
@@ -264,6 +267,7 @@ function TextField({
   inputMode,
   className,
   after,
+  error,
 }: {
   id: string;
   label: string;
@@ -273,15 +277,17 @@ function TextField({
   inputMode?: "numeric";
   className?: string;
   after?: ReactNode;
+  error?: string;
 }) {
   return (
-    <Field label={label} htmlFor={id} className={className}>
+    <Field label={label} htmlFor={id} className={className} error={error}>
       <div className="flex items-center gap-1.5">
         <Input
           id={id}
           defaultValue={defaultValue}
           placeholder={placeholder}
           inputMode={inputMode}
+          aria-invalid={error ? true : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
         {after}

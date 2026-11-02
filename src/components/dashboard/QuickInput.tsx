@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createQuickThought } from "@/app/_actions/quick-thought";
+import { safeAction } from "@/components/links/safe-action";
 import { QUICK_INPUT_ID } from "@/components/shell/shortcuts";
 import { cn, controlClass, Kbd } from "@/components/ui";
 
@@ -17,7 +18,7 @@ export function QuickInput() {
     if (!text || pending) return;
     setError(null);
     startTransition(async () => {
-      const result = await createQuickThought(text);
+      const result = await safeAction(() => createQuickThought(text));
       if (result.ok) {
         setValue("");
         setSaved(true);

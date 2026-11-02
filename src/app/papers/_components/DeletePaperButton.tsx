@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { safeAction } from "@/components/links/safe-action";
 import { Button, ConfirmDialog } from "@/components/ui";
 import { deletePaper } from "../actions";
 
@@ -24,7 +25,7 @@ export function DeletePaperButton({ paperId, title }: { paperId: string; title: 
         open={open}
         onCancel={() => setOpen(false)}
         onConfirm={async () => {
-          const result = await deletePaper(paperId);
+          const result = await safeAction(() => deletePaper(paperId));
           setOpen(false);
           if (result.ok) {
             router.push("/papers");

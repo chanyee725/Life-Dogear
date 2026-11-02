@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useActionState } from "react";
+import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
@@ -12,7 +13,12 @@ import { createPaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
 
 export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
-  const [state, action, pending] = useActionState(createPaper, null);
+  // safeAction turns a crashed or unreachable action into an inline error (redirects pass through).
+  const [state, action, pending] = useActionState(
+    (previous: Awaited<ReturnType<typeof createPaper>> | null, form: FormData) =>
+      safeAction(() => createPaper(previous, form)),
+    null,
+  );
 
   return (
     <form
