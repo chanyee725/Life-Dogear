@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, sql, type SQL } from "drizzle-orm";
 import { highlights, papers } from "@/db/schema";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import { PAPER_TEMPLATE } from "@/lib/templates";
@@ -15,6 +15,9 @@ import {
   requireTitle,
   trimText,
   type Executor,
+  orderFor,
+  withTx,
+  serializeWrite,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -121,7 +124,7 @@ export async function list(options: PaperListOptions = {}): Promise<Paper[]> {
     .select()
     .from(papers)
     .where(where.length ? and(...where) : undefined)
-    .orderBy(...ORDER[options.sort ?? "updated"]);
+    .orderBy(...orderFor(ORDER, options.sort, "updated"));
   return withTags(rows);
 }
 
@@ -133,7 +136,7 @@ export async function get(id: string): Promise<Paper | null> {
 export async function create(input: PaperInput): Promise<Paper> {
   const now = nowIso();
   const id = newId();
-  await db().transaction(async (tx) => {
+  await withTx(async (tx) => {
     await tx.insert(papers).values({
       id,
       title: requireTitle(input.title),
@@ -148,7 +151,7 @@ export async function create(input: PaperInput): Promise<Paper> {
 }
 
 export async function update(id: string, patch: PaperPatch): Promise<Paper | null> {
-  const found = await db().transaction(async (tx) => {
+  const found = await withTx(async (tx) => {
     const updated = await tx
       .update(papers)
       .set({ ...toColumns({ ...patch, tags: undefined }), updatedAt: nowIso() })
@@ -166,7 +169,7 @@ export async function update(id: string, patch: PaperPatch): Promise<Paper | nul
  * `pdfPath` so the caller can delete the file (storage lives outside the repo).
  */
 export async function remove(id: string): Promise<{ removed: boolean; pdfPath: string | null }> {
-  return db().transaction(async (tx) => {
+  return withTx(async (tx) => {
     const deleted = await tx
       .delete(papers)
       .where(eq(papers.id, id))
@@ -188,7 +191,7 @@ export async function setPdf(
   path: string | null,
   totalPages?: number | null,
 ): Promise<{ previousPdfPath: string | null } | undefined> {
-  return db().transaction(async (tx) => {
+  return withTx(async (tx) => {
     const [before] = await tx
       .select({ pdfPath: papers.pdfPath })
       .from(papers)
@@ -211,6 +214,7 @@ export async function setPdf(
 /**
  * Saves the reading position. Moves `to_read` papers to `reading` and stamps
  * `lastReadAt`; does not touch `updatedAt` (reading is not editing).
+ * Single UPDATE (no transaction) so frequent viewer saves stay cheap.
  */
 export async function saveProgress(id: string, progress: ReadingProgress): Promise<boolean> {
   const totalPages =
@@ -221,24 +225,21 @@ export async function saveProgress(id: string, progress: ReadingProgress): Promi
   if (totalPages) page = Math.min(page, totalPages);
   const scroll = Number.isFinite(progress.scroll) ? Math.min(1, Math.max(0, progress.scroll)) : 0;
 
-  return db().transaction(async (tx) => {
-    const [row] = await tx
-      .select({ readStatus: papers.readStatus })
-      .from(papers)
-      .where(eq(papers.id, id));
-    if (!row) return false;
-    await tx
+  const updated = await serializeWrite(() =>
+    db()
       .update(papers)
       .set({
-        lastPage: page,
+        // Without a fresh page count, clamp to the stored one.
+        lastPage: totalPages ? page : sql`min(${page}, coalesce(${papers.totalPages}, ${page}))`,
         lastScroll: scroll,
         ...(totalPages ? { totalPages } : {}),
         lastReadAt: nowIso(),
-        ...(row.readStatus === "to_read" ? { readStatus: "reading" as const } : {}),
+        readStatus: sql`case when ${papers.readStatus} = 'to_read' then 'reading' else ${papers.readStatus} end`,
       })
-      .where(eq(papers.id, id));
-    return true;
-  });
+      .where(eq(papers.id, id))
+      .returning({ id: papers.id }),
+  );
+  return updated.length > 0;
 }
 
 /** Papers being read, most recently read first (home "이어 읽기"). */

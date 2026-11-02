@@ -25,6 +25,35 @@ export class RepoError extends Error {
 
 export const db = (): Db => getDb();
 
+// One SQLite connection cannot run overlapping write transactions (SQLITE_BUSY /
+// TRANSACTION_ACTIVE), so every write in this process goes through one queue.
+// Kept on globalThis so dev-server hot reloads share the same queue.
+const writeQueue = globalThis as unknown as { __researchBrainWrites?: Promise<unknown> };
+
+/** Runs `fn` after all previously queued writes have settled. */
+export function serializeWrite<T>(fn: () => Promise<T>): Promise<T> {
+  const previous = writeQueue.__researchBrainWrites ?? Promise.resolve();
+  const run = previous.then(fn, fn);
+  writeQueue.__researchBrainWrites = run.catch(() => undefined);
+  return run;
+}
+
+/** Serialized write transaction. Never call another `withTx` inside `fn` (it would deadlock). */
+export function withTx<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+  return serializeWrite(() => db().transaction(fn));
+}
+
+/** Order clauses for `sort`, falling back to `fallback` for unknown values. */
+export function orderFor<K extends string>(
+  orders: Record<K, SQL[]>,
+  sort: unknown,
+  fallback: K,
+): SQL[] {
+  return typeof sort === "string" && Object.hasOwn(orders, sort)
+    ? orders[sort as K]
+    : orders[fallback];
+}
+
 export const nowIso = (): string => new Date().toISOString();
 
 export const newId = (): string => crypto.randomUUID();

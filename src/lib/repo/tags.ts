@@ -1,6 +1,14 @@
 import { and, asc, eq, inArray, notExists, sql } from "drizzle-orm";
 import { itemTags, tags } from "@/db/schema";
-import { assertItemRef, db, newId, type Executor, type ItemRef, type ItemType } from "./shared";
+import {
+  assertItemRef,
+  db,
+  newId,
+  type Executor,
+  type ItemRef,
+  type ItemType,
+  withTx,
+} from "./shared";
 
 export type TagCount = { name: string; count: number };
 
@@ -21,7 +29,7 @@ export function normalizeTagNames(names: readonly string[]): string[] {
 /** Replaces the tags of an item. Existing tags keep their original spelling. */
 export async function setTags(ref: ItemRef, names: readonly string[]): Promise<string[]> {
   assertItemRef(ref);
-  return db().transaction((tx) => setTagsWith(tx, ref, names));
+  return withTx((tx) => setTagsWith(tx, ref, names));
 }
 
 export async function setTagsWith(

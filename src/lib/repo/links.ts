@@ -1,7 +1,17 @@
 import { and, desc, eq, or } from "drizzle-orm";
 import { links } from "@/db/schema";
 import { exists, getTitles, refKey, type ItemSummary } from "./items";
-import { assertItemRef, db, newId, nowIso, RepoError, type Executor, type ItemRef } from "./shared";
+import {
+  assertItemRef,
+  db,
+  newId,
+  nowIso,
+  RepoError,
+  type Executor,
+  type ItemRef,
+  withTx,
+  serializeWrite,
+} from "./shared";
 
 export type Link = typeof links.$inferSelect;
 
@@ -38,7 +48,7 @@ export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
   assertItemRef(b);
   if (sameRef(a, b)) throw new RepoError("invalid", "자기 자신과는 연결할 수 없습니다.");
 
-  return db().transaction(async (tx) => {
+  return withTx(async (tx) => {
     if (!(await exists(a, tx)) || !(await exists(b, tx))) {
       throw new RepoError("not_found", "연결할 항목을 찾을 수 없습니다.");
     }
@@ -62,7 +72,9 @@ export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
 export async function unlink(a: ItemRef, b: ItemRef): Promise<boolean> {
   assertItemRef(a);
   assertItemRef(b);
-  const deleted = await db().delete(links).where(between(a, b)).returning({ id: links.id });
+  const deleted = await serializeWrite(() =>
+    db().delete(links).where(between(a, b)).returning({ id: links.id }),
+  );
   return deleted.length > 0;
 }
 

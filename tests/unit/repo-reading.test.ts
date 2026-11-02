@@ -37,6 +37,15 @@ describe("reading progress", () => {
     expect(await papers.saveProgress("missing", { page: 1, scroll: 0 })).toBe(false);
   });
 
+  it("clamps to the stored page count when totalPages is omitted", async () => {
+    const p = await papers.create({ title: "논문" });
+    await papers.saveProgress(p.id, { page: 99, scroll: 0 });
+    expect(await papers.get(p.id)).toMatchObject({ lastPage: 99, totalPages: null });
+    await papers.setPdf(p.id, "data/pdfs/x.pdf", 10);
+    await papers.saveProgress(p.id, { page: 99, scroll: 0 });
+    expect(await papers.get(p.id)).toMatchObject({ lastPage: 10, totalPages: 10 });
+  });
+
   it("setPdf replaces the file, resets position and returns the previous path", async () => {
     const p = await papers.create({ title: "논문" });
     expect(await papers.setPdf(p.id, "data/pdfs/a.pdf", 5)).toEqual({ previousPdfPath: null });

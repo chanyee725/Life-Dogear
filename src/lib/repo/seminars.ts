@@ -15,6 +15,8 @@ import {
   requireTitle,
   trimText,
   type Executor,
+  orderFor,
+  withTx,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -77,7 +79,7 @@ export async function list(options: SeminarListOptions = {}): Promise<Seminar[]>
     .select()
     .from(seminars)
     .where(where.length ? and(...where) : undefined)
-    .orderBy(...ORDER[options.sort ?? "date"]);
+    .orderBy(...orderFor(ORDER, options.sort, "date"));
   return withTags(rows);
 }
 
@@ -99,7 +101,7 @@ export async function get(id: string): Promise<Seminar | null> {
 export async function create(input: SeminarInput): Promise<Seminar> {
   const now = nowIso();
   const id = newId();
-  await db().transaction(async (tx) => {
+  await withTx(async (tx) => {
     await tx.insert(seminars).values({
       id,
       title: requireTitle(input.title),
@@ -114,7 +116,7 @@ export async function create(input: SeminarInput): Promise<Seminar> {
 }
 
 export async function update(id: string, patch: SeminarPatch): Promise<Seminar | null> {
-  const found = await db().transaction(async (tx) => {
+  const found = await withTx(async (tx) => {
     const updated = await tx
       .update(seminars)
       .set({ ...toColumns({ ...patch, tags: undefined }), updatedAt: nowIso() })
@@ -128,7 +130,7 @@ export async function update(id: string, patch: SeminarPatch): Promise<Seminar |
 }
 
 export async function remove(id: string): Promise<boolean> {
-  return db().transaction(async (tx) => {
+  return withTx(async (tx) => {
     const deleted = await tx
       .delete(seminars)
       .where(eq(seminars.id, id))

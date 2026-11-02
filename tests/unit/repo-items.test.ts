@@ -78,6 +78,21 @@ describe("papers", () => {
   });
 });
 
+describe("list sort", () => {
+  it("falls back to the default order for unknown sort values", async () => {
+    await projects.create({ title: "A" });
+    await papers.create({ title: "A" });
+    await seminars.create({ title: "A" });
+    await thoughts.create({ title: "A" });
+    for (const sort of ["bogus", "toString", "__proto__"] as never[]) {
+      expect(await projects.list({ sort })).toHaveLength(1);
+      expect(await papers.list({ sort })).toHaveLength(1);
+      expect(await seminars.list({ sort })).toHaveLength(1);
+      expect(await thoughts.list({ sort })).toHaveLength(1);
+    }
+  });
+});
+
 describe("seminars and thoughts", () => {
   it("seminar CRUD with template and date order", async () => {
     const a = await seminars.create({ title: "A", date: "2026-10-01", kind: "lecture" });
