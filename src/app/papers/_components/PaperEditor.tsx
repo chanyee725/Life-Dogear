@@ -14,6 +14,7 @@ import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import type { Paper } from "@/lib/repo/papers";
 import { updatePaper } from "../actions";
+import { ArchivePaperButton } from "./ArchivePaperButton";
 import { AuthorsField } from "./AuthorsField";
 import { DeletePaperButton } from "./DeletePaperButton";
 import { createLatestSender, createSaveQueue, type SaveState } from "./save-queue";
@@ -154,12 +155,18 @@ export function PaperEditor({
               {/* A failed tag save stays visible even after field saves succeed. */}
               {tagsError && state !== "error" ? "태그 저장 실패" : SAVE_LABEL[state]}
             </span>
+            <ArchivePaperButton paperId={paper.id} archived={Boolean(paper.archivedAt)} />
             <DeletePaperButton paperId={paper.id} title={paper.title} />
             <Button variant="primary" onClick={saveNow}>
               저장
             </Button>
           </div>
         </div>
+        {paper.archivedAt ? (
+          <p className="rounded-lg bg-subtle px-3 py-2 text-[13px] text-muted">
+            보관된 논문입니다. 목록과 홈에는 보이지 않으며, 보관 해제하면 다시 나타납니다.
+          </p>
+        ) : null}
         {error || tagsError ? (
           <p role="alert" className="rounded-lg bg-tone-red-bg px-3 py-2 text-sm text-tone-red-fg">
             {error ?? tagsError}
