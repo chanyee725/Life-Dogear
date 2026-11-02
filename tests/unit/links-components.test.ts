@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 import { ConnectedItems } from "@/components/links";
-import { links, papers, seminars, thoughts } from "@/lib/repo";
+import { archive, areas, links, papers, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 beforeEach(async () => {
@@ -33,6 +33,18 @@ describe("ConnectedItems", () => {
     expect(html).toContain("생각 &lt;b&gt;X&lt;/b&gt;");
     expect(html.match(/연결 해제/g)?.length).toBeGreaterThanOrEqual(2);
     expect(html).toContain("연결 추가");
+  });
+
+  it("shows areas with their path and marks archived items", async () => {
+    const paper = await papers.create({ title: "논문" });
+    const area = await areas.create({ title: "학위" });
+    const P = { type: "paper" as const, id: paper.id };
+    await links.link(P, { type: "area", id: area.id });
+    await archive.archive({ type: "area", id: area.id });
+    const html = await render(P);
+    expect(html).toContain(`href="/areas/${area.id}"`);
+    expect(html).toContain(">영역<");
+    expect(html).toContain(">보관됨<");
   });
 
   it("shows an empty message when nothing is connected", async () => {

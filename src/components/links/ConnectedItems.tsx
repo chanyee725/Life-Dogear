@@ -41,7 +41,7 @@ export async function ConnectedItems({
       >
         {connected.length === 0 ? (
           <p className="text-[13px] text-muted">
-            아직 연결된 항목이 없습니다. 관련 논문·세미나·생각·연구를 연결해 보세요.
+            아직 연결된 항목이 없습니다. 관련 프로젝트·영역·논문·세미나·생각을 연결해 보세요.
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
@@ -54,6 +54,7 @@ export async function ConnectedItems({
                 >
                   {c.title}
                 </Link>
+                {c.archived ? <Badge tone="gray">보관됨</Badge> : null}
                 <UnlinkButton item={item} other={c.ref} otherTitle={c.title} />
               </li>
             ))}
