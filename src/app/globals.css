@@ -166,8 +166,9 @@
     background: var(--rb-accent-soft);
   }
 
+  /* Opaque accent so the focus indicator clears 3:1 against bg in both themes. */
   :focus-visible {
-    outline: 2px solid var(--rb-ring);
+    outline: 2px solid var(--rb-accent);
     outline-offset: 2px;
   }
 }
