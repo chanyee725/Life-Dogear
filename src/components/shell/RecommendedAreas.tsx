@@ -24,10 +24,10 @@ export function RecommendedAreas() {
         setMessage(result.error);
         return;
       }
-      const skipped = (result.data as { skipped?: string[] }).skipped ?? [];
-      if (skipped.length > 0) {
+      const archived = result.data.skipped.filter((a) => a.archived).map((a) => a.title);
+      if (archived.length > 0) {
         setMessage(
-          `${skipped.join(", ")}: 보관된 같은 이름의 영역이 있습니다. 보관함에서 해제하세요.`,
+          `${archived.join(", ")}: 보관된 같은 이름의 영역이 있습니다. 보관함에서 해제하세요.`,
         );
       }
       setPicked([]);
