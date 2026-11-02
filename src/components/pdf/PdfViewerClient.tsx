@@ -22,7 +22,8 @@ import {
   visibleRange,
   type Position,
 } from "./layout";
-import { sendProgress, type ReadingProgress } from "./progress-client";
+import { fetchProgress, sendProgress, type ReadingProgress } from "./progress-client";
+import { laterReadAt, newerRemotePosition } from "./remote-progress";
 
 // Bundled with the app (no CDN). Must be set in the module that renders react-pdf.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -55,6 +56,12 @@ export type PdfViewerProps = {
   /** Position to restore (1-based page, 0–1 within the page). */
   initialPage?: number | null;
   initialScroll?: number | null;
+  /**
+   * `lastReadAt` that `initialPage`/`initialScroll` came from. With `progressUrl`,
+   * the viewer re-checks the server on mount and when restored from history and
+   * jumps to a position saved later than this (stale props from a cache).
+   */
+  initialReadAt?: string | null;
   /** When set, positions are saved here (debounced PUT, beacon on page hide). */
   progressUrl?: string;
   /** Called with each saved position (same debounce as saving). */
@@ -70,6 +77,7 @@ export default function PdfViewerClient({
   file,
   initialPage,
   initialScroll,
+  initialReadAt = null,
   progressUrl,
   onProgress,
   saveDelay = 800,
@@ -90,6 +98,11 @@ export default function PdfViewerClient({
   /** Position kept stable across zoom, resize and page-size corrections. */
   const anchorRef = useRef<Position>(initial);
   const lastQueuedRef = useRef<Position | null>(initial);
+  /** Latest read time this page knows of (server value or our own last save). */
+  const knownReadAtRef = useRef<string | null>(initialReadAt);
+  const markSaved = () => {
+    knownReadAtRef.current = laterReadAt(new Date().toISOString(), knownReadAtRef.current);
+  };
   const pendingRef = useRef<ReadingProgress | null>(null);
   const readyRef = useRef(false);
   const frameRef = useRef(0);
@@ -119,7 +132,10 @@ export default function PdfViewerClient({
     (progress: ReadingProgress) => {
       pendingRef.current = null;
       onProgressRef.current?.(progress);
-      if (progressUrl) sendProgress(progressUrl, progress);
+      if (progressUrl) {
+        markSaved();
+        sendProgress(progressUrl, progress);
+      }
     },
     saveDelay,
     { flushOnUnmount: true },
@@ -133,7 +149,10 @@ export default function PdfViewerClient({
       save.cancel();
       pendingRef.current = null;
       onProgressRef.current?.(progress);
-      if (progressUrl) sendProgress(progressUrl, progress, { beacon: true });
+      if (progressUrl) {
+        markSaved();
+        sendProgress(progressUrl, progress, { beacon: true });
+      }
     };
     const onVisibility = () => {
       if (document.visibilityState === "hidden") flushWithBeacon();
@@ -161,6 +180,47 @@ export default function PdfViewerClient({
   }, []);
 
   useEffect(() => () => cancelAnimationFrame(frameRef.current), []);
+
+  // Catch up with a position saved after these props were rendered: the page may
+  // come from the router/bfcache on back navigation, or another tab kept reading.
+  useEffect(() => {
+    if (!progressUrl) return;
+    let cancelled = false;
+    const check = async () => {
+      const remote = await fetchProgress(progressUrl);
+      if (!remote || cancelled) return;
+      const next = newerRemotePosition(
+        remote,
+        knownReadAtRef.current,
+        readyRef.current ? anchorRef.current : null,
+        pendingRef.current !== null,
+      );
+      knownReadAtRef.current = laterReadAt(remote.lastReadAt, knownReadAtRef.current);
+      if (!next) return;
+      anchorRef.current = next;
+      lastQueuedRef.current = next;
+      const el = scrollRef.current;
+      // Before the first layout the anchor is applied by the layout effect.
+      if (el && readyRef.current) el.scrollTop = scrollTopFor(layoutRef.current, next);
+    };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void check();
+    };
+    const onPopState = () => void check();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    void check();
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("popstate", onPopState);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("popstate", onPopState);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [progressUrl]);
 
   const syncView = useCallback((el: HTMLDivElement) => {
     const current = layoutRef.current;

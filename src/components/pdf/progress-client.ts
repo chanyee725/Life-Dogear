@@ -1,3 +1,5 @@
+import { parseRemoteProgress, type RemoteProgress } from "./remote-progress";
+
 export type ReadingProgress = { page: number; scroll: number; totalPages: number };
 
 /**
@@ -24,4 +26,14 @@ export function sendProgress(
   }).catch(() => {
     // Best effort: the next scroll saves again.
   });
+}
+
+/** Latest saved position from the server, or null when unavailable. Never throws. */
+export async function fetchProgress(url: string): Promise<RemoteProgress | null> {
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    return res.ok ? parseRemoteProgress(await res.json()) : null;
+  } catch {
+    return null;
+  }
 }

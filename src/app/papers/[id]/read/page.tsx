@@ -64,6 +64,7 @@ export default async function ReadPaperPage({ params }: Props) {
         progressUrl={`/api/papers/${paper.id}/progress`}
         initialPage={paper.lastPage}
         initialScroll={paper.lastScroll}
+        initialReadAt={paper.lastReadAt}
         header={
           <>
             {back}

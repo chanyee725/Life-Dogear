@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
+import { useLatestProgress } from "@/components/pdf/useLatestProgress";
 import { Button, buttonClass, ConfirmDialog, Section } from "@/components/ui";
 import { removePaperPdf } from "./pdf-client";
 import { PdfDropZone, ReplacePdfButton } from "./PdfUploader";
@@ -13,11 +14,19 @@ type PdfPanelProps = {
   hasPdf: boolean;
   lastPage: number | null;
   totalPages: number | null;
+  lastReadAt: string | null;
 };
 
 /** PDF block on the paper page: continue reading, progress, replace/remove, or upload. */
-export function PdfPanel({ paperId, hasPdf, lastPage, totalPages }: PdfPanelProps) {
+export function PdfPanel({ paperId, hasPdf, lastPage, totalPages, lastReadAt }: PdfPanelProps) {
   const router = useRouter();
+  // The page may be shown from the router cache after reading; catch up with the server.
+  const latest = useLatestProgress(hasPdf ? `/api/papers/${paperId}/progress` : null, {
+    page: lastPage,
+    scroll: null,
+    totalPages,
+    lastReadAt,
+  });
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +43,13 @@ export function PdfPanel({ paperId, hasPdf, lastPage, totalPages }: PdfPanelProp
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-center gap-3">
           <Link href={`/papers/${paperId}/read`} className={buttonClass("primary")}>
-            {lastPage ? `이어 읽기 · ${lastPage}쪽` : "이어 읽기"}
+            {latest.page ? `이어 읽기 · ${latest.page}쪽` : "이어 읽기"}
           </Link>
-          <ProgressBar current={lastPage} total={totalPages} className="min-w-40 flex-1" />
+          <ProgressBar
+            current={latest.page}
+            total={latest.totalPages}
+            className="min-w-40 flex-1"
+          />
         </div>
         <div className="flex flex-wrap items-center gap-1">
           <ReplacePdfButton paperId={paperId} />
