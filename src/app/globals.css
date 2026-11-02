@@ -145,6 +145,9 @@
   ::before,
   ::after {
     border-color: var(--rb-border);
+    /* Resting outline color matches the focus color, so transition-colors
+       does not fade the focus ring in from currentColor. */
+    outline-color: var(--rb-accent);
   }
 
   html {
