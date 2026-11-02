@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { areas, goals, papers, projects, reviews, seminars, thoughts } from "@/db/schema";
 import { ITEM_TYPE } from "@/lib/enums";
+import { titleKey } from "@/lib/wikilinks";
 import { assertItemRef, db, type Executor, type ItemRef, type ItemType } from "./shared";
 
 /** `archived` is set only where it matters (connected items); pickers never return archived items. */
@@ -104,4 +105,56 @@ export async function searchTitles(
     (a, b) => Number(b.prefix) - Number(a.prefix) || b.updatedAt.localeCompare(a.updatedAt),
   );
   return rows.slice(0, limit).map(({ ref, type, title }) => ({ ref, type, title }));
+}
+
+/**
+ * Items for `[[title]]` links, keyed by `titleKey` (case-insensitive, trimmed). When
+ * several items share a title, a non-archived one wins, then the most recently updated.
+ * Titles nothing matches are absent.
+ */
+export async function resolveTitles(
+  titles: readonly string[],
+  exec: Executor = db(),
+): Promise<Map<string, ItemSummary>> {
+  const keys = [...new Set(titles.map(titleKey).filter(Boolean))];
+  const best = new Map<string, ItemSummary & { updatedAt: string }>();
+  if (!keys.length) return new Map();
+  for (const type of ITEM_TYPE.values) {
+    const t = tableFor(type);
+    const rows = await exec
+      .select({ id: t.id, title: t.title, archivedAt: t.archivedAt, updatedAt: t.updatedAt })
+      .from(t)
+      .where(inArray(sql`lower(trim(${t.title}))`, keys));
+    for (const r of rows) {
+      const key = titleKey(r.title);
+      const archived = r.archivedAt !== null;
+      const current = best.get(key);
+      const better =
+        !current ||
+        (current.archived && !archived) ||
+        (current.archived === archived && r.updatedAt > current.updatedAt);
+      if (better) {
+        best.set(key, {
+          ref: { type, id: r.id },
+          type,
+          title: r.title,
+          archived,
+          updatedAt: r.updatedAt,
+        });
+      }
+    }
+  }
+  return new Map(
+    [...best].map(([k, s]) => [
+      k,
+      { ref: s.ref, type: s.type, title: s.title, archived: s.archived },
+    ]),
+  );
+}
+
+/** Markdown body of an item, or null if it does not exist. */
+export async function getBody(ref: ItemRef, exec: Executor = db()): Promise<string | null> {
+  const t = tableFor(ref.type);
+  const [row] = await exec.select({ body: t.body }).from(t).where(eq(t.id, ref.id)).limit(1);
+  return row ? row.body : null;
 }

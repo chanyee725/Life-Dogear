@@ -23,6 +23,7 @@ export function parseProjectForm(form: FormData): ProjectPatch {
     status: optionalEnum(PROJECT_STATUS, formText(form, "status"), "상태"),
     // "" (없음) clears the area.
     areaId: optionalNullableText(formText(form, "areaId"), "영역"),
+    goalId: optionalNullableText(formText(form, "goalId"), "목표"),
     nextAction: optionalText(formText(form, "nextAction"), "다음 할 일"),
     researchQuestion: optionalText(formText(form, "researchQuestion"), "연구 질문"),
     stage: optionalEnum(PROJECT_STAGE, formText(form, "stage"), "단계"),
