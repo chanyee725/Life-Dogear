@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import type { ReactNode } from "react";
+import { describeError } from "@/app/_actions/result";
 import { areas, thoughts } from "@/lib/repo";
 import { SidebarNav } from "./SidebarNav";
 
@@ -13,7 +14,8 @@ async function loadSidebarData(): Promise<SidebarData> {
     const [areaList, inboxCount] = await Promise.all([areas.list(), thoughts.countInbox()]);
     return { areas: areaList.map((a) => ({ id: a.id, title: a.title })), inboxCount };
   } catch (error) {
-    console.error("[sidebar] could not load areas or the inbox count", error);
+    // Name and code only: the error object carries SQL, params, stacks and local paths.
+    console.error("[sidebar] could not load areas or the inbox count", describeError(error));
     return EMPTY;
   }
 }
