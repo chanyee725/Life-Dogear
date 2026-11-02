@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  createLatestSender,
   createSaveQueue,
   SAVE_FAILED,
   type SaveOutcome,
@@ -155,5 +156,48 @@ describe("createSaveQueue", () => {
       await queue.flush();
       expect(save).toHaveBeenCalledExactlyOnceWith({ title: "내 편집" });
     });
+  });
+});
+
+describe("createLatestSender", () => {
+  it("sends in order, skips superseded values and reports only the final outcome", async () => {
+    const releases: ((o: SaveOutcome) => void)[] = [];
+    const sent: string[][] = [];
+    const send = vi.fn(
+      (tags: string[]) =>
+        new Promise<SaveOutcome>((resolve) => {
+          sent.push(tags);
+          releases.push(resolve);
+        }),
+    );
+    const settled: SaveOutcome[] = [];
+    const sendTags = createLatestSender(send, (o) => settled.push(o));
+
+    const done = sendTags(["a"]);
+    void sendTags(["a", "b"]); // superseded before it is sent
+    void sendTags(["a", "b", "c"]);
+    expect(sent).toEqual([["a"]]); // one request at a time
+
+    releases[0]({ ok: false, error: "old" });
+    await vi.waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]).toEqual(["a", "b", "c"]);
+    expect(settled).toEqual([]); // the stale result is not reported
+
+    releases[1]({ ok: true });
+    await done;
+    expect(settled).toEqual([{ ok: true }]);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("treats a throwing send as a failure and keeps working", async () => {
+    const send = vi
+      .fn<(v: number) => Promise<SaveOutcome>>()
+      .mockRejectedValueOnce(new Error("down"))
+      .mockResolvedValue({ ok: true });
+    const settled: SaveOutcome[] = [];
+    const sendValue = createLatestSender(send, (o) => settled.push(o));
+    await sendValue(1);
+    await sendValue(2);
+    expect(settled).toEqual([{ ok: false, error: SAVE_FAILED }, { ok: true }]);
   });
 });

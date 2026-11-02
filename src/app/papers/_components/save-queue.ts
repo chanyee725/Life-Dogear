@@ -97,3 +97,39 @@ export function createSaveQueue<P extends object>(
     pending: () => pending,
   };
 }
+
+/**
+ * Sends values one at a time and only the newest: calls made while a send is in
+ * flight replace each other, and the latest goes out when the current one ends.
+ * Requests therefore reach the server in order (no older list saved last), and
+ * `onSettled` reports only the outcome of the value that is final for now.
+ * Throwing sends count as failures.
+ */
+export function createLatestSender<T>(
+  send: (value: T) => Promise<SaveOutcome>,
+  onSettled: (outcome: SaveOutcome) => void,
+): (value: T) => Promise<void> {
+  let running: Promise<void> | null = null;
+  let next: { value: T } | null = null;
+
+  async function drain() {
+    while (next) {
+      const { value } = next;
+      next = null;
+      let outcome: SaveOutcome;
+      try {
+        outcome = await send(value);
+      } catch {
+        outcome = { ok: false, error: SAVE_FAILED };
+      }
+      if (!next) onSettled(outcome);
+    }
+    running = null;
+  }
+
+  return (value: T) => {
+    next = { value };
+    running ??= drain();
+    return running;
+  };
+}
