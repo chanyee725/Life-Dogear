@@ -24,7 +24,8 @@ describe("createQuickThought", () => {
       maturity: "seed",
       body: "",
     });
-    expect(vi.mocked(revalidatePath).mock.calls.map((c) => c[0])).toEqual(["/", "/thoughts"]);
+    expect(vi.mocked(revalidatePath).mock.calls.map((c) => c[0])).toEqual(["/", "/thoughts", "/"]);
+    expect(vi.mocked(revalidatePath)).toHaveBeenLastCalledWith("/", "layout");
   });
 
   it("uses the first line as title and the rest as body", async () => {

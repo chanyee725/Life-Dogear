@@ -8,6 +8,8 @@ import { runAction, type ActionResult } from "./result";
 function revalidateBoth(a: ItemRef, b: ItemRef) {
   revalidatePath(itemPath(a));
   revalidatePath(itemPath(b));
+  // Linking files a thought out of the inbox; the sidebar count lives in the layout.
+  if (a.type === "thought" || b.type === "thought") revalidatePath("/", "layout");
 }
 
 /** Connects two items (idempotent). */

@@ -5,6 +5,7 @@ import {
   archiveFilter,
   db,
   definedOnly,
+  hasTag,
   newId,
   nowIso,
   RepoError,
@@ -26,7 +27,7 @@ export type AreaInput = {
   tags?: string[];
 };
 export type AreaPatch = Partial<AreaInput>;
-export type AreaListOptions = ArchiveOptions;
+export type AreaListOptions = ArchiveOptions & { tag?: string };
 
 const ref = (id: string) => ({ type: "area" as const, id });
 
@@ -52,7 +53,12 @@ export async function list(options: AreaListOptions = {}): Promise<Area[]> {
   const rows = await db()
     .select()
     .from(areas)
-    .where(archiveFilter(areas.archivedAt, options))
+    .where(
+      and(
+        archiveFilter(areas.archivedAt, options),
+        options.tag ? hasTag(db(), "area", areas.id, options.tag) : undefined,
+      ),
+    )
     .orderBy(asc(areas.sortOrder), asc(areas.title));
   return withTags(rows);
 }
