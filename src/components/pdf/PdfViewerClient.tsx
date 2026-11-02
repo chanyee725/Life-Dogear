@@ -71,6 +71,8 @@ export type PdfViewerProps = {
   saveDelay?: number;
   /** Shown at the left of the toolbar (e.g. back link and title). */
   header?: ReactNode;
+  /** Shown at the right end of the toolbar (e.g. the focus mode toggle). */
+  toolbarEnd?: ReactNode;
   className?: string;
   /** Rendered over each page box (absolute, page-sized). Gets the 1-based page number. */
   renderPageOverlay?: (page: number) => ReactNode;
@@ -92,6 +94,7 @@ export default function PdfViewerClient({
   onProgress,
   saveDelay = 800,
   header,
+  toolbarEnd,
   className = "",
   renderPageOverlay,
   apiRef,
@@ -393,6 +396,7 @@ export default function PdfViewerClient({
             +
           </button>
         </div>
+        {toolbarEnd ? <div className="flex shrink-0 items-center gap-1">{toolbarEnd}</div> : null}
       </div>
 
       <div
