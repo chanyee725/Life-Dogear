@@ -1,6 +1,6 @@
 export const QUICK_INPUT_ID = "quick-input";
-/** Node search box on the graph page; `/` focuses it there instead of the quick input. */
-export const GRAPH_SEARCH_ID = "graph-search";
+/** Window event the graph page listens to: `/` opens its node search there. */
+export const GRAPH_SEARCH_EVENT = "rb:graph-search";
 export const GRAPH_HREF = "/graph";
 
 const SECTIONS = ["projects", "areas", "papers", "seminars", "thoughts"] as const;
