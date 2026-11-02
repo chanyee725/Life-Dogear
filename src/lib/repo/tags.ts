@@ -109,7 +109,7 @@ export async function removeTagsFor(exec: Executor, ref: ItemRef): Promise<void>
   await pruneOrphanTags(exec);
 }
 
-async function pruneOrphanTags(exec: Executor): Promise<void> {
+export async function pruneOrphanTags(exec: Executor): Promise<void> {
   await exec
     .delete(tags)
     .where(notExists(exec.select().from(itemTags).where(eq(itemTags.tagId, tags.id))));
