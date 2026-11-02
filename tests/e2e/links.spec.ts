@@ -7,7 +7,7 @@ test("상세에서 연결 추가 → 양쪽에 표시 → 해제", async ({ page
   const title = uniqueTitle("E2E link");
 
   await page.goto("/thoughts/new");
-  await page.getByLabel("제목").first().fill(title);
+  await page.getByLabel("제목", { exact: true }).fill(title);
   await page.getByRole("button", { name: "저장" }).click();
   await expect(page).toHaveURL(/\/thoughts\/(?!new)[^/]+$/);
   const thoughtUrl = page.url();

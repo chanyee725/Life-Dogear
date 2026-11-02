@@ -16,11 +16,11 @@ for (const { section, label } of SECTIONS) {
     await createItem(page, section, title);
 
     // Edit the title and save; the change survives a reload.
-    const titleField = page.getByLabel("제목").first();
+    const titleField = page.getByLabel("제목", { exact: true });
     await titleField.fill(edited);
     await page.getByRole("button", { name: "저장" }).click();
     await page.reload();
-    await expect(page.getByLabel("제목").first()).toHaveValue(edited);
+    await expect(page.getByLabel("제목", { exact: true })).toHaveValue(edited);
 
     // It appears in the list.
     await page.goto(`/${section}`);
@@ -36,7 +36,8 @@ for (const { section, label } of SECTIONS) {
 
 test("빈 제목은 저장되지 않는다", async ({ page }) => {
   await page.goto("/thoughts/new");
-  await page.getByLabel("제목").first().fill("   ");
+  await page.getByLabel("제목", { exact: true }).fill("   ");
   await page.getByRole("button", { name: "저장" }).click();
+  await expect(page.getByText("제목을 입력하세요.")).toBeVisible();
   await expect(page).toHaveURL(/\/thoughts\/new$/);
 });

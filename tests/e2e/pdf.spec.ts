@@ -27,7 +27,7 @@ test("PDF 뷰어: 스크롤 → 저장 → 새로고침 시 같은 쪽 근처로
 
   // Re-open from the paper detail page too.
   await page.goto(`/papers/${PAPER}`);
-  await page.getByRole("link", { name: /이어 읽기/ }).click();
+  await page.getByRole("link", { name: /^이어 읽기/ }).click();
   await expect(page).toHaveURL(new RegExp(`${PAPER}/read$`));
   await expect(pageInput(page)).toHaveValue("3", { timeout: 15_000 });
 });
@@ -55,5 +55,5 @@ test("PDF 없는 논문의 뷰어/진행 API는 실패 경로로 처리된다", 
   const traversal = await request.get("/api/papers/..%2F..%2Fetc%2Fpasswd/pdf");
   expect([400, 404]).toContain(traversal.status());
   await page.goto("/papers/seed-paper-4");
-  await expect(page.getByRole("link", { name: /이어 읽기/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /^이어 읽기/ })).toHaveCount(0);
 });
