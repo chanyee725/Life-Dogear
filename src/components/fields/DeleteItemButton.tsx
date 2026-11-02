@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
-import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Dialog";
+import { QuietButton } from "./ItemDetail";
 
 /** 삭제 button with a confirmation dialog; navigates to `redirectTo` after deleting. */
 export function DeleteItemButton({
@@ -36,9 +36,7 @@ export function DeleteItemButton({
 
   return (
     <>
-      <Button variant="ghost" onClick={() => setOpen(true)}>
-        삭제
-      </Button>
+      <QuietButton onClick={() => setOpen(true)}>삭제</QuietButton>
       <ConfirmDialog
         open={open}
         onCancel={() => setOpen(false)}

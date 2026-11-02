@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { archiveItem, unarchiveItem } from "@/app/_actions/archive";
 import { safeAction } from "@/components/links/safe-action";
-import { Button } from "@/components/ui";
+import { QuietButton } from "@/components/fields/ItemDetail";
 
 /**
  * "보관" / "보관 해제" for a paper. Archived papers drop out of lists, home and the
@@ -32,9 +32,9 @@ export function ArchivePaperButton({ paperId, archived }: { paperId: string; arc
           {error}
         </span>
       ) : null}
-      <Button variant="ghost" onClick={toggle} disabled={pending}>
+      <QuietButton onClick={toggle} disabled={pending}>
         {pending ? "처리 중…" : archived ? "보관 해제" : "보관"}
-      </Button>
+      </QuietButton>
     </>
   );
 }
