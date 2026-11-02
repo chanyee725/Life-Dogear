@@ -7,7 +7,7 @@ import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "태그" };
+export const metadata: Metadata = { title: "주제" };
 
 const SORTS: { value: TagSort; label: string }[] = [
   { value: "count", label: "많이 쓴 순" },
@@ -20,16 +20,16 @@ export default async function TagsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sort = parseTagSort((await searchParams).sort);
-  const list = sortTags(await tags.listAll(), sort);
+  const list = sortTags(await tags.listAll({ visibleOnly: true }), sort);
 
   return (
     <Page>
       <PageHeader
-        title="태그"
+        title="주제"
         description={
           list.length
-            ? `태그 ${list.length}개 — 연구·논문·세미나·생각이 함께 씁니다.`
-            : "연구·논문·세미나·생각이 함께 쓰는 태그입니다."
+            ? `주제 ${list.length}개 — 프로젝트·영역·논문·세미나·생각이 함께 씁니다.`
+            : "프로젝트·영역·논문·세미나·생각이 함께 쓰는 주제입니다."
         }
         actions={
           list.length ? (
@@ -50,8 +50,8 @@ export default async function TagsPage({
       />
       {list.length === 0 ? (
         <EmptyState
-          title="아직 태그가 없습니다"
-          description="연구·논문·세미나·생각의 상세 화면에서 태그를 달면 여기에 모입니다."
+          title="아직 주제가 없습니다"
+          description="상세 화면에서 주제를 달면 여기에 모입니다."
         />
       ) : (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">

@@ -2,7 +2,9 @@ import {
   IMPORTANCE,
   ITEM_ROUTE,
   ITEM_TYPE,
+  PROJECT_KIND,
   PROJECT_STAGE,
+  PROJECT_STATUS,
   READ_STATUS,
   SEMINAR_KIND,
   THOUGHT_KIND,
@@ -10,7 +12,7 @@ import {
   type BadgeTone,
   type ItemType,
 } from "@/lib/enums";
-import { papers, projects, seminars, tags, thoughts } from "@/lib/repo";
+import { areas, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 
 export type TagSort = "count" | "name";
@@ -63,11 +65,14 @@ const href = (type: ItemType, id: string) => `${ITEM_ROUTE[type]}/${id}`;
  */
 export async function loadTagPage(rawName: string): Promise<TagPageData | null> {
   const wanted = rawName.normalize("NFC").trim().toLowerCase();
-  const tag = (await tags.listAll()).find((t) => t.name.toLowerCase() === wanted);
+  const tag = (await tags.listAll({ visibleOnly: true })).find(
+    (t) => t.name.toLowerCase() === wanted,
+  );
   if (!tag) return null;
 
-  const [projectRows, paperRows, seminarRows, thoughtRows] = await Promise.all([
+  const [projectRows, areaRows, paperRows, seminarRows, thoughtRows] = await Promise.all([
     projects.list({ tag: tag.name, sort: "updated" }),
+    areas.list({ tag: tag.name }),
     papers.list({ tag: tag.name, sort: "updated" }),
     seminars.list({ tag: tag.name, sort: "date" }),
     thoughts.list({ tag: tag.name, sort: "updated" }),
@@ -81,8 +86,22 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
         id: p.id,
         href: href("project", p.id),
         title: p.title,
-        badges: [badge(PROJECT_STAGE, p.stage)],
+        badges:
+          p.kind === "research"
+            ? [badge(PROJECT_STAGE, p.stage)]
+            : [badge(PROJECT_KIND, p.kind), badge(PROJECT_STATUS, p.status)],
         meta: p.dueDate ? `마감 ${p.dueDate}` : undefined,
+      })),
+    },
+    {
+      type: "area",
+      label: ITEM_TYPE.label("area"),
+      items: areaRows.map((a) => ({
+        id: a.id,
+        href: href("area", a.id),
+        title: a.title,
+        badges: [],
+        meta: a.standard || undefined,
       })),
     },
     {
