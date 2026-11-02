@@ -31,7 +31,8 @@ export function UnlinkButton({
         variant="ghost"
         size="sm"
         disabled={pending}
-        aria-label={`"${otherTitle}" 연결 해제`}
+        aria-busy={pending}
+        title={`"${otherTitle}" 연결 해제`}
         className="opacity-60 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={() =>
           startTransition(async () => {
@@ -42,7 +43,7 @@ export function UnlinkButton({
           })
         }
       >
-        {pending ? "해제 중…" : "연결 해제"}
+        연결 해제
       </Button>
     </span>
   );

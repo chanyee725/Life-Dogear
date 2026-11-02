@@ -84,7 +84,8 @@ export function LinkPicker({
   return (
     <>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-        + {label}
+        <span aria-hidden>+</span>
+        {label}
       </Button>
       <Dialog
         open={open}

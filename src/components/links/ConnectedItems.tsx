@@ -25,31 +25,41 @@ export async function ConnectedItems({
   const connected = await links.listConnected(item);
 
   return (
-    <Section
-      title={`${title}${connected.length ? ` ${connected.length}` : ""}`}
-      action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
-      className={className}
-    >
-      {connected.length === 0 ? (
-        <p className="text-[13px] text-faint">
-          아직 연결된 항목이 없습니다. 관련 논문·세미나·생각·연구를 연결해 보세요.
-        </p>
-      ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
-          {connected.map((c) => (
-            <li key={refKey(c.ref)} className="group flex items-center gap-2.5 px-3 py-2">
-              <Badge tone={ITEM_TYPE.tone(c.type)}>{ITEM_TYPE.label(c.type)}</Badge>
-              <Link
-                href={itemPath(c.ref)}
-                className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
-              >
-                {c.title}
-              </Link>
-              <UnlinkButton item={item} other={c.ref} otherTitle={c.title} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Section>
+    <div role="region" aria-label={title} className={className}>
+      <Section
+        title={
+          <>
+            {title}
+            {connected.length ? (
+              <span aria-hidden className="ml-1.5 font-normal text-faint">
+                {connected.length}
+              </span>
+            ) : null}
+          </>
+        }
+        action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
+      >
+        {connected.length === 0 ? (
+          <p className="text-[13px] text-faint">
+            아직 연결된 항목이 없습니다. 관련 논문·세미나·생각·연구를 연결해 보세요.
+          </p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+            {connected.map((c) => (
+              <li key={refKey(c.ref)} className="group flex items-center gap-2.5 px-3 py-2">
+                <Badge tone={ITEM_TYPE.tone(c.type)}>{ITEM_TYPE.label(c.type)}</Badge>
+                <Link
+                  href={itemPath(c.ref)}
+                  className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
+                >
+                  {c.title}
+                </Link>
+                <UnlinkButton item={item} other={c.ref} otherTitle={c.title} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+    </div>
   );
 }
