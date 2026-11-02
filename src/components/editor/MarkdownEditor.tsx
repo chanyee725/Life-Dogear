@@ -108,7 +108,8 @@ function HiddenValue({
     if (!editor || !input) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Tiptap can emit an `update` right after mount (normalization) without a real edit.
-    const loadedDoc = editor.state.doc;
+    // Baseline for "changed?": the loaded document, then whatever was last submitted.
+    let loadedDoc = editor.state.doc;
     const sync = () => {
       // Toolbar commands change the document without a DOM input event; announce real
       // edits so the surrounding form can track unsaved changes.
@@ -120,6 +121,7 @@ function HiddenValue({
       }, HIDDEN_SYNC_MS);
     };
     const onFormData = (event: FormDataEvent) => {
+      loadedDoc = editor.state.doc;
       const markdown = getMarkdown(editor);
       input.value = markdown;
       event.formData.set(name, markdown);

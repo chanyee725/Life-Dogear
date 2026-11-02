@@ -7,6 +7,7 @@ import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
+import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
 
 export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: string }>>;
 
@@ -15,7 +16,7 @@ export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: stri
  * - create: on success navigates to `${basePath}/${id}`
  * - edit: on success shows "저장됨" and refreshes server data
  * Cmd/Ctrl+S submits. Errors (including network failures) are shown inline.
- * Unsaved edits show "저장 안 됨" and trigger the browser's leave-page warning.
+ * Unsaved edits show "저장 안 됨"; leaving the page or following an in-app link asks first.
  * Fields signal edits with bubbling `input`/`change` events (the editor and TagInput
  * dispatch `input` for changes that don't come from typing).
  */
@@ -63,15 +64,7 @@ export function ItemForm({
     };
   }, []);
 
-  useEffect(() => {
-    if (!dirty) return;
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = ""; // Older browsers need returnValue set.
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [dirty]);
+  useUnsavedChangesGuard(dirty);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
