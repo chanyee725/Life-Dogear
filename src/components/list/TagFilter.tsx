@@ -53,9 +53,7 @@ export function FilterChips({
           >
             {o.label}
             {o.count !== undefined ? (
-              <span className="text-xs font-normal text-muted tabular-nums">
-                {o.count}
-              </span>
+              <span className="text-xs font-normal text-muted tabular-nums">{o.count}</span>
             ) : null}
           </Link>
         );
