@@ -1,0 +1,91 @@
+/**
+ * Enum values stored in the database, with Korean labels and badge tones.
+ * Badge tones are semantic tokens; the design system maps them to colors.
+ */
+
+export type BadgeTone = "gray" | "blue" | "green" | "amber" | "red" | "purple" | "teal";
+
+export type EnumOption<V extends string> = {
+  readonly value: V;
+  readonly label: string;
+  readonly tone: BadgeTone;
+};
+
+function defineEnum<const V extends string>(options: readonly EnumOption<V>[]) {
+  const values = options.map((o) => o.value) as unknown as readonly [V, ...V[]];
+  const byValue = new Map<string, EnumOption<V>>(options.map((o) => [o.value, o]));
+  return {
+    options,
+    values,
+    is: (value: unknown): value is V => typeof value === "string" && byValue.has(value),
+    label: (value: V): string => byValue.get(value)?.label ?? value,
+    tone: (value: V): BadgeTone => byValue.get(value)?.tone ?? "gray",
+  };
+}
+
+export const ITEM_TYPE = defineEnum([
+  { value: "project", label: "연구", tone: "purple" },
+  { value: "paper", label: "논문", tone: "blue" },
+  { value: "seminar", label: "세미나", tone: "teal" },
+  { value: "thought", label: "생각", tone: "amber" },
+] as const);
+export type ItemType = (typeof ITEM_TYPE.values)[number];
+
+/** URL segment for each item type, e.g. `/papers/<id>`. */
+export const ITEM_ROUTE: Record<ItemType, string> = {
+  project: "/projects",
+  paper: "/papers",
+  seminar: "/seminars",
+  thought: "/thoughts",
+};
+
+export const PROJECT_STAGE = defineEnum([
+  { value: "exploring", label: "주제 탐색", tone: "gray" },
+  { value: "topic_set", label: "주제 확정", tone: "blue" },
+  { value: "proposal", label: "제안서 작성", tone: "purple" },
+  { value: "lit_review", label: "문헌 검토", tone: "teal" },
+  { value: "data_collection", label: "데이터 수집", tone: "amber" },
+  { value: "drafting", label: "초안 작성", tone: "blue" },
+  { value: "revising", label: "수정·교정", tone: "red" },
+  { value: "submitted", label: "제출 완료", tone: "green" },
+] as const);
+export type ProjectStage = (typeof PROJECT_STAGE.values)[number];
+
+export const READ_STATUS = defineEnum([
+  { value: "to_read", label: "읽을 예정", tone: "gray" },
+  { value: "reading", label: "읽는 중", tone: "blue" },
+  { value: "done", label: "다 읽음", tone: "green" },
+] as const);
+export type ReadStatus = (typeof READ_STATUS.values)[number];
+
+export const IMPORTANCE = defineEnum([
+  { value: "core", label: "핵심", tone: "red" },
+  { value: "reference", label: "참고", tone: "blue" },
+  { value: "light", label: "가볍게", tone: "gray" },
+] as const);
+export type Importance = (typeof IMPORTANCE.values)[number];
+
+export const SEMINAR_KIND = defineEnum([
+  { value: "seminar", label: "세미나", tone: "teal" },
+  { value: "conference_talk", label: "학회 발표", tone: "purple" },
+  { value: "lecture", label: "강의", tone: "blue" },
+  { value: "webinar", label: "웨비나", tone: "amber" },
+  { value: "other", label: "기타", tone: "gray" },
+] as const);
+export type SeminarKind = (typeof SEMINAR_KIND.values)[number];
+
+export const THOUGHT_KIND = defineEnum([
+  { value: "idea", label: "아이디어", tone: "amber" },
+  { value: "question", label: "질문", tone: "blue" },
+  { value: "critique", label: "비판·반론", tone: "red" },
+  { value: "connection", label: "연결 발견", tone: "purple" },
+  { value: "memo", label: "메모", tone: "gray" },
+] as const);
+export type ThoughtKind = (typeof THOUGHT_KIND.values)[number];
+
+export const THOUGHT_MATURITY = defineEnum([
+  { value: "seed", label: "씨앗", tone: "gray" },
+  { value: "growing", label: "자라는 중", tone: "teal" },
+  { value: "refined", label: "정리됨", tone: "green" },
+] as const);
+export type ThoughtMaturity = (typeof THOUGHT_MATURITY.values)[number];
