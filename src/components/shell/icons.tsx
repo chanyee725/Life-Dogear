@@ -72,3 +72,9 @@ export const MonitorIcon = () => (
     <path d="M6 14h4M8 11v3" />
   </Icon>
 );
+export const SidebarIcon = () => (
+  <Icon>
+    <rect x="1.75" y="2.5" width="12.5" height="11" rx="1.5" />
+    <path d="M5.5 2.5v11" />
+  </Icon>
+);
