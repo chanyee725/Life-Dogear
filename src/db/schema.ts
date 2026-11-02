@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnySQLiteColumn,
   index,
   integer,
   primaryKey,
@@ -9,12 +10,17 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import {
+  GOAL_HORIZON,
+  GOAL_PROGRESS_MODE,
+  GOAL_STATUS,
   IMPORTANCE,
   ITEM_TYPE,
+  LINK_VIA,
   PROJECT_KIND,
   PROJECT_STAGE,
   PROJECT_STATUS,
   READ_STATUS,
+  REVIEW_KIND,
   SEMINAR_KIND,
   THOUGHT_KIND,
   THOUGHT_MATURITY,
@@ -45,6 +51,37 @@ export const areas = sqliteTable(
   (t) => [index("areas_order_idx").on(t.archivedAt, t.sortOrder)],
 );
 
+/** Goals: life (no period) → year (`2027`) → quarter (`2027-Q1`). */
+export const goals = sqliteTable(
+  "goals",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    why: text("why").notNull().default(""),
+    horizon: text("horizon", { enum: GOAL_HORIZON.values }).notNull(),
+    /** Null for life goals. */
+    period: text("period"),
+    parentId: text("parent_id").references((): AnySQLiteColumn => goals.id, {
+      onDelete: "set null",
+    }),
+    areaId: text("area_id").references(() => areas.id, { onDelete: "set null" }),
+    status: text("status", { enum: GOAL_STATUS.values }).notNull().default("active"),
+    progressMode: text("progress_mode", { enum: GOAL_PROGRESS_MODE.values })
+      .notNull()
+      .default("auto"),
+    /** 0..100, used when `progressMode` is manual. */
+    manualProgress: integer("manual_progress"),
+    body: text("body").notNull().default(""),
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [
+    index("goals_period_idx").on(t.period),
+    index("goals_parent_idx").on(t.parentId),
+    index("goals_area_idx").on(t.areaId),
+  ],
+);
+
 export const projects = sqliteTable(
   "projects",
   {
@@ -54,6 +91,7 @@ export const projects = sqliteTable(
     /** General projects use this; research projects keep it in sync with `stage`. */
     status: text("status", { enum: PROJECT_STATUS.values }).notNull().default("active"),
     areaId: text("area_id").references(() => areas.id, { onDelete: "set null" }),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
     nextAction: text("next_action").notNull().default(""),
     researchQuestion: text("research_question").notNull().default(""),
     stage: text("stage", { enum: PROJECT_STAGE.values }).notNull().default("exploring"),
@@ -67,6 +105,7 @@ export const projects = sqliteTable(
   (t) => [
     index("projects_kind_status_idx").on(t.kind, t.status, t.archivedAt),
     index("projects_area_idx").on(t.areaId),
+    index("projects_goal_idx").on(t.goalId),
   ],
 );
 
@@ -156,7 +195,11 @@ export const itemTags = sqliteTable(
   ],
 );
 
-/** Directed many-to-many link between any two items (creator → target). */
+/**
+ * Directed many-to-many link between any two items (creator → target).
+ * One link per pair regardless of direction or `via`: a `manual` link is never
+ * touched by body sync, and linking a `body` pair by hand promotes it to `manual`.
+ */
 export const links = sqliteTable(
   "links",
   {
@@ -165,6 +208,7 @@ export const links = sqliteTable(
     sourceId: text("source_id").notNull(),
     targetType: text("target_type", { enum: ITEM_TYPE.values }).notNull(),
     targetId: text("target_id").notNull(),
+    via: text("via", { enum: LINK_VIA.values }).notNull().default("manual"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [
@@ -190,4 +234,41 @@ export const highlights = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [index("highlights_paper_idx").on(t.paperId, t.page)],
+);
+
+/** Reviews (회고): one per kind + period, e.g. week `2026-W45`. */
+export const reviews = sqliteTable(
+  "reviews",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind", { enum: REVIEW_KIND.values }).notNull(),
+    period: text("period").notNull(),
+    /** Display title (e.g. "2026-W45 주간 회고"); used by links, search and `[[…]]`. */
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    /** JSON array of ItemRef (weekly focus, ≤3). */
+    focus: text("focus").notNull().default("[]"),
+    /** JSON object {goalId: 0..100} snapshot at writing time. */
+    goalProgress: text("goal_progress").notNull().default("{}"),
+    completedAt: text("completed_at"),
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("reviews_kind_period_idx").on(t.kind, t.period),
+    index("reviews_archived_idx").on(t.archivedAt),
+  ],
+);
+
+/** Pinned node positions on `/graph` (the only graph-specific table). */
+export const graphLayout = sqliteTable(
+  "graph_layout",
+  {
+    nodeType: text("node_type", { enum: ITEM_TYPE.values }).notNull(),
+    nodeId: text("node_id").notNull(),
+    x: real("x").notNull(),
+    y: real("y").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.nodeType, t.nodeId] })],
 );
