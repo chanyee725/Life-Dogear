@@ -2,11 +2,11 @@ import { mkdir, mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { isValidItemId } from "@/lib/ids";
 import {
   assertPdfBytes,
   deletePdf,
   isPdfBytes,
-  isValidPaperId,
   pdfAbsolutePath,
   pdfExists,
   pdfRelativePath,
@@ -30,7 +30,7 @@ function codeOf(fn: () => unknown): string | undefined {
 
 describe("paper id validation", () => {
   it.each([UUID, "seed-paper-1", "seed-paper"])("accepts %s", (id) => {
-    expect(isValidPaperId(id)).toBe(true);
+    expect(isValidItemId(id)).toBe(true);
   });
 
   it.each([
@@ -49,7 +49,7 @@ describe("paper id validation", () => {
     42,
     null,
   ])("rejects %j", (id) => {
-    expect(isValidPaperId(id)).toBe(false);
+    expect(isValidItemId(id)).toBe(false);
   });
 
   it("builds paths from the id only", () => {

@@ -13,7 +13,7 @@ export type { ReadingProgress } from "./progress-client";
 export const PdfViewer = dynamic<PdfViewerProps>(() => import("./PdfViewerClient"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+    <div className="flex h-full items-center justify-center text-sm text-muted">
       뷰어를 불러오는 중…
     </div>
   ),

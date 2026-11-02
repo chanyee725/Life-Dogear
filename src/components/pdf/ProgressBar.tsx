@@ -27,15 +27,15 @@ export function ProgressBar({
         aria-valuemax={100}
         aria-valuenow={percent}
         aria-valuetext={known ? `${total}쪽 중 ${page}쪽` : "전체 쪽수 모름"}
-        className="h-1 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800"
+        className="h-1 flex-1 overflow-hidden rounded-full bg-subtle"
       >
         <div
-          className="h-full rounded-full bg-neutral-700 transition-[width] dark:bg-neutral-300"
+          className="h-full rounded-full bg-accent transition-[width]"
           style={{ width: `${percent}%` }}
         />
       </div>
       {showLabel && (
-        <span className="shrink-0 text-xs text-neutral-500 tabular-nums dark:text-neutral-400">
+        <span className="shrink-0 text-xs text-muted tabular-nums">
           {known ? `${page} / ${total}쪽` : current ? `${current}쪽` : "—"}
         </span>
       )}

@@ -5,6 +5,24 @@ import { join } from "node:path";
 const ALLOWED: Record<string, Record<string, string>> = {
   cmaps: { ".bcmap": "application/octet-stream" },
   standard_fonts: { ".pfb": "application/x-font-type1", ".ttf": "font/ttf" },
+  wasm: { ".wasm": "application/wasm", ".js": "text/javascript" },
+  // CMYK colour profile used when converting CMYK images.
+  iccs: { ".icc": "application/vnd.iccprofile" },
+};
+
+/**
+ * Directories limited to specific files: image decoders for scanned PDFs
+ * (JPEG 2000, JBIG2) with their no-wasm fallbacks, and ICC colour support.
+ * The scripting engine (quickjs) in the same directory is not served.
+ */
+const ONLY_FILES: Record<string, ReadonlySet<string>> = {
+  wasm: new Set([
+    "openjpeg.wasm",
+    "openjpeg_nowasm_fallback.js",
+    "jbig2.wasm",
+    "jbig2_nowasm_fallback.js",
+    "qcms_bg.wasm",
+  ]),
 };
 
 const FILE_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*(\.[a-z0-9]+)$/;
@@ -46,5 +64,6 @@ export function resolvePdfjsAsset(
   const types = ALLOWED[dir];
   const contentType = Object.hasOwn(types, match[1]) ? types[match[1]] : undefined;
   if (!contentType) return null;
+  if (Object.hasOwn(ONLY_FILES, dir) && !ONLY_FILES[dir].has(file)) return null;
   return { path: join(root, dir, file), contentType };
 }
