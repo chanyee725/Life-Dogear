@@ -25,10 +25,14 @@ export function sortTags(list: readonly TagCount[], sort: TagSort): TagCount[] {
 
 export const tagHref = (name: string) => `/tags/${encodeURIComponent(name)}`;
 
-/** Decodes the `[name]` segment; null when it is not valid percent-encoding. */
+/**
+ * Decodes the `[name]` segment; null when it is not valid percent-encoding.
+ * Relies on Next 15 handing `params` over still percent-encoded (as in the URL),
+ * so this decodes exactly once; revisit if a Next upgrade starts pre-decoding.
+ */
 export function decodeTagParam(raw: string): string | null {
   try {
-    const name = decodeURIComponent(raw).trim();
+    const name = decodeURIComponent(raw).normalize("NFC").trim();
     return name || null;
   } catch {
     return null;
@@ -58,7 +62,7 @@ const href = (type: ItemType, id: string) => `${ITEM_ROUTE[type]}/${id}`;
  * dropped. Returns null when no item uses the tag (case-insensitive match).
  */
 export async function loadTagPage(rawName: string): Promise<TagPageData | null> {
-  const wanted = rawName.trim().toLowerCase();
+  const wanted = rawName.normalize("NFC").trim().toLowerCase();
   const tag = (await tags.listAll()).find((t) => t.name.toLowerCase() === wanted);
   if (!tag) return null;
 

@@ -12,12 +12,15 @@ import {
 
 export type TagCount = { name: string; count: number };
 
-/** Trims, drops a leading `#`, collapses spaces and de-duplicates case-insensitively. */
+/**
+ * NFC-normalizes (macOS input can arrive decomposed), trims, drops a leading `#`,
+ * collapses spaces and de-duplicates case-insensitively.
+ */
 export function normalizeTagNames(names: readonly string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of names) {
-    const name = raw.trim().replace(/^#+/, "").replace(/\s+/g, " ").trim();
+    const name = raw.normalize("NFC").trim().replace(/^#+/, "").replace(/\s+/g, " ").trim();
     const key = name.toLowerCase();
     if (!name || seen.has(key)) continue;
     seen.add(key);

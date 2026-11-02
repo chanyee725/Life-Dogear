@@ -12,7 +12,8 @@ type Props = { params: Promise<{ name: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = decodeTagParam((await params).name);
-  return { title: name ? `#${name} · Research Brain` : "태그 · Research Brain" };
+  // The root layout's title template appends " · Research Brain".
+  return { title: name ? `#${name}` : "태그" };
 }
 
 export default async function TagPage({ params }: Props) {
