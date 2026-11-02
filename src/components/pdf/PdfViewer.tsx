@@ -1,9 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { PdfViewerProps } from "./PdfViewerClient";
+import type { PdfViewerApi, PdfViewerProps } from "./PdfViewerClient";
 
-export type { PdfViewerProps };
+export type { PdfViewerApi, PdfViewerProps };
 export type { ReadingProgress } from "./progress-client";
 
 /**
