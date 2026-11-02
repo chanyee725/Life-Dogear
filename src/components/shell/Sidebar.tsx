@@ -1,22 +1,37 @@
+import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { areas, thoughts } from "@/lib/repo";
 import { SidebarNav } from "./SidebarNav";
+
+type SidebarData = { areas: { id: string; title: string }[]; inboxCount: number };
+
+const EMPTY: SidebarData = { areas: [], inboxCount: 0 };
+
+/** Areas and inbox count; on any database error the sidebar still renders, just without them. */
+async function loadSidebarData(): Promise<SidebarData> {
+  try {
+    const [areaList, inboxCount] = await Promise.all([areas.list(), thoughts.countInbox()]);
+    return { areas: areaList.map((a) => ({ id: a.id, title: a.title })), inboxCount };
+  } catch (error) {
+    console.error("[sidebar] could not load areas or the inbox count", error);
+    return EMPTY;
+  }
+}
 
 /**
  * App sidebar (server): reads the areas and the inbox count, then renders the client nav.
  * Area/archive/inbox actions revalidate the root layout, so this stays current.
  *
+ * `connection()` defers the database reads to request time, so `next build` never
+ * queries the database (prerendering, e.g. /_not-found, would otherwise need a migrated DB).
+ *
  * `searchSlot`: reserved for the 2팀 "검색 ⌘K" button (rendered under the app name).
  */
 export async function Sidebar({ searchSlot }: { searchSlot?: ReactNode } = {}) {
-  const [areaList, inboxCount] = await Promise.all([areas.list(), thoughts.countInbox()]);
-  return (
-    <SidebarNav
-      areas={areaList.map((a) => ({ id: a.id, title: a.title }))}
-      inboxCount={inboxCount}
-      searchSlot={searchSlot}
-    />
-  );
+  // Outside the try: it signals dynamic rendering to Next and must not be swallowed.
+  await connection();
+  const data = await loadSidebarData();
+  return <SidebarNav areas={data.areas} inboxCount={data.inboxCount} searchSlot={searchSlot} />;
 }
 
 export { NAV_SECTIONS, isActivePath } from "./nav";
