@@ -4,6 +4,7 @@
  */
 import {
   DEFAULT_GRAPH_NODE_TYPES,
+  type GoalHorizon,
   GRAPH_NODE_TYPES,
   graphNodeId,
   type GraphData,
@@ -29,8 +30,10 @@ export type SourceItem = {
   goalId?: string | null;
   /** Goals: parent goal (quarter → year → life). */
   parentGoalId?: string | null;
-  /** Goals: `life`, `2027`, `2027-Q1`. */
-  horizon?: string;
+  /** Goals. */
+  horizon?: GoalHorizon;
+  /** Goals (`2027`, `2027-Q1`) and reviews (`2026-W45`). */
+  period?: string | null;
 };
 
 export type SourceLink = {
@@ -70,6 +73,7 @@ function fullGraph(source: GraphSource, withTags: boolean) {
     };
     if (item.areaId) node.areaId = item.areaId;
     if (item.type === "goal" && item.horizon) node.horizon = item.horizon;
+    if (item.period) node.period = item.period;
     nodes.set(node.id, node);
   }
 
@@ -245,11 +249,7 @@ export function buildGraph(source: GraphSource, filter: GraphFilter = {}): Graph
  * Uses every item type except topics; archived neighbours are left out (the center is
  * always included). Returns an empty graph when the center does not exist.
  */
-export function buildLocalGraph(
-  source: GraphSource,
-  center: GraphNodeId,
-  depth: 1 | 2,
-): GraphData {
+export function buildLocalGraph(source: GraphSource, center: GraphNodeId, depth: 1 | 2): GraphData {
   const { nodes, edges: all } = fullGraph(source, false);
   const c = nodes.get(center);
   if (!c) return { nodes: [], edges: [] };

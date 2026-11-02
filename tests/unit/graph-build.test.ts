@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { buildGraph, buildLocalGraph, type GraphSource, type SourceItem } from "@/lib/graph/build";
 import type { GraphData } from "@/lib/graph/types";
 
-const item = (type: SourceItem["type"], id: string, extra: Partial<SourceItem> = {}): SourceItem => ({
+const item = (
+  type: SourceItem["type"],
+  id: string,
+  extra: Partial<SourceItem> = {},
+): SourceItem => ({
   type,
   id,
   title: `${type} ${id}`,
@@ -17,8 +21,8 @@ const item = (type: SourceItem["type"], id: string, extra: Partial<SourceItem> =
 const SOURCE: GraphSource = {
   items: [
     item("goal", "life", { horizon: "life" }),
-    item("goal", "year", { horizon: "2027", parentGoalId: "life", areaId: "A" }),
-    item("goal", "q1", { horizon: "2027-Q1", parentGoalId: "year" }),
+    item("goal", "year", { horizon: "year", period: "2027", parentGoalId: "life", areaId: "A" }),
+    item("goal", "q1", { horizon: "quarter", period: "2027-Q1", parentGoalId: "year" }),
     item("area", "A"),
     item("area", "B"),
     item("project", "p", { goalId: "q1", areaId: "A" }),
@@ -78,7 +82,8 @@ describe("buildGraph", () => {
     expect(size(g, "paper:x")).toBe(2);
     expect(size(g, "seminar:s")).toBe(0);
     expect(g.nodes.find((n) => n.id === "goal:year")).toMatchObject({
-      horizon: "2027",
+      horizon: "year",
+      period: "2027",
       areaId: "A",
       archived: false,
     });
