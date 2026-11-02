@@ -16,11 +16,17 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    // Dedicated DB so the run never touches data/local.db. Seed resets only `seed-*` rows.
-    command: "npm run db:migrate && npm run db:seed && npm run dev",
+    // Dedicated data dir (DB + PDFs) so the run never touches data/local.db or data/pdfs.
+    // Wipe the e2e data folder first so every run starts from a fresh DB + PDFs.
+    command:
+      "node -e \"require('fs').rmSync('data/e2e',{recursive:true,force:true})\" && npm run db:migrate && npm run db:seed && npm run dev",
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 180_000,
-    env: { DATABASE_URL: "file:./data/e2e.db", DATABASE_AUTH_TOKEN: "" },
+    env: {
+      DATA_DIR: "data/e2e",
+      DATABASE_URL: "file:./data/e2e/e2e.db",
+      DATABASE_AUTH_TOKEN: "",
+    },
   },
 });
