@@ -5,9 +5,10 @@ import { pdfjsVersion, resolvePdfjsAsset } from "../_lib/assets";
 export const runtime = "nodejs";
 
 /**
- * Serves pdf.js cMaps and standard fonts from node_modules/pdfjs-dist so Korean
- * and other CJK PDFs without embedded fonts render, without a CDN or copying
- * files into public/. URL: /api/pdfjs/<version>/<cmaps|standard_fonts>/<file>.
+ * Serves pdf.js cMaps, standard fonts and wasm image decoders from
+ * node_modules/pdfjs-dist so Korean/CJK PDFs without embedded fonts and scanned
+ * PDFs render, without a CDN or copying files into public/.
+ * URL: /api/pdfjs/<version>/<cmaps|standard_fonts|wasm>/<file>.
  */
 export async function GET(
   _request: NextRequest,

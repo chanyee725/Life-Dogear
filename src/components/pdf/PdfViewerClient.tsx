@@ -22,13 +22,16 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-// cMaps and standard fonts (needed for CJK PDFs without embedded fonts), served
+// cMaps and standard fonts (needed for CJK PDFs without embedded fonts) and wasm
+// image decoders, served
 // from node_modules by /api/pdfjs. Module-level so the options object is stable.
 const PDFJS_ASSETS = `/api/pdfjs/${pdfjs.version}`;
 const DOCUMENT_OPTIONS = {
   cMapUrl: `${PDFJS_ASSETS}/cmaps/`,
   cMapPacked: true,
   standardFontDataUrl: `${PDFJS_ASSETS}/standard_fonts/`,
+  // Decoders for JPEG 2000 / JBIG2 images common in scanned papers.
+  wasmUrl: `${PDFJS_ASSETS}/wasm/`,
 };
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];

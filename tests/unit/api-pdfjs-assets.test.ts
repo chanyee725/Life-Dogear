@@ -22,6 +22,19 @@ describe("resolvePdfjsAsset", () => {
     ).toBe("font/ttf");
   });
 
+  it("resolves only the listed wasm decoders", () => {
+    expect(resolvePdfjsAsset([version, "wasm", "openjpeg.wasm"], version)?.contentType).toBe(
+      "application/wasm",
+    );
+    expect(
+      resolvePdfjsAsset([version, "wasm", "jbig2_nowasm_fallback.js"], version)?.contentType,
+    ).toBe("text/javascript");
+    expect(resolvePdfjsAsset([version, "wasm", "qcms_bg.wasm"], version)).not.toBeNull();
+    expect(resolvePdfjsAsset([version, "wasm", "quickjs-eval.wasm"], version)).toBeNull();
+    expect(resolvePdfjsAsset([version, "wasm", "quickjs-eval.js"], version)).toBeNull();
+    expect(resolvePdfjsAsset([version, "wasm", "LICENSE_JBIG2"], version)).toBeNull();
+  });
+
   it.each([
     [["0.0.0", "cmaps", "UniKS-UCS2-H.bcmap"]],
     [[version, "build", "pdf.mjs"]],
@@ -46,6 +59,12 @@ describe("GET /api/pdfjs/[...path]", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toContain("immutable");
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0);
+  });
+
+  it("serves wasm decoders as application/wasm", async () => {
+    const res = await fetchAsset([version, "wasm", "openjpeg.wasm"]);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/wasm");
   });
 
   it("returns 404 for anything else", async () => {
