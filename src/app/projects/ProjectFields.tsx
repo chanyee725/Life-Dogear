@@ -14,6 +14,7 @@ export type ProjectFormValues = {
   stage: ProjectStage;
   status: ProjectStatus;
   areaId: string | null;
+  goalId: string | null;
   nextAction: string;
   researchQuestion: string;
   startDate: string | null;
@@ -27,12 +28,15 @@ export function ProjectFields({
   values,
   tagSuggestions,
   areaOptions,
+  goalOptions,
   editorKey,
 }: {
   values: ProjectFormValues;
   tagSuggestions: string[];
   /** Non-archived areas (plus the current one if it is archived). */
   areaOptions: { value: string; label: string }[];
+  /** Non-archived goals (plus the current one if it is archived). */
+  goalOptions: { value: string; label: string }[];
   editorKey: string;
 }) {
   return (
@@ -56,6 +60,16 @@ export function ProjectFields({
             emptyLabel="없음"
             defaultValue={values.areaId ?? ""}
             className="w-auto"
+          />
+        </Property>
+        <Property label="목표" htmlFor="project-goal">
+          <EnumSelect
+            id="project-goal"
+            name="goalId"
+            options={goalOptions}
+            emptyLabel="없음"
+            defaultValue={values.goalId ?? ""}
+            className="w-auto max-w-full"
           />
         </Property>
         <Property label="연구 질문" htmlFor="project-question">

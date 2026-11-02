@@ -6,5 +6,6 @@ export * as links from "./links";
 export * as tags from "./tags";
 export * as items from "./items";
 export * as areas from "./areas";
+export * as goals from "./goals";
 export * as archive from "./archive";
 export { RepoError, type ArchiveOptions, type ItemRef, type ItemType } from "./shared";

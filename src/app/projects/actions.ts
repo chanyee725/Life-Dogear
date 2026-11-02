@@ -12,6 +12,8 @@ function revalidate(id?: string) {
   revalidatePath("/tags", "layout");
   // Area pages list their projects.
   revalidatePath("/areas", "layout");
+  // Goal pages list their projects and progress.
+  revalidatePath("/goals", "layout");
   if (id) revalidatePath(`/projects/${id}`);
 }
 
