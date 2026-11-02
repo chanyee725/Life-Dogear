@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { papers } from "@/lib/repo";
 import { isValidItemId } from "@/lib/ids";
-import { getPaperPdfPath } from "../../_lib/paper-pdf";
+import { getPaperPdfPath, getPaperProgress } from "../../_lib/paper-pdf";
 import { MAX_PROGRESS_BODY, parseProgressInput } from "../../_lib/progress-input";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -35,6 +35,22 @@ async function save(request: NextRequest, { params }: IdParams): Promise<NextRes
     if (!(await getPaperPdfPath(id))) return notFound();
     const saved = await papers.saveProgress(id, input);
     return saved ? new NextResponse(null, { status: 204 }) : notFound();
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+/**
+ * Latest saved position `{ page, scroll, totalPages, lastReadAt }`, so a viewer or
+ * detail page restored from the browser/router cache can catch up. Read-only.
+ */
+export async function GET(_request: NextRequest, { params }: IdParams): Promise<NextResponse> {
+  const { id } = await params;
+  if (!isValidItemId(id)) return invalidId();
+  try {
+    const progress = await getPaperProgress(id);
+    if (!progress) return notFound();
+    return NextResponse.json(progress, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return errorResponse(error);
   }

@@ -38,6 +38,7 @@ export default async function PaperPage({ params }: Props) {
             hasPdf={Boolean(paper.pdfPath)}
             lastPage={paper.lastPage}
             totalPages={paper.totalPages}
+            lastReadAt={paper.lastReadAt}
           />
         }
       />

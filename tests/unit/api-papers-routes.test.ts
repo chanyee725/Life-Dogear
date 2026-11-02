@@ -144,6 +144,33 @@ describe("/api/papers/[id]/progress", () => {
     expect((await putProgress(MISSING, { page: 1, scroll: 0 })).status).toBe(404);
   });
 
+  it("returns the latest saved position", async () => {
+    const getProgress = (id: string) =>
+      progressRoute.GET(new NextRequest(url(id, "progress"), { headers: HOST }), ctx(id));
+
+    const { id } = await papers.create({ title: "최신 위치" });
+    expect((await getProgress(id)).status).toBe(404); // no PDF yet
+    expect((await getProgress("../x")).status).toBe(400);
+    expect((await getProgress(MISSING)).status).toBe(404);
+
+    expect((await upload(id, "%PDF-1.7")).status).toBe(201);
+    let res = await getProgress(id);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(await res.json()).toEqual({
+      page: null,
+      scroll: null,
+      totalPages: null,
+      lastReadAt: null,
+    });
+
+    expect((await putProgress(id, { page: 6, scroll: 0.4, totalPages: 12 })).status).toBe(204);
+    res = await getProgress(id);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ page: 6, scroll: 0.4, totalPages: 12 });
+    expect(typeof body.lastReadAt).toBe("string");
+  });
+
   it("rejects cross-site writes", async () => {
     const { id } = await papers.create({ title: "CSRF 진행" });
     expect((await upload(id, "%PDF-1.7")).status).toBe(201);
