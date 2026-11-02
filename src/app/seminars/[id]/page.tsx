@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isValidItemId } from "@/lib/ids";
+import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedItems } from "@/components/links";
@@ -27,35 +28,47 @@ export default async function SeminarDetailPage({ params }: Props) {
 
   return (
     <Page className="flex flex-col gap-12">
-      <ItemForm
-        mode="edit"
-        action={updateSeminar.bind(null, seminar.id)}
-        basePath="/seminars"
-        backLabel="세미나"
-        actions={
-          <DeleteItemButton
-            action={deleteSeminar.bind(null, seminar.id)}
-            redirectTo="/seminars"
-            itemLabel="이 세미나"
+      <div className="flex flex-col gap-4">
+        {seminar.archivedAt ? <ArchivedNotice item={{ type: "seminar", id: seminar.id }} /> : null}
+        <ItemForm
+          mode="edit"
+          action={updateSeminar.bind(null, seminar.id)}
+          basePath="/seminars"
+          backLabel="세미나"
+          actions={
+            <>
+              {seminar.archivedAt ? null : (
+                <ArchiveButton
+                  item={{ type: "seminar", id: seminar.id }}
+                  archived={false}
+                  redirectTo="/seminars"
+                />
+              )}
+              <DeleteItemButton
+                action={deleteSeminar.bind(null, seminar.id)}
+                redirectTo="/seminars"
+                itemLabel="이 세미나"
+              />
+            </>
+          }
+        >
+          <SeminarFields
+            editorKey={seminar.id}
+            tagSuggestions={allTags.map((t) => t.name)}
+            values={{
+              title: seminar.title,
+              date: seminar.date,
+              speaker: seminar.speaker,
+              hostVenue: seminar.hostVenue,
+              kind: seminar.kind,
+              keyLine: seminar.keyLine,
+              materialUrl: seminar.materialUrl,
+              body: seminar.body,
+              tags: seminar.tags,
+            }}
           />
-        }
-      >
-        <SeminarFields
-          editorKey={seminar.id}
-          tagSuggestions={allTags.map((t) => t.name)}
-          values={{
-            title: seminar.title,
-            date: seminar.date,
-            speaker: seminar.speaker,
-            hostVenue: seminar.hostVenue,
-            kind: seminar.kind,
-            keyLine: seminar.keyLine,
-            materialUrl: seminar.materialUrl,
-            body: seminar.body,
-            tags: seminar.tags,
-          }}
-        />
-      </ItemForm>
+        </ItemForm>
+      </div>
       <ConnectedItems item={{ type: "seminar", id: seminar.id }} />
     </Page>
   );
