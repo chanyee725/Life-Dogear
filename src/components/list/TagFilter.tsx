@@ -30,12 +30,16 @@ export function FilterChips({
   const chip = (active: boolean) =>
     cn(
       "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[13px] transition-colors",
-      active ? "bg-fg text-bg" : "text-muted hover:bg-hover hover:text-fg",
+      active ? "bg-hover font-medium text-fg" : "text-muted hover:bg-subtle hover:text-fg",
     );
 
   return (
     <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1", className)}>
-      <Link href={buildHref(basePath, params, { [param]: undefined })} className={chip(!selected)}>
+      <Link
+        href={buildHref(basePath, params, { [param]: undefined })}
+        aria-current={!selected ? "true" : undefined}
+        className={chip(!selected)}
+      >
         {allLabel}
       </Link>
       {options.map((o) => {
@@ -49,9 +53,7 @@ export function FilterChips({
           >
             {o.label}
             {o.count !== undefined ? (
-              <span className={cn("text-xs tabular-nums", active ? "text-bg/70" : "text-faint")}>
-                {o.count}
-              </span>
+              <span className="text-xs font-normal text-muted tabular-nums">{o.count}</span>
             ) : null}
           </Link>
         );

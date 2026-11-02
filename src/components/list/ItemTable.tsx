@@ -12,7 +12,18 @@ export type Column<T> = {
   primary?: boolean;
   className?: string;
   headerClassName?: string;
+  /** Hide this (secondary) column below the given breakpoint so narrow windows keep the title readable. */
+  hideBelow?: "md" | "lg";
 };
+
+// Literal class strings so Tailwind can see them.
+const HIDE_BELOW: Record<NonNullable<Column<unknown>["hideBelow"]>, string> = {
+  md: "hidden md:table-cell",
+  lg: "hidden lg:table-cell",
+};
+
+const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
+  c.hideBelow ? HIDE_BELOW[c.hideBelow] : undefined;
 
 /**
  * Generic item table. Server-compatible: render functions run where the table is rendered,
@@ -40,7 +51,7 @@ export function ItemTable<T>({
       <THead>
         <tr>
           {columns.map((c) => (
-            <Th key={c.key} className={c.headerClassName}>
+            <Th key={c.key} className={cn(hideClass(c), c.headerClassName)}>
               {c.header}
             </Th>
           ))}
@@ -52,12 +63,12 @@ export function ItemTable<T>({
           return (
             <Tr key={getKey(item)} className={cn(href && "relative hover:bg-surface")}>
               {columns.map((c) => (
-                <Td key={c.key} className={c.className}>
+                <Td key={c.key} className={cn(hideClass(c), c.primary && "min-w-56", c.className)}>
                   {c.primary && href ? (
                     // Stretched link: the ::after covers the row so the whole row is clickable.
                     <Link
                       href={href}
-                      className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                      className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
                     >
                       {c.render(item)}
                     </Link>

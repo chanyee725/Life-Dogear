@@ -30,7 +30,7 @@ export function Textarea({
 export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={cn(controlClass, "h-9 cursor-pointer appearance-auto pr-8", className)}
+      className={cn(controlClass, "rb-select h-9 cursor-pointer pr-8", className)}
       {...props}
     >
       {children}
@@ -65,7 +65,7 @@ export function Field({
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-faint">{hint}</p>
+        <p className="text-xs text-muted">{hint}</p>
       ) : null}
     </div>
   );
