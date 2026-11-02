@@ -74,7 +74,10 @@ export type PdfViewerProps = {
   /** Shown at the right end of the toolbar (e.g. the focus mode toggle). */
   toolbarEnd?: ReactNode;
   className?: string;
-  /** Rendered over each page box (absolute, page-sized). Gets the 1-based page number. */
+  /**
+   * Rendered over each page box (absolute, page-sized). Gets the 1-based page number.
+   * It sits above the text layer, so give it `pointer-events: none` to keep text selectable.
+   */
   renderPageOverlay?: (page: number) => ReactNode;
   /** Set to the viewer's controls while it is mounted. */
   apiRef?: RefObject<PdfViewerApi | null>;
