@@ -122,7 +122,8 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       tag: tag || undefined,
       sort: isSort(sort) ? sort : undefined,
     }),
-    tags.listAll(),
+    // Chips only for tags on visible (non-archived) items.
+    tags.listAll({ visibleOnly: true }),
   ]);
   const filtered = Boolean(status || importance || tag);
 
