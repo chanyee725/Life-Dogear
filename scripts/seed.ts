@@ -13,6 +13,7 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { getDb, resolveDbConfig } from "../src/db/client";
 import { loadEnvIfPresent } from "../src/db/env";
+import { pdfDirSetting } from "../src/lib/data-dir";
 import {
   highlights,
   itemTags,
@@ -27,7 +28,6 @@ import { pruneOrphanTags, setTagsWith } from "../src/lib/repo/tags";
 import type { ItemRef } from "../src/lib/repo/shared";
 
 const PREFIX = "seed-";
-const PDF_DIR = join("data", "pdfs");
 const PDF_PAGES = 10;
 
 const now = Date.now();
@@ -312,6 +312,7 @@ async function makeDummyPdf(title: string): Promise<Uint8Array> {
 
 async function main() {
   loadEnvIfPresent();
+  const PDF_DIR = pdfDirSetting(); // <DATA_DIR>/pdfs, read after env files load
   const target = resolveDbConfig().url.startsWith("file:") ? "local file" : "Turso";
   const db = getDb();
   await migrate(db, { migrationsFolder: "drizzle" });
