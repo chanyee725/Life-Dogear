@@ -82,4 +82,64 @@ describe("createSaveQueue", () => {
     await Promise.all([first, queue.flush()]);
     expect(order).toEqual(["start 1", "end 1", "start 2", "end 2"]);
   });
+
+  describe("with a server baseline", () => {
+    const baseline: Patch = { title: "제목", body: "## 왜 읽나\n" };
+
+    it("ignores values equal to what the server has (opening the page saves nothing)", async () => {
+      const save = vi.fn(async () => ({ ok: true }) as const);
+      const states: SaveState[] = [];
+      const queue = createSaveQueue<Patch>(save, (s) => states.push(s), baseline);
+      queue.add({ title: "제목", body: "## 왜 읽나\n" });
+      expect(queue.dirty()).toBe(false);
+      await queue.flush();
+      expect(save).not.toHaveBeenCalled();
+      expect(states).toEqual([]);
+    });
+
+    it("drops a field the user changed back to the server value", async () => {
+      const save = vi.fn(async () => ({ ok: true }) as const);
+      const states: SaveState[] = [];
+      const queue = createSaveQueue<Patch>(save, (s) => states.push(s), baseline);
+      queue.add({ title: "다른 제목" });
+      expect(queue.dirty()).toBe(true);
+      queue.add({ title: "제목" });
+      expect(queue.dirty()).toBe(false);
+      expect(states).toEqual(["pending", "idle"]);
+      await queue.flush();
+      expect(save).not.toHaveBeenCalled();
+    });
+
+    it("advances the baseline after a save", async () => {
+      const save = vi.fn(async () => ({ ok: true }) as const);
+      const queue = createSaveQueue<Patch>(save, () => {}, baseline);
+      queue.add({ title: "새 제목" });
+      await queue.flush();
+      expect(save).toHaveBeenCalledExactlyOnceWith({ title: "새 제목" });
+      queue.add({ title: "새 제목" });
+      expect(queue.dirty()).toBe(false);
+      queue.add({ title: "제목" });
+      expect(queue.pending()).toEqual({ title: "제목" });
+    });
+
+    it("compares against a save in flight", async () => {
+      let release!: (o: SaveOutcome) => void;
+      const save = vi
+        .fn<(patch: Patch) => Promise<SaveOutcome>>()
+        .mockImplementationOnce(() => new Promise((r) => (release = r)))
+        .mockResolvedValue({ ok: true });
+      const queue = createSaveQueue<Patch>(save, () => {}, baseline);
+      queue.add({ title: "A" });
+      const inFlight = queue.flush();
+      await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+      queue.add({ title: "A" }); // same as what is being saved
+      expect(queue.pending()).toEqual({});
+      queue.add({ title: "제목" }); // back to the old server value: must be saved
+      expect(queue.pending()).toEqual({ title: "제목" });
+      release({ ok: true });
+      await inFlight;
+      await queue.flush();
+      expect(save).toHaveBeenLastCalledWith({ title: "제목" });
+    });
+  });
 });

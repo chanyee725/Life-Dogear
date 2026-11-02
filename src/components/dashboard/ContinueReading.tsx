@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ProgressBar } from "@/components/pdf/ProgressBar";
 import type { Paper } from "@/lib/repo/papers";
 import { DashboardEmpty, DashboardSection } from "./DashboardSection";
-import { formatRelative, paperByline } from "./format";
+import { paperByline } from "./format";
+import { LatestReading } from "./LatestReading";
 
 /** Papers being read, most recent first, each opening the viewer at the saved spot. */
 export function ContinueReading({ papers }: { papers: Paper[] }) {
@@ -32,16 +32,13 @@ export function ContinueReading({ papers }: { papers: Paper[] }) {
                 >
                   <span className="line-clamp-2 font-medium text-fg">{paper.title}</span>
                   {byline ? <span className="text-[13px] text-muted">{byline}</span> : null}
-                  <ProgressBar
-                    current={paper.lastPage}
-                    total={paper.totalPages}
-                    className="mt-auto pt-1"
+                  <LatestReading
+                    paperId={paper.id}
+                    hasPdf={Boolean(paper.pdfPath)}
+                    page={paper.lastPage}
+                    totalPages={paper.totalPages}
+                    lastReadAt={paper.lastReadAt}
                   />
-                  {paper.lastReadAt ? (
-                    <span className="text-xs text-faint">
-                      {formatRelative(paper.lastReadAt)} 읽음
-                    </span>
-                  ) : null}
                 </Link>
               </li>
             );
