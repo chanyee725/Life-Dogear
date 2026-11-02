@@ -35,3 +35,45 @@ export function isInAppNavigation(click: ClickLike, anchor: AnchorLike, current:
   const samePage = next.pathname === current.pathname && next.search === current.search;
   return !samePage;
 }
+
+/** How long a "yes, leave" answer suppresses further prompts if the navigation never completes. */
+const LEAVING_RESET_MS = 2_000;
+
+type ActiveGuard = {
+  message: string;
+  leaving: boolean;
+  resetTimer?: ReturnType<typeof setTimeout>;
+};
+
+/** Guards registered by mounted `useUnsavedChangesGuard` hooks with unsaved edits. */
+const activeGuards = new Set<ActiveGuard>();
+
+export function registerGuard(message: string): ActiveGuard {
+  const guard: ActiveGuard = { message, leaving: false };
+  activeGuards.add(guard);
+  return guard;
+}
+
+export function unregisterGuard(guard: ActiveGuard): void {
+  clearTimeout(guard.resetTimer);
+  activeGuards.delete(guard);
+}
+
+/**
+ * Call before any programmatic navigation (e.g. keyboard shortcuts). With unsaved edits
+ * it asks once; returns false if the user wants to stay. After "yes", the guards stay
+ * quiet briefly so the unload/link checks don't ask again while the page changes.
+ */
+export function confirmLeave(): boolean {
+  const pending = [...activeGuards].filter((g) => !g.leaving);
+  if (pending.length === 0) return true;
+  if (!window.confirm(pending[0].message)) return false;
+  for (const guard of activeGuards) {
+    guard.leaving = true;
+    clearTimeout(guard.resetTimer);
+    guard.resetTimer = setTimeout(() => {
+      guard.leaving = false;
+    }, LEAVING_RESET_MS);
+  }
+  return true;
+}
