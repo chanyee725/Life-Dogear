@@ -1,0 +1,157 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ItemCards } from "@/components/list/ItemCards";
+import { ItemTable, type Column } from "@/components/list/ItemTable";
+import { countTags, filterByTag, firstParam, type QueryParams } from "@/components/list/query";
+import { SortSelect } from "@/components/list/SortSelect";
+import { FilterChips, TagFilter } from "@/components/list/TagFilter";
+import { TagList } from "@/components/list/TagList";
+import { ListView } from "@/components/list/ViewToggle";
+import { Page, PageHeader } from "@/components/shell/PageHeader";
+import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { formatDate } from "@/components/ui/format";
+import { SEMINAR_KIND } from "@/lib/enums";
+import { seminars } from "@/lib/repo";
+import type { Seminar, SeminarSort } from "@/lib/repo/seminars";
+
+export const metadata: Metadata = { title: "세미나" };
+export const dynamic = "force-dynamic";
+
+const SORTS: { value: SeminarSort; label: string }[] = [
+  { value: "date", label: "날짜순" },
+  { value: "updated", label: "최근 수정순" },
+  { value: "created", label: "최근 생성순" },
+  { value: "title", label: "제목순" },
+];
+
+const href = (s: Seminar) => `/seminars/${s.id}`;
+
+const columns: Column<Seminar>[] = [
+  {
+    key: "date",
+    header: "날짜",
+    className: "text-muted tabular-nums whitespace-nowrap",
+    render: (s) => formatDate(s.date),
+  },
+  { key: "title", header: "제목", primary: true, render: (s) => s.title },
+  {
+    key: "kind",
+    header: "종류",
+    render: (s) => <Badge tone={SEMINAR_KIND.tone(s.kind)}>{SEMINAR_KIND.label(s.kind)}</Badge>,
+  },
+  { key: "speaker", header: "연사", className: "text-muted", render: (s) => s.speaker },
+  { key: "tags", header: "태그", render: (s) => <TagList tags={s.tags} /> },
+];
+
+export default async function SeminarsPage({
+  searchParams,
+}: {
+  searchParams: Promise<QueryParams>;
+}) {
+  const params = await searchParams;
+  const kindParam = firstParam(params, "kind");
+  const kind = SEMINAR_KIND.is(kindParam) ? kindParam : undefined;
+  const tag = firstParam(params, "tag");
+  const sortParam = firstParam(params, "sort");
+  const sort = SORTS.find((s) => s.value === sortParam)?.value ?? "date";
+
+  const all = await seminars.list({ kind, sort });
+  const items = filterByTag(all, tag);
+  const filtered = Boolean(kind || tag);
+
+  const empty = (
+    <EmptyState
+      title={filtered ? "조건에 맞는 세미나가 없습니다" : "아직 세미나 노트가 없습니다"}
+      description={
+        filtered
+          ? "필터를 바꾸거나 해제해 보세요."
+          : "세미나·학회 발표·강의를 들은 뒤 기록해 보세요."
+      }
+      action={
+        filtered ? (
+          <Link href="/seminars" className={buttonClass("secondary", "sm")}>
+            필터 해제
+          </Link>
+        ) : (
+          <Link href="/seminars/new" className={buttonClass("primary", "sm")}>
+            새 세미나
+          </Link>
+        )
+      }
+    />
+  );
+
+  return (
+    <Page>
+      <PageHeader
+        title="세미나"
+        actions={
+          <Link href="/seminars/new" className={buttonClass("primary")}>
+            새 세미나
+          </Link>
+        }
+      />
+      <ListView
+        storageKey="seminars"
+        toolbar={
+          <>
+            <FilterChips
+              ariaLabel="종류 필터"
+              param="kind"
+              basePath="/seminars"
+              params={params}
+              selected={kind}
+              options={SEMINAR_KIND.options}
+            />
+            <div className="ml-auto">
+              <SortSelect options={SORTS} value={sort} basePath="/seminars" params={params} />
+            </div>
+            <TagFilter
+              tags={countTags(all)}
+              selected={tag}
+              basePath="/seminars"
+              params={params}
+              className="w-full"
+            />
+          </>
+        }
+        table={
+          <ItemTable
+            items={items}
+            columns={columns}
+            getKey={(s) => s.id}
+            getHref={href}
+            empty={empty}
+          />
+        }
+        cards={
+          <ItemCards
+            items={items}
+            getKey={(s) => s.id}
+            getHref={href}
+            empty={empty}
+            renderCard={(s) => (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-medium">{s.title}</span>
+                  <Badge tone={SEMINAR_KIND.tone(s.kind)}>{SEMINAR_KIND.label(s.kind)}</Badge>
+                </div>
+                {s.keyLine ? (
+                  <p className="line-clamp-2 text-[13px] text-muted">{s.keyLine}</p>
+                ) : null}
+                <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-faint">
+                  <TagList tags={s.tags} />
+                  <span className="tabular-nums">
+                    {[formatDate(s.date), s.speaker].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+              </>
+            )}
+          />
+        }
+      />
+    </Page>
+  );
+}

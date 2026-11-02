@@ -14,3 +14,4 @@ export { Dialog, ConfirmDialog } from "./Dialog";
 export { EmptyState } from "./EmptyState";
 export { Spinner } from "./Spinner";
 export { Kbd } from "./Kbd";
+export { formatDate } from "./format";

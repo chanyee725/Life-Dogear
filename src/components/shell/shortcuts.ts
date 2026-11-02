@@ -9,21 +9,38 @@ export type ShortcutAction =
 
 export type ShortcutKeyEvent = {
   key: string;
+  /** Physical key; lets `N` work while a Korean input mode turns `key` into "ㅜ". */
+  code?: string;
   metaKey: boolean;
   ctrlKey: boolean;
   altKey: boolean;
+  shiftKey?: boolean;
   isComposing?: boolean;
+  keyCode?: number;
+};
+
+export type ShortcutContext = {
+  /** Focus is in a text field, select or the editor. */
+  typing: boolean;
+  /** A modal dialog is open. */
+  dialogOpen?: boolean;
 };
 
 /** Pure decision for the global single-key shortcuts. */
 export function resolveShortcut(
   event: ShortcutKeyEvent,
   pathname: string,
-  typing: boolean,
+  context: ShortcutContext,
 ): ShortcutAction {
-  if (typing || event.isComposing || event.metaKey || event.ctrlKey || event.altKey) return null;
+  if (context.typing || context.dialogOpen) return null;
+  // keyCode 229: the IME is still processing the key.
+  if (event.isComposing || event.keyCode === 229) return null;
+  if (event.metaKey || event.ctrlKey || event.altKey) return null;
 
-  if (event.key === "n" || event.key === "N") {
+  const isN = event.key === "n" || event.key === "N" || event.code === "KeyN";
+  const isSlash = event.key === "/" || (event.code === "Slash" && !event.shiftKey);
+
+  if (isN) {
     const segment = pathname.split("/")[1] ?? "";
     const section = (SECTIONS as readonly string[]).includes(segment)
       ? segment
@@ -32,7 +49,7 @@ export function resolveShortcut(
     return pathname === href ? null : { kind: "navigate", href };
   }
 
-  if (event.key === "/") return { kind: "focus-quick-input" };
+  if (isSlash) return { kind: "focus-quick-input" };
 
   return null;
 }
