@@ -29,8 +29,10 @@ export function FilterChips({
 }) {
   const chip = (active: boolean) =>
     cn(
-      "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[13px] transition-colors",
-      active ? "bg-hover font-medium text-fg" : "text-muted hover:bg-subtle hover:text-fg",
+      "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[13px] transition-colors",
+      active
+        ? "border-accent/30 bg-accent-soft font-medium text-accent"
+        : "border-transparent text-muted hover:bg-subtle hover:text-fg",
     );
 
   return (
