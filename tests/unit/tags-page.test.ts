@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 import TagPage from "@/app/tags/[name]/page";
 import TagsPage from "@/app/tags/page";
 import { decodeTagParam, loadTagPage, sortTags, tagHref } from "@/app/tags/tag-data";
-import { papers, projects, seminars, thoughts } from "@/lib/repo";
+import { archive, areas, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 beforeEach(async () => {
@@ -52,12 +52,16 @@ describe("loadTagPage", () => {
     });
     await thoughts.create({ title: "생각 A", kind: "idea", tags: ["NLP"] });
     await seminars.create({ title: "다른 세미나", tags: ["기타"] });
+    await areas.create({ title: "영역 A", standard: "기준", tags: ["NLP"] });
+    const gone = await papers.create({ title: "보관 논문", tags: ["NLP"] });
+    await archive.archive({ type: "paper", id: gone.id });
 
     const data = (await loadTagPage("nlp"))!;
     expect(data.name).toBe("NLP");
-    expect(data.total).toBe(3);
-    expect(data.groups.map((g) => g.type)).toEqual(["project", "paper", "thought"]);
-    expect(data.groups[1].items[0]).toMatchObject({
+    expect(data.total).toBe(4);
+    expect(data.groups.map((g) => g.type)).toEqual(["project", "area", "paper", "thought"]);
+    expect(data.groups[1].items[0]).toMatchObject({ title: "영역 A", meta: "기준" });
+    expect(data.groups[2].items[0]).toMatchObject({
       title: "논문 A",
       meta: "김가명 · 2024",
       badges: [
@@ -72,7 +76,7 @@ describe("loadTagPage", () => {
 describe("tag pages", () => {
   it("lists tags with counts and links, or an empty state", async () => {
     const empty = renderToStaticMarkup(await TagsPage({ searchParams: Promise.resolve({}) }));
-    expect(empty).toContain("아직 태그가 없습니다");
+    expect(empty).toContain("아직 주제가 없습니다");
 
     await thoughts.create({ title: "T", tags: ["방법론", "NLP"] });
     await papers.create({ title: "P", tags: ["NLP"] });
