@@ -138,7 +138,7 @@ export function LinkPicker({
                       >
                         <Badge tone={ITEM_TYPE.tone(r.type)}>{ITEM_TYPE.label(r.type)}</Badge>
                         <span className="min-w-0 flex-1 truncate">{r.title}</span>
-                        {already ? <span className="text-xs text-faint">연결됨</span> : null}
+                        {already ? <span className="text-xs text-muted">연결됨</span> : null}
                       </button>
                     </li>
                   );

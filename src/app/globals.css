@@ -201,6 +201,13 @@
   .dark .rb-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%239d9da6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 6.25 8 9.75l3.5-3.5'/%3E%3C/svg%3E");
   }
+  /* Windows high contrast: fall back to the system arrow, which follows forced colors. */
+  @media (forced-colors: active) {
+    .rb-select {
+      appearance: auto;
+      background-image: none;
+    }
+  }
 }
 
 /* ---------- Markdown editor (Tiptap) ---------- */

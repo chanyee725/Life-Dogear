@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/shell";
 import { EmptyState } from "@/components/ui";
-import { cn } from "@/components/ui/cn";
+import { filterChipClass } from "@/components/list/TagFilter";
 import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
 
@@ -39,10 +39,7 @@ export default async function TagsPage({
                   key={s.value}
                   href={s.value === "count" ? "/tags" : `/tags?sort=${s.value}`}
                   aria-current={sort === s.value ? "true" : undefined}
-                  className={cn(
-                    "inline-flex h-7 items-center rounded-lg px-2.5 text-[13px] transition-colors",
-                    sort === s.value ? "bg-fg text-bg" : "text-muted hover:bg-hover hover:text-fg",
-                  )}
+                  className={filterChipClass(sort === s.value)}
                 >
                   {s.label}
                 </Link>
@@ -65,7 +62,7 @@ export default async function TagsPage({
                 className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface"
               >
                 <span className="min-w-0 truncate text-sm text-fg">#{t.name}</span>
-                <span className="shrink-0 text-xs text-faint tabular-nums">{t.count}개</span>
+                <span className="shrink-0 text-xs text-muted tabular-nums">{t.count}개</span>
               </Link>
             </li>
           ))}

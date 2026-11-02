@@ -28,7 +28,7 @@ export function RecentThoughts({ thoughts }: { thoughts: Thought[] }) {
             <li key={t.id}>
               <Link href={`/thoughts/${t.id}`} className={rowClass}>
                 <span className="line-clamp-1 text-sm text-fg">{t.title}</span>
-                <span className="flex items-center gap-1.5 text-xs text-faint">
+                <span className="flex items-center gap-1.5 text-xs text-muted">
                   <Badge tone={THOUGHT_KIND.tone(t.kind)}>{THOUGHT_KIND.label(t.kind)}</Badge>
                   <Badge tone={THOUGHT_MATURITY.tone(t.maturity)}>
                     {THOUGHT_MATURITY.label(t.maturity)}
@@ -55,7 +55,7 @@ export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
             <li key={s.id}>
               <Link href={`/seminars/${s.id}`} className={rowClass}>
                 <span className="line-clamp-1 text-sm text-fg">{s.title}</span>
-                <span className="flex items-center gap-1.5 text-xs text-faint">
+                <span className="flex items-center gap-1.5 text-xs text-muted">
                   <Badge tone={SEMINAR_KIND.tone(s.kind)}>{SEMINAR_KIND.label(s.kind)}</Badge>
                   {[formatDate(s.date), s.speaker].filter(Boolean).join(" · ")}
                 </span>

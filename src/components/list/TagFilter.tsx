@@ -2,6 +2,15 @@ import Link from "next/link";
 import { cn } from "@/components/ui/cn";
 import { buildHref, type QueryParams } from "./query";
 
+/** Chip look for query-param filters and sort links; selected = accent text, thin border. */
+export const filterChipClass = (active: boolean): string =>
+  cn(
+    "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[13px] transition-colors",
+    active
+      ? "border-accent/30 bg-accent-soft font-medium text-accent"
+      : "border-transparent text-muted hover:bg-subtle hover:text-fg",
+  );
+
 export type FilterOption = { value: string; label: string; count?: number };
 
 /**
@@ -27,11 +36,7 @@ export function FilterChips({
   ariaLabel?: string;
   className?: string;
 }) {
-  const chip = (active: boolean) =>
-    cn(
-      "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[13px] transition-colors",
-      active ? "bg-hover font-medium text-fg" : "text-muted hover:bg-subtle hover:text-fg",
-    );
+  const chip = filterChipClass;
 
   return (
     <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1", className)}>

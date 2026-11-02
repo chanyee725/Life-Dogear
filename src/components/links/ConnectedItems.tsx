@@ -31,7 +31,7 @@ export async function ConnectedItems({
           <>
             {title}
             {connected.length ? (
-              <span aria-hidden className="ml-1.5 font-normal text-faint">
+              <span aria-hidden className="ml-1.5 font-normal text-muted">
                 {connected.length}
               </span>
             ) : null}
@@ -40,7 +40,7 @@ export async function ConnectedItems({
         action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
       >
         {connected.length === 0 ? (
-          <p className="text-[13px] text-faint">
+          <p className="text-[13px] text-muted">
             아직 연결된 항목이 없습니다. 관련 논문·세미나·생각·연구를 연결해 보세요.
           </p>
         ) : (

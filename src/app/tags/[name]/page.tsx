@@ -39,7 +39,7 @@ export default async function TagPage({ params }: Props) {
             title={
               <>
                 {group.label}
-                <span aria-hidden className="ml-1.5 font-normal text-faint">
+                <span aria-hidden className="ml-1.5 font-normal text-muted">
                   {group.items.length}
                 </span>
               </>
@@ -54,7 +54,7 @@ export default async function TagPage({ params }: Props) {
                       {item.title}
                     </Link>
                     {item.meta ? (
-                      <span className="truncate text-xs text-faint">{item.meta}</span>
+                      <span className="truncate text-xs text-muted">{item.meta}</span>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">

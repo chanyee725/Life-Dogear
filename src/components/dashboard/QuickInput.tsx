@@ -62,7 +62,7 @@ export function QuickInput() {
       <p
         id="quick-input-status"
         aria-live="polite"
-        className={cn("min-h-4 text-xs", error ? "text-danger" : "text-faint")}
+        className={cn("min-h-4 text-xs", error ? "text-danger" : "text-muted")}
       >
         {error ?? (pending ? "저장 중…" : saved ? "생각으로 저장했습니다." : "")}
       </p>
