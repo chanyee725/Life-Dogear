@@ -53,3 +53,27 @@ test("다크 모드 토글", async ({ page }) => {
   await page.getByRole("radio", { name: "라이트" }).click();
   await expect(html).not.toHaveClass(/dark/);
 });
+
+test("진행 중인 프로젝트: 연구 칸반 / 그 외 탭, 선택은 새로고침 뒤에도 유지", async ({ page }) => {
+  await page.goto("/");
+  const section = page.getByRole("region", { name: "진행 중인 프로젝트" });
+  const research = section.getByRole("tab", { name: /연구 칸반/ });
+  const general = section.getByRole("tab", { name: /그 외/ });
+  await expect(research).toHaveAttribute("aria-selected", "true");
+  // Seeded research projects show on the kanban.
+  await expect(section.getByRole("tabpanel")).toBeVisible();
+
+  await general.click();
+  await expect(general).toHaveAttribute("aria-selected", "true");
+  await expect(section.getByRole("tabpanel", { name: /그 외/ })).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("region", { name: "진행 중인 프로젝트" }).getByRole("tab", { name: /그 외/ }),
+  ).toHaveAttribute("aria-selected", "true");
+});
+
+test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {
+  await page.goto("/");
+  const link = page.getByRole("link", { name: /수집함에 정리할 항목 \d+개/ });
+  await expect(link).toHaveAttribute("href", "/inbox");
+});
