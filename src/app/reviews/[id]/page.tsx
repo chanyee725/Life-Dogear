@@ -12,9 +12,11 @@ import { Page } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { REVIEW_KIND } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
-import { projects, thoughts } from "@/lib/repo";
+import { goals, projects, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { periodLabel } from "@/lib/reviews/period";
+import { NextGoalForm } from "../NextGoalForm";
+import { nextGoalTarget } from "../next-goal";
 import { deleteReview, updateReview } from "../actions";
 import { CompleteButton } from "../CompleteButton";
 import { FocusPicker, type FocusOption } from "../FocusPicker";
@@ -52,13 +54,21 @@ export default async function ReviewDetailPage({ params }: Props) {
   if (!review) notFound();
 
   const isWeek = review.kind === "week";
-  const [periodGoals, previous, inboxCount, stageColumns, general] = await Promise.all([
-    reviews.goalsForPeriod(review.kind, review.period),
-    reviews.findPrevious(review),
-    isWeek ? thoughts.countInbox() : Promise.resolve(0),
-    isWeek ? projects.listByStage() : Promise.resolve([]),
-    isWeek ? projects.listActiveGeneral() : Promise.resolve([]),
-  ]);
+  const target = nextGoalTarget(review.kind, review.period);
+  const [periodGoals, previous, inboxCount, stageColumns, general, parentCandidates] =
+    await Promise.all([
+      reviews.goalsForPeriod(review.kind, review.period),
+      reviews.findPrevious(review),
+      isWeek ? thoughts.countInbox() : Promise.resolve(0),
+      isWeek ? projects.listByStage() : Promise.resolve([]),
+      isWeek ? projects.listActiveGeneral() : Promise.resolve([]),
+      target ? goals.list({ horizon: target.parentHorizon }) : Promise.resolve([]),
+    ]);
+  const parents = target
+    ? parentCandidates
+        .filter((g) => g.period === target.parentPeriod)
+        .map((g) => ({ id: g.id, title: g.title }))
+    : [];
   const activeProjects = [...stageColumns.flatMap((c) => c.items), ...general];
   const ref = { type: "review" as const, id: review.id };
   const backHref = review.kind === "week" ? "/reviews" : `/reviews?kind=${review.kind}`;
@@ -202,6 +212,16 @@ export default async function ReviewDetailPage({ params }: Props) {
           </DetailBody>
         </ItemForm>
       </div>
+      {target ? (
+        <Step title={review.kind === "quarter" ? "다음 분기 목표 만들기" : "내년 연 목표 만들기"}>
+          <NextGoalForm
+            reviewId={review.id}
+            targetLabel={`${periodLabel(target.horizon, target.period)} 목표`}
+            parents={parents}
+          />
+          <p className="text-xs text-faint">만든 목표는 이 회고와 연결됩니다.</p>
+        </Step>
+      ) : null}
       <ConnectedItems item={ref} />
     </Page>
   );
