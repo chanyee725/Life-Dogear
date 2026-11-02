@@ -1,11 +1,17 @@
 export const QUICK_INPUT_ID = "quick-input";
+/** Node search box on the graph page; `/` focuses it there instead of the quick input. */
+export const GRAPH_SEARCH_ID = "graph-search";
+export const GRAPH_HREF = "/graph";
 
 const SECTIONS = ["projects", "areas", "papers", "seminars", "thoughts"] as const;
 /** Where `N` goes outside the item sections (home, inbox, tags, archive). */
 const DEFAULT_NEW_SECTION = "thoughts";
 
 export type ShortcutAction =
-  { kind: "navigate"; href: string } | { kind: "focus-quick-input" } | null;
+  | { kind: "navigate"; href: string }
+  | { kind: "focus-quick-input" }
+  | { kind: "focus-graph-search" }
+  | null;
 
 export type ShortcutKeyEvent = {
   key: string;
@@ -39,6 +45,9 @@ export function resolveShortcut(
 
   const isN = event.key === "n" || event.key === "N" || event.code === "KeyN";
   const isSlash = event.key === "/" || (event.code === "Slash" && !event.shiftKey);
+  // `code` keeps `G` working while a Korean input mode turns `key` into "ㅎ".
+  const isG = event.key === "g" || event.key === "G" || event.code === "KeyG";
+  const onGraph = pathname === GRAPH_HREF || pathname.startsWith(`${GRAPH_HREF}/`);
 
   if (isN) {
     const segment = pathname.split("/")[1] ?? "";
@@ -49,7 +58,9 @@ export function resolveShortcut(
     return pathname === href ? null : { kind: "navigate", href };
   }
 
-  if (isSlash) return { kind: "focus-quick-input" };
+  if (isG) return onGraph ? null : { kind: "navigate", href: GRAPH_HREF };
+
+  if (isSlash) return onGraph ? { kind: "focus-graph-search" } : { kind: "focus-quick-input" };
 
   return null;
 }
