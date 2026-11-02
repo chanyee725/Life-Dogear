@@ -4,20 +4,30 @@ import { cn } from "@/components/ui/cn";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TBody, THead, Table, Td, Th, Tr } from "@/components/ui/Table";
 
-export type Column<T> = {
+type ColumnBase<T> = {
   key: string;
   header: ReactNode;
   render: (item: T) => ReactNode;
-  /** The column whose content links to the item; the whole row becomes clickable. */
-  primary?: boolean;
   className?: string;
   headerClassName?: string;
-  /** Hide this (secondary) column below the given breakpoint so narrow windows keep the title readable. */
-  hideBelow?: "md" | "lg";
 };
 
+export type Column<T> = ColumnBase<T> &
+  (
+    | {
+        /** The column whose content links to the item; the whole row becomes clickable. Always visible. */
+        primary: true;
+        hideBelow?: never;
+      }
+    | {
+        primary?: false;
+        /** Hide this secondary column below the breakpoint so narrow windows keep the title readable. */
+        hideBelow?: "md" | "lg";
+      }
+  );
+
 // Literal class strings so Tailwind can see them.
-const HIDE_BELOW: Record<NonNullable<Column<unknown>["hideBelow"]>, string> = {
+const HIDE_BELOW: Record<"md" | "lg", string> = {
   md: "hidden md:table-cell",
   lg: "hidden lg:table-cell",
 };
