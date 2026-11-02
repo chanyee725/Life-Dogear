@@ -101,3 +101,25 @@ export const PlusIcon = () => (
     <path d="M8 3v10M3 8h10" />
   </Icon>
 );
+export const GoalIcon = () => (
+  <Icon>
+    <circle cx="8" cy="8" r="5.75" />
+    <circle cx="8" cy="8" r="2.75" />
+    <circle cx="8" cy="8" r="0.5" fill="currentColor" />
+  </Icon>
+);
+export const ReviewIcon = () => (
+  <Icon>
+    <path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.77" />
+    <path d="M2.5 2.75v2.5H5" />
+    <path d="M8 5.25V8l1.75 1.25" />
+  </Icon>
+);
+export const GraphIcon = () => (
+  <Icon>
+    <circle cx="4" cy="4.5" r="1.75" />
+    <circle cx="12" cy="4" r="1.5" />
+    <circle cx="8.5" cy="12" r="1.75" />
+    <path d="M5.6 5.2 7.6 10.4M5.7 4.4 10.5 4.1M11.4 5.4 9.2 10.4" />
+  </Icon>
+);
