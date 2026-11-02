@@ -1,7 +1,15 @@
 "use client";
 
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -53,6 +61,8 @@ export type PdfViewerProps = {
   onProgress?: (progress: ReadingProgress) => void;
   /** Debounce for saving, in ms. */
   saveDelay?: number;
+  /** Shown at the left of the toolbar (e.g. back link and title). */
+  header?: ReactNode;
   className?: string;
 };
 
@@ -63,6 +73,7 @@ export default function PdfViewerClient({
   progressUrl,
   onProgress,
   saveDelay = 800,
+  header,
   className = "",
 }: PdfViewerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -221,11 +232,12 @@ export default function PdfViewerClient({
   if (ready) for (let i = range[0]; i <= range[1]; i++) pages.push(i);
 
   const toolbarButton =
-    "rounded-md px-2 py-1 text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent dark:text-neutral-300 dark:hover:bg-neutral-800";
+    "rounded-md px-2 py-1 text-muted hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent";
 
   return (
     <div className={`flex h-full min-h-0 flex-col ${className}`}>
-      <div className="flex items-center justify-between gap-4 border-b border-neutral-200 bg-white px-4 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="flex h-11 shrink-0 items-center gap-4 border-b border-border bg-bg px-3 text-sm">
+        {header ? <div className="flex min-w-0 flex-1 items-center gap-2">{header}</div> : null}
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -237,7 +249,7 @@ export default function PdfViewerClient({
             ‹
           </button>
           <input
-            className="w-12 rounded-md border border-neutral-200 bg-transparent px-1.5 py-0.5 text-center tabular-nums dark:border-neutral-700"
+            className="w-12 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center tabular-nums focus:border-accent focus:outline-none"
             inputMode="numeric"
             aria-label="쪽 번호"
             disabled={!ready}
@@ -258,7 +270,7 @@ export default function PdfViewerClient({
               }
             }}
           />
-          <span className="text-neutral-500 tabular-nums">/ {numPages || "–"}</span>
+          <span className="text-muted tabular-nums">/ {numPages || "–"}</span>
           <button
             type="button"
             className={toolbarButton}
@@ -269,7 +281,7 @@ export default function PdfViewerClient({
             ›
           </button>
         </div>
-        <div className="flex items-center gap-1">
+        <div className={`flex items-center gap-1 ${header ? "" : "ml-auto"}`}>
           <button
             type="button"
             className={toolbarButton}
@@ -304,7 +316,7 @@ export default function PdfViewerClient({
         onScroll={handleScroll}
         tabIndex={0}
         aria-label="PDF 본문"
-        className="relative min-h-0 flex-1 overflow-auto bg-neutral-100 outline-none dark:bg-neutral-900"
+        className="relative min-h-0 flex-1 overflow-auto bg-subtle outline-none"
       >
         <Document
           file={file}
@@ -323,7 +335,7 @@ export default function PdfViewerClient({
               {pages.map((i) => (
                 <div
                   key={i}
-                  className="absolute overflow-hidden rounded-sm bg-white ring-1 ring-neutral-200 dark:ring-neutral-800"
+                  className="absolute overflow-hidden rounded-sm bg-white ring-1 ring-border"
                   style={{
                     top: layout.tops[i],
                     left: PADDING,
@@ -353,7 +365,7 @@ export default function PdfViewerClient({
 
 function Status({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full min-h-40 items-center justify-center text-sm text-neutral-500">
+    <div className="flex h-full min-h-40 items-center justify-center text-sm text-muted">
       {children}
     </div>
   );
