@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { unlinkItems } from "@/app/_actions/links";
 import { Button } from "@/components/ui";
 import type { ItemRef } from "@/lib/repo/shared";
+import { safeAction } from "./safe-action";
 
 /** Small "연결 해제" button for one connected item. */
 export function UnlinkButton({
@@ -31,18 +32,22 @@ export function UnlinkButton({
         variant="ghost"
         size="sm"
         disabled={pending}
-        aria-label={`"${otherTitle}" 연결 해제`}
+        aria-busy={pending}
+        title={`"${otherTitle}" 연결 해제`}
         className="opacity-60 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={() =>
           startTransition(async () => {
             setError(null);
-            const res = await unlinkItems(item, other);
+            const res = await safeAction(
+              () => unlinkItems(item, other),
+              "연결을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+            );
             if (res.ok) router.refresh();
             else setError(res.error);
           })
         }
       >
-        {pending ? "해제 중…" : "연결 해제"}
+        연결 해제
       </Button>
     </span>
   );

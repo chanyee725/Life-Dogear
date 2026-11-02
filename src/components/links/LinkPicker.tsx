@@ -9,6 +9,7 @@ import { ITEM_TYPE } from "@/lib/enums";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import type { ItemSummary } from "@/lib/repo/items";
 import type { ItemRef } from "@/lib/repo/shared";
+import { safeAction } from "./safe-action";
 
 const keyOf = (ref: ItemRef) => `${ref.type}:${ref.id}`;
 
@@ -39,7 +40,10 @@ export function LinkPicker({
   async function search(q: string) {
     const ticket = ++latest.current;
     setSearching(true);
-    const res = await searchItemTitles(q, item);
+    const res = await safeAction(
+      () => searchItemTitles(q, item),
+      "검색하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    );
     if (ticket !== latest.current) return; // a newer search is in flight
     setSearching(false);
     if (res.ok) {
@@ -71,7 +75,7 @@ export function LinkPicker({
 
   function choose(target: ItemRef) {
     startLinking(async () => {
-      const res = await linkItems(item, target);
+      const res = await safeAction(() => linkItems(item, target));
       if (res.ok) {
         close();
         router.refresh();
@@ -84,7 +88,8 @@ export function LinkPicker({
   return (
     <>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-        + {label}
+        <span aria-hidden>+</span>
+        {label}
       </Button>
       <Dialog
         open={open}

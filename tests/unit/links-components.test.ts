@@ -24,7 +24,8 @@ describe("ConnectedItems", () => {
     await links.link({ type: "thought", id: thought.id }, P);
 
     const html = await render(P);
-    expect(html).toContain("연결된 항목 2");
+    expect(html).toContain('role="region" aria-label="연결된 항목"');
+    expect(html).toMatch(/연결된 항목<span aria-hidden="true"[^>]*>2<\/span>/);
     expect(html).toContain(`href="/seminars/${seminar.id}"`);
     expect(html).toContain(`href="/thoughts/${thought.id}"`);
     expect(html).toContain(">세미나<");
