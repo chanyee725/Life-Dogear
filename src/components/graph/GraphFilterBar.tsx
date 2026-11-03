@@ -83,6 +83,16 @@ export function GraphFilterControls({
       {main.map(chip)}
       <Divider />
       {OPT_IN_TYPES.map(chip)}
+      {shownTypes(filter).includes("task") ? (
+        <label className="inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-fg">
+          <input
+            type="checkbox"
+            checked={!!filter.doneTasks}
+            onChange={(e) => onChange({ ...filter, doneTasks: e.target.checked || undefined })}
+          />
+          완료 포함
+        </label>
+      ) : null}
     </div>,
     <div key="selects" className="flex flex-wrap items-center gap-3">
       <span className="inline-flex items-center gap-1.5">

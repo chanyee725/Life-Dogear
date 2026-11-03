@@ -53,8 +53,19 @@ export type SourceLink = {
 export type SourceTagging = { itemType: string; itemId: string; tagId: string };
 export type SourceTag = { id: string; name: string };
 
+/** Task row (`tasks`); only loaded when task nodes are asked for. */
+export type SourceTask = {
+  id: string;
+  title: string;
+  done: boolean;
+  dueDate: string | null;
+  parentType: "project" | "goal" | "area" | null;
+  parentId: string | null;
+};
+
 export type GraphSource = {
   items: SourceItem[];
+  tasks?: SourceTask[];
   links: SourceLink[];
   tags?: SourceTag[];
   itemTags?: SourceTagging[];
@@ -114,6 +125,24 @@ function fullGraph(source: GraphSource, withTags: boolean) {
       `${l.targetType}:${l.targetId}` as GraphNodeId,
       l.via === "body" ? "body" : "link",
     );
+  }
+
+  // Tasks: one node each, a `belongs` edge to the parent; archived along with the parent.
+  for (const t of source.tasks ?? []) {
+    const parent = t.parentType && t.parentId ? graphNodeId(t.parentType, t.parentId) : null;
+    if (parent && !nodes.has(parent)) continue; // parent gone: not shown
+    const node: GraphNode = {
+      id: graphNodeId("task", t.id),
+      type: "task",
+      title: t.title,
+      size: 0,
+      archived: parent ? nodes.get(parent)!.archived : false,
+      done: t.done,
+    };
+    if (t.dueDate) node.dueDate = t.dueDate;
+    if (parent) node.parent = parent;
+    nodes.set(node.id, node);
+    if (parent) add(node.id, parent, "belongs");
   }
 
   if (withTags && source.tags && source.itemTags) {
@@ -228,7 +257,10 @@ function normalizeTypes(types: GraphFilter["types"]): Set<GraphNodeType> {
 /** The whole graph for `/graph`, filtered. */
 export function buildGraph(source: GraphSource, filter: GraphFilter = {}): GraphData {
   const types = normalizeTypes(filter.types);
-  const visible = (n: GraphNode) => types.has(n.type) && (filter.archived || !n.archived);
+  const visible = (n: GraphNode) =>
+    types.has(n.type) &&
+    (filter.archived || !n.archived) &&
+    (n.type !== "task" || !n.done || Boolean(filter.doneTasks));
 
   const { nodes, edges: all } = fullGraph(source, types.has("tag"));
   // Edges only among visible nodes, so hidden types/archived items do not pull others in.

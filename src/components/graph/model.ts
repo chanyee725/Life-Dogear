@@ -53,6 +53,8 @@ export function baseRadius(node: Pick<GraphNode, "type" | "horizon">): number {
     case "review":
     case "tag":
       return 3.5;
+    case "task":
+      return 3;
     default:
       return 4;
   }
@@ -68,6 +70,7 @@ export function nodeRadius(
   large = false,
 ): number {
   if (node.type === "review" || node.type === "tag") return 3.5;
+  if (node.type === "task") return 3;
   const base = large ? Math.max(baseRadius(node) - 1, 3) : baseRadius(node);
   return Math.min(base + 1.2 * Math.sqrt(Math.max(degree, 0)), 16);
 }
@@ -106,6 +109,19 @@ export function paraXByType(columns: readonly ParaColumn[]): Record<GraphNodeTyp
   return out;
 }
 
+/** Tasks sit just right of their parent's column (no column of their own). */
+export const TASK_COLUMN_OFFSET = 70;
+
+/** PARA x target of a node: its type's column; tasks: parent's column (+70), else projects'. */
+export function paraTargetX(
+  node: Pick<GraphNode, "type" | "parent">,
+  paraX: Record<GraphNodeType, number>,
+): number {
+  if (node.type !== "task") return paraX[node.type];
+  const parentType = node.parent ? parseGraphNodeId(node.parent)?.type : undefined;
+  return paraX[parentType ?? "project"] + TASK_COLUMN_OFFSET;
+}
+
 /** Vertical target inside the goal column: life −240, year 0, quarter +240. */
 export function goalRowY(horizon: GraphNode["horizon"]): number {
   return horizon === "life" ? -240 : horizon === "quarter" ? 240 : 0;
@@ -125,18 +141,27 @@ export function labelZoom(node: Pick<GraphNode, "type" | "horizon">, nodeCount: 
 
 /** Label text: `#` for topics, ` · 보관` for archived, 18 chars (40 when emphasised). */
 export function labelText(
-  node: Pick<GraphNode, "type" | "title" | "archived">,
+  node: Pick<GraphNode, "type" | "title" | "archived" | "done">,
   emphasised: boolean,
 ): string {
   const max = emphasised ? 40 : 18;
   const base = node.type === "tag" ? `#${node.title}` : node.title;
   const cut = base.length > max ? `${base.slice(0, max - 1)}…` : base;
-  return node.archived ? `${cut} · 보관` : cut;
+  const done = node.type === "task" && node.done ? `${cut} · 완료` : cut;
+  return node.archived ? `${done} · 보관` : done;
 }
 
-/** Static label priority (lower first): goal > area > project > the rest. */
+/** Static label priority (lower first): goal > area > project > the rest > tasks. */
 export function labelPriority(type: GraphNodeType): number {
-  return type === "goal" ? 0 : type === "area" ? 1 : type === "project" ? 2 : 3;
+  return type === "goal"
+    ? 0
+    : type === "area"
+      ? 1
+      : type === "project"
+        ? 2
+        : type === "task"
+          ? 4
+          : 3;
 }
 
 // ---------- Edges and neighbours ----------
@@ -333,12 +358,20 @@ const ROUTE: Record<GraphNodeType, string> = {
   task: "/tasks",
 };
 
-/** Detail page of a node. Topic nodes open the tag page by name. */
-export function nodeHref(node: Pick<GraphNode, "id" | "title">): string | null {
+/**
+ * Detail page of a node. Topic nodes open the tag page by name; tasks have no page and
+ * open their parent (unfiled ones `/tasks`).
+ */
+export function nodeHref(node: Pick<GraphNode, "id" | "title" | "parent">): string | null {
   const parsed = parseGraphNodeId(node.id);
   if (!parsed) return null;
   if (parsed.type === "tag") return `/tags/${encodeURIComponent(node.title)}`;
-  if (parsed.type === "task") return ROUTE.task;
+  if (parsed.type === "task") {
+    const parent = node.parent ? parseGraphNodeId(node.parent) : null;
+    return parent && parent.type !== "task" && parent.type !== "tag"
+      ? `${ROUTE[parent.type]}/${encodeURIComponent(parent.id)}`
+      : ROUTE.task;
+  }
   return `${ROUTE[parsed.type]}/${encodeURIComponent(parsed.id)}`;
 }
 
@@ -370,6 +403,8 @@ export function normalizeFilter(filter: GraphFilter): GraphFilter {
   if (filter.tag) out.tag = filter.tag;
   if (filter.archived) out.archived = true;
   if (filter.orphans) out.orphans = true;
+  // Only meaningful while task nodes are shown.
+  if (filter.doneTasks && out.types?.includes("task")) out.doneTasks = true;
   return out;
 }
 
@@ -385,7 +420,8 @@ export function activeFilterCount(filter: GraphFilter): number {
     (f.area ? 1 : 0) +
     (f.tag ? 1 : 0) +
     (f.archived ? 1 : 0) +
-    (f.orphans ? 1 : 0)
+    (f.orphans ? 1 : 0) +
+    (f.doneTasks ? 1 : 0)
   );
 }
 
@@ -402,6 +438,7 @@ export function graphQuery(filter: GraphFilter): string {
   if (f.tag) p.set("tag", f.tag);
   if (f.archived) p.set("archived", "1");
   if (f.orphans) p.set("orphans", "1");
+  if (f.doneTasks) p.set("doneTasks", "1");
   const s = p.toString();
   return s ? `?${s}` : "";
 }
@@ -430,6 +467,7 @@ export function parsePageQuery(params: URLSearchParams): GraphUrlState {
   if (tag) filter.tag = tag;
   if (params.get("archived") === "1") filter.archived = true;
   if (params.get("orphans") === "1") filter.orphans = true;
+  if (params.get("doneTasks") === "1") filter.doneTasks = true;
   const focusRef = parseGraphNodeId(params.get("focus"));
   return {
     filter: normalizeFilter(filter),
