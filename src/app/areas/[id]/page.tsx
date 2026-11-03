@@ -13,7 +13,7 @@ import { Section } from "@/components/ui/Card";
 import { isValidItemId } from "@/lib/ids";
 import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
 import { areas, goals, projects, tags } from "@/lib/repo";
-import type { Project } from "@/lib/repo/projects";
+import type { AreaProject } from "@/lib/repo/projects";
 import { GoalTree } from "../../goals/GoalTree";
 import { ProgressBadge } from "../../projects/ProgressBadge";
 import { updateAreaPatch } from "../actions";
@@ -36,7 +36,7 @@ export default async function AreaDetailPage({ params }: Props) {
   const [area, allTags, areaProjects, areaGoals, allGoals, materials] = await Promise.all([
     areas.get(id),
     tags.listAll({ visibleOnly: true }),
-    projects.list({ areaId: id }),
+    projects.listForArea(id),
     goals.listTreeForArea(id),
     goals.list({ includeArchived: true }),
     areas.listMaterials(id),
@@ -169,7 +169,7 @@ export default async function AreaDetailPage({ params }: Props) {
 
 const countLabel = (n: number) => (n ? ` ${n}` : "");
 
-function ProjectList({ list }: { list: Project[] }) {
+function ProjectList({ list }: { list: AreaProject[] }) {
   return (
     <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
       {list.map((p) => (
@@ -179,6 +179,12 @@ function ProjectList({ list }: { list: Project[] }) {
             className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
           >
             <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
+            {p.viaGoal ? (
+              // No area of its own: listed because its goal belongs to this area.
+              <span className="max-w-48 shrink-0 truncate text-xs text-muted">
+                {viaLabel([{ type: "goal", ...p.viaGoal }])}
+              </span>
+            ) : null}
             {p.nextAction ? (
               <span className="hidden max-w-64 truncate text-muted sm:inline">
                 다음: {p.nextAction}
