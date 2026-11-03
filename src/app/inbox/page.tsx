@@ -15,7 +15,12 @@ function preview(body: string): string {
   return (
     body
       .split("\n")
-      .map((l) => l.replace(/^[#>\-*\s]+|\[[ x]\]\s*/g, "").trim())
+      .map((l) =>
+        l
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // photos: not text
+          .replace(/^[#>\-*\s]+|\[[ x]\]\s*/g, "")
+          .trim(),
+      )
       .find(Boolean) ?? ""
   );
 }

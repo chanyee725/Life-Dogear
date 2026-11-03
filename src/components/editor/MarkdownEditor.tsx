@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EDITOR_READY_EVENT } from "@/components/fields/form-patch";
 import { cn } from "@/components/ui/cn";
 import { createExtensions } from "./extensions";
+import { insertImages, isImageFile } from "./image-upload";
 import { itemFromPath } from "./wiki-resolver";
 import { WikiRenamePrompt } from "./WikiRenamePrompt";
 import { WikiSuggest, type SuggestKeyHandler } from "./WikiSuggest";
@@ -49,6 +50,23 @@ export function MarkdownEditor({
   // Last markdown we emitted or loaded; lets us ignore our own value echoing back.
   const lastMarkdown = useRef(value);
   const suggestKeys = useRef<SuggestKeyHandler | null>(null);
+  const editorRef = useRef<Editor | null>(null);
+  const [uploading, setUploading] = useState(0);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  async function addImages(files: File[], pos?: number) {
+    const editor = editorRef.current;
+    if (!editor || files.length === 0) return;
+    setImageError(null);
+    setUploading((n) => n + files.length);
+    const error = await insertImages(editor, files, pos);
+    setUploading((n) => Math.max(0, n - files.length));
+    if (error) setImageError(error);
+  }
+  const addImagesRef = useRef(addImages);
+  useEffect(() => {
+    addImagesRef.current = addImages;
+  });
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -63,6 +81,23 @@ export function MarkdownEditor({
     editorProps: {
       attributes: { class: "rb-prose", "aria-label": "본문", spellcheck: "false" },
       handleKeyDown: (_view, event) => suggestKeys.current?.(event) ?? false,
+      // Pasted or dropped photos are uploaded and inserted as images.
+      handlePaste: (_view, event) => {
+        const files = [...(event.clipboardData?.files ?? [])].filter(isImageFile);
+        if (files.length === 0) return false;
+        event.preventDefault();
+        void addImagesRef.current(files);
+        return true;
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false;
+        const files = [...(event.dataTransfer?.files ?? [])].filter(isImageFile);
+        if (files.length === 0) return false;
+        event.preventDefault();
+        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+        void addImagesRef.current(files, pos);
+        return true;
+      },
     },
     onUpdate: ({ editor }) => {
       const markdown = getMarkdown(editor);
@@ -84,10 +119,26 @@ export function MarkdownEditor({
     editor?.setEditable(editable);
   }, [editor, editable]);
 
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {toolbar && editable && editor ? <Toolbar editor={editor} /> : null}
+      {toolbar && editable && editor ? (
+        <Toolbar editor={editor} onPickImages={(files) => void addImages(files)} />
+      ) : null}
       <EditorContent editor={editor} />
+      {uploading > 0 ? (
+        <p aria-live="polite" className="text-xs text-muted">
+          사진 올리는 중…
+        </p>
+      ) : null}
+      {imageError ? (
+        <p role="alert" className="text-xs text-danger">
+          {imageError}
+        </p>
+      ) : null}
       {editor && editable ? <WikiSuggest editor={editor} keyHandler={suggestKeys} /> : null}
       {name ? <HiddenValue name={name} editor={editor} initial={value} /> : null}
       {name && editable ? <FormTitleRename /> : null}
@@ -183,7 +234,14 @@ function HiddenValue({
   return <input ref={ref} type="hidden" name={name} defaultValue={initial} />;
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({
+  editor,
+  onPickImages,
+}: {
+  editor: Editor;
+  onPickImages: (files: File[]) => void;
+}) {
+  const fileInput = useRef<HTMLInputElement>(null);
   const state = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -261,6 +319,24 @@ function Toolbar({ editor }: { editor: Editor }) {
         코드
       </Tool>
       <Divider />
+      <Tool
+        label="사진 넣기 (붙여넣기·끌어다 놓기도 됩니다)"
+        onClick={() => fileInput.current?.click()}
+      >
+        사진
+      </Tool>
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = "";
+          onPickImages(files);
+        }}
+      />
       {state.table ? (
         <>
           <Tool label="아래에 행 추가" onClick={() => chain().addRowAfter().run()}>

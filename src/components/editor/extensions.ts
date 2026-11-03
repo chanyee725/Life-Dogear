@@ -1,4 +1,5 @@
 import { Extension } from "@tiptap/core";
+import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
@@ -51,6 +52,9 @@ export function createExtensions(placeholder: string) {
     TableRow,
     TableHeader,
     TableCell,
+    // Photos are stored as files and referenced by URL (`![alt](/api/images/…)`), never
+    // inlined as base64: bodies stay small and Markdown stays readable.
+    Image.configure({ inline: false, allowBase64: false }),
     Placeholder.configure({ placeholder }),
     WikiLink,
     Markdown.configure({
