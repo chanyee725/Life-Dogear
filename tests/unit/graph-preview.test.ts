@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   areaPreview,
   firstParagraph,
+  goalPreview,
   paperPreview,
   projectPreview,
+  reviewPreview,
   seminarPreview,
   thoughtPreview,
 } from "@/app/graph/preview/build";
@@ -102,6 +104,66 @@ describe("previews", () => {
       archived: false,
       props: [{ label: "프로젝트", value: "3개" }],
       summary: "주 1회 점검",
+    });
+  });
+});
+
+describe("goal and review previews", () => {
+  const goal = {
+    horizon: "quarter",
+    period: "2027-Q1",
+    status: "active",
+    why: "학회 마감 전에",
+    body: "",
+    archivedAt: null,
+  };
+
+  it("goal: progress, period, parent and area; why as summary", () => {
+    expect(
+      goalPreview(goal, { progress: 66.7, parentTitle: "1저자 논문", areaTitle: "연구 분야" }),
+    ).toEqual({
+      archived: false,
+      badge: "분기 목표 2027-Q1",
+      props: [
+        { label: "진행률", value: "67%" },
+        { label: "기간", value: "2027-Q1" },
+        { label: "상위", value: "1저자 논문" },
+        { label: "영역", value: "연구 분야" },
+      ],
+      summary: "학회 마감 전에",
+    });
+  });
+
+  it("life goal: no progress or period; non-active status shown", () => {
+    const p = goalPreview(
+      { ...goal, horizon: "life", period: null, status: "dropped", why: "", body: "방향만 둔다" },
+      { progress: null },
+    );
+    expect(p.badge).toBe("인생 목표");
+    expect(p.props).toEqual([{ label: "상태", value: "내려놓음" }]);
+    expect(p.summary).toBe("방향만 둔다");
+  });
+
+  it("review: period and done state", () => {
+    const base = {
+      kind: "week",
+      period: "2026-W45",
+      completedAt: null,
+      body: "",
+      archivedAt: null,
+    };
+    expect(reviewPreview(base)).toEqual({
+      archived: false,
+      badge: "주간 회고",
+      props: [
+        { label: "기간", value: "2026-W45" },
+        { label: "상태", value: "작성 중" },
+      ],
+      summary: undefined,
+    });
+    expect(reviewPreview({ ...base, completedAt: "2026-11-08T10:00:00.000Z" }).props[1]).toEqual({
+      label: "상태",
+      value: "완료 2026-11-08",
     });
   });
 });
