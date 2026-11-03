@@ -62,33 +62,39 @@ function Section({
   );
 }
 
+/** Collapsed state for the panel: saved choice, else collapsed on narrow screens. */
+export function useCosmosPanelCollapsed(narrow: boolean): [boolean, () => void] {
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    const saved = localStorage.getItem(COSMOS_PANEL_STORAGE_KEY);
+    setCollapsed(saved === null ? narrow : saved === "collapsed");
+  }, [narrow]);
+  const toggle = () =>
+    setCollapsed((prev) => {
+      localStorage.setItem(COSMOS_PANEL_STORAGE_KEY, prev ? "expanded" : "collapsed");
+      return !prev;
+    });
+  return [collapsed, toggle];
+}
+
 export function CosmosPanel({
   data,
   byId,
-  narrow,
+  collapsed,
+  onToggle,
   onSelect,
   onHover,
   onShowAllLonely,
 }: {
   data: CosmosResponse;
   byId: ReadonlyMap<GraphNodeId, GraphNode>;
-  narrow: boolean;
+  collapsed: boolean;
+  onToggle: () => void;
   onSelect: (id: GraphNodeId) => void;
   onHover: (id: GraphNodeId | null) => void;
   /** "+ n개 더": turn on "연결 없는 항목만" and go back to the basic view. */
   onShowAllLonely: () => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    const saved = localStorage.getItem(COSMOS_PANEL_STORAGE_KEY);
-    setCollapsed(saved === null ? narrow : saved === "collapsed");
-  }, [narrow]);
-  function toggle() {
-    const next = !collapsed;
-    setCollapsed(next);
-    localStorage.setItem(COSMOS_PANEL_STORAGE_KEY, next ? "collapsed" : "expanded");
-  }
-
   const order = new Map(data.galaxies.map((g, i) => [g.id, i] as const));
   const row = (id: GraphNodeId, left: ReactNode, right: ReactNode) => {
     const node = byId.get(id);
@@ -143,7 +149,7 @@ export function CosmosPanel({
           className="h-7 w-7"
           aria-expanded={!collapsed}
           aria-label={collapsed ? "우주 요약 펼치기" : "우주 요약 접기"}
-          onClick={toggle}
+          onClick={onToggle}
         >
           <svg
             width="12"

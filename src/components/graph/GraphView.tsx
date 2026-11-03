@@ -22,7 +22,8 @@ import { withStar } from "@/lib/cosmos/star-patch";
 import type { CosmosResponse } from "@/lib/cosmos/types";
 import type { GraphFilter, GraphNode, GraphNodeId, GraphPosition } from "@/lib/graph/types";
 import { fetchCosmos, fetchGraph, type GraphLoad, resetLayout, saveLayout, setStar } from "./api";
-import { CosmosPanel } from "./CosmosPanel";
+import { CosmosPanel, useCosmosPanelCollapsed } from "./CosmosPanel";
+import { freeArea } from "./cosmos-model";
 import { createLayoutSaver } from "./layout-saver";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { CosmosCanvasLazy, GraphCanvasLazy } from "./GraphCanvasLazy";
@@ -116,6 +117,9 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const [rootRef, rootSize] = useElementSize<HTMLDivElement>();
   const [canvasRef, canvasSize] = useElementSize<HTMLDivElement>();
   const narrow = rootSize.width > 0 && rootSize.width < NARROW;
+  const [panelCollapsed, togglePanel] = useCosmosPanelCollapsed(narrow);
+  /** Cosmos camera move to run after the render that opens the preview (insets change). */
+  const pendingCamera = useRef<{ id: GraphNodeId; zoom?: number } | null>(null);
 
   useEffect(() => {
     setLargeDismissed(sessionStorage.getItem(LARGE_NOTICE_KEY) === "1");
@@ -263,6 +267,11 @@ export default function GraphView({ options }: { options: FilterOptions }) {
         }
         setAnnounce(text);
       }
+      if (cosmosData) {
+        // 6.2: done after render, against the free area with the preview open.
+        pendingCamera.current = { id, zoom: opts.center ? opts.zoom : undefined };
+        return;
+      }
       const api = apiRef.current;
       if (!api) return;
       if (opts.center) api.focusNode(id, { zoom: opts.zoom, offsetX: PANEL_OFFSET, duration: 400 });
@@ -270,6 +279,24 @@ export default function GraphView({ options }: { options: FilterOptions }) {
     },
     [byId, cosmosData, pathFor],
   );
+
+  const insets = freeArea(canvasSize.width, !!cosmosData && !panelCollapsed, !!selected);
+  useEffect(() => {
+    const move = pendingCamera.current;
+    const api = apiRef.current;
+    if (!move || !api || move.id !== selectedId) return;
+    pendingCamera.current = null;
+    if (move.zoom) {
+      // Search pick: centre the node in the free area and zoom in (6.3 of graph.md).
+      api.focusNode(move.id, {
+        zoom: move.zoom,
+        offsetX: (insets.right - insets.left) / 2,
+        duration: 400,
+      });
+    } else if (constellation) {
+      api.fitNodes?.(constellation.order, 300);
+    }
+  }, [selectedId, constellation, insets.left, insets.right]);
 
   /** Keyboard start: in the cosmos view the brightest sun, else the top-scored node. */
   const startFocus = useCallback((): GraphNodeId | null => {
@@ -706,7 +733,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
                 height={canvasSize.height}
                 selectedId={selectedId}
                 focusId={focusId}
-                externalHoverId={externalHover}
+                externalHoverId={selectedId ? null : externalHover}
+                insets={insets}
                 constellation={constellation}
                 fitKey={`cosmos:${graphQuery(filter)}`}
                 onNodeClick={(node) => {
@@ -833,10 +861,12 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           <CosmosPanel
             data={cosmosData}
             byId={byId}
-            narrow={narrow}
+            collapsed={panelCollapsed}
+            onToggle={togglePanel}
             onSelect={(id) => {
+              setExternalHover(null);
               setFocusId(id);
-              select(id, { center: true });
+              select(id);
             }}
             onHover={setExternalHover}
             onShowAllLonely={() => {

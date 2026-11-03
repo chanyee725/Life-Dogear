@@ -26,6 +26,7 @@ import {
   galaxyColor,
   galaxyRingRadius,
   glowFor,
+  grewBeyond,
   type Nebula,
   nebulae as computeNebulae,
   sunPositions,
@@ -61,6 +62,8 @@ export type CosmosCanvasProps = {
   /** "왜 중요한가" path of the selected node. */
   constellation?: Constellation | null;
   fitKey?: string;
+  /** Overlay insets (4.1): fits and moves use the free area between them. */
+  insets?: { left: number; right: number };
   onNodeClick?: (node: GraphNode, event: MouseEvent) => void;
   onBackgroundClick?: () => void;
   onHover?: (id: GraphNodeId | null) => void;
@@ -70,6 +73,8 @@ export type CosmosCanvasProps = {
 };
 
 const FADE_MS = 120;
+const NO_INSETS = { left: 0, right: 0 };
+const FIT_PAD = 64;
 const PATH_MS = 450;
 
 type Emph =
@@ -79,6 +84,8 @@ type Emph =
       kind: "select";
       s: GraphNodeId;
       p: Set<GraphNodeId>;
+      /** P by distance from S (label priority). */
+      order: GraphNodeId[];
       n: Set<GraphNodeId>;
       edges: Set<string>;
     };
@@ -144,6 +151,7 @@ export default function CosmosCanvas({
   externalHoverId = null,
   constellation = null,
   fitKey = "",
+  insets = NO_INSETS,
   onNodeClick,
   onBackgroundClick,
   onHover,
@@ -308,6 +316,7 @@ export default function CosmosCanvas({
         kind: "select",
         s: selectedId,
         p: constellation.nodes,
+        order: constellation.order,
         n,
         edges: constellation.edges,
       };
@@ -629,6 +638,11 @@ export default function CosmosCanvas({
   const labelRef = useRef(labelOrder);
   labelRef.current = labelOrder;
 
+  /**
+   * 9절: labels in priority order, skipping any whose box (text + 2s each side) overlaps
+   * one already drawn — always while something is emphasised, otherwise above 300 nodes.
+   * Emphasised: S > P (nearest S first) > H > N; sun labels are never skipped.
+   */
   const onRenderFramePost = useCallback((ctx: CanvasRenderingContext2D, k: number) => {
     const fg = fgRef.current;
     if (!fg) return;
@@ -636,7 +650,9 @@ export default function CosmosCanvas({
     const to = fade.current.to;
     const tl = fg.screen2GraphCoords(0, 0);
     const br = fg.screen2GraphCoords(L.width, L.height);
-    const dense = L.count > DENSE_GRAPH;
+    const emphasised = to.kind !== "none";
+    const cull = emphasised || L.count > DENSE_GRAPH;
+    const gap = 2 / k;
     const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
     const drawn = new Set<string>();
     const byId = simCache.current;
@@ -647,10 +663,10 @@ export default function CosmosCanvas({
         : id === to.s || to.p.has(id) || to.n.has(id));
 
     const draw = (
-      n: SimNode,
-      opts: { strong: boolean; weight: number; size?: number; always: boolean },
+      n: SimNode | undefined,
+      opts: { strong: boolean; weight: number; size?: number; always?: boolean; keep?: boolean },
     ) => {
-      if (drawn.has(n.id as string)) return;
+      if (!n || drawn.has(n.id as string)) return;
       const x = n.x ?? 0;
       const y = n.y ?? 0;
       if (x < tl.x - 200 || x > br.x + 200 || y < tl.y - 50 || y > br.y + 50) return;
@@ -661,10 +677,18 @@ export default function CosmosCanvas({
       ctx.font = `${opts.weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
       const top = y + (n.sun ? n.r + 3 : shapeBottom(n.type, n.r)) + 3 / k;
       const w = ctx.measureText(text).width;
-      const box = { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + size * 1.25 };
-      if (dense && !opts.strong) {
-        if (boxes.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1))
-          return;
+      const box = {
+        x0: x - w / 2 - gap,
+        y0: top - gap,
+        x1: x + w / 2 + gap,
+        y1: top + size * 1.25 + gap,
+      };
+      if (
+        cull &&
+        !opts.keep &&
+        boxes.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)
+      ) {
+        return;
       }
       boxes.push(box);
       ctx.globalAlpha = lit(id) ? 1 : 0.5;
@@ -680,60 +704,94 @@ export default function CosmosCanvas({
     };
 
     const get = (id: GraphNodeId | null | undefined) => (id ? byId.get(id) : undefined);
-    // Priority: selection > path > hover > neighbours > suns > score.
-    if (to.kind === "select") {
-      const s = get(to.s);
-      if (s) draw(s, { strong: true, weight: 600, always: true });
-      for (const id of to.p) {
-        const n = get(id);
-        if (n) draw(n, { strong: true, weight: 500, always: true });
-      }
+    if (to.kind === "select") draw(get(to.s), { strong: true, weight: 600, keep: true });
+    if (to.kind === "hover") draw(get(to.h), { strong: true, weight: 500, keep: true });
+    for (const n of labelRef.current) {
+      if (n.sun) draw(n, { strong: true, weight: 600, size: 13, always: true, keep: true });
     }
-    const focus = get(L.focusId);
-    if (focus) draw(focus, { strong: true, weight: 500, always: true });
-    if (to.kind === "hover") {
-      const h = get(to.h);
-      if (h) draw(h, { strong: true, weight: 500, always: true });
+    if (to.kind === "select") {
+      for (const id of to.order) draw(get(id), { strong: true, weight: 500, always: true });
     }
     if (to.kind !== "none") {
-      for (const id of to.n) {
-        const n = get(id);
-        if (n) draw(n, { strong: false, weight: 400, always: true });
+      for (const id of to.n) draw(get(id), { strong: false, weight: 400, always: true });
+    }
+    draw(get(L.focusId), { strong: true, weight: 500, always: !emphasised });
+    if (!emphasised) {
+      let budget = 400;
+      for (const n of labelRef.current) {
+        if (budget <= 0) break;
+        if (k < cosmosLabelZoom(n, n.s, L.count)) continue;
+        const weight = n.type === "goal" || n.type === "area" ? 500 : 400;
+        draw(n, { strong: false, weight });
+        budget--;
       }
-    }
-    for (const n of labelRef.current) {
-      if (n.sun) draw(n, { strong: true, weight: 600, size: 13, always: true });
-    }
-    let budget = 400;
-    for (const n of labelRef.current) {
-      if (budget <= 0) break;
-      if (k < cosmosLabelZoom(n, n.s, L.count)) continue;
-      const weight = n.type === "goal" || n.type === "area" ? 500 : 400;
-      draw(n, { strong: false, weight, always: false });
-      budget--;
     }
     ctx.globalAlpha = 1;
   }, []);
 
-  // ----- Fit and nebulae -----
+  // ----- Fit (4.1: into the free area between overlays) and nebulae -----
+  const insetsRef = useRef(insets);
+  insetsRef.current = insets;
+
+  /** Bounds of the given nodes (all when omitted), padded by the largest radius. */
+  const boundsOf = useCallback((ids?: ReadonlySet<GraphNodeId>) => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    let maxR = 0;
+    for (const n of graphRef.current.nodes) {
+      if (n.x == null || n.y == null || (ids && !ids.has(n.id as GraphNodeId))) continue;
+      x0 = Math.min(x0, n.x);
+      y0 = Math.min(y0, n.y);
+      x1 = Math.max(x1, n.x);
+      y1 = Math.max(y1, n.y);
+      maxR = Math.max(maxR, n.r);
+    }
+    if (x0 === Infinity) return null;
+    const pad = maxR + 12;
+    return { x0: x0 - pad, y0: y0 - pad, x1: x1 + pad, y1: y1 + pad };
+  }, []);
+
   const fitView = useCallback(
-    (duration: number) => {
+    (duration: number, opts: { ids?: ReadonlySet<GraphNodeId>; noZoomIn?: boolean } = {}) => {
       const fg = fgRef.current;
-      if (!fg || graphData.nodes.length === 0) return;
-      const box = fg.getGraphBbox();
-      const maxR = graphData.nodes.reduce((m, n) => Math.max(m, n.r), 0) + 12;
-      const pad = 64;
-      const w = box.x[1] - box.x[0] + maxR * 2;
-      const h = box.y[1] - box.y[0] + maxR * 2;
-      const k = Math.max(
-        0.2,
-        Math.min(2.5, (width - pad * 2) / Math.max(w, 1), (height - pad * 2) / Math.max(h, 1)),
-      );
+      const b = boundsOf(opts.ids);
+      if (!fg || !b) return null;
+      const { left, right } = insetsRef.current;
+      const freeW = Math.max(width - left - right, 1);
+      const w = Math.max(b.x1 - b.x0, 1);
+      const h = Math.max(b.y1 - b.y0, 1);
+      let k = Math.min(2.5, (freeW - FIT_PAD * 2) / w, (height - FIT_PAD * 2) / h);
+      if (opts.noZoomIn) k = Math.min(k, fg.zoom());
+      k = Math.max(0.2, k);
+      // Put the bounds' centre at the free area's centre: shift by (left − right) / 2 px.
+      const cx = (b.x0 + b.x1) / 2 - (left - right) / 2 / k;
+      const cy = (b.y0 + b.y1) / 2;
       fg.zoom(k, duration);
-      fg.centerAt((box.x[0] + box.x[1]) / 2, (box.y[0] + box.y[1]) / 2, duration);
+      fg.centerAt(cx, cy, duration);
+      return { w, h };
     },
-    [graphData, width, height],
+    [boundsOf, width, height],
   );
+
+  /** True when any of the nodes is outside the free area on screen. */
+  const outsideFree = useCallback(
+    (ids: Iterable<GraphNodeId>) => {
+      const fg = fgRef.current;
+      if (!fg) return false;
+      const { left, right } = insetsRef.current;
+      for (const id of ids) {
+        const n = simCache.current.get(id);
+        if (!n || n.x == null || n.y == null) continue;
+        const p = fg.graph2ScreenCoords(n.x, n.y);
+        if (p.x < left || p.x > width - right || p.y < 0 || p.y > height) return true;
+      }
+      return false;
+    },
+    [width, height],
+  );
+
   const recomputeNebulae = useCallback(() => {
     nebulaRef.current = computeNebulae(
       graphRef.current.nodes.map((n) => ({ x: n.x, y: n.y, galaxy: n.galaxy })),
@@ -741,11 +799,24 @@ export default function CosmosCanvas({
     );
   }, []);
 
-  const pendingFit = useRef(true);
-  useEffect(() => {
-    pendingFit.current = true;
-  }, [fitKey]);
   const dur = useCallback((d: number) => (reducedMotion ? 0 : d), [reducedMotion]);
+  // First entry / filter change: the library applies new data in a debounced update and
+  // runs the 80 warm-up ticks there, so fit on its first engine tick — before that frame
+  // is drawn — at 0ms (4절).
+  const lastFit = useRef<{ w: number; h: number } | null>(null);
+  const fittedKey = useRef<string | null>(null);
+  const fitKeyRef = useRef(fitKey);
+  fitKeyRef.current = fitKey;
+  const fitIfNew = useCallback(() => {
+    if (fittedKey.current === fitKeyRef.current) return;
+    // Until the simulation has taken the new nodes, only the pinned suns have positions.
+    if (graphRef.current.nodes.some((n) => n.x == null || n.y == null)) return;
+    const size = fitView(0);
+    if (!size) return;
+    fittedKey.current = fitKeyRef.current;
+    lastFit.current = size;
+    onTransform?.();
+  }, [fitView, onTransform]);
 
   // ----- Imperative API (same as GraphCanvas) -----
   useEffect(() => {
@@ -774,7 +845,13 @@ export default function CosmosCanvas({
         const fg = fgRef.current;
         if (fg) fg.zoom(Math.min(6, Math.max(0.2, fg.zoom() * factor)), dur(200));
       },
-      zoomToFit: (d = 400) => fitView(dur(d)),
+      zoomToFit: (d = 400) => {
+        const size = fitView(dur(d));
+        if (size) lastFit.current = size;
+      },
+      fitNodes: (ids, d = 300) => {
+        if (outsideFree(ids)) fitView(dur(d), { ids: new Set(ids), noZoomIn: true });
+      },
       unpinAll: () => undefined,
       nodes: () => graphData.nodes,
       toScreen: (x, y) => fgRef.current?.graph2ScreenCoords(x, y) ?? { x, y },
@@ -786,7 +863,7 @@ export default function CosmosCanvas({
         return s.x > width - rightInset || s.x < 0 || s.y < 0 || s.y > height;
       },
     });
-  }, [onReady, dur, width, height, graphData, kick, fitView]);
+  }, [onReady, dur, width, height, graphData, kick, fitView, outsideFree]);
 
   return (
     <ForceGraph2D<SimNode, SimLink>
@@ -807,7 +884,7 @@ export default function CosmosCanvas({
       minZoom={0.2}
       maxZoom={6}
       autoPauseRedraw={!animating}
-      warmupTicks={reducedMotion ? 150 : large ? 60 : 0}
+      warmupTicks={reducedMotion ? 150 : 80}
       cooldownTicks={reducedMotion ? 0 : large ? 150 : 300}
       d3AlphaDecay={large ? 0.04 : 0.03}
       d3VelocityDecay={0.4}
@@ -829,13 +906,19 @@ export default function CosmosCanvas({
         }
         recomputeNebulae();
       }}
+      onEngineTick={fitIfNew}
       onEngineStop={() => {
+        fitIfNew();
         recomputeNebulae();
         kick();
-        if (!pendingFit.current) return;
-        pendingFit.current = false;
-        fitView(dur(400));
-        onTransform?.();
+        // Re-fit only if the layout spread out noticeably since the last fit.
+        const b = boundsOf();
+        if (!b || !lastFit.current) return;
+        const size = { w: b.x1 - b.x0, h: b.y1 - b.y0 };
+        if (grewBeyond(lastFit.current, size)) {
+          lastFit.current = fitView(dur(400)) ?? size;
+          onTransform?.();
+        }
       }}
     />
   );
