@@ -1,10 +1,11 @@
 /**
  * Data for `/resources` (자료): topics first, then — for a chosen topic — its papers,
  * seminars and thoughts in one list, most recently updated first. Archived items are
- * left out (repo default). Fixed query count: one for the topics, three lists per topic.
+ * left out (repo default). Topics come from those same items, so tags used only by
+ * projects, areas or goals do not show. Fixed query count: three lists (each with its tags).
  */
 import { ITEM_ROUTE, READ_STATUS, SEMINAR_KIND, THOUGHT_KIND, type BadgeTone } from "@/lib/enums";
-import { papers, seminars, tags, thoughts } from "@/lib/repo";
+import { papers, seminars, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 
 export type ResourceType = "paper" | "seminar" | "thought";
@@ -42,6 +43,22 @@ export function findTopic(topics: readonly TagCount[], wanted: string): TagCount
   const w = wanted.normalize("NFC").trim().toLowerCase();
   return topics.find((t) => t.name.toLowerCase() === w) ?? null;
 }
+
+/**
+ * Topics used by the given (non-archived) resources, with how many carry each, by name.
+ * Tag names are unique regardless of case, so one tag has one spelling everywhere.
+ */
+export function collectTopics(rows: readonly { tags: readonly string[] }[]): TagCount[] {
+  const counts = new Map<string, number>();
+  for (const row of rows)
+    for (const name of new Set(row.tags)) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return [...counts]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name, "ko"));
+}
+
+const hasTag = (row: { tags: readonly string[] }, lower: string) =>
+  row.tags.some((t) => t.toLowerCase() === lower);
 
 export const resourcesHref = (topic?: string | null) =>
   topic ? `/resources?topic=${encodeURIComponent(topic)}` : "/resources";
@@ -121,19 +138,24 @@ export function mergeResources(
 }
 
 export async function loadResources(rawTopic: string | null): Promise<ResourcesData> {
-  const topics = await tags.listAll({ visibleOnly: true });
+  const [paperRows, seminarRows, thoughtRows] = await Promise.all([
+    papers.list(),
+    seminars.list(),
+    thoughts.list(),
+  ]);
+  const topics = collectTopics([...paperRows, ...seminarRows, ...thoughtRows]);
   if (!rawTopic) return { topics, topic: null, unknownTopic: false, items: [] };
   const found = findTopic(topics, rawTopic);
   if (!found) return { topics, topic: null, unknownTopic: true, items: [] };
-  const [paperRows, seminarRows, thoughtRows] = await Promise.all([
-    papers.list({ tag: found.name }),
-    seminars.list({ tag: found.name }),
-    thoughts.list({ tag: found.name }),
-  ]);
+  const lower = found.name.toLowerCase();
   return {
     topics,
     topic: found.name,
     unknownTopic: false,
-    items: mergeResources(paperRows, seminarRows, thoughtRows),
+    items: mergeResources(
+      paperRows.filter((r) => hasTag(r, lower)),
+      seminarRows.filter((r) => hasTag(r, lower)),
+      thoughtRows.filter((r) => hasTag(r, lower)),
+    ),
   };
 }

@@ -34,7 +34,7 @@ export default async function ResourcesPage({
       {topics.length === 0 ? (
         <EmptyState
           title="아직 주제가 없습니다"
-          description="논문·세미나·생각에 주제를 달면 여기서 주제별로 모아 볼 수 있습니다."
+          description="논문·세미나·생각에 주제를 달면 여기서 주제별로 모아 볼 수 있습니다. 프로젝트·영역·목표에만 쓴 주제는 '주제' 화면에서 봅니다."
         />
       ) : (
         <div className="flex flex-col gap-8">
@@ -57,7 +57,7 @@ export default async function ResourcesPage({
           {data.unknownTopic ? (
             <EmptyState
               title="이 주제를 찾을 수 없습니다"
-              description="주제 이름이 바뀌었거나 보관한 항목에만 쓰였을 수 있습니다."
+              description="논문·세미나·생각에 쓰인 주제가 아니거나, 보관한 항목에만 쓰였을 수 있습니다."
               action={
                 <Link href={resourcesHref()} className={buttonClass("secondary", "sm")}>
                   주제 목록 보기
@@ -83,10 +83,7 @@ export default async function ResourcesPage({
               }
             >
               {items.length === 0 ? (
-                <EmptyState
-                  title="이 주제의 자료가 없습니다"
-                  description="이 주제는 프로젝트·영역·목표에만 쓰였습니다."
-                />
+                <EmptyState title="이 주제의 자료가 없습니다" />
               ) : (
                 <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
                   {items.map((item) => (
