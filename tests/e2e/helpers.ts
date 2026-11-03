@@ -10,7 +10,8 @@ export async function createItem(page: Page, section: Section, title: string) {
   await page.goto(`/${section}/new`);
   await page.getByLabel("제목", { exact: true }).fill(title);
   await page.getByRole("button", { name: "저장" }).click();
-  await expect(page).toHaveURL(new RegExp(`/${section}/(?!new)[^/]+$`));
+  // Generous: the first save of a run waits for the dev server to compile the detail page.
+  await expect(page).toHaveURL(new RegExp(`/${section}/(?!new)[^/]+$`), { timeout: 20_000 });
   await expect(page.getByLabel("제목", { exact: true })).toHaveValue(title);
 }
 
