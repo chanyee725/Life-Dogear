@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   cosmosAlpha,
   cosmosLabelZoom,
+  boxesOverlap,
+  boxHitsCircle,
   cosmosRadius,
   freeArea,
   grewBeyond,
@@ -11,6 +13,7 @@ import {
   isSun,
   makeStars,
   nebulae,
+  placeLabel,
   starCount,
   sunPositions,
   sunRadius,
@@ -164,5 +167,69 @@ describe("free area (4.1)", () => {
     expect(grewBeyond({ w: 100, h: 100 }, { w: 115, h: 100 })).toBe(false);
     expect(grewBeyond({ w: 100, h: 100 }, { w: 116, h: 90 })).toBe(true);
     expect(grewBeyond({ w: 100, h: 100 }, { w: 80, h: 120 })).toBe(true);
+  });
+});
+
+describe("placeLabel (6.2)", () => {
+  const base = {
+    x: 0,
+    y: 0,
+    top: 4,
+    bottom: 4,
+    side: 4,
+    width: 40,
+    size: 12,
+    k: 1,
+    sunBoxes: [] as { x0: number; y0: number; x1: number; y1: number }[],
+    sunDiscs: [] as { x: number; y: number; r: number }[],
+  };
+
+  it("stays below when nothing is in the way", () => {
+    const s = placeLabel(base);
+    expect(s.spot).toBe("below");
+    expect(s.y).toBe(7);
+    expect(s.baseline).toBe("top");
+  });
+
+  it("moves above when the default spot hits a sun disc below", () => {
+    const s = placeLabel({ ...base, sunDiscs: [{ x: 0, y: 30, r: 20 }] });
+    expect(s.spot).toBe("above");
+    expect(s.y).toBe(-7);
+    expect(s.baseline).toBe("bottom");
+  });
+
+  it("goes to the side away from the sun when above is blocked too", () => {
+    const sunBoxes = [{ x0: -30, y0: -40, x1: 30, y1: -12 }];
+    const left = placeLabel({ ...base, x: 0, sunBoxes, sunDiscs: [{ x: -5, y: 30, r: 20 }] });
+    expect(left.spot).toBe("side");
+    expect(left.align).toBe("left");
+    expect(left.x).toBe(10);
+    const right = placeLabel({ ...base, x: 0, sunBoxes, sunDiscs: [{ x: 5, y: 30, r: 20 }] });
+    expect(right.align).toBe("right");
+    expect(right.x).toBe(-10);
+  });
+
+  it("falls back to above when every spot is blocked", () => {
+    const wall = [{ x0: -500, y0: -500, x1: 500, y1: 500 }];
+    expect(placeLabel({ ...base, sunBoxes: wall }).spot).toBe("above");
+  });
+
+  it("also avoids extra boxes (the selected label for path labels)", () => {
+    const avoid = [{ x0: -50, y0: 5, x1: 50, y1: 30 }];
+    expect(placeLabel({ ...base, avoid }).spot).toBe("above");
+  });
+
+  it("scales gaps with the zoom", () => {
+    expect(placeLabel({ ...base, k: 2 }).y).toBe(5.5);
+  });
+});
+
+describe("box helpers", () => {
+  it("detect box/box and box/circle overlap", () => {
+    const b = { x0: 0, y0: 0, x1: 10, y1: 10 };
+    expect(boxesOverlap(b, { x0: 5, y0: 5, x1: 20, y1: 20 })).toBe(true);
+    expect(boxesOverlap(b, { x0: 10, y0: 0, x1: 20, y1: 10 })).toBe(false);
+    expect(boxHitsCircle(b, 15, 5, 6)).toBe(true);
+    expect(boxHitsCircle(b, 20, 20, 5)).toBe(false);
   });
 });

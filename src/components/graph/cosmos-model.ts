@@ -217,3 +217,101 @@ export function grewBeyond(
   const eps = 1e-9; // 100 × 1.15 is 114.999… in floating point
   return next.w > prev.w * ratio + eps || next.h > prev.h * ratio + eps;
 }
+
+// ---------- Label spot near a sun (6.2) ----------
+
+export type Box = { x0: number; y0: number; x1: number; y1: number };
+export type LabelSpot = {
+  x: number;
+  y: number;
+  align: CanvasTextAlign;
+  baseline: CanvasTextBaseline;
+  box: Box;
+  spot: "below" | "above" | "side";
+};
+
+export const boxesOverlap = (a: Box, b: Box) =>
+  a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+export function boxHitsCircle(b: Box, cx: number, cy: number, r: number): boolean {
+  const nx = Math.max(b.x0, Math.min(cx, b.x1));
+  const ny = Math.max(b.y0, Math.min(cy, b.y1));
+  return (nx - cx) ** 2 + (ny - cy) ** 2 < r * r;
+}
+
+/**
+ * Where a label goes (graph units; `k` = zoom). Default below the node; if that hits a
+ * sun label box or sun disc, try above (3s), then the side away from the sun (6s); if
+ * all three hit, above. All boxes include a 2s margin.
+ */
+export function placeLabel(input: {
+  x: number;
+  y: number;
+  /** Shape extents from the centre. */
+  top: number;
+  bottom: number;
+  side: number;
+  /** Text width and font size in graph units. */
+  width: number;
+  size: number;
+  k: number;
+  sunBoxes: readonly Box[];
+  sunDiscs: readonly { x: number; y: number; r: number }[];
+  /** Other boxes to avoid (e.g. the selected label for path labels). */
+  avoid?: readonly Box[];
+}): LabelSpot {
+  const { x, y, width: w, size, k } = input;
+  const gap = 2 / k;
+  const h = size * 1.25;
+  const nearestSun = input.sunDiscs.reduce<{ x: number; y: number } | null>(
+    (best, d) =>
+      !best || Math.hypot(d.x - x, d.y - y) < Math.hypot(best.x - x, best.y - y) ? d : best,
+    null,
+  );
+  const dir = !nearestSun || x >= nearestSun.x ? 1 : -1;
+
+  const belowTop = y + input.bottom + 3 / k;
+  const aboveBottom = y - input.top - 3 / k;
+  const sideX = x + dir * (input.side + 6 / k);
+  const spots: LabelSpot[] = [
+    {
+      spot: "below",
+      x,
+      y: belowTop,
+      align: "center",
+      baseline: "top",
+      box: { x0: x - w / 2 - gap, y0: belowTop - gap, x1: x + w / 2 + gap, y1: belowTop + h + gap },
+    },
+    {
+      spot: "above",
+      x,
+      y: aboveBottom,
+      align: "center",
+      baseline: "bottom",
+      box: {
+        x0: x - w / 2 - gap,
+        y0: aboveBottom - h - gap,
+        x1: x + w / 2 + gap,
+        y1: aboveBottom + gap,
+      },
+    },
+    {
+      spot: "side",
+      x: sideX,
+      y,
+      align: dir === 1 ? "left" : "right",
+      baseline: "middle",
+      box: {
+        x0: (dir === 1 ? sideX : sideX - w) - gap,
+        y0: y - h / 2 - gap,
+        x1: (dir === 1 ? sideX + w : sideX) + gap,
+        y1: y + h / 2 + gap,
+      },
+    },
+  ];
+  const clear = (s: LabelSpot) =>
+    !input.sunBoxes.some((b) => boxesOverlap(s.box, b)) &&
+    !input.sunDiscs.some((d) => boxHitsCircle(s.box, d.x, d.y, d.r)) &&
+    !(input.avoid ?? []).some((b) => boxesOverlap(s.box, b));
+  return spots.find(clear) ?? spots[1]!;
+}
