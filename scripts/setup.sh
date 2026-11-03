@@ -133,7 +133,7 @@ cat <<EOF
 접속:   http://127.0.0.1:$PORT
 EOF
 if [ "$MODE" = turso ] && [ "$FILES" = local ]; then
-  echo "참고: PDF·사진은 DB가 아니라 이 PC의 $DATA/에 저장됩니다. 다른 PC와 같이 보려면 R2를 설정하세요 (README '공유 파일 저장소')."
+  echo "참고: PDF·사진은 DB가 아니라 이 PC의 DATA_DIR 폴더(기본 data/)에 저장됩니다. 다른 PC와 같이 보려면 R2를 설정하세요 (README '공유 파일 저장소')."
 fi
 if [ "$FILES" = r2 ] && { [ -n "$(ls -A "$DATA/pdfs" 2>/dev/null)" ] || [ -n "$(ls -A "$DATA/images" 2>/dev/null)" ]; }; then
   echo "참고: 이 PC에 로컬 PDF·사진이 있습니다. 버킷으로 옮기려면: npm run storage:push -- --dry-run 후 npm run storage:push"
