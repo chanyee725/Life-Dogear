@@ -5,9 +5,10 @@ import {
   links as linksTable,
   papers as papersTable,
   projects as projectsTable,
+  tasks as tasksTable,
   reviews as reviewsTable,
 } from "@/db/schema";
-import { links, papers, projects, RepoError } from "@/lib/repo";
+import { links, papers, projects, RepoError, tasks } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { useFreshDb } from "./repo-helpers";
 
@@ -183,6 +184,26 @@ describe("weekly review draft", () => {
     // Only once: reopening keeps what the user wrote.
     await reviews.update(review.id, { body: "고친 내용" });
     expect((await reviews.open("week", "2026-W45")).review.body).toBe("고친 내용");
+  });
+
+  it("lists tasks done this week with their parent", async () => {
+    const project = await projects.create({ title: "논문 A" });
+    const a = await tasks.create({
+      title: "2장 초안",
+      parent: { type: "project", id: project.id },
+    });
+    const b = await tasks.create({ title: "장비 신청" });
+    const c = await tasks.create({ title: "지난주 일" });
+    await db.update(tasksTable).set({ doneAt: inWeek }).where(eq(tasksTable.id, b.id));
+    await db
+      .update(tasksTable)
+      .set({ doneAt: new Date(2026, 10, 5).toISOString() })
+      .where(eq(tasksTable.id, a.id));
+    await db.update(tasksTable).set({ doneAt: before }).where(eq(tasksTable.id, c.id));
+    expect((await reviews.weekDigest("2026-W45")).doneTasks).toEqual([
+      { title: "장비 신청", parentTitle: null },
+      { title: "2장 초안", parentTitle: "논문 A" },
+    ]);
   });
 
   it("leaves other kinds and quiet weeks plain", async () => {

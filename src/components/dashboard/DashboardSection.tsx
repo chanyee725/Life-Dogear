@@ -5,12 +5,15 @@ import { cn } from "@/components/ui";
 export function DashboardSection({
   id,
   title,
+  titleExtra,
   action,
   className,
   children,
 }: {
   id: string;
   title: string;
+  /** Shown after the title inside the heading (e.g. a count). */
+  titleExtra?: ReactNode;
   action?: ReactNode;
   className?: string;
   children: ReactNode;
@@ -21,6 +24,7 @@ export function DashboardSection({
       <div className="flex items-center justify-between gap-2">
         <h2 id={headingId} className="text-[13px] font-semibold text-muted">
           {title}
+          {titleExtra}
         </h2>
         {action}
       </div>
