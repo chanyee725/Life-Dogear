@@ -95,7 +95,7 @@ function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
         const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
         if (range && !ignoreRange) {
           const n = data.length;
-          let [start, end] = range[1]
+          const [start, end] = range[1]
             ? [Number(range[1]), range[2] ? Math.min(Number(range[2]), n - 1) : n - 1]
             : [Math.max(0, n - Number(range[2])), n - 1];
           if (start >= n) {
@@ -104,7 +104,6 @@ function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
               headers: { "content-range": `bytes */${n}` },
             });
           }
-          end = Math.min(end, n - 1);
           return new Response(data.slice(start, end + 1), {
             status: 206,
             headers: { "content-range": `bytes ${start}-${end}/${data.length}` },
