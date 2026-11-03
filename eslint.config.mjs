@@ -6,7 +6,7 @@ import prettier from "eslint-config-prettier";
 const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) });
 
 const config = [
-  { ignores: ["node_modules/", ".next/", "drizzle/", "data/", ".dispatch/", "next-env.d.ts"] },
+  { ignores: ["node_modules/", ".next/", ".next-prod/", "drizzle/", "data/", ".dispatch/", "next-env.d.ts"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   prettier,
 ];
