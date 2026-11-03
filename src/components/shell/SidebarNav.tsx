@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
@@ -58,8 +58,20 @@ function NavLink({
     <Link href={href} aria-current={active ? "page" : undefined} className={linkClass(active)}>
       {icon}
       <span className="min-w-0 flex-1 truncate">{label}</span>
+      <PendingDot />
       {badge}
     </Link>
+  );
+}
+
+/** Lights up on the clicked link until its page arrives, so a click always gets instant feedback. */
+function PendingDot() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden
+      className={`size-1.5 shrink-0 rounded-full bg-accent transition-opacity duration-150 motion-reduce:transition-none ${pending ? "opacity-100" : "opacity-0"}`}
+    />
   );
 }
 
