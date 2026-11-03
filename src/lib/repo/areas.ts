@@ -1,5 +1,6 @@
-import { and, asc, eq, sql } from "drizzle-orm";
-import { areas, projects } from "@/db/schema";
+import { and, asc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { areas, goals, links, projects } from "@/db/schema";
+import { getHeads, refKey } from "./items";
 import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
@@ -14,6 +15,7 @@ import {
   withTx,
   type ArchiveOptions,
   type Executor,
+  type ItemRef,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
@@ -196,4 +198,101 @@ export async function isAssignable(id: string, exec: Executor = db()): Promise<b
     .where(and(eq(areas.id, id), archiveFilter(areas.archivedAt)))
     .limit(1);
   return rows.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Material (논문·세미나·생각) around an area
+
+export type MaterialType = "paper" | "seminar" | "thought";
+const MATERIAL_TYPES: readonly string[] = ["paper", "seminar", "thought"];
+
+/** Where a material is linked from: the area itself, or one of its projects or goals. */
+export type MaterialVia =
+  { type: "area" } | { type: "project" | "goal"; id: string; title: string };
+
+export type AreaMaterial = {
+  ref: ItemRef & { type: MaterialType };
+  title: string;
+  /** Direct link first, then projects and goals by title; never empty. */
+  via: MaterialVia[];
+};
+
+const typeOrder = (t: string) => MATERIAL_TYPES.indexOf(t);
+
+/**
+ * Papers, seminars and thoughts linked to the area, to its projects or to its goals
+ * (non-archived on both ends), one entry per item with every path that reaches it.
+ * Fixed query count: projects, goals, links, then one title query per material type.
+ */
+export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
+  const [areaProjects, areaGoals] = await Promise.all([
+    db()
+      .select({ id: projects.id, title: projects.title })
+      .from(projects)
+      .where(and(eq(projects.areaId, areaId), isNull(projects.archivedAt))),
+    db()
+      .select({ id: goals.id, title: goals.title })
+      .from(goals)
+      .where(and(eq(goals.areaId, areaId), isNull(goals.archivedAt))),
+  ]);
+
+  const sources = new Map<string, MaterialVia>([[refKey(ref(areaId)), { type: "area" }]]);
+  for (const p of areaProjects) sources.set(`project:${p.id}`, { type: "project", ...p });
+  for (const g of areaGoals) sources.set(`goal:${g.id}`, { type: "goal", ...g });
+
+  const side = (type: "area" | "project" | "goal", ids: string[]): SQL[] =>
+    ids.length
+      ? [
+          and(eq(links.sourceType, type), inArray(links.sourceId, ids))!,
+          and(eq(links.targetType, type), inArray(links.targetId, ids))!,
+        ]
+      : [];
+  const rows = await db()
+    .select()
+    .from(links)
+    .where(
+      or(
+        ...side("area", [areaId]),
+        ...side(
+          "project",
+          areaProjects.map((p) => p.id),
+        ),
+        ...side(
+          "goal",
+          areaGoals.map((g) => g.id),
+        ),
+      ),
+    );
+
+  const found = new Map<string, { ref: AreaMaterial["ref"]; via: MaterialVia[] }>();
+  for (const l of rows) {
+    const pairs: [string, ItemRef][] = [
+      [`${l.sourceType}:${l.sourceId}`, { type: l.targetType, id: l.targetId }],
+      [`${l.targetType}:${l.targetId}`, { type: l.sourceType, id: l.sourceId }],
+    ];
+    for (const [sourceKey, other] of pairs) {
+      const via = sources.get(sourceKey);
+      if (!via || !MATERIAL_TYPES.includes(other.type)) continue;
+      const entry = found.get(refKey(other)) ?? {
+        ref: other as AreaMaterial["ref"],
+        via: [],
+      };
+      if (!entry.via.includes(via)) entry.via.push(via);
+      found.set(refKey(other), entry);
+    }
+  }
+
+  const heads = await getHeads([...found.values()].map((e) => e.ref));
+  const viaRank = (v: MaterialVia) => (v.type === "area" ? "" : `${v.type}:${v.title}`);
+  return [...found.values()]
+    .flatMap((e) => {
+      const head = heads.get(refKey(e.ref));
+      if (!head || head.archived) return [];
+      const via = [...e.via].sort((a, b) => viaRank(a).localeCompare(viaRank(b), "ko"));
+      return [{ ref: e.ref, title: head.title, via }];
+    })
+    .sort(
+      (a, b) =>
+        typeOrder(a.ref.type) - typeOrder(b.ref.type) || a.title.localeCompare(b.title, "ko"),
+    );
 }
