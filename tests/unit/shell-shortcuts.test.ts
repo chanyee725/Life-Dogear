@@ -81,6 +81,45 @@ describe("resolveShortcut", () => {
     ).toBeNull();
   });
 
+  it("G opens the graph, and does nothing on the graph itself", () => {
+    expect(resolveShortcut(key("g"), "/papers/abc", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/graph",
+    });
+    expect(resolveShortcut(key("G"), "/", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/graph",
+    });
+    expect(resolveShortcut(key("g"), "/graph", { typing: false })).toBeNull();
+  });
+
+  it("G works in a Korean input mode and is ignored while typing or with modifiers", () => {
+    expect(resolveShortcut(key("ㅎ", { code: "KeyG" }), "/", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/graph",
+    });
+    expect(resolveShortcut(key("g"), "/", { typing: true })).toBeNull();
+    expect(resolveShortcut(key("g", { ctrlKey: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("g", { isComposing: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("g"), "/", { typing: false, dialogOpen: true })).toBeNull();
+  });
+
+  it("/ focuses the node search on the graph page", () => {
+    expect(resolveShortcut(key("/"), "/graph", { typing: false })).toEqual({
+      kind: "focus-graph-search",
+    });
+    expect(resolveShortcut(key("/"), "/graphs", { typing: false })).toEqual({
+      kind: "focus-quick-input",
+    });
+  });
+
+  it("N on the graph page still opens a new thought", () => {
+    expect(resolveShortcut(key("n"), "/graph", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/thoughts/new",
+    });
+  });
+
   it("ignores shortcuts while a dialog is open", () => {
     expect(resolveShortcut(key("n"), "/papers", { typing: false, dialogOpen: true })).toBeNull();
   });

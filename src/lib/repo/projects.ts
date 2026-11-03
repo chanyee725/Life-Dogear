@@ -10,7 +10,8 @@ import {
 } from "@/lib/enums";
 import { PROJECT_TEMPLATE } from "@/lib/templates";
 import { isAssignable } from "./areas";
-import { removeLinksFor } from "./links";
+import { isAssignable as isAssignableGoal } from "./goals";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   ascNullsLast,
@@ -41,6 +42,8 @@ export type ProjectInput = {
   status?: ProjectStatus;
   /** Area the project belongs to; `null` clears it. */
   areaId?: string | null;
+  /** Goal the project works toward; `null` clears it. */
+  goalId?: string | null;
   /** "다음 할 일" — one line. */
   nextAction?: string;
   researchQuestion?: string;
@@ -60,6 +63,7 @@ export type ProjectListOptions = ArchiveOptions & {
   status?: ProjectStatus;
   stage?: ProjectStage;
   areaId?: string;
+  goalId?: string;
   sort?: ProjectSort;
 };
 
@@ -128,6 +132,20 @@ async function validAreaId(exec: Executor, areaId: string | null | undefined) {
   return areaId;
 }
 
+/** New goal id must be assignable; keeping the current (maybe archived) goal is fine. */
+async function validGoalId(
+  exec: Executor,
+  goalId: string | null | undefined,
+  current: string | null = null,
+) {
+  if (goalId === undefined) return undefined;
+  if (goalId === null || goalId === "") return null;
+  if (goalId !== current && !(await isAssignableGoal(goalId, exec))) {
+    throw new RepoError("not_found", "목표를 찾을 수 없습니다.");
+  }
+  return goalId;
+}
+
 function toColumns(input: ProjectPatch) {
   return definedOnly({
     title: input.title === undefined ? undefined : requireTitle(input.title),
@@ -156,6 +174,7 @@ export async function list(options: ProjectListOptions = {}): Promise<Project[]>
   if (options.status) where.push(eq(projects.status, options.status));
   if (options.stage) where.push(eq(projects.stage, options.stage));
   if (options.areaId) where.push(eq(projects.areaId, options.areaId));
+  if (options.goalId) where.push(eq(projects.goalId, options.goalId));
   if (options.tag) where.push(hasTag(db(), "project", projects.id, options.tag));
   const rows = await db()
     .select()
@@ -181,6 +200,7 @@ export async function create(input: ProjectInput): Promise<Project> {
   );
   await withTx(async (tx) => {
     const areaId = await validAreaId(tx, input.areaId);
+    const goalId = await validGoalId(tx, input.goalId);
     await tx.insert(projects).values({
       id,
       title: requireTitle(input.title),
@@ -188,10 +208,12 @@ export async function create(input: ProjectInput): Promise<Project> {
       ...columns,
       ...lifecycle,
       areaId: areaId ?? null,
+      goalId: goalId ?? null,
       createdAt: now,
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -206,22 +228,26 @@ export async function update(id: string, patch: ProjectPatch): Promise<Project |
         stage: projects.stage,
         status: projects.status,
         completedAt: projects.completedAt,
+        goalId: projects.goalId,
       })
       .from(projects)
       .where(eq(projects.id, id));
     if (!current) return false;
     const now = nowIso();
     const areaId = await validAreaId(tx, patch.areaId);
+    const goalId = await validGoalId(tx, patch.goalId, current.goalId);
     await tx
       .update(projects)
       .set({
         ...columns,
         ...deriveLifecycle(current, lifecycleInput, now),
         ...(areaId !== undefined ? { areaId } : {}),
+        ...(goalId !== undefined ? { goalId } : {}),
         updatedAt: now,
       })
       .where(eq(projects.id, id));
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

@@ -2,7 +2,7 @@ import { and, asc, desc, eq, sql, type SQL } from "drizzle-orm";
 import { highlights, papers } from "@/db/schema";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import { PAPER_TEMPLATE } from "@/lib/templates";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   db,
   definedOnly,
@@ -149,6 +149,7 @@ export async function create(input: PaperInput): Promise<Paper> {
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -162,6 +163,7 @@ export async function update(id: string, patch: PaperPatch): Promise<Paper | nul
       .returning({ id: papers.id });
     if (!updated.length) return false;
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

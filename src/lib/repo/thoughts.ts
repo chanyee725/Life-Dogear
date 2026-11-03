@@ -6,7 +6,7 @@ import {
   type ThoughtKind,
   type ThoughtMaturity,
 } from "@/lib/enums";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   db,
   definedOnly,
@@ -113,6 +113,7 @@ export async function create(input: ThoughtInput): Promise<Thought> {
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -126,6 +127,7 @@ export async function update(id: string, patch: ThoughtPatch): Promise<Thought |
       .returning({ id: thoughts.id });
     if (!updated.length) return false;
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

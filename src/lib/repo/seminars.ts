@@ -2,7 +2,7 @@ import { and, asc, desc, eq, type SQL } from "drizzle-orm";
 import { seminars } from "@/db/schema";
 import { SEMINAR_KIND, type SeminarKind } from "@/lib/enums";
 import { SEMINAR_TEMPLATE } from "@/lib/templates";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   db,
   definedOnly,
@@ -119,6 +119,7 @@ export async function create(input: SeminarInput): Promise<Seminar> {
       updatedAt: now,
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
+    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
   });
   return (await get(id))!;
 }
@@ -132,6 +133,7 @@ export async function update(id: string, patch: SeminarPatch): Promise<Seminar |
       .returning({ id: seminars.id });
     if (!updated.length) return false;
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

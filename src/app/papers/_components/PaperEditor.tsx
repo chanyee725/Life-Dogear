@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { setItemTags } from "@/app/_actions/tags";
 import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
+import { WikiRenamePrompt } from "@/components/editor/WikiRenamePrompt";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
@@ -213,6 +214,7 @@ export function PaperEditor({
             제목을 입력하세요. 비어 있는 동안 제목은 저장되지 않습니다.
           </p>
         ) : null}
+        <WikiRenamePrompt item={{ type: "paper", id: paperId }} title={title} />
       </div>
 
       <FillFromLink

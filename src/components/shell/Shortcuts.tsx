@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { isTypingTarget, QUICK_INPUT_ID, resolveShortcut } from "./shortcuts";
+import { GRAPH_SEARCH_EVENT, isTypingTarget, QUICK_INPUT_ID, resolveShortcut } from "./shortcuts";
 
 function focusQuickInput(): boolean {
   const el = document.getElementById(QUICK_INPUT_ID);
@@ -15,7 +15,9 @@ function focusQuickInput(): boolean {
 /**
  * Global keyboard shortcuts (mounted once in the root layout):
  * - `N`  → new item in the current section (`/<type>/new`; home and tags go to a new thought)
- * - `/`  → focus the home quick input (`#quick-input`), navigating home first if needed
+ * - `G`  → open the graph (`/graph`)
+ * - `/`  → focus the home quick input (`#quick-input`), navigating home first if needed;
+ *          on the graph page it opens the node search (`GRAPH_SEARCH_EVENT`) instead
  * Ignored while typing (inputs, selects, the editor, IME composition), with modifier keys,
  * and while a modal dialog is open.
  */
@@ -35,6 +37,8 @@ export function Shortcuts() {
       event.preventDefault();
       if (action.kind === "navigate") {
         if (confirmLeave()) router.push(action.href);
+      } else if (action.kind === "focus-graph-search") {
+        window.dispatchEvent(new Event(GRAPH_SEARCH_EVENT));
       } else if (!focusQuickInput()) {
         if (!confirmLeave()) return;
         pendingFocus.current = true;

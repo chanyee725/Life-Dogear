@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PaperHighlights } from "@/components/highlights";
-import { ConnectedItems } from "@/components/links";
+import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell";
 import { isValidItemId } from "@/lib/ids";
 import { papers, tags } from "@/lib/repo";
@@ -53,7 +53,7 @@ export default async function PaperPage({ params }: Props) {
         initialHighlights={paperHighlights}
         hasPdf={Boolean(paper.pdfPath)}
       />
-      <ConnectedItems item={{ type: "paper", id: paper.id }} />
+      <ConnectedWithGraph item={{ type: "paper", id: paper.id }} />
     </Page>
   );
 }

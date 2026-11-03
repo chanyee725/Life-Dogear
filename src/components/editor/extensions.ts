@@ -5,6 +5,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
+import { WikiLink } from "./WikiLink";
 
 /**
  * tiptap-markdown only marks bullet/ordered lists as "tight"; without this, checklists
@@ -33,7 +34,8 @@ const TightTaskLists = Extension.create({
 
 /**
  * Editor extensions. Everything here must round-trip through Markdown:
- * underline is disabled because Markdown has no syntax for it.
+ * underline is disabled because Markdown has no syntax for it; `[[title]]` wiki links
+ * are stored as plain `[[title]]`.
  */
 export function createExtensions(placeholder: string) {
   return [
@@ -50,6 +52,7 @@ export function createExtensions(placeholder: string) {
     TableHeader,
     TableCell,
     Placeholder.configure({ placeholder }),
+    WikiLink,
     Markdown.configure({
       html: false,
       tightLists: true,
