@@ -186,3 +186,34 @@ export const wrap = (v: number, size: number) => ((v % size) + size) % size;
 
 /** Score lookup with a neutral default. */
 export const scoreOf = (info: CosmosNodeInfo | undefined) => info?.score ?? 0;
+
+// ---------- Free area (4.1) ----------
+
+export const PANEL_INSET = 320; // 16 + 288 + 16
+export const PREVIEW_INSET = 352; // 16 + 320 + 16
+export const MIN_FREE_WIDTH = 320;
+
+/**
+ * Horizontal insets of the area not covered by overlays: the side panel (when expanded)
+ * on the left, the preview (when open) on the right. If the free width would drop below
+ * 320px, the left panel is not subtracted, so the graph never disappears.
+ */
+export function freeArea(
+  width: number,
+  panelExpanded: boolean,
+  previewOpen: boolean,
+): { left: number; right: number } {
+  const right = previewOpen ? PREVIEW_INSET : 0;
+  const left = panelExpanded ? PANEL_INSET : 0;
+  return width - left - right < MIN_FREE_WIDTH ? { left: 0, right } : { left, right };
+}
+
+/** True when the bounds grew by more than 15% in width or height (re-fit on settle). */
+export function grewBeyond(
+  prev: { w: number; h: number },
+  next: { w: number; h: number },
+  ratio = 1.15,
+): boolean {
+  const eps = 1e-9; // 100 × 1.15 is 114.999… in floating point
+  return next.w > prev.w * ratio + eps || next.h > prev.h * ratio + eps;
+}

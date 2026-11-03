@@ -54,6 +54,13 @@ describe("constellationPath", () => {
     expect(c.stepsToLife).toBe(3);
   });
 
+  it("orders path nodes by distance from the start", () => {
+    expect(c.order[0]).toBe("paper:x");
+    expect(c.order.slice(1, 3).sort()).toEqual(["project:p", "project:p2"]);
+    expect(c.order.indexOf("goal:life" as GraphNodeId)).toBe(c.order.length - 1);
+    expect(new Set(c.order)).toEqual(c.nodes);
+  });
+
   it("does not hop from note to note or climb down", () => {
     expect([...constellationPath(S("thought:y"), nodes, edges).nodes]).toEqual(["thought:y"]);
     const life = constellationPath(S("goal:life"), nodes, edges);

@@ -16,6 +16,8 @@ export type Constellation = {
   chain: GraphNodeId[];
   /** Steps from S to the nearest life goal; null when none is reached. */
   stepsToLife: number | null;
+  /** P in order of distance from S (S first) — label priority among path nodes. */
+  order: GraphNodeId[];
 };
 
 export const edgeKey = (e: Pick<GraphEdge, "source" | "target">) => `${e.source}|${e.target}`;
@@ -31,6 +33,7 @@ export function constellationPath(
     edges: new Set(),
     chain: [start],
     stepsToLife: null,
+    order: [start],
   };
   if (!byId.has(start)) return empty;
 
@@ -109,5 +112,6 @@ export function constellationPath(
     edges: pathEdges,
     chain,
     stepsToLife: rank(best) === 3 ? dist.get(best)! : null,
+    order: [start, ...queue],
   };
 }

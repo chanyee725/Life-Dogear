@@ -3,6 +3,8 @@ import {
   cosmosAlpha,
   cosmosLabelZoom,
   cosmosRadius,
+  freeArea,
+  grewBeyond,
   galaxyAnchors,
   galaxyColor,
   glowFor,
@@ -143,5 +145,24 @@ describe("background stars (2.2)", () => {
   it("wraps coordinates", () => {
     expect(wrap(-5, 100)).toBe(95);
     expect(wrap(105, 100)).toBe(5);
+  });
+});
+
+describe("free area (4.1)", () => {
+  it("subtracts the expanded panel on the left and the open preview on the right", () => {
+    expect(freeArea(1200, true, true)).toEqual({ left: 320, right: 352 });
+    expect(freeArea(1200, false, true)).toEqual({ left: 0, right: 352 });
+    expect(freeArea(1200, true, false)).toEqual({ left: 320, right: 0 });
+  });
+
+  it("drops the left inset when the free width would be under 320px", () => {
+    expect(freeArea(900, true, true)).toEqual({ left: 0, right: 352 }); // 228 left over
+    expect(freeArea(992, true, true)).toEqual({ left: 320, right: 352 }); // exactly 320
+  });
+
+  it("re-fits only when bounds grow more than 15%", () => {
+    expect(grewBeyond({ w: 100, h: 100 }, { w: 115, h: 100 })).toBe(false);
+    expect(grewBeyond({ w: 100, h: 100 }, { w: 116, h: 90 })).toBe(true);
+    expect(grewBeyond({ w: 100, h: 100 }, { w: 80, h: 120 })).toBe(true);
   });
 });
