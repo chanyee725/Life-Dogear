@@ -27,6 +27,9 @@ import {
   galaxyRingRadius,
   glowFor,
   grewBeyond,
+  type Box,
+  boxesOverlap,
+  placeLabel,
   type Nebula,
   nebulae as computeNebulae,
   sunPositions,
@@ -91,6 +94,13 @@ type Emph =
     };
 
 const NONE: Emph = { kind: "none" };
+
+let measureCanvas: CanvasRenderingContext2D | null = null;
+/** Shared 2D context for measuring label text outside a frame. */
+function measureCtx(): CanvasRenderingContext2D {
+  measureCanvas ??= document.createElement("canvas").getContext("2d")!;
+  return measureCanvas;
+}
 
 // ---------- Glow sprites (3.3): one 64×64 radial sprite per color, (1 − t)² falloff ----------
 const spriteCache = new Map<string, HTMLCanvasElement>();
@@ -652,8 +662,7 @@ export default function CosmosCanvas({
     const br = fg.screen2GraphCoords(L.width, L.height);
     const emphasised = to.kind !== "none";
     const cull = emphasised || L.count > DENSE_GRAPH;
-    const gap = 2 / k;
-    const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const boxes: Box[] = [];
     const drawn = new Set<string>();
     const byId = simCache.current;
     const lit = (id: GraphNodeId) =>
@@ -662,55 +671,99 @@ export default function CosmosCanvas({
         ? id === to.h || to.n.has(id)
         : id === to.s || to.p.has(id) || to.n.has(id));
 
+    const sunBoxes: Box[] = [];
+    const sunDiscs: { x: number; y: number; r: number }[] = [];
+    /** Shape extents from the centre (top, bottom, side) in graph units. */
+    const extents = (n: SimNode) => {
+      if (n.sun) return { top: n.r + 3, bottom: n.r + 3, side: n.r + 3 };
+      const bottom = shapeBottom(n.type, n.r);
+      const top = n.type === "seminar" ? 1.3 * n.r : bottom;
+      const side =
+        n.type === "project" || n.type === "tag"
+          ? 1.3 * n.r
+          : n.type === "seminar"
+            ? 1.3 * n.r * Math.cos(Math.PI / 6)
+            : n.type === "area" || n.type === "review"
+              ? 0.875 * n.r
+              : n.r;
+      return { top, bottom, side };
+    };
+
     const draw = (
       n: SimNode | undefined,
-      opts: { strong: boolean; weight: number; size?: number; always?: boolean; keep?: boolean },
-    ) => {
-      if (!n || drawn.has(n.id as string)) return;
+      opts: {
+        strong: boolean;
+        weight: number;
+        size?: number;
+        always?: boolean;
+        keep?: boolean;
+        /** Step aside from sun labels/discs (6.2), also avoiding these boxes. */
+        avoidSuns?: boolean;
+        avoid?: Box[];
+        sun?: boolean;
+      },
+    ): Box | null => {
+      if (!n || drawn.has(n.id as string)) return null;
       const x = n.x ?? 0;
       const y = n.y ?? 0;
-      if (x < tl.x - 200 || x > br.x + 200 || y < tl.y - 50 || y > br.y + 50) return;
+      if (x < tl.x - 200 || x > br.x + 200 || y < tl.y - 50 || y > br.y + 50) return null;
       const id = n.id as GraphNodeId;
-      if (!lit(id) && !opts.always) return;
+      if (!lit(id) && !opts.always) return null;
       const text = labelText(n, opts.strong);
       const size = (opts.size ?? 12) / k;
       ctx.font = `${opts.weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
-      const top = y + (n.sun ? n.r + 3 : shapeBottom(n.type, n.r)) + 3 / k;
-      const w = ctx.measureText(text).width;
-      const box = {
-        x0: x - w / 2 - gap,
-        y0: top - gap,
-        x1: x + w / 2 + gap,
-        y1: top + size * 1.25 + gap,
-      };
-      if (
-        cull &&
-        !opts.keep &&
-        boxes.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)
-      ) {
-        return;
+      const ext = extents(n);
+      const spot = placeLabel({
+        x,
+        y,
+        ...ext,
+        width: ctx.measureText(text).width,
+        size,
+        k,
+        sunBoxes: opts.avoidSuns ? sunBoxes : [],
+        sunDiscs: opts.avoidSuns ? sunDiscs : [],
+        avoid: opts.avoidSuns ? opts.avoid : undefined,
+      });
+      if (cull && !opts.keep && boxes.some((b) => boxesOverlap(b, spot.box))) return null;
+      boxes.push(spot.box);
+      if (opts.sun) {
+        sunBoxes.push(spot.box);
+        sunDiscs.push({ x, y, r: n.r + 3 + 1.5 / k });
       }
-      boxes.push(box);
       ctx.globalAlpha = lit(id) ? 1 : 0.5;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
+      ctx.textAlign = spot.align;
+      ctx.textBaseline = spot.baseline;
       ctx.lineJoin = "round";
       ctx.lineWidth = 3.5 / k;
       ctx.strokeStyle = C.space;
-      ctx.strokeText(text, x, top);
+      ctx.strokeText(text, spot.x, spot.y);
       ctx.fillStyle = opts.strong ? C.labelStrong : C.label;
-      ctx.fillText(text, x, top);
+      ctx.fillText(text, spot.x, spot.y);
       drawn.add(n.id as string);
+      return spot.box;
     };
 
     const get = (id: GraphNodeId | null | undefined) => (id ? byId.get(id) : undefined);
-    if (to.kind === "select") draw(get(to.s), { strong: true, weight: 600, keep: true });
-    if (to.kind === "hover") draw(get(to.h), { strong: true, weight: 500, keep: true });
+    // Suns first: their labels never move or drop, and S/P step aside from them.
     for (const n of labelRef.current) {
-      if (n.sun) draw(n, { strong: true, weight: 600, size: 13, always: true, keep: true });
+      if (n.sun)
+        draw(n, { strong: true, weight: 600, size: 13, always: true, keep: true, sun: true });
     }
+    let sBox: Box | null = null;
     if (to.kind === "select") {
-      for (const id of to.order) draw(get(id), { strong: true, weight: 500, always: true });
+      sBox = draw(get(to.s), { strong: true, weight: 600, keep: true, avoidSuns: true });
+    }
+    if (to.kind === "hover") draw(get(to.h), { strong: true, weight: 500, keep: true });
+    if (to.kind === "select") {
+      for (const id of to.order) {
+        draw(get(id), {
+          strong: true,
+          weight: 500,
+          always: true,
+          avoidSuns: true,
+          avoid: sBox ? [sBox] : [],
+        });
+      }
     }
     if (to.kind !== "none") {
       for (const id of to.n) draw(get(id), { strong: false, weight: 400, always: true });
@@ -753,18 +806,56 @@ export default function CosmosCanvas({
     return { x0: x0 - pad, y0: y0 - pad, x1: x1 + pad, y1: y1 + pad };
   }, []);
 
+  /**
+   * Screen-px size of a node's selected label (600 12px) and its offset below the node
+   * centre at zoom `k` — so a fit can keep the label inside the free area (6.2).
+   */
+  const labelExtent = useCallback((id: GraphNodeId, k: number) => {
+    const n = simCache.current.get(id);
+    if (!n) return null;
+    const ctx = measureCtx();
+    ctx.font = "600 12px ui-sans-serif, system-ui, sans-serif";
+    const w = ctx.measureText(labelText(n, true)).width + 4;
+    const below = (n.sun ? n.r + 3 : shapeBottom(n.type, n.r)) * k + 3;
+    return { w, top: below - 2, bottom: below + 15 + 2 };
+  }, []);
+
   const fitView = useCallback(
-    (duration: number, opts: { ids?: ReadonlySet<GraphNodeId>; noZoomIn?: boolean } = {}) => {
+    (
+      duration: number,
+      opts: { ids?: ReadonlySet<GraphNodeId>; noZoomIn?: boolean; labelFor?: GraphNodeId } = {},
+    ) => {
       const fg = fgRef.current;
-      const b = boundsOf(opts.ids);
-      if (!fg || !b) return null;
+      const b0 = boundsOf(opts.ids);
+      if (!fg || !b0) return null;
       const { left, right } = insetsRef.current;
       const freeW = Math.max(width - left - right, 1);
+      const zoomFor = (b: Box) => {
+        let k = Math.min(
+          2.5,
+          (freeW - FIT_PAD * 2) / Math.max(b.x1 - b.x0, 1),
+          (height - FIT_PAD * 2) / Math.max(b.y1 - b.y0, 1),
+        );
+        if (opts.noZoomIn) k = Math.min(k, fg.zoom());
+        return Math.max(0.2, k);
+      };
+      let b = b0;
+      let k = zoomFor(b);
+      // Include the selected label: its size is in screen px, so widen at this zoom and
+      // re-fit once (the zoom only gets smaller, so the label still fits).
+      const node = opts.labelFor ? simCache.current.get(opts.labelFor) : undefined;
+      const ext = opts.labelFor ? labelExtent(opts.labelFor, k) : null;
+      if (node && ext && node.x != null && node.y != null) {
+        b = {
+          x0: Math.min(b.x0, node.x - ext.w / 2 / k),
+          x1: Math.max(b.x1, node.x + ext.w / 2 / k),
+          y0: b.y0,
+          y1: Math.max(b.y1, node.y + ext.bottom / k),
+        };
+        k = zoomFor(b);
+      }
       const w = Math.max(b.x1 - b.x0, 1);
       const h = Math.max(b.y1 - b.y0, 1);
-      let k = Math.min(2.5, (freeW - FIT_PAD * 2) / w, (height - FIT_PAD * 2) / h);
-      if (opts.noZoomIn) k = Math.min(k, fg.zoom());
-      k = Math.max(0.2, k);
       // Put the bounds' centre at the free area's centre: shift by (left − right) / 2 px.
       const cx = (b.x0 + b.x1) / 2 - (left - right) / 2 / k;
       const cy = (b.y0 + b.y1) / 2;
@@ -772,24 +863,33 @@ export default function CosmosCanvas({
       fg.centerAt(cx, cy, duration);
       return { w, h };
     },
-    [boundsOf, width, height],
+    [boundsOf, labelExtent, width, height],
   );
 
   /** True when any of the nodes is outside the free area on screen. */
   const outsideFree = useCallback(
-    (ids: Iterable<GraphNodeId>) => {
+    (ids: Iterable<GraphNodeId>, labelFor?: GraphNodeId) => {
       const fg = fgRef.current;
       if (!fg) return false;
       const { left, right } = insetsRef.current;
+      const out = (x: number, y: number) => x < left || x > width - right || y < 0 || y > height;
       for (const id of ids) {
         const n = simCache.current.get(id);
         if (!n || n.x == null || n.y == null) continue;
         const p = fg.graph2ScreenCoords(n.x, n.y);
-        if (p.x < left || p.x > width - right || p.y < 0 || p.y > height) return true;
+        if (out(p.x, p.y)) return true;
+      }
+      const n = labelFor ? simCache.current.get(labelFor) : undefined;
+      const ext = labelFor ? labelExtent(labelFor, fg.zoom()) : null;
+      if (n && ext && n.x != null && n.y != null) {
+        const p = fg.graph2ScreenCoords(n.x, n.y);
+        if (out(p.x - ext.w / 2, p.y + ext.bottom) || out(p.x + ext.w / 2, p.y + ext.bottom)) {
+          return true;
+        }
       }
       return false;
     },
-    [width, height],
+    [labelExtent, width, height],
   );
 
   const recomputeNebulae = useCallback(() => {
@@ -849,8 +949,10 @@ export default function CosmosCanvas({
         const size = fitView(dur(d));
         if (size) lastFit.current = size;
       },
-      fitNodes: (ids, d = 300) => {
-        if (outsideFree(ids)) fitView(dur(d), { ids: new Set(ids), noZoomIn: true });
+      fitNodes: (ids, d = 300, labelFor) => {
+        if (outsideFree(ids, labelFor)) {
+          fitView(dur(d), { ids: new Set(ids), noZoomIn: true, labelFor });
+        }
       },
       unpinAll: () => undefined,
       nodes: () => graphData.nodes,

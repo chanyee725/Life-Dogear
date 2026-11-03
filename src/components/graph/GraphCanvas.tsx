@@ -54,7 +54,7 @@ export type GraphCanvasApi = {
   zoomBy: (factor: number) => void;
   zoomToFit: (duration?: number) => void;
   /** Cosmos view: if any of these nodes is outside the free area, fit them (never zooms in). */
-  fitNodes?: (ids: readonly GraphNodeId[], duration?: number) => void;
+  fitNodes?: (ids: readonly GraphNodeId[], duration?: number, labelFor?: GraphNodeId) => void;
   /** Releases every pinned node and restarts the layout. */
   unpinAll: () => void;
   /** Current simulated nodes (positions in graph units). */

@@ -120,6 +120,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const [panelCollapsed, togglePanel] = useCosmosPanelCollapsed(narrow);
   /** Cosmos camera move to run after the render that opens the preview (insets change). */
   const pendingCamera = useRef<{ id: GraphNodeId; zoom?: number } | null>(null);
+  /** Bumped on every cosmos selection so re-selecting the same node still moves the camera. */
+  const [cameraTick, setCameraTick] = useState(0);
 
   useEffect(() => {
     setLargeDismissed(sessionStorage.getItem(LARGE_NOTICE_KEY) === "1");
@@ -270,6 +272,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       if (cosmosData) {
         // 6.2: done after render, against the free area with the preview open.
         pendingCamera.current = { id, zoom: opts.center ? opts.zoom : undefined };
+        setCameraTick((t) => t + 1);
         return;
       }
       const api = apiRef.current;
@@ -294,9 +297,9 @@ export default function GraphView({ options }: { options: FilterOptions }) {
         duration: 400,
       });
     } else if (constellation) {
-      api.fitNodes?.(constellation.order, 300);
+      api.fitNodes?.(constellation.order, 300, move.id);
     }
-  }, [selectedId, constellation, insets.left, insets.right]);
+  }, [selectedId, constellation, insets.left, insets.right, cameraTick]);
 
   /** Keyboard start: in the cosmos view the brightest sun, else the top-scored node. */
   const startFocus = useCallback((): GraphNodeId | null => {
