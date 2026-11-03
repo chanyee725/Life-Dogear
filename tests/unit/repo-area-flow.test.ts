@@ -122,3 +122,80 @@ describe("areas.listMaterials", () => {
     expect(bigGoals).toBeLessThanOrEqual(smallGoals + 3);
   });
 });
+
+describe("goal area inheritance", () => {
+  it("effectiveAreas: empty area follows the parent; a named area stops it", () => {
+    const m = areas.effectiveAreas([
+      { id: "life", parentId: null, areaId: "A" },
+      { id: "y1", parentId: "life", areaId: null },
+      { id: "q1", parentId: "y1", areaId: null },
+      { id: "y2", parentId: "life", areaId: "B" },
+      { id: "q2", parentId: "y2", areaId: null },
+      { id: "orphan", parentId: "gone", areaId: null },
+      { id: "c1", parentId: "c2", areaId: null },
+      { id: "c2", parentId: "c1", areaId: null },
+    ]);
+    expect(Object.fromEntries(m)).toEqual({
+      life: "A",
+      y1: "A",
+      q1: "A",
+      y2: "B",
+      q2: "B",
+      orphan: null,
+      c1: null,
+      c2: null,
+    });
+  });
+
+  it("area page tree and material use the same rule", async () => {
+    const A = await areas.create({ title: "연구" });
+    const B = await areas.create({ title: "건강" });
+    const life = await goals.create({ title: "인생", horizon: "life", areaId: A.id });
+    const year = await goals.create({
+      title: "연(상속)",
+      horizon: "year",
+      period: "2027",
+      parentId: life.id,
+    });
+    const q = await goals.create({
+      title: "분기(상속)",
+      horizon: "quarter",
+      period: "2027-Q1",
+      parentId: year.id,
+    });
+    const other = await goals.create({
+      title: "연(건강)",
+      horizon: "year",
+      period: "2027",
+      parentId: life.id,
+      areaId: B.id,
+    });
+    const own = await projects.create({ title: "영역 프로젝트", areaId: A.id, goalId: q.id });
+    const loose = await projects.create({ title: "영역 없는 프로젝트", goalId: q.id });
+    // Another area's project toward the same goal: not listed under A.
+    await projects.create({ title: "건강 프로젝트", areaId: B.id, goalId: q.id });
+    const paper = await papers.create({ title: "상속 목표 논문" });
+    const seminar = await seminars.create({ title: "영역 없는 프로젝트 세미나" });
+    const t = await thoughts.create({ title: "건강 목표 생각" });
+    await links.link({ type: "goal", id: q.id }, { type: "paper", id: paper.id });
+    await links.link({ type: "project", id: loose.id }, { type: "seminar", id: seminar.id });
+    await links.link({ type: "goal", id: other.id }, { type: "thought", id: t.id });
+
+    const [root] = await goals.listTreeForArea(A.id);
+    expect(root.goal.id).toBe(life.id);
+    expect(root.children.map((n) => n.goal.id)).toEqual([year.id]);
+    const qNode = root.children[0].children[0];
+    expect(qNode.goal.id).toBe(q.id);
+    // Only this area's projects are listed; progress still counts all three.
+    expect(qNode.projects.map((p) => p.id)).toEqual([own.id]);
+    expect((await goals.listTreeForArea(B.id)).map((n) => n.goal.id)).toEqual([other.id]);
+
+    expect(
+      (await areas.listMaterials(A.id)).map((m) => [m.title, m.via.map((v) => v.type)]),
+    ).toEqual([
+      ["상속 목표 논문", ["goal"]],
+      ["영역 없는 프로젝트 세미나", ["project"]],
+    ]);
+    expect((await areas.listMaterials(B.id)).map((m) => m.title)).toEqual(["건강 목표 생각"]);
+  });
+});

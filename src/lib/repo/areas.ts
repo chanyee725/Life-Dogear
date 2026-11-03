@@ -200,6 +200,28 @@ export async function isAssignable(id: string, exec: Executor = db()): Promise<b
   return rows.length > 0;
 }
 
+/**
+ * Area a goal counts toward: its own, else (left empty) its parent's, recursively.
+ * Only a goal that names another area leaves its area's subtree.
+ */
+export function effectiveAreas(
+  list: readonly { id: string; parentId: string | null; areaId: string | null }[],
+): Map<string, string | null> {
+  const byId = new Map(list.map((g) => [g.id, g]));
+  const out = new Map<string, string | null>();
+  const resolve = (id: string, seen: Set<string>): string | null => {
+    if (out.has(id)) return out.get(id)!;
+    const g = byId.get(id);
+    if (!g) return null;
+    const area =
+      g.areaId ?? (g.parentId && !seen.has(g.parentId) ? resolve(g.parentId, seen.add(id)) : null);
+    out.set(id, area);
+    return area;
+  };
+  for (const g of list) resolve(g.id, new Set());
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Material (논문·세미나·생각) around an area
 
@@ -220,25 +242,41 @@ export type AreaMaterial = {
 const typeOrder = (t: string) => MATERIAL_TYPES.indexOf(t);
 
 /**
- * Papers, seminars and thoughts linked to the area, to its projects or to its goals
- * (non-archived on both ends), one entry per item with every path that reaches it.
- * Fixed query count: projects, goals, links, then one title query per material type.
+ * Papers, seminars and thoughts linked to the area, to its goals (own or inherited
+ * from the parent, see {@link effectiveAreas}), to its projects or to area-less projects
+ * working toward its goals (non-archived on both ends), one entry per item with every
+ * path that reaches it. Fixed query count: goals, projects, links, then one title query
+ * per material type.
  */
 export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
-  const [areaProjects, areaGoals] = await Promise.all([
-    db()
-      .select({ id: projects.id, title: projects.title })
-      .from(projects)
-      .where(and(eq(projects.areaId, areaId), isNull(projects.archivedAt))),
-    db()
-      .select({ id: goals.id, title: goals.title })
-      .from(goals)
-      .where(and(eq(goals.areaId, areaId), isNull(goals.archivedAt))),
-  ]);
+  // Goals count toward the area by the inheritance rule (non-archived chain only).
+  const liveGoals = await db()
+    .select({ id: goals.id, title: goals.title, parentId: goals.parentId, areaId: goals.areaId })
+    .from(goals)
+    .where(isNull(goals.archivedAt));
+  const areaOf = effectiveAreas(liveGoals);
+  const areaGoals = liveGoals.filter((g) => areaOf.get(g.id) === areaId);
+  // The area's projects, plus area-less projects working toward one of its goals.
+  const goalIds = areaGoals.map((g) => g.id);
+  const areaProjects = await db()
+    .select({ id: projects.id, title: projects.title })
+    .from(projects)
+    .where(
+      and(
+        isNull(projects.archivedAt),
+        or(
+          eq(projects.areaId, areaId),
+          goalIds.length
+            ? and(isNull(projects.areaId), inArray(projects.goalId, goalIds))
+            : undefined,
+        ),
+      ),
+    );
 
   const sources = new Map<string, MaterialVia>([[refKey(ref(areaId)), { type: "area" }]]);
   for (const p of areaProjects) sources.set(`project:${p.id}`, { type: "project", ...p });
-  for (const g of areaGoals) sources.set(`goal:${g.id}`, { type: "goal", ...g });
+  for (const g of areaGoals)
+    sources.set(`goal:${g.id}`, { type: "goal", id: g.id, title: g.title });
 
   const side = (type: "area" | "project" | "goal", ids: string[]): SQL[] =>
     ids.length
