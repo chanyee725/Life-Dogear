@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { tasks as tasksTable } from "@/db/schema";
+import { graphLayout, tasks as tasksTable } from "@/db/schema";
 import { archive, areas, goals, projects, RepoError, tasks } from "@/lib/repo";
 import { computeProgress } from "@/lib/repo/goals";
 import { useFreshDb } from "./repo-helpers";
@@ -118,12 +118,22 @@ describe("tasks repo: update, order, remove", () => {
     ]) {
       await tasks.create({ title: "child", parent });
     }
+    const pin = (id: string) => ({
+      nodeType: "task" as const,
+      nodeId: id,
+      x: 0,
+      y: 0,
+      updatedAt: "t",
+    });
+    const children = await db.select({ id: tasksTable.id }).from(tasksTable);
+    await db.insert(graphLayout).values(children.map((c) => pin(c.id)));
     expect(await tasks.remove(t.id)).toBe(true);
     expect(await tasks.remove(t.id)).toBe(false);
     await projects.remove(p.id);
     await goals.remove(g.id);
     await areas.remove(ar.id);
     expect(await db.select().from(tasksTable)).toEqual([]);
+    expect(await db.select().from(graphLayout)).toEqual([]);
   });
 });
 
