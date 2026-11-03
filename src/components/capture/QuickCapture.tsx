@@ -13,6 +13,7 @@ import {
 import { createQuickThought } from "@/app/_actions/quick-thought";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { safeAction } from "@/components/links/safe-action";
+import { useModKey } from "@/components/shell/mod-key";
 import { Button, cn, controlClass, Kbd, Spinner } from "@/components/ui";
 import {
   draftToText,
@@ -54,6 +55,7 @@ export function QuickCapture() {
   const [pending, setPending] = useState(false);
   const saving = useRef(false);
   const statusId = useId();
+  const modKey = useModKey();
 
   const dirty = open && hasContent(draft);
   useUnsavedChangesGuard(dirty);
@@ -265,7 +267,7 @@ export function QuickCapture() {
                 {status.text}
               </p>
               <span className="flex items-center gap-1 text-xs text-muted">
-                <Kbd>⌘</Kbd>
+                <Kbd>{modKey}</Kbd>
                 <Kbd>Enter</Kbd> 저장
               </span>
               <Button size="sm" onClick={() => void save("close")} disabled={pending}>
