@@ -15,9 +15,8 @@ import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
-import { ITEM_ROUTE } from "@/lib/enums";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
-import { addDays, formatDue } from "./format";
+import { addDays, formatDue, parentHref } from "./format";
 
 const TITLE_MAX = 300;
 /** A just-checked task stays in place this long before moving to 완료 (today.md 2.1). */
@@ -50,9 +49,6 @@ export type TaskListProps = {
 
 const parentOf = (t: Task): TaskParent =>
   t.parentType && t.parentId ? { type: t.parentType, id: t.parentId } : null;
-
-export const parentHref = (t: Pick<Task, "parentType" | "parentId">): string | null =>
-  t.parentType && t.parentId ? `${ITEM_ROUTE[t.parentType]}/${t.parentId}` : null;
 
 /** Monday after `today` (calendar arithmetic). */
 function nextMonday(today: string): string {
@@ -91,6 +87,7 @@ export function TaskList({
   const [showDone, setShowDone] = useState(false);
   const [, startTransition] = useTransition();
   const listRef = useRef<HTMLUListElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const doneId = useId();
   const helpId = useId();
 
@@ -119,20 +116,36 @@ export function TaskList({
       }
     });
 
+  /**
+   * Before a row leaves the open list: if focus is in it, move focus to the next row's
+   * checkbox, else the add line, else the section heading (so it never drops to <body>).
+   */
+  const keepFocus = (taskId: string) => {
+    const root = rootRef.current;
+    const row = root?.querySelector<HTMLElement>(`[data-task-row="${taskId}"]`);
+    if (!root || !row || !row.contains(document.activeElement)) return;
+    const target =
+      row.nextElementSibling?.querySelector<HTMLElement>("input[type=checkbox]") ??
+      root.querySelector<HTMLElement>("[data-task-add]") ??
+      root.closest("section")?.querySelector<HTMLElement>("h2") ??
+      root;
+    if (target.tabIndex < 0 && !target.hasAttribute("tabindex")) target.tabIndex = -1;
+    target.focus();
+  };
+
   const toggle = (task: Task, checked: boolean) => {
     const before = task.doneAt;
     patchLocal(task.id, { doneAt: checked ? new Date().toISOString() : null });
     if (checked) {
       setLingering((s) => new Set(s).add(task.id));
-      setTimeout(
-        () =>
-          setLingering((s) => {
-            const next = new Set(s);
-            next.delete(task.id);
-            return next;
-          }),
-        DONE_LINGER_MS,
-      );
+      setTimeout(() => {
+        keepFocus(task.id);
+        setLingering((s) => {
+          const next = new Set(s);
+          next.delete(task.id);
+          return next;
+        });
+      }, DONE_LINGER_MS);
     }
     setAnnounce(checked ? `${task.title}, 완료` : `${task.title}, 미완료`);
     run(
@@ -190,6 +203,7 @@ export function TaskList({
   };
 
   const remove = (task: Task) => {
+    keepFocus(task.id);
     const snapshot = items;
     setItems((list) => list.filter((t) => t.id !== task.id));
     setUndo(task);
@@ -215,7 +229,11 @@ export function TaskList({
         }),
       );
       if (result.ok) {
-        setItems((list) => [...list, { ...result.data, parentTitle: task.parentTitle }]);
+        setItems((list) =>
+          list.some((t) => t.id === result.data.id)
+            ? list
+            : [...list, { ...result.data, parentTitle: task.parentTitle }],
+        );
         setAnnounce(`‘${task.title}’을 되돌렸습니다.`);
         setError(null);
       } else {
@@ -230,7 +248,8 @@ export function TaskList({
       createTask({ title, parent: addTo.parent, dueDate: addTo.dueDate ?? null }),
     );
     if (!result.ok) return result.error;
-    setItems((list) => [...list, result.data]);
+    // The refreshed server list may already hold it.
+    setItems((list) => (list.some((t) => t.id === result.data.id) ? list : [...list, result.data]));
     setAnnounce(`${result.data.title}, 추가함`);
     return null;
   };
@@ -249,7 +268,7 @@ export function TaskList({
   };
 
   return (
-    <div className={cn("flex flex-col", className)}>
+    <div ref={rootRef} className={cn("flex flex-col outline-none", className)}>
       {reorderable ? (
         <span id={helpId} className="sr-only">
           위아래 화살표로 옮깁니다.
@@ -359,6 +378,7 @@ function TaskRow({
 
   return (
     <li
+      data-task-row={task.id}
       onKeyDown={onRowKeyDown}
       className="group relative flex h-9 items-center gap-2 rounded-md px-1.5 focus-within:bg-hover hover:bg-hover"
     >
@@ -507,7 +527,9 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  // Own flag, not useTransition: the transition stays pending through the page refresh
+  // that follows the action, which would lock the input between quick entries.
+  const [pending, setPending] = useState(false);
   const errorId = useId();
   const tooLong = value.trim().length > TITLE_MAX;
 
@@ -515,6 +537,7 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
     return (
       <button
         type="button"
+        data-task-add
         onClick={() => setEditing(true)}
         className="flex h-9 w-full items-center rounded-md pl-[30px] text-left text-sm text-muted hover:bg-hover hover:text-fg"
       >
@@ -526,8 +549,9 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
   const submit = () => {
     const title = value.trim();
     if (!title || tooLong || pending) return;
-    startTransition(async () => {
-      const failure = await onAdd(title);
+    setPending(true);
+    void onAdd(title).then((failure) => {
+      setPending(false);
       if (failure) setError(failure);
       else {
         setError(null);
@@ -540,6 +564,7 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
     <div className="flex flex-col pl-[30px]">
       <input
         autoFocus
+        data-task-add
         value={value}
         readOnly={pending}
         placeholder="할 일 추가"
