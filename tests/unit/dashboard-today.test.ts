@@ -1,12 +1,19 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/app/_actions/tasks", () => ({
+  createTask: vi.fn(),
+  deleteTask: vi.fn(),
+  moveTask: vi.fn(),
+  restoreTask: vi.fn(),
+  updateTask: vi.fn(),
+}));
 import {
   quarterGoal,
   quarterGoalNodes,
   restOfWeek,
   revisitStars,
-  taskParentHref,
   todayHeading,
 } from "@/components/dashboard/today";
 import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
@@ -29,11 +36,8 @@ describe("today helpers", () => {
     expect(restOfWeek("2026-12-29")).toEqual({ from: "2026-12-30", to: "2027-01-03" });
   });
 
-  it("writes the date line and parent links", () => {
+  it("writes the date line", () => {
     expect(todayHeading(NOW)).toBe("11월 3일 화요일");
-    expect(taskParentHref({ parentType: "project", parentId: "p1" })).toBe("/projects/p1");
-    expect(taskParentHref({ parentType: "goal", parentId: "g1" })).toBe("/goals/g1");
-    expect(taskParentHref({ parentType: null, parentId: null })).toBeNull();
   });
 
   const node = (

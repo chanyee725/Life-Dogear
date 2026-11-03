@@ -126,17 +126,6 @@ export function revisitStars(
   return out;
 }
 
-/** Where a task's parent link goes; null for unfiled tasks (no link shown). */
-export function taskParentHref(task: { parentType: string | null; parentId: string | null }) {
-  if (
-    task.parentId &&
-    (task.parentType === "project" || task.parentType === "goal" || task.parentType === "area")
-  ) {
-    return `${ITEM_ROUTE[task.parentType]}/${encodeURIComponent(task.parentId)}`;
-  }
-  return null;
-}
-
 /** "11월 3일 화요일" for the date line. */
 export function todayHeading(now: Date): string {
   const days = ["일", "월", "화", "수", "목", "금", "토"];
