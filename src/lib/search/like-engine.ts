@@ -1,4 +1,4 @@
-import { desc, eq, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { getDb } from "@/db/client";
 import {
@@ -9,6 +9,7 @@ import {
   projects,
   reviews,
   seminars,
+  tasks,
   thoughts,
 } from "@/db/schema";
 import type { ItemType } from "@/lib/enums";
@@ -286,6 +287,54 @@ async function searchHighlights(query: string, patterns: string[]) {
   return hits;
 }
 
+/**
+ * Tasks by title (one query; the parent's title and archive state come from left joins).
+ * A task of an archived parent is still found and marked archived, like archived items.
+ */
+async function searchTasks(query: string, patterns: string[]) {
+  const ofType = (type: "project" | "goal" | "area", id: SQLiteColumn) =>
+    and(eq(tasks.parentType, type), eq(tasks.parentId, id));
+  const rows = await getDb()
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      parentType: tasks.parentType,
+      parentId: tasks.parentId,
+      updatedAt: tasks.updatedAt,
+      parentTitle: sql<string | null>`coalesce(${projects.title}, ${goals.title}, ${areas.title})`,
+      parentArchived: sql<
+        string | null
+      >`coalesce(${projects.archivedAt}, ${goals.archivedAt}, ${areas.archivedAt})`,
+    })
+    .from(tasks)
+    .leftJoin(projects, ofType("project", projects.id))
+    .leftJoin(goals, ofType("goal", goals.id))
+    .leftJoin(areas, ofType("area", areas.id))
+    .where(likeAny([tasks.title], patterns))
+    .orderBy(desc(tasks.updatedAt))
+    .limit(CANDIDATES_PER_SOURCE);
+
+  const hits: RankedHit[] = [];
+  for (const r of rows) {
+    const score = titleScore(r.title, query);
+    if (!score) continue;
+    const parent = r.parentType && r.parentId ? { type: r.parentType, id: r.parentId } : null;
+    hits.push({
+      type: "task",
+      id: r.id,
+      title: r.title,
+      snippet: null,
+      field: "title",
+      href: parent ? itemHref(parent.type, parent.id) : "/tasks?tab=by-parent",
+      ...(parent && r.parentTitle !== null ? { parentTitle: r.parentTitle } : {}),
+      score,
+      archived: r.parentArchived != null,
+      updatedAt: r.updatedAt,
+    });
+  }
+  return hits;
+}
+
 /** Substring search with LIKE: works on any libSQL/Turso database without schema changes. */
 export const likeEngine: SearchEngine = {
   async search(query, limit) {
@@ -294,6 +343,7 @@ export const likeEngine: SearchEngine = {
     const groups = await Promise.all([
       ...SOURCES.map((s) => searchItems(s, query, patterns)),
       searchHighlights(query, patterns),
+      searchTasks(query, patterns),
     ]);
     return groups
       .flat()
