@@ -30,21 +30,18 @@
 - `serverExternalPackages` 유지·점검(`@libsql/client`), 함수 실행 시간(그래프·우주 보기·검색 같은 무거운 라우트에 `maxDuration` 필요 여부).
 - 마이그레이션은 PC에서 Turso를 대상으로 실행(`DATABASE_URL`·`DATABASE_AUTH_TOKEN`을 잠시 지정하고 `npm run db:migrate`) — 문서화. Vercel 빌드에서는 마이그레이션하지 않는다.
 
-## 4. PWA (오프라인 캐시 없음)
+## 4. PWA — 제외 (2026-11-04 사용자 결정)
 
-- `src/app/manifest.ts`: name/short_name "Research Brain", `display: standalone`, 테마·배경색은 디자인 토큰.
-- 아이콘(조용한 디자인): 192·512·maskable, `apple-touch-icon` 180. 디자이너가 SVG 원본과 PNG를 만든다.
-- `viewport-fit=cover` + 아이폰 safe-area(`env(safe-area-inset-*)`) 여백: 사이드바 서랍·상단 바·하단 고정 요소.
+manifest·아이콘·apple-touch-icon·standalone·safe-area는 이번 단계에서 하지 않는다.
 
 ## 5. `docs/DEPLOY.md` (사용자 체크리스트)
 
-Google Cloud OAuth 클라이언트(승인된 리디렉션 URI `https://<프로젝트>.vercel.app/api/auth/callback/google`, 로컬 테스트용 `http://127.0.0.1:3000/api/auth/callback/google`) → R2 버킷·API 토큰·CORS → Turso DB·토큰 → Vercel 프로젝트 연결·환경변수(값은 사용자가 직접) → PC에서 첫 마이그레이션·`storage:push` → 첫 로그인 확인 → 아이폰 Safari 공유 → 홈 화면에 추가.
+Google Cloud OAuth 클라이언트(승인된 리디렉션 URI `https://<프로젝트>.vercel.app/api/auth/callback/google`, 로컬 테스트용 `http://127.0.0.1:3000/api/auth/callback/google`) → R2 버킷·API 토큰·CORS → Turso DB·토큰 → Vercel 프로젝트 연결·환경변수(값은 사용자가 직접) → PC에서 첫 마이그레이션·`storage:push` → 첫 로그인 확인. (아이폰 홈 화면 추가는 PWA 제외로 다루지 않는다.)
 
 ## 6. 담당
 
 | 담당 | 범위 |
 |---|---|
-| 구현자 A | 1 전체, 3의 "Vercel에서 s3 필수 안내", 4 PWA(아이콘 파일은 디자이너), 5 문서(로그인·Vercel·Turso·PWA 부분). 소유: `src/lib/auth/**`, `src/auth.ts`, `src/app/api/auth/**`, `src/middleware.ts`, `src/app/(auth)/**`(로그인·거부·설정 안내), `src/app/manifest.ts`, `src/app/layout.tsx`(viewport·아이콘 메타만), `src/components/shell/**`(로그아웃·safe-area), `package.json`, `.env.example`, `docs/DEPLOY.md` |
+| 구현자 A | 1 전체, 3의 "Vercel에서 s3 필수 안내", 5 문서(로그인·Vercel·Turso 부분). 소유: `src/lib/auth/**`, `src/auth.ts`, `src/app/api/auth/**`, `src/middleware.ts`, `src/app/(auth)/**`(로그인·거부·설정 안내), `src/components/shell/**`(로그아웃), `package.json`, `.env.example`, `docs/DEPLOY.md` |
 | 구현자 B | 2 전체, 3의 pdf.js 자산·`next.config.ts`·`maxDuration`. 소유: `src/lib/storage/**`, `src/app/api/{uploads,images,papers,pdfjs}/**`, 업로드하는 클라이언트 부분(에디터 사진 업로드, 논문 PDF 패널), `next.config.ts`, `docs/DEPLOY.md`의 R2·CORS 절(A와 절 단위로 나눔) |
-| 디자이너 | 아이콘(SVG 원본 + PNG), 로그인·거부·설정 안내 화면 문구·레이아웃(조용한 규칙) — 짧게 |
 | 리뷰어 | 전체. 인증 우회(미들웨어 matcher 누락, API 보호), 허용 목록 비교, 실수 공개 방지, presigned URL 범위·만료·키 노출, 업로드 확정 검증, 이메일·비밀값 노출 |
