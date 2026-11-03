@@ -66,14 +66,14 @@ describe("mergeResources", () => {
           title: "세미나",
           date: "2026-10-30",
           speaker: "한가명",
-          kind: "lecture",
+          kind: "talk",
           updatedAt: "2026-11-03T00:00:00.000Z",
         },
       ],
       [{ id: "t1", title: "생각", kind: "question", updatedAt: "2026-11-01T00:00:00.000Z" }],
     );
     expect(items.map((i) => [i.type, i.href, i.meta])).toEqual([
-      ["seminar", "/seminars/s1", "2026-10-30 · 한가명 · 강의"],
+      ["seminar", "/seminars/s1", "2026-10-30 · 한가명 · 발표"],
       ["paper", "/papers/p1", "김가명 외 2명 · 2024"],
       ["thought", "/thoughts/t1", "질문"],
     ]);

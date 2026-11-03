@@ -94,7 +94,7 @@ export default async function SeminarsPage({
       description={
         filtered
           ? "필터를 바꾸거나 해제해 보세요."
-          : "세미나·학회 발표·강의를 들은 뒤 기록해 보세요."
+          : "들은 세미나나 내가 한 발표를 기록해 보세요."
       }
       action={
         filtered ? (

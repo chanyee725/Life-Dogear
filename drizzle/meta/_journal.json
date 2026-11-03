@@ -43,6 +43,13 @@
       "when": 1793707415557,
       "tag": "0005_area_pinned_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793716116317,
+      "tag": "0006_seminar_two_kinds",
+      "breakpoints": true
     }
   ]
 }

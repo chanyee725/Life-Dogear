@@ -126,12 +126,10 @@ export const IMPORTANCE = defineEnum([
 ] as const);
 export type Importance = (typeof IMPORTANCE.values)[number];
 
+/** 세미나 = one you attended (talks, lectures, webinars); 발표 = one you gave. Migration 0006. */
 export const SEMINAR_KIND = defineEnum([
   { value: "seminar", label: "세미나", tone: "teal" },
-  { value: "conference_talk", label: "학회 발표", tone: "violet" },
-  { value: "lecture", label: "강의", tone: "blue" },
-  { value: "webinar", label: "웨비나", tone: "amber" },
-  { value: "other", label: "기타", tone: "gray" },
+  { value: "talk", label: "발표", tone: "violet" },
 ] as const);
 export type SeminarKind = (typeof SEMINAR_KIND.values)[number];
 

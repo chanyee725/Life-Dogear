@@ -95,12 +95,12 @@ describe("list sort", () => {
 
 describe("seminars and thoughts", () => {
   it("seminar CRUD with template and date order", async () => {
-    const a = await seminars.create({ title: "A", date: "2026-10-01", kind: "lecture" });
+    const a = await seminars.create({ title: "A", date: "2026-10-01", kind: "talk" });
     await seminars.create({ title: "B", date: "2026-10-20" });
     await seminars.create({ title: "C" });
     expect(a.body).toBe(SEMINAR_TEMPLATE);
     expect((await seminars.list()).map((s) => s.title)).toEqual(["B", "A", "C"]);
-    expect((await seminars.list({ kind: "lecture" })).map((s) => s.title)).toEqual(["A"]);
+    expect((await seminars.list({ kind: "talk" })).map((s) => s.title)).toEqual(["A"]);
     expect(await seminars.listRecent(2)).toHaveLength(2);
     expect(await seminars.remove(a.id)).toBe(true);
     expect(await seminars.get(a.id)).toBeNull();

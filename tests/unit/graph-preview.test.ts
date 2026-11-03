@@ -83,14 +83,14 @@ describe("previews", () => {
     const s = seminarPreview({
       date: "2026-11-01",
       speaker: "",
-      kind: "lecture",
+      kind: "talk",
       keyLine: "",
       body: "첫 문단",
       archivedAt: null,
     });
     expect(s).toEqual({
       archived: false,
-      badge: "강의",
+      badge: "발표",
       props: [{ label: "날짜", value: "2026-11-01" }],
       summary: "첫 문단",
     });
