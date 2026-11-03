@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
@@ -18,6 +18,7 @@ import {
   type S3Config,
 } from "@/lib/storage/blob";
 import { openImage, writeImage } from "@/lib/storage/images";
+import { gcImages, pushLocalFiles, referencedImages } from "@/lib/storage/maintenance";
 import { useFreshDb } from "./repo-helpers";
 
 const CONFIG: S3Config = {
@@ -322,5 +323,80 @@ describe("routes proxy the bucket", () => {
     const removed = await pdfRoute.DELETE(new NextRequest(url, { method: "DELETE", headers }), ctx);
     expect(removed.status).toBe(204);
     expect(bucket.objects.has(`pdfs/${id}.pdf`)).toBe(false);
+  });
+});
+
+describe("storage maintenance", () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "rb-maint-"));
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("pushes only what the bucket lacks; --dry-run uploads nothing", async () => {
+    const local = new LocalBlobStore(root);
+    const other = "0f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png";
+    await local.put(`images/${IMG}`, PNG);
+    await local.put(`images/${other}`, PNG);
+    await local.put("pdfs/seed-paper-1.pdf", new TextEncoder().encode("%PDF-1.7"));
+    const bucket = fakeBucket({ [`images/${IMG}`]: PNG });
+
+    expect(await pushLocalFiles(local, bucket.store, { dryRun: true })).toEqual({
+      uploaded: 2,
+      skipped: 1,
+      failed: 0,
+    });
+    expect(bucket.objects.size).toBe(1);
+
+    expect(await pushLocalFiles(local, bucket.store)).toEqual({
+      uploaded: 2,
+      skipped: 1,
+      failed: 0,
+    });
+    expect(bucket.objects.get(`images/${other}`)).toEqual(PNG);
+    const pdfPut = bucket.requests.find((r) => r.method === "PUT" && r.url.endsWith(".pdf"));
+    expect(pdfPut?.headers.get("content-type")).toBe("application/pdf");
+    expect(await pushLocalFiles(local, bucket.store)).toEqual({
+      uploaded: 0,
+      skipped: 3,
+      failed: 0,
+    });
+  });
+
+  it("finds photo names in any text", () => {
+    const a = "3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png";
+    const b = "0f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.jpg";
+    expect(
+      referencedImages([`메모\n\n![](/api/images/${a})`, `<img src="${b}">`, 42, null, "x.png"]),
+    ).toEqual(new Set([a, b]));
+  });
+
+  it("deletes only unreferenced photos older than 24 hours, and only with apply", async () => {
+    const local = new LocalBlobStore(root);
+    const now = new Date("2026-11-04T12:00:00Z");
+    const names = {
+      used: "1f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png",
+      stale: "2f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png",
+      fresh: "3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png",
+    };
+    const old = new Date(now.getTime() - 25 * 3600 * 1000);
+    for (const name of Object.values(names)) await local.put(`images/${name}`, PNG);
+    await utimes(local.path(`images/${names.used}`), old, old);
+    await utimes(local.path(`images/${names.stale}`), old, old);
+    const fresh = new Date(now.getTime() - 23 * 3600 * 1000);
+    await utimes(local.path(`images/${names.fresh}`), fresh, fresh);
+    const referenced = new Set([names.used]);
+
+    const dry = await gcImages(local, referenced, { now });
+    expect(dry).toMatchObject({ total: 3, referenced: 1, tooNew: 1, unreferenced: 1, deleted: 0 });
+    expect((await local.list("images/")).length).toBe(3);
+
+    const applied = await gcImages(local, referenced, { now, apply: true });
+    expect(applied).toMatchObject({ unreferenced: 1, deleted: 1, failed: 0 });
+    expect((await local.list("images/")).map((e) => e.key).sort()).toEqual(
+      [`images/${names.used}`, `images/${names.fresh}`].sort(),
+    );
   });
 });
