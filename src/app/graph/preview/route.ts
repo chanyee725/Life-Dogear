@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { describeError } from "@/app/_actions/result";
+import { isSameOriginRequest } from "@/app/api/papers/_lib/origin";
 import type { NodePreview } from "@/components/graph/preview-types";
 import { parseGraphNodeId } from "@/lib/graph/types";
 import { isValidItemId } from "@/lib/ids";
@@ -23,11 +24,14 @@ const json = (status: number, body: unknown) =>
   NextResponse.json(body, { status, headers: NO_STORE });
 
 /**
- * `GET /graph/preview?node=<type>:<id>` → `NodePreview` (graph side panel). Read-only.
+ * `GET /graph/preview?node=<type>:<id>` → `NodePreview` (graph side panel). Read-only,
+ * same-origin only (it returns private fields, like `/api/graph`).
  * Archived items are allowed (shown as 보관). Topics get an empty preview (the panel
  * shows only the graph's own data).
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  if (!isSameOriginRequest(request.headers))
+    return json(403, { error: "허용되지 않은 요청입니다." });
   const ref = parseGraphNodeId(request.nextUrl.searchParams.get("node"));
   if (!ref || !isValidItemId(ref.id)) return json(400, { error: "잘못된 노드입니다." });
 
