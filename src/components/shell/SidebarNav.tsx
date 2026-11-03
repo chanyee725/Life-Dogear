@@ -216,6 +216,9 @@ export function SidebarNav({
               <Kbd>/</Kbd> 빠른 입력
             </span>
             <span className="flex items-center gap-1.5">
+              <Kbd>C</Kbd> 빠른 캡처
+            </span>
+            <span className="flex items-center gap-1.5">
               <Kbd>G</Kbd> 그래프
             </span>
           </div>
