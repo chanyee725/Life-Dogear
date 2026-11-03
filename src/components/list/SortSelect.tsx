@@ -4,24 +4,31 @@ import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/Input";
 import { buildHref, type QueryParams } from "./query";
 
-/** Sort dropdown that navigates to `?sort=<value>`, keeping other params. */
+/**
+ * Dropdown that navigates to `?<param>=<value>` (default `sort`), keeping other params.
+ * `label` shows a quiet word before the select (e.g. "묶기") and names it for screen readers.
+ */
 export function SortSelect({
   options,
   value,
   basePath,
   params = {},
+  param = "sort",
+  label,
 }: {
   options: readonly { value: string; label: string }[];
   value: string;
   basePath: string;
   params?: QueryParams;
+  param?: string;
+  label?: string;
 }) {
   const router = useRouter();
-  return (
+  const select = (
     <Select
-      aria-label="정렬"
+      aria-label={label ?? "정렬"}
       value={value}
-      onChange={(e) => router.push(buildHref(basePath, params, { sort: e.target.value }))}
+      onChange={(e) => router.push(buildHref(basePath, params, { [param]: e.target.value }))}
       className="h-8 w-auto text-[13px]"
     >
       {options.map((o) => (
@@ -30,5 +37,12 @@ export function SortSelect({
         </option>
       ))}
     </Select>
+  );
+  if (!label) return select;
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-muted">
+      <span aria-hidden>{label}</span>
+      {select}
+    </span>
   );
 }

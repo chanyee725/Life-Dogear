@@ -2,10 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
-import { countTags, filterByTag, firstParam, type QueryParams } from "@/components/list/query";
+import { groupByKey, parseGroup, type ItemGroup } from "@/components/list/groups";
+import {
+  buildHref,
+  countTags,
+  filterByTag,
+  firstParam,
+  topicOptions,
+  type QueryParams,
+} from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
-import { FilterChips, TagFilter } from "@/components/list/TagFilter";
+import { FilterChips } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
+import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -25,6 +34,21 @@ const SORTS: { value: ThoughtSort; label: string }[] = [
   { value: "title", label: "제목순" },
 ];
 
+type ThoughtGroup = "maturity" | "kind" | "none";
+
+const GROUPS: { value: ThoughtGroup; label: string }[] = [
+  { value: "maturity", label: "발전 정도" },
+  { value: "kind", label: "종류" },
+  { value: "none", label: "묶지 않음" },
+];
+
+function groupThoughts(list: Thought[], group: ThoughtGroup): ItemGroup<Thought>[] | undefined {
+  if (group === "maturity") return groupByKey(list, (t) => t.maturity, THOUGHT_MATURITY.options);
+  if (group === "kind") return groupByKey(list, (t) => t.kind, THOUGHT_KIND.options);
+  return undefined;
+}
+
+const BASE = "/thoughts";
 const href = (t: Thought) => `/thoughts/${t.id}`;
 
 const kindBadge = (t: Thought) => (
@@ -69,9 +93,11 @@ export default async function ThoughtsPage({
   const tag = firstParam(params, "tag");
   const sortParam = firstParam(params, "sort");
   const sort = SORTS.find((s) => s.value === sortParam)?.value ?? "updated";
+  const group = parseGroup(firstParam(params, "group"), GROUPS, "maturity");
 
   const all = await thoughts.list({ kind, maturity, sort });
   const items = filterByTag(all, tag);
+  const groups = groupThoughts(items, group);
   const filtered = Boolean(kind || maturity || tag);
 
   const empty = (
@@ -114,32 +140,48 @@ export default async function ThoughtsPage({
               basePath="/thoughts"
               params={params}
               selected={kind}
+              allLabel="모든 종류"
               options={THOUGHT_KIND.options}
             />
-            <div className="ml-auto">
-              <SortSelect options={SORTS} value={sort} basePath="/thoughts" params={params} />
-            </div>
             <FilterChips
               ariaLabel="발전 정도 필터"
               param="maturity"
               basePath="/thoughts"
               params={params}
               selected={maturity}
+              allLabel="모든 발전 정도"
               options={THOUGHT_MATURITY.options}
-              className="w-full"
             />
-            <TagFilter
-              tags={countTags(all)}
-              selected={tag}
-              basePath="/thoughts"
-              params={params}
-              className="w-full"
-            />
+            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
+              <TopicPicker
+                topics={topicOptions(countTags(all), BASE, params)}
+                selected={tag}
+                clearHref={buildHref(BASE, params, { tag: undefined })}
+              />
+              <div className="ml-auto flex flex-wrap items-center gap-3">
+                <SortSelect
+                  label="묶기"
+                  param="group"
+                  options={GROUPS}
+                  value={group}
+                  basePath={BASE}
+                  params={params}
+                />
+                <SortSelect
+                  label="정렬"
+                  options={SORTS}
+                  value={sort}
+                  basePath={BASE}
+                  params={params}
+                />
+              </div>
+            </div>
           </>
         }
         table={
           <ItemTable
             items={items}
+            groups={groups}
             columns={columns}
             getKey={(t) => t.id}
             getHref={href}
@@ -149,6 +191,7 @@ export default async function ThoughtsPage({
         cards={
           <ItemCards
             items={items}
+            groups={groups}
             getKey={(t) => t.id}
             getHref={href}
             empty={empty}

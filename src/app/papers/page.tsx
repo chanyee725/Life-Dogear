@@ -2,20 +2,28 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatAuthors, formatRelative, paperByline } from "@/components/dashboard/format";
 import {
+  countTags,
+  filterByTag,
   FilterChips,
+  groupByKey,
+  groupByYear,
   ItemCards,
   ItemTable,
   ListView,
+  parseGroup,
   SortSelect,
-  TagFilter,
+  TopicPicker,
+  topicOptions,
+  buildHref,
   type Column,
+  type ItemGroup,
   type QueryParams,
 } from "@/components/list";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
 import { Page, PageHeader } from "@/components/shell";
 import { Badge, buttonClass, EmptyState, Kbd, TagChip } from "@/components/ui";
 import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
-import { papers, tags } from "@/lib/repo";
+import { papers } from "@/lib/repo";
 import type { Paper, PaperSort } from "@/lib/repo/papers";
 
 export const metadata: Metadata = { title: "논문" };
@@ -30,6 +38,28 @@ const SORTS: { value: PaperSort; label: string }[] = [
   { value: "title", label: "제목" },
   { value: "year", label: "연도" },
 ];
+
+type PaperGroup = "status" | "importance" | "year" | "none";
+
+const GROUPS: { value: PaperGroup; label: string }[] = [
+  { value: "status", label: "읽기 상태" },
+  { value: "importance", label: "중요도" },
+  { value: "year", label: "연도" },
+  { value: "none", label: "묶지 않음" },
+];
+
+// Reading first: what is open now, then the queue, then what is finished.
+const STATUS_ORDER = ["reading", "to_read", "done"].map((value) => ({
+  value,
+  label: READ_STATUS.label(value as Paper["readStatus"]),
+}));
+
+function groupPapers(list: Paper[], group: PaperGroup): ItemGroup<Paper>[] | undefined {
+  if (group === "status") return groupByKey(list, (p) => p.readStatus, STATUS_ORDER);
+  if (group === "importance") return groupByKey(list, (p) => p.importance, IMPORTANCE.options);
+  if (group === "year") return groupByYear(list, (p) => p.year);
+  return undefined;
+}
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const isSort = (v: unknown): v is PaperSort => SORTS.some((s) => s.value === v);
@@ -114,17 +144,16 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const importance = first(params.importance);
   const tag = first(params.tag);
   const sort = first(params.sort);
+  const group = parseGroup(first(params.group), GROUPS, "status");
 
-  const [list, allTags] = await Promise.all([
-    papers.list({
-      status: READ_STATUS.is(status) ? status : undefined,
-      importance: IMPORTANCE.is(importance) ? importance : undefined,
-      tag: tag || undefined,
-      sort: isSort(sort) ? sort : undefined,
-    }),
-    // Chips only for tags on visible (non-archived) items.
-    tags.listAll({ visibleOnly: true }),
-  ]);
+  // Topics come from the papers shown before the topic filter, so every topic leads somewhere.
+  const unfilteredByTag = await papers.list({
+    status: READ_STATUS.is(status) ? status : undefined,
+    importance: IMPORTANCE.is(importance) ? importance : undefined,
+    sort: isSort(sort) ? sort : undefined,
+  });
+  const list = filterByTag(unfilteredByTag, tag);
+  const groups = groupPapers(list, group);
   const filtered = Boolean(status || importance || tag);
 
   const newButton = (
@@ -164,6 +193,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 basePath={BASE}
                 params={params}
                 selected={status}
+                allLabel="모든 상태"
                 options={READ_STATUS.options}
               />
               <FilterChips
@@ -175,8 +205,24 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 allLabel="모든 중요도"
                 options={IMPORTANCE.options}
               />
-              <div className="ml-auto">
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <TopicPicker
+                topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
+                selected={tag}
+                clearHref={buildHref(BASE, params, { tag: undefined })}
+              />
+              <div className="ml-auto flex flex-wrap items-center gap-3">
                 <SortSelect
+                  label="묶기"
+                  param="group"
+                  options={GROUPS}
+                  value={group}
+                  basePath={BASE}
+                  params={params}
+                />
+                <SortSelect
+                  label="정렬"
                   options={SORTS}
                   value={isSort(sort) ? sort : "updated"}
                   basePath={BASE}
@@ -184,12 +230,12 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 />
               </div>
             </div>
-            <TagFilter tags={allTags} selected={tag} basePath={BASE} params={params} />
           </div>
         }
         table={
           <ItemTable
             items={list}
+            groups={groups}
             columns={columns}
             getKey={(p) => p.id}
             getHref={(p) => `/papers/${p.id}`}
@@ -199,6 +245,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
         cards={
           <ItemCards
             items={list}
+            groups={groups}
             getKey={(p) => p.id}
             getHref={(p) => `/papers/${p.id}`}
             renderCard={(p) => <PaperCard paper={p} />}

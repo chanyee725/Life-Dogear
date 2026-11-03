@@ -54,3 +54,16 @@ export function filterByTag<T extends { tags: readonly string[] }>(
   const key = tag.toLowerCase();
   return items.filter((item) => item.tags.some((t) => t.toLowerCase() === key));
 }
+
+/** Topic options for `TopicPicker`: each links to `?tag=<name>` keeping the other params. */
+export function topicOptions(
+  tags: readonly { name: string; count?: number }[],
+  basePath: string,
+  params: QueryParams,
+): { name: string; count: number; href: string }[] {
+  return tags.map((t) => ({
+    name: t.name,
+    count: t.count ?? 0,
+    href: buildHref(basePath, params, { tag: t.name }),
+  }));
+}

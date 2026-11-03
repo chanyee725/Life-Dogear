@@ -2,15 +2,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
-import { countTags, filterByTag, firstParam, type QueryParams } from "@/components/list/query";
+import { groupByKey, groupByMonth, parseGroup, type ItemGroup } from "@/components/list/groups";
+import {
+  buildHref,
+  countTags,
+  filterByTag,
+  firstParam,
+  topicOptions,
+  type QueryParams,
+} from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
-import { FilterChips, TagFilter } from "@/components/list/TagFilter";
+import { FilterChips } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
+import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { localDate } from "@/components/tasks/format";
 import { formatDate } from "@/components/ui/format";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
@@ -26,6 +36,21 @@ const SORTS: { value: SeminarSort; label: string }[] = [
   { value: "title", label: "제목순" },
 ];
 
+type SeminarGroup = "month" | "kind" | "none";
+
+const GROUPS: { value: SeminarGroup; label: string }[] = [
+  { value: "month", label: "월별" },
+  { value: "kind", label: "종류" },
+  { value: "none", label: "묶지 않음" },
+];
+
+function groupSeminars(list: Seminar[], group: SeminarGroup): ItemGroup<Seminar>[] | undefined {
+  if (group === "month") return groupByMonth(list, (s) => s.date, localDate());
+  if (group === "kind") return groupByKey(list, (s) => s.kind, SEMINAR_KIND.options);
+  return undefined;
+}
+
+const BASE = "/seminars";
 const href = (s: Seminar) => `/seminars/${s.id}`;
 
 const columns: Column<Seminar>[] = [
@@ -56,9 +81,11 @@ export default async function SeminarsPage({
   const tag = firstParam(params, "tag");
   const sortParam = firstParam(params, "sort");
   const sort = SORTS.find((s) => s.value === sortParam)?.value ?? "date";
+  const group = parseGroup(firstParam(params, "group"), GROUPS, "month");
 
   const all = await seminars.list({ kind, sort });
   const items = filterByTag(all, tag);
+  const groups = groupSeminars(items, group);
   const filtered = Boolean(kind || tag);
 
   const empty = (
@@ -103,23 +130,39 @@ export default async function SeminarsPage({
               basePath="/seminars"
               params={params}
               selected={kind}
+              allLabel="모든 종류"
               options={SEMINAR_KIND.options}
             />
-            <div className="ml-auto">
-              <SortSelect options={SORTS} value={sort} basePath="/seminars" params={params} />
+            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
+              <TopicPicker
+                topics={topicOptions(countTags(all), BASE, params)}
+                selected={tag}
+                clearHref={buildHref(BASE, params, { tag: undefined })}
+              />
+              <div className="ml-auto flex flex-wrap items-center gap-3">
+                <SortSelect
+                  label="묶기"
+                  param="group"
+                  options={GROUPS}
+                  value={group}
+                  basePath={BASE}
+                  params={params}
+                />
+                <SortSelect
+                  label="정렬"
+                  options={SORTS}
+                  value={sort}
+                  basePath={BASE}
+                  params={params}
+                />
+              </div>
             </div>
-            <TagFilter
-              tags={countTags(all)}
-              selected={tag}
-              basePath="/seminars"
-              params={params}
-              className="w-full"
-            />
           </>
         }
         table={
           <ItemTable
             items={items}
+            groups={groups}
             columns={columns}
             getKey={(s) => s.id}
             getHref={href}
@@ -129,6 +172,7 @@ export default async function SeminarsPage({
         cards={
           <ItemCards
             items={items}
+            groups={groups}
             getKey={(s) => s.id}
             getHref={href}
             empty={empty}

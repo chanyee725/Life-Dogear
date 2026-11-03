@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TBody, THead, Table, Td, Th, Tr } from "@/components/ui/Table";
+import type { ItemGroup } from "./groups";
 
 type ColumnBase<T> = {
   key: string;
@@ -38,9 +39,11 @@ const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
 /**
  * Generic item table. Server-compatible: render functions run where the table is rendered,
  * so use it from server pages (or other client components), then hand the result to `ListView`.
+ * With `groups`, one table keeps the columns aligned and each group gets a header row.
  */
 export function ItemTable<T>({
   items,
+  groups,
   columns,
   getKey,
   getHref,
@@ -48,6 +51,8 @@ export function ItemTable<T>({
   className,
 }: {
   items: readonly T[];
+  /** Same items split into labelled groups (see `groups.ts`); omit for a flat table. */
+  groups?: readonly ItemGroup<T>[];
   columns: readonly Column<T>[];
   getKey: (item: T) => string;
   getHref?: (item: T) => string;
@@ -55,6 +60,30 @@ export function ItemTable<T>({
   className?: string;
 }) {
   if (items.length === 0) return <>{empty ?? <EmptyState title="항목이 없습니다" />}</>;
+
+  const rows = (list: readonly T[]) =>
+    list.map((item) => {
+      const href = getHref?.(item);
+      return (
+        <Tr key={getKey(item)} className={cn(href && "relative hover:bg-surface")}>
+          {columns.map((c) => (
+            <Td key={c.key} className={cn(hideClass(c), c.primary && "min-w-56", c.className)}>
+              {c.primary && href ? (
+                // Stretched link: the ::after covers the row so the whole row is clickable.
+                <Link
+                  href={href}
+                  className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
+                >
+                  {c.render(item)}
+                </Link>
+              ) : (
+                c.render(item)
+              )}
+            </Td>
+          ))}
+        </Tr>
+      );
+    });
 
   return (
     <Table className={className}>
@@ -67,30 +96,31 @@ export function ItemTable<T>({
           ))}
         </tr>
       </THead>
-      <TBody>
-        {items.map((item) => {
-          const href = getHref?.(item);
-          return (
-            <Tr key={getKey(item)} className={cn(href && "relative hover:bg-surface")}>
-              {columns.map((c) => (
-                <Td key={c.key} className={cn(hideClass(c), c.primary && "min-w-56", c.className)}>
-                  {c.primary && href ? (
-                    // Stretched link: the ::after covers the row so the whole row is clickable.
-                    <Link
-                      href={href}
-                      className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
-                    >
-                      {c.render(item)}
-                    </Link>
-                  ) : (
-                    c.render(item)
-                  )}
-                </Td>
-              ))}
-            </Tr>
-          );
-        })}
-      </TBody>
+      {groups ? (
+        groups.map((group) => (
+          <TBody
+            key={group.key}
+            aria-label={`${group.label} ${group.items.length}개`}
+            className="border-t border-border first-of-type:border-t-0"
+          >
+            <tr className="bg-subtle">
+              <th
+                scope="rowgroup"
+                colSpan={columns.length}
+                className="h-8 px-3 text-left text-xs font-medium text-fg"
+              >
+                {group.label}
+                <span className="ml-1.5 font-normal text-muted tabular-nums">
+                  {group.items.length}
+                </span>
+              </th>
+            </tr>
+            {rows(group.items)}
+          </TBody>
+        ))
+      ) : (
+        <TBody>{rows(items)}</TBody>
+      )}
     </Table>
   );
 }
