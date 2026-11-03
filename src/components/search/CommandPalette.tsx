@@ -159,8 +159,11 @@ export function CommandPalette() {
       setActive((i) => moveActive(i, event.key === "ArrowDown" ? 1 : -1, total));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      // A command chosen with ↑/↓ runs at once.
-      if (active >= 0 && active < commands.length) return choose(active);
+      // Commands rank first: one chosen with ↑/↓, or the top row for a typed query
+      // (even before hits arrive), runs at once.
+      if (commands.length && active < commands.length && (active >= 0 || query.trim())) {
+        return choose(Math.max(active, 0));
+      }
       // Results may lag behind fast typing: search now and open the top hit when it lands.
       if (debouncedSearch.pending() || status === "loading") {
         enterPending.current = true;
