@@ -25,10 +25,13 @@ export default async function ReviewsPage({
   const kindParam = firstParam(params, "kind");
   const kind = REVIEW_KIND.is(kindParam) ? kindParam : "week";
 
-  const all = await reviews.list();
-  const items = all.filter((r) => r.kind === kind);
   const currentPeriod = periodOf(kind, new Date());
-  const current = items.find((r) => r.period === currentPeriod);
+  // Archived reviews count too (as on home): a period never gets a second review.
+  const [all, current] = await Promise.all([
+    reviews.list(),
+    reviews.findByPeriod(kind, currentPeriod),
+  ]);
+  const items = all.filter((r) => r.kind === kind);
   const currentLabel = `${CURRENT_PERIOD_LABEL[kind]} 회고`;
 
   // One review per period: write it when missing, otherwise open the existing one.

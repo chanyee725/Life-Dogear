@@ -20,6 +20,7 @@ import { nextGoalTarget } from "../next-goal";
 import { deleteReview, updateReview } from "../actions";
 import { CompleteButton } from "../CompleteButton";
 import { FocusPicker, type FocusOption } from "../FocusPicker";
+import { staleFocusOptions } from "../focus-options";
 import { KIND_TAB_LABEL } from "../labels";
 import { progressChange } from "../progress";
 
@@ -73,12 +74,14 @@ export default async function ReviewDetailPage({ params }: Props) {
   const ref = { type: "review" as const, id: review.id };
   const backHref = review.kind === "week" ? "/reviews" : `/reviews?kind=${review.kind}`;
 
-  const focusOptions: FocusOption[] = [
+  const choices: FocusOption[] = [
     ...periodGoals
       .filter((g) => g.horizon === "quarter")
       .map((g) => ({ key: `goal:${g.id}`, label: g.title, hint: "목표" })),
     ...activeProjects.map((p) => ({ key: `project:${p.id}`, label: p.title, hint: "프로젝트" })),
   ];
+  // Saved picks that dropped out (done, archived, deleted) come first so they can be cleared.
+  const focusOptions = [...(await staleFocusOptions(review.focus, choices)), ...choices];
 
   const goalCheck = (
     <Step n={isWeek ? 3 : undefined} title="목표 점검">

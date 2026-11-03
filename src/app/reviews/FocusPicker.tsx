@@ -4,7 +4,15 @@ import { useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import { FOCUS_FIELD } from "./form";
 
-export type FocusOption = { key: string; label: string; hint?: string };
+export type FocusOption = {
+  key: string;
+  label: string;
+  hint?: string;
+  /** Saved earlier but no longer a regular choice (done, archived…): shown so it can be cleared. */
+  stale?: boolean;
+  /** The item was deleted: can be cleared but not picked again. */
+  gone?: boolean;
+};
 
 /**
  * "다음 주 집중 3가지": pick up to `max` items. Writes `type:id,…` into a hidden input
@@ -55,14 +63,15 @@ export function FocusPicker({
                   htmlFor={id}
                   className={cn(
                     "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover",
-                    !checked && full && "opacity-50",
+                    !checked && (full || o.gone) && "opacity-50",
+                    (o.stale || o.gone) && "text-muted",
                   )}
                 >
                   <input
                     id={id}
                     type="checkbox"
                     checked={checked}
-                    disabled={!checked && full}
+                    disabled={!checked && (full || o.gone)}
                     onChange={() => toggle(o.key)}
                     // Not a form field itself: the hidden input carries the value.
                     form="__none"
