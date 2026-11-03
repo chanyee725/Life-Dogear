@@ -15,20 +15,6 @@
       "when": 1793595789588,
       "tag": "0001_para_skeleton",
       "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1793665367077,
-      "tag": "0002_brown_veda",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1793665700340,
-      "tag": "0003_striped_orphan",
-      "breakpoints": true
     }
   ]
 }

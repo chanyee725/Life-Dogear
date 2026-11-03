@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
-import { areas, goals, papers, projects, reviews, seminars, thoughts } from "@/db/schema";
+import { areas, papers, projects, seminars, thoughts } from "@/db/schema";
 import { ITEM_TYPE } from "@/lib/enums";
 import { assertItemRef, db, type Executor, type ItemRef, type ItemType } from "./shared";
 
@@ -12,8 +12,6 @@ const TABLES = {
   seminar: seminars,
   thought: thoughts,
   area: areas,
-  goal: goals,
-  review: reviews,
 } as const;
 
 export const tableFor = (type: ItemType) => TABLES[type];

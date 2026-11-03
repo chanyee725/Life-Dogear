@@ -61,7 +61,6 @@ export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
       sourceId: a.id,
       targetType: b.type,
       targetId: b.id,
-      via: "manual",
       createdAt: nowIso(),
     };
     await tx.insert(links).values(row);
