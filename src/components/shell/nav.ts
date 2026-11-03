@@ -1,5 +1,5 @@
 /**
- * Static sidebar entries (areas are listed dynamically between 목표와 프로젝트 and 자료).
+ * Static sidebar entries. Areas are one 영역 entry; the list lives on the /areas page.
  * IA: docs/PROPOSAL-SECOND-BRAIN.md 4절 — reviews sit near home, goals with projects,
  * the graph under 자료.
  */
@@ -16,6 +16,7 @@ export const NAV_SECTIONS = {
   projects: [
     { href: "/goals", label: "목표", icon: "goal" },
     { href: "/projects", label: "프로젝트", icon: "project" },
+    { href: "/areas", label: "영역", icon: "area" },
   ],
   library: [
     { href: "/papers", label: "논문", icon: "paper" },

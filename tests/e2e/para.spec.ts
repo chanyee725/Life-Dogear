@@ -21,9 +21,13 @@ test("영역이 없으면 추천 영역을 골라 만든다", async ({ page }) =
   await sidebar(page).getByLabel("학위").check();
   await sidebar(page).getByRole("button", { name: "선택한 영역 만들기" }).click();
 
-  await expect(sidebar(page).getByRole("link", { name: "건강" })).toBeVisible();
-  await expect(sidebar(page).getByRole("link", { name: "학위" })).toBeVisible();
-  await expect(sidebar(page).getByRole("link", { name: "커리어" })).toHaveCount(0);
+  // The sidebar has a single 영역 entry: the picker goes away and the areas list shows them.
+  await expect(sidebar(page).getByText("추천 영역을 골라 만들 수 있어요.")).toHaveCount(0);
+  await page.goto("/areas");
+  const list = page.locator("main ul");
+  await expect(list.getByRole("link", { name: /건강/ })).toBeVisible();
+  await expect(list.getByRole("link", { name: /학위/ })).toBeVisible();
+  await expect(list.getByRole("link", { name: /커리어/ })).toHaveCount(0);
 });
 
 test("보관 → 보관함 → 보관 해제", async ({ page }) => {

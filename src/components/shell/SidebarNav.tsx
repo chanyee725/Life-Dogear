@@ -13,7 +13,6 @@ import {
   HomeIcon,
   InboxIcon,
   PaperIcon,
-  PlusIcon,
   ProjectIcon,
   ReviewIcon,
   SeminarIcon,
@@ -38,6 +37,7 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   archive: ArchiveIcon,
   review: ReviewIcon,
   goal: GoalIcon,
+  area: AreaIcon,
   graph: GraphIcon,
   task: TaskIcon,
 };
@@ -96,15 +96,12 @@ function SectionTitle({ children, action }: { children: ReactNode; action?: Reac
 }
 
 export function SidebarNav({
-  areas,
-  hasAreas = areas.length > 0,
+  hasAreas,
   inboxCount,
   searchSlot,
 }: {
-  /** Areas to list (the pinned ones). */
-  areas: { id: string; title: string }[];
   /** False when no areas exist at all: recommended areas are offered instead. */
-  hasAreas?: boolean;
+  hasAreas: boolean;
   inboxCount: number;
   searchSlot?: ReactNode;
 }) {
@@ -197,40 +194,8 @@ export function SidebarNav({
           <SectionTitle>목표와 프로젝트</SectionTitle>
           {NAV_SECTIONS.projects.map((entry) => item(entry))}
 
-          <SectionTitle
-            action={
-              <Link
-                href="/areas/new"
-                aria-label="새 영역"
-                title="새 영역"
-                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
-              >
-                <PlusIcon />
-              </Link>
-            }
-          >
-            <Link
-              href="/areas"
-              aria-current={pathname === "/areas" ? "page" : undefined}
-              className="hover:text-fg aria-[current=page]:text-fg"
-            >
-              영역
-            </Link>
-          </SectionTitle>
-          {/* Only pinned areas; all of them live on the 영역 page (the title link). */}
-          {hasAreas ? (
-            areas.map((area) => (
-              <NavLink
-                key={area.id}
-                href={`/areas/${area.id}`}
-                label={area.title}
-                icon={<AreaIcon />}
-                pathname={pathname}
-              />
-            ))
-          ) : (
-            <RecommendedAreas />
-          )}
+          {/* No areas yet: offer the recommended ones right under the 영역 entry. */}
+          {hasAreas ? null : <RecommendedAreas />}
 
           <SectionTitle>
             <Link

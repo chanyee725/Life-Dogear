@@ -2,7 +2,7 @@ import { formatRelative } from "@/components/ui/format";
 
 /** Areas list sort, kept in `?sort=`. `order`: the user's (sidebar) order, the default. */
 export const AREA_SORTS = [
-  { value: "order", label: "사이드바 순" },
+  { value: "order", label: "정한 순서" },
   { value: "recent", label: "최근 활동" },
   { value: "stale", label: "오래 방치된 순" },
 ] as const;
@@ -52,7 +52,7 @@ export function filterAreas<T extends Searchable>(rows: readonly T[], query: str
 
 /**
  * Rows in the chosen order. `order` keeps the given (sidebar) order; `recent` puts the
- * latest activity first, `stale` the oldest. Ties keep the sidebar order.
+ * latest activity first, `stale` the oldest. Ties keep the area order.
  */
 export function sortAreas<T extends { lastActivity: string }>(
   rows: readonly T[],

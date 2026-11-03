@@ -45,7 +45,7 @@ export const areas = sqliteTable(
     standard: text("standard").notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
     body: text("body").notNull().default(""),
-    /** Set (ISO) when the area is pinned to the sidebar; null = not pinned. */
+    /** Unused: sidebar pinning was tried and dropped (the sidebar has one 영역 entry). Kept so the migration-0005 column stays mapped. */
     pinnedAt: text("pinned_at"),
     archivedAt: archivedAt(),
     ...timestamps,

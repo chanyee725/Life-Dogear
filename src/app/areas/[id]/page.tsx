@@ -19,7 +19,6 @@ import { GoalTree } from "../../goals/GoalTree";
 import { ProgressBadge } from "../../projects/ProgressBadge";
 import { updateAreaPatch } from "../actions";
 import { AreaFields } from "../AreaFields";
-import { PinTextButton } from "../PinButton";
 import { goalOrder, groupProjectsByGoal, viaLabel } from "../flow";
 
 export const dynamic = "force-dynamic";
@@ -64,10 +63,7 @@ export default async function AreaDetailPage({ params }: Props) {
           actions={
             <>
               {area.archivedAt ? null : (
-                <>
-                  <PinTextButton areaId={area.id} pinned={area.pinnedAt !== null} />
-                  <ArchiveButton item={ref} archived={false} redirectTo="/areas" />
-                </>
+                <ArchiveButton item={ref} archived={false} redirectTo="/areas" />
               )}
               <DeleteItemButton
                 action={deleteArea.bind(null, area.id)}

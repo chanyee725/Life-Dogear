@@ -5,21 +5,18 @@ import { areas, thoughts } from "@/lib/repo";
 import { SidebarNav } from "./SidebarNav";
 
 type SidebarData = {
-  /** Pinned areas only, in the user's order. */
-  areas: { id: string; title: string }[];
   /** False with no (non-archived) areas at all: the sidebar offers recommended ones. */
   hasAreas: boolean;
   inboxCount: number;
 };
 
-const EMPTY: SidebarData = { areas: [], hasAreas: true, inboxCount: 0 };
+const EMPTY: SidebarData = { hasAreas: true, inboxCount: 0 };
 
-/** Areas and inbox count; on any database error the sidebar still renders, just without them. */
+/** Whether any area exists, and the inbox count; on any database error the sidebar still renders, just without them. */
 async function loadSidebarData(): Promise<SidebarData> {
   try {
     const [areaList, inboxCount] = await Promise.all([areas.list(), thoughts.countInbox()]);
     return {
-      areas: areaList.filter((a) => a.pinnedAt).map((a) => ({ id: a.id, title: a.title })),
       hasAreas: areaList.length > 0,
       inboxCount,
     };
@@ -31,7 +28,7 @@ async function loadSidebarData(): Promise<SidebarData> {
 }
 
 /**
- * App sidebar (server): reads the pinned areas and the inbox count, then renders the client nav.
+ * App sidebar (server): checks for areas and reads the inbox count, then renders the client nav.
  * Area/archive/inbox actions revalidate the root layout, so this stays current.
  *
  * `connection()` defers the database reads to request time, so `next build` never
@@ -45,7 +42,6 @@ export async function Sidebar({ searchSlot }: { searchSlot?: ReactNode } = {}) {
   const data = await loadSidebarData();
   return (
     <SidebarNav
-      areas={data.areas}
       hasAreas={data.hasAreas}
       inboxCount={data.inboxCount}
       searchSlot={searchSlot}
