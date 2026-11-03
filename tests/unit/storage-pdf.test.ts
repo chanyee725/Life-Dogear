@@ -7,12 +7,12 @@ import {
   assertPdfBytes,
   deletePdf,
   isPdfBytes,
+  openPdf,
   pdfAbsolutePath,
   pdfExists,
   pdfRelativePath,
   pdfSize,
   PdfStorageError,
-  readPdfStream,
   writePdf,
 } from "@/lib/storage/pdf";
 
@@ -95,17 +95,22 @@ describe("file operations", () => {
     expect(await pdfSize(UUID, options)).toBe(pdf("first").length);
 
     await writePdf(UUID, pdf("second!"), options);
-    const text = await new Response(readPdfStream(UUID, undefined, options)).text();
-    expect(text).toBe("%PDF-second!");
-    expect(await new Response(readPdfStream(UUID, { start: 5, end: 7 }, options)).text()).toBe(
-      "sec",
-    );
+    const text = async (read: Awaited<ReturnType<typeof openPdf>>) =>
+      read && "body" in read ? new Response(read.body).text() : String(read && "416");
+    expect(await text(await openPdf(UUID, undefined, options))).toBe("%PDF-second!");
+    const part = await openPdf(UUID, { start: 5, end: 7 }, options);
+    expect(part?.size).toBe(pdf("second!").length);
+    expect(await text(part)).toBe("sec");
+    expect(await text(await openPdf(UUID, { suffix: 3 }, options))).toBe("nd!");
+    expect(await text(await openPdf(UUID, { start: 9 }, options))).toBe("nd!");
+    expect(await openPdf(UUID, { start: 99 }, options)).toEqual({ unsatisfiable: true, size: 12 });
     // No temp files left behind.
     expect(await readdir(join(root, "data/pdfs"))).toEqual([`${UUID}.pdf`]);
 
     expect(await deletePdf(UUID, options)).toBe(true);
     expect(await deletePdf(UUID, options)).toBe(false);
     expect(await pdfExists(UUID, options)).toBe(false);
+    expect(await openPdf(UUID, undefined, options)).toBeNull();
   });
 
   it("does not write invalid data or ids", async () => {

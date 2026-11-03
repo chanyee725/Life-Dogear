@@ -32,7 +32,8 @@ cp .env.example .env
 
 - **로컬 모드 (기본):** `DATABASE_URL`을 비워 두면 `file:./data/local.db` 로컬 SQLite 파일을 사용합니다. 별도 설정이 필요 없습니다.
 - **Turso 모드:** `DATABASE_URL`에 Turso 데이터베이스 주소, `DATABASE_AUTH_TOKEN`에 토큰을 넣으면 Turso를 사용합니다. 두 값을 모두 채워야 합니다.
-- **`DATA_DIR`(기본 `data`):** 로컬 `local.db`와 `pdfs/` 폴더가 놓일 위치를 바꿉니다.
+- **`DATA_DIR`(기본 `data`):** 로컬 `local.db`와 `pdfs/`·`images/` 폴더가 놓일 위치를 바꿉니다.
+- **공유 파일 저장소 (`S3_*`, 선택):** 사진과 PDF를 Cloudflare R2(또는 S3 호환 버킷)에 둡니다. 아래 [공유 파일 저장소](#공유-파일-저장소-cloudflare-r2) 참고.
 - **`ALLOWED_HOSTS`:** 서버가 받아들일 접속 주소입니다. 쉼표로 구분하며, `name`은 모든 포트를, `name:port`는 그 포트만 허용합니다. 기본 허용은 `127.0.0.1`, `localhost`, `[::1]`입니다. 허용되지 않은 주소로 접속하면 403 안내가 나옵니다. 값을 바꾸면 서버를 재시작해야 반영됩니다.
 
 ## 데이터베이스 준비
@@ -63,9 +64,48 @@ npm run dev
 
 브라우저에서 <http://127.0.0.1:3000>을 엽니다. 기본 허용 주소는 `127.0.0.1`, `localhost`, `[::1]`이며, 다른 주소는 `ALLOWED_HOSTS`에 추가합니다. `ALLOWED_HOSTS`를 바꾸면 서버를 재시작해야 반영됩니다.
 
-## PDF 저장 위치
+## PDF·사진 저장 위치
 
-업로드한 논문 PDF는 `data/pdfs/<논문 id>.pdf` 경로에 로컬로 저장합니다. 위치는 `DATA_DIR`로 바꿀 수 있습니다. 클라우드로 업로드하지 않으며, 파일 이름은 사용자가 정한 이름이 아니라 논문 id로 정해집니다.
+기본은 로컬입니다. 논문 PDF는 `data/pdfs/<논문 id>.pdf`, 본문에 붙인 사진은 `data/images/<임의 이름>`에 저장하며 위치는 `DATA_DIR`로 바꿀 수 있습니다. 파일 이름은 사용자가 정한 이름이 아니라 논문 id나 임의 이름으로 정해집니다.
+
+### 공유 파일 저장소 (Cloudflare R2)
+
+Turso로 PC 두 대가 DB를 같이 쓰면, 로컬 모드에서는 다른 PC에서 올린 PDF·사진이 보이지 않습니다. R2 버킷을 설정하면 모든 PC가 같은 파일을 봅니다. 브라우저는 지금처럼 `/api/images/...`, `/api/papers/<id>/pdf`로 받고 서버가 버킷에서 가져와 전달하므로, 버킷을 공개할 필요가 없고 키도 브라우저에 노출되지 않습니다.
+
+1. Cloudflare 대시보드 → **R2** → **Create bucket** (예: `research-brain`). 공개 접근은 켜지 않습니다.
+2. **R2** → **Manage R2 API Tokens** → **Create API token**: 권한 **Object Read & Write**, 대상은 방금 만든 버킷만. 발급된 Access Key ID와 Secret Access Key를 복사합니다 (Secret은 한 번만 보입니다).
+3. 각 PC의 `.env`에 네 값을 모두 넣습니다. 하나라도 비면 로컬 모드입니다.
+
+   ```bash
+   S3_ENDPOINT=https://<계정 ID>.r2.cloudflarestorage.com
+   S3_BUCKET=research-brain
+   S3_ACCESS_KEY_ID=...
+   S3_SECRET_ACCESS_KEY=...
+   # S3_REGION은 비워 두면 auto (R2는 그대로 두면 됩니다)
+   ```
+
+4. 서버를 다시 시작합니다. 이후 올리는 파일은 버킷에 저장됩니다.
+5. 전에 로컬에 올린 파일은 그 PC에서 한 번 버킷으로 옮깁니다. 이미 버킷에 있는 파일은 건너뜁니다.
+
+   ```bash
+   npm run storage:push -- --dry-run   # 올릴 개수만 확인
+   npm run storage:push
+   ```
+
+옮기기 전에도 버킷에 없는 파일은 그 PC의 로컬 폴더에서 읽으므로 깨지지 않습니다. 로컬 파일은 지우지 않으니, 옮긴 뒤 확인하고 직접 정리하세요. 결과는 개수만 출력하며 키·주소·파일 이름은 출력하지 않습니다.
+
+### 안 쓰는 사진 정리
+
+본문에서 지운 사진은 파일로 남습니다. 아래 명령은 어떤 본문에서도 참조하지 않고, 만든 지 24시간이 지난 사진만 찾습니다(갓 붙인 사진은 저장 전일 수 있어 건너뜀). 기본은 개수만 보여 주고, `--apply`를 붙여야 지웁니다. 지운 사진은 되돌릴 수 없으니 먼저 [데이터 백업](#데이터-백업)을 권장합니다.
+
+```bash
+npm run storage:gc-images            # 지울 개수 확인 (dry-run)
+npm run storage:gc-images -- --apply # 실제 삭제
+```
+
+공유 저장소를 쓰는데 DB가 로컬 파일이거나, 참조된 사진이 하나도 없으면(DB 설정 실수 가능성) 삭제하지 않고 멈춥니다. 첫 줄에 저장소 종류(local/s3)와 DB 종류(local/turso)를 주소 없이 보여 줍니다.
+
+> 앱을 쓰는 중에는 실행하지 마세요. 모든 PC에서 서버를 끈 상태에서 실행합니다. 편집 중인 본문의 사진이 지워질 수 있습니다.
 
 ## 스크립트
 
@@ -81,6 +121,8 @@ npm run dev
 | `npm run db:generate` | 스키마 변경을 마이그레이션 SQL로 생성 |
 | `npm run db:migrate` | 마이그레이션 적용 |
 | `npm run db:seed` | 샘플 데이터 다시 넣기 (개발 서버를 끈 뒤 실행) |
+| `npm run storage:push` | 로컬 PDF·사진을 R2 버킷으로 한 번 옮기기 (`-- --dry-run`으로 개수만 확인) |
+| `npm run storage:gc-images` | 안 쓰는 사진 찾기 (`-- --apply`로 실제 삭제) |
 
 ## 단축키
 
@@ -178,7 +220,7 @@ npm run dev
 
 - 단위 테스트: `npm run test`
 - e2e 테스트: 처음 한 번 `npx playwright install chromium`을 실행한 뒤 `npx playwright test`를 실행합니다.
-  - e2e는 `data/e2e/` 폴더를 매번 새로 만들어 그 안의 DB와 PDF를 씁니다. 로컬 데이터(`data/local.db`, `data/pdfs/`)와 분리되어 있습니다. `DATABASE_URL`은 `data/e2e` 안의 로컬 파일로 지정되므로 `.env`의 Turso 설정을 건드리지 않습니다.
+  - e2e는 `data/e2e/` 폴더를 매번 새로 만들어 그 안의 DB와 PDF를 씁니다. 로컬 데이터(`data/local.db`, `data/pdfs/`)와 분리되어 있습니다. `DATABASE_URL`은 `data/e2e` 안의 로컬 파일로 지정되므로 `.env`의 Turso 설정을 건드리지 않습니다. `BLOB_STORE=local`로 실행되어 `.env`에 R2가 설정돼 있어도 버킷에 쓰지 않습니다.
   - Playwright가 3000 포트에서 개발 서버를 직접 띄우므로, 실행 전에 `npm run dev`를 꺼 두세요. 켜져 있으면 포트가 충돌합니다.
 
 ## 데이터 백업
@@ -188,4 +230,4 @@ npm run dev
 1. 개발 서버를 끕니다 (`Ctrl+C`).
 2. 데이터 폴더 전체를 다른 위치에 복사합니다.
 
-DB를 쓰는 중에 복사하면 일부만 담길 수 있으므로 서버를 끈 뒤에 복사하세요. Turso 모드에서는 데이터가 원격 DB에 있으므로 이 방법으로는 백업되지 않습니다.
+DB를 쓰는 중에 복사하면 일부만 담길 수 있으므로 서버를 끈 뒤에 복사하세요. Turso 모드에서는 데이터가 원격 DB에, 공유 저장소를 쓰면 PDF·사진이 R2 버킷에 있으므로 이 방법으로는 백업되지 않습니다.

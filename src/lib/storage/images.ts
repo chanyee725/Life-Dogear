@@ -1,11 +1,9 @@
-import { createReadStream } from "node:fs";
-import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { Readable } from "node:stream";
 import { dataDir } from "@/lib/data-dir";
+import { blobStore, type StoreOptions } from "./blob";
 
 /**
- * Photos pasted or dropped into a body: `<DATA_DIR>/images/<uuid>.<ext>`, referenced from
+ * Photos pasted or dropped into a body: key `images/<uuid>.<ext>` in the {@link blobStore}
+ * (local: `<DATA_DIR>/images/`), referenced from
  * Markdown as `![](/api/images/<uuid>.<ext>)`. The type comes from the file's bytes, never
  * from the browser; only raster formats browsers show (no SVG: it can carry scripts).
  */
@@ -56,11 +54,11 @@ export function sniffImage(bytes: Uint8Array): ImageExt | "heic" | null {
 export const isImageName = (name: string): boolean => NAME_RE.test(name);
 
 export const imageDirSetting = (): string => `${dataDir()}/images`;
-const imageDir = (root: string = process.cwd()) => resolve(root, imageDirSetting());
 
-function imagePath(name: string, root?: string): string {
+/** Storage key of a photo; throws for names this module did not create. */
+export function imageKey(name: string): string {
   if (!isImageName(name)) throw new ImageStorageError("not_image", "잘못된 사진 이름입니다.");
-  return join(imageDir(root), name);
+  return `images/${name}`;
 }
 
 export function imageContentType(name: string): string {
@@ -71,7 +69,7 @@ export function imageContentType(name: string): string {
 /** Checks and stores the bytes under a new name; returns the name. */
 export async function writeImage(
   bytes: Uint8Array,
-  options: { root?: string; maxBytes?: number } = {},
+  options: StoreOptions & { maxBytes?: number } = {},
 ): Promise<string> {
   if (bytes.length === 0) throw new ImageStorageError("empty", "빈 파일입니다.");
   if (bytes.length > (options.maxBytes ?? MAX_IMAGE_BYTES)) {
@@ -87,32 +85,17 @@ export async function writeImage(
   if (!type) throw new ImageStorageError("not_image", "JPG·PNG·GIF·WebP 사진만 올릴 수 있습니다.");
 
   const name = `${crypto.randomUUID()}.${type}`;
-  const target = imagePath(name, options.root);
-  await mkdir(imageDir(options.root), { recursive: true });
-  const temp = `${target}.${crypto.randomUUID()}.tmp`;
-  try {
-    await writeFile(temp, bytes, { flag: "wx" });
-    await rename(temp, target);
-  } catch (error) {
-    await rm(temp, { force: true });
-    throw error;
-  }
+  await blobStore(options).put(imageKey(name), bytes, IMAGE_TYPES[type]);
   return name;
 }
 
 /** Size in bytes, or null when there is no such image. */
-export async function imageSize(name: string, options: { root?: string } = {}) {
-  try {
-    const info = await stat(imagePath(name, options.root));
-    return info.isFile() ? info.size : null;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return null;
-    throw error;
-  }
+export async function imageSize(name: string, options: StoreOptions = {}) {
+  return (await blobStore(options).head(imageKey(name)))?.size ?? null;
 }
 
-export function readImageStream(name: string, options: { root?: string } = {}) {
-  return Readable.toWeb(
-    createReadStream(imagePath(name, options.root)),
-  ) as ReadableStream<Uint8Array>;
+/** The photo's bytes and size, or null when it does not exist. */
+export async function openImage(name: string, options: StoreOptions = {}) {
+  const read = await blobStore(options).get(imageKey(name));
+  return read && "body" in read ? { body: read.body, size: read.size } : null;
 }
