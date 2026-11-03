@@ -273,3 +273,19 @@ export function neglectedImportant(
     .sort((a, b) => (a.lastActiveAt ?? "").localeCompare(b.lastActiveAt ?? "") || byId(a, b))
     .slice(0, limit);
 }
+
+/** Score again from already computed parts (e.g. after toggling a star on the client). */
+export function rescore(
+  parts: Pick<ScoreParts, "direct" | "centrality" | "recency">,
+  starred: boolean,
+  archived: boolean,
+): number {
+  let score =
+    WEIGHTS.direct * parts.direct +
+    WEIGHTS.centrality * parts.centrality +
+    WEIGHTS.recency * parts.recency +
+    WEIGHTS.star * (starred ? 1 : 0);
+  if (starred) score = Math.max(score, STAR_FLOOR);
+  if (archived) score *= ARCHIVED_FACTOR;
+  return clamp01(score);
+}

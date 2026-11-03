@@ -4,6 +4,7 @@ import {
   directValue,
   importanceScore,
   lonelyStars,
+  rescore,
   neglectedImportant,
   recencyValue,
   scoreGraph,
@@ -206,5 +207,17 @@ describe("panel lists (7.3)", () => {
       "paper:core-older",
       "paper:core-old",
     ]);
+  });
+});
+
+describe("rescore", () => {
+  it("matches importanceScore for the same parts", () => {
+    const i = input("paper:a", { importance: "core", lastActiveAt: daysAgo(15) });
+    const base = importanceScore(i, 0.5, NOW);
+    expect(rescore(base, false, false)).toBeCloseTo(base.score);
+    const starred = importanceScore({ ...i, starred: true }, 0.5, NOW);
+    expect(rescore(base, true, false)).toBeCloseTo(starred.score);
+    const archived = importanceScore({ ...i, starred: true, archived: true }, 0.5, NOW);
+    expect(rescore(base, true, true)).toBeCloseTo(archived.score);
   });
 });

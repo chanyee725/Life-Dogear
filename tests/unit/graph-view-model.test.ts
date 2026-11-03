@@ -210,6 +210,15 @@ describe("filter and URL state", () => {
     expect(parsed).toEqual(state);
   });
 
+  it("keeps ?mode=cosmos, and leaves the mode out when not given", () => {
+    const q = pageQuery({ filter: {}, view: "free", focus: null, mode: "cosmos" });
+    expect(q).toBe("?mode=cosmos");
+    expect(parsePageQuery(new URLSearchParams(q)).mode).toBe("cosmos");
+    expect(pageQuery({ filter: {}, view: "free", focus: null, mode: "basic" })).toBe("");
+    expect(parsePageQuery(new URLSearchParams("")).mode).toBeUndefined();
+    expect(parsePageQuery(new URLSearchParams("mode=3d")).mode).toBeUndefined();
+  });
+
   it("falls back to defaults for unknown values", () => {
     const parsed = parsePageQuery(
       new URLSearchParams("view=3d&focus=bogus:1&types=goal,nope&archived=yes"),
