@@ -1,6 +1,6 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { areas, projects } from "@/db/schema";
-import { removeLinksFor } from "./links";
+import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   db,
@@ -136,6 +136,7 @@ async function createWith(exec: Executor, input: AreaInput): Promise<string> {
     updatedAt: now,
   });
   if (input.tags) await setTagsWith(exec, ref(id), input.tags);
+  if (input.body) await syncBodyLinks(exec, ref(id), input.body);
   return id;
 }
 
@@ -148,6 +149,7 @@ export async function update(id: string, patch: AreaPatch): Promise<Area | null>
       .returning({ id: areas.id });
     if (!updated.length) return false;
     if (patch.tags) await setTagsWith(tx, ref(id), patch.tags);
+    if (patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
     return true;
   });
   return found ? get(id) : null;

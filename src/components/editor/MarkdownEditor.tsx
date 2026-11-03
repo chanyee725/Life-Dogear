@@ -2,10 +2,14 @@
 
 import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EDITOR_READY_EVENT } from "@/components/fields/form-patch";
 import { cn } from "@/components/ui/cn";
 import { createExtensions } from "./extensions";
+import { itemFromPath } from "./wiki-resolver";
+import { WikiRenamePrompt } from "./WikiRenamePrompt";
+import { WikiSuggest, type SuggestKeyHandler } from "./WikiSuggest";
 
 type MarkdownStorage = { markdown: { getMarkdown: () => string } };
 
@@ -29,7 +33,8 @@ export type MarkdownEditorProps = {
 
 /**
  * Block editor that reads and writes Markdown (Tiptap + tiptap-markdown).
- * Supports headings, lists, checklists, tables, quotes, code and links.
+ * Supports headings, lists, checklists, tables, quotes, code, links and `[[title]]`
+ * wiki links (`[[` opens a title search).
  */
 export function MarkdownEditor({
   value,
@@ -43,6 +48,7 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   // Last markdown we emitted or loaded; lets us ignore our own value echoing back.
   const lastMarkdown = useRef(value);
+  const suggestKeys = useRef<SuggestKeyHandler | null>(null);
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -56,6 +62,7 @@ export function MarkdownEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: { class: "rb-prose", "aria-label": "본문", spellcheck: "false" },
+      handleKeyDown: (_view, event) => suggestKeys.current?.(event) ?? false,
     },
     onUpdate: ({ editor }) => {
       const markdown = getMarkdown(editor);
@@ -81,8 +88,38 @@ export function MarkdownEditor({
     <div className={cn("flex flex-col gap-2", className)}>
       {toolbar && editable && editor ? <Toolbar editor={editor} /> : null}
       <EditorContent editor={editor} />
+      {editor && editable ? <WikiSuggest editor={editor} keyHandler={suggestKeys} /> : null}
       {name ? <HiddenValue name={name} editor={editor} initial={value} /> : null}
+      {name && editable ? <FormTitleRename /> : null}
     </div>
+  );
+}
+
+/**
+ * On a detail page whose editor sits in a form with a `title` field (the shared
+ * ItemForm), offers to update `[[옛 제목]]` in other bodies after a rename.
+ * Editors outside such a form (the paper page) render `WikiRenamePrompt` themselves.
+ */
+function FormTitleRename() {
+  const item = itemFromPath(usePathname());
+  const probe = useRef<HTMLSpanElement>(null);
+  const [title, setTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    const input = probe.current
+      ?.closest("form")
+      ?.querySelector<HTMLInputElement>('input[name="title"]');
+    if (!input) return;
+    setTitle(input.value);
+    const onInput = () => setTitle(input.value);
+    input.addEventListener("input", onInput);
+    return () => input.removeEventListener("input", onInput);
+  }, []);
+
+  return (
+    <span ref={probe} className="contents">
+      {item && title !== null ? <WikiRenamePrompt item={item} title={title} /> : null}
+    </span>
   );
 }
 

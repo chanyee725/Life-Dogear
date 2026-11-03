@@ -6,7 +6,8 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
-import { areas, projects, tags } from "@/lib/repo";
+import { areas, goals, projects, tags } from "@/lib/repo";
+import { goalOptionsFor } from "../../goals/options";
 import { deleteProject, updateProject } from "../actions";
 import { areaOptionsFor, ProjectFields } from "../ProjectFields";
 
@@ -23,10 +24,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProjectDetailPage({ params }: Props) {
   const { id } = await params;
   if (!isValidItemId(id)) notFound();
-  const [project, allTags, areaList] = await Promise.all([
+  const [project, allTags, areaList, goalList] = await Promise.all([
     projects.get(id),
     tags.listAll({ visibleOnly: true }),
     areas.list({ includeArchived: true }),
+    goals.list({ includeArchived: true }),
   ]);
   if (!project) notFound();
   const ref = { type: "project" as const, id: project.id };
@@ -57,12 +59,14 @@ export default async function ProjectDetailPage({ params }: Props) {
             editorKey={project.id}
             tagSuggestions={allTags.map((t) => t.name)}
             areaOptions={areaOptionsFor(areaList, project.areaId)}
+            goalOptions={goalOptionsFor(goalList, project.goalId)}
             values={{
               title: project.title,
               kind: project.kind,
               stage: project.stage,
               status: project.status,
               areaId: project.areaId,
+              goalId: project.goalId,
               nextAction: project.nextAction,
               researchQuestion: project.researchQuestion,
               startDate: project.startDate,

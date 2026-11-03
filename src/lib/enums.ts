@@ -29,6 +29,8 @@ export const ITEM_TYPE = defineEnum([
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
   { value: "area", label: "영역", tone: "rose" },
+  { value: "goal", label: "목표", tone: "red" },
+  { value: "review", label: "회고", tone: "gray" },
 ] as const);
 export type ItemType = (typeof ITEM_TYPE.values)[number];
 
@@ -39,7 +41,50 @@ export const ITEM_ROUTE: Record<ItemType, string> = {
   paper: "/papers",
   seminar: "/seminars",
   thought: "/thoughts",
+  goal: "/goals",
+  review: "/reviews",
 };
+
+/** Goal horizon: life goals have no period, year `2027`, quarter `2027-Q1`. */
+export const GOAL_HORIZON = defineEnum([
+  { value: "life", label: "인생", tone: "red" },
+  { value: "year", label: "연", tone: "violet" },
+  { value: "quarter", label: "분기", tone: "blue" },
+] as const);
+export type GoalHorizon = (typeof GOAL_HORIZON.values)[number];
+
+export const GOAL_STATUS = defineEnum([
+  { value: "active", label: "진행 중", tone: "blue" },
+  { value: "achieved", label: "달성", tone: "green" },
+  { value: "dropped", label: "내려놓음", tone: "gray" },
+] as const);
+export type GoalStatus = (typeof GOAL_STATUS.values)[number];
+
+/** Auto: computed from projects (quarter) or child goals (year). Manual: `manual_progress`. */
+export const GOAL_PROGRESS_MODE = defineEnum([
+  { value: "auto", label: "자동", tone: "gray" },
+  { value: "manual", label: "직접 입력", tone: "gray" },
+] as const);
+export type GoalProgressMode = (typeof GOAL_PROGRESS_MODE.values)[number];
+
+/** Review kind; period values: week `2026-W45`, month `2026-11`, quarter `2026-Q4`, year `2026`. */
+export const REVIEW_KIND = defineEnum([
+  { value: "week", label: "주간", tone: "gray" },
+  { value: "month", label: "월간", tone: "blue" },
+  { value: "quarter", label: "분기", tone: "violet" },
+  { value: "year", label: "연간", tone: "red" },
+] as const);
+export type ReviewKind = (typeof REVIEW_KIND.values)[number];
+
+/**
+ * Where a link came from. `manual`: made with the link button (or a highlight).
+ * `body`: synced from a `[[title]]` in the source body. One link per pair; manual wins.
+ */
+export const LINK_VIA = defineEnum([
+  { value: "manual", label: "직접 연결", tone: "gray" },
+  { value: "body", label: "본문 링크", tone: "gray" },
+] as const);
+export type LinkVia = (typeof LINK_VIA.values)[number];
 
 /** Project kind: research projects use the 8 stages, general ones only a status. */
 export const PROJECT_KIND = defineEnum([
