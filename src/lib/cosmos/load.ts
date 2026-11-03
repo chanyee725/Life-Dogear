@@ -60,7 +60,7 @@ async function loadSignals(): Promise<{
     d
       .select({ id: areas.id, title: areas.title, updatedAt: areas.updatedAt })
       .from(areas)
-      .orderBy(asc(areas.sortOrder), asc(areas.title)),
+      .orderBy(asc(areas.sortOrder), asc(areas.id)),
     d
       .select({
         id: projects.id,

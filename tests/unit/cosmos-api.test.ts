@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/graph/cosmos/route";
 import { getCosmos } from "@/lib/cosmos/load";
 import type { CosmosResponse } from "@/lib/cosmos/types";
+import { areas as areasTable } from "@/db/schema";
 import { areas, links, papers, projects, thoughts } from "@/lib/repo";
 import { setStarred } from "@/lib/repo/stars";
 import { useFreshDb } from "./repo-helpers";
@@ -45,6 +46,17 @@ describe("GET /api/graph/cosmos", () => {
     expect(body.galaxies).toEqual([{ id: area.id, title: "연구 분야" }]);
     expect(body.top).toHaveLength(5);
     expect(body.lonely).toEqual([`thought:${alone.id}`]);
+  });
+
+  it("orders galaxies by sort_order, then id (not title)", async () => {
+    const t = "2026-11-01T00:00:00.000Z";
+    await db.insert(areasTable).values([
+      { id: "seed-area-b", title: "가", sortOrder: 0, createdAt: t, updatedAt: t },
+      { id: "seed-area-a", title: "하", sortOrder: 0, createdAt: t, updatedAt: t },
+      { id: "seed-area-c", title: "나", sortOrder: -1, createdAt: t, updatedAt: t },
+    ]);
+    const body = await getCosmos();
+    expect(body.galaxies.map((g) => g.id)).toEqual(["seed-area-c", "seed-area-a", "seed-area-b"]);
   });
 
   it("raises a starred item to at least the star floor", async () => {
