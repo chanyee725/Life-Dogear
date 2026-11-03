@@ -14,7 +14,7 @@ export function setSearchEngine(next: SearchEngine): void {
 
 /**
  * Searches titles, bodies and key fields of every item type (projects, areas, papers,
- * seminars, thoughts) plus highlight text/notes. Archived items are included, flagged.
+ * seminars, thoughts, goals, reviews) plus highlight text/notes. Archived items are included, flagged.
  * Title matches rank first (exact > prefix > contains), then key fields, highlights, bodies;
  * ties go to the non-archived item, then the most recently updated. Blank queries return nothing.
  */

@@ -1,7 +1,16 @@
 import { desc, eq, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { getDb } from "@/db/client";
-import { areas, highlights, papers, projects, seminars, thoughts } from "@/db/schema";
+import {
+  areas,
+  goals,
+  highlights,
+  papers,
+  projects,
+  reviews,
+  seminars,
+  thoughts,
+} from "@/db/schema";
 import type { ItemType } from "@/lib/enums";
 import { parseStoredRects, readerHref, scrollTargetFor } from "@/lib/highlights";
 import {
@@ -28,7 +37,14 @@ const BODY_WINDOW = 150;
 
 type Source = {
   type: ItemType;
-  table: typeof projects | typeof areas | typeof papers | typeof seminars | typeof thoughts;
+  table:
+    | typeof projects
+    | typeof areas
+    | typeof papers
+    | typeof seminars
+    | typeof thoughts
+    | typeof goals
+    | typeof reviews;
   title: SQLiteColumn;
   /** Short fields (authors, summary, key line…) ranked between title and body. */
   meta: SQLiteColumn[];
@@ -105,6 +121,25 @@ const SOURCES: Source[] = [
     body: thoughts.body,
     updatedAt: thoughts.updatedAt,
     archivedAt: thoughts.archivedAt,
+  },
+  {
+    type: "goal",
+    table: goals,
+    title: goals.title,
+    // "왜" — the one-line reason shown under the goal title.
+    meta: [goals.why],
+    body: goals.body,
+    updatedAt: goals.updatedAt,
+    archivedAt: goals.archivedAt,
+  },
+  {
+    type: "review",
+    table: reviews,
+    title: reviews.title,
+    meta: [],
+    body: reviews.body,
+    updatedAt: reviews.updatedAt,
+    archivedAt: reviews.archivedAt,
   },
 ];
 

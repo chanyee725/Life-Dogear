@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { highlights } from "@/db/schema";
-import { archive, areas, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
+import { migrate } from "drizzle-orm/libsql/migrator";
+import { setDb } from "@/db/client";
+import * as schema from "@/db/schema";
+import { archive, areas, goals, papers, projects, seminars, thoughts } from "@/lib/repo";
+import * as reviews from "@/lib/repo/reviews";
 import { searchAll } from "@/lib/search";
 import {
   clampLimit,
@@ -382,5 +388,82 @@ describe("areas and archived items (phase 1.5)", () => {
       "old-active",
       "new-archived",
     ]);
+  });
+});
+
+describe("goals and reviews", () => {
+  it("finds goals by title, why and body and links to /goals/<id>", async () => {
+    const byTitle = await goals.create({ title: "체력 기르기", horizon: "life" });
+    const byWhy = await goals.create({ title: "학위", horizon: "life", why: "체력이 버텨야 한다" });
+    const byBody = await goals.create({
+      title: "건강",
+      horizon: "life",
+      body: "## 계획\n체력 측정",
+    });
+    const hits = await searchAll("체력");
+    expect(hits.map((h) => h.id)).toEqual([byTitle.id, byWhy.id, byBody.id]);
+    expect(hits[0]).toMatchObject({
+      type: "goal",
+      field: "title",
+      href: `/goals/${byTitle.id}`,
+      archived: false,
+    });
+    expect(hits[1]).toMatchObject({ field: "meta", snippet: { match: "체력" } });
+    expect(hits[2]).toMatchObject({ field: "body", snippet: { before: "계획 ", match: "체력" } });
+  });
+
+  it("finds reviews by title and body and links to /reviews/<id>", async () => {
+    const { review } = await reviews.open("week", "2026-W45");
+    await reviews.update(review.id, { body: "## 잘한 점\n실험 재현 성공" });
+    const [byTitle] = await searchAll("2026-W45");
+    expect(byTitle).toMatchObject({
+      type: "review",
+      id: review.id,
+      field: "title",
+      href: `/reviews/${review.id}`,
+    });
+    const [byBody] = await searchAll("재현");
+    expect(byBody).toMatchObject({ type: "review", field: "body", snippet: { match: "재현" } });
+  });
+
+  it("keeps archived goals and reviews in the results, flagged", async () => {
+    const goal = await goals.create({ title: "보관 목표", horizon: "life" });
+    const { review } = await reviews.open("month", "2026-10");
+    await reviews.update(review.id, { body: "보관 목표 돌아보기" });
+    await archive.archive({ type: "goal", id: goal.id });
+    await archive.archive({ type: "review", id: review.id });
+    const hits = await searchAll("보관 목표");
+    expect(hits.map((h) => [h.type, h.id, h.archived])).toEqual([
+      ["goal", goal.id, true],
+      ["review", review.id, true],
+    ]);
+  });
+});
+
+describe("query count", () => {
+  let queries = 0;
+  beforeEach(async () => {
+    const counting = drizzle(createClient({ url: ":memory:" }), {
+      schema,
+      logger: { logQuery: () => void queries++ },
+    });
+    await migrate(counting, { migrationsFolder: "drizzle" });
+    setDb(counting);
+  });
+
+  async function countSearch(q: string): Promise<number> {
+    queries = 0;
+    await searchAll(q);
+    return queries;
+  }
+
+  it("runs one query per source (7 item types + highlights), however many rows match", async () => {
+    expect(await countSearch("목표")).toBe(8);
+    for (let i = 0; i < 3; i++) {
+      await goals.create({ title: `목표 ${i}`, horizon: "life" });
+      await thoughts.create({ title: `목표 생각 ${i}` });
+    }
+    await reviews.open("week", "2026-W44");
+    expect(await countSearch("목표")).toBe(8);
   });
 });
