@@ -87,14 +87,15 @@ export default async function AreaDetailPage({ params }: Props) {
       <Section
         title={`목표${countLabel(goalOrder(areaGoals).length)}`}
         action={
-          <Link href="/goals" className={buttonClass("ghost", "sm")}>
-            목표 보기
+          <Link href={`/goals/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
+            새 목표
           </Link>
         }
       >
         {areaGoals.length === 0 ? (
           <p className="text-sm text-muted">
-            이 영역에 속한 목표가 없습니다. 목표 화면에서 영역을 고르면 여기 보입니다.
+            이 영역에 속한 목표가 없습니다. 새 목표를 만들거나 목표 화면에서 영역을 고르면 여기
+            보입니다.
           </p>
         ) : (
           <GoalTree nodes={areaGoals} />

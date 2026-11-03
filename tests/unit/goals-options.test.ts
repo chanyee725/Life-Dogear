@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalOptionsFor, parentOptionsFor } from "@/app/goals/options";
+import { goalOptionsFor, initialAreaId, parentOptionsFor } from "@/app/goals/options";
 import { goalLevelLabel, joinPeriod, splitPeriod } from "@/app/goals/period";
 
 const g = (id: string, horizon: "life" | "year" | "quarter", archivedAt: string | null = null) => ({
@@ -31,5 +31,16 @@ describe("goal form helpers", () => {
     expect(joinPeriod("quarter", "2027", "Q2")).toBe("2027-Q2");
     expect(goalLevelLabel({ horizon: "quarter", period: "2027-Q2" })).toBe("2027-Q2 분기 목표");
     expect(goalLevelLabel({ horizon: "life", period: null })).toBe("인생 목표");
+  });
+});
+
+describe("initialAreaId", () => {
+  const areas = [{ id: "a" }, { id: "b" }, { id: "old", archivedAt: "2026-11-01T00:00:00.000Z" }];
+  it("takes a selectable ?area=, else the parent's area, else none", () => {
+    expect(initialAreaId("a", areas, "b")).toBe("a");
+    expect(initialAreaId("old", areas, "b")).toBe("b");
+    expect(initialAreaId("nope", areas, null)).toBeNull();
+    expect(initialAreaId(undefined, areas, "old")).toBeNull();
+    expect(initialAreaId(undefined, areas)).toBeNull();
   });
 });
