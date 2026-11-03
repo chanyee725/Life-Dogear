@@ -99,3 +99,40 @@ export function useReducedMotion(): boolean {
   }, []);
   return reduced;
 }
+
+/**
+ * Cosmos view colors (docs/design/cosmos.md 1절). One constant: the cosmos canvas is
+ * always dark, whatever the app theme.
+ */
+export const COSMOS_THEME = {
+  space: "#0b0e1a",
+  spaceRaised: "#121729",
+  spaceBorder: "#262d47",
+  starWhite: "#ffffff",
+  starBlue: "#cfd8ff",
+  starWarm: "#ffe9c4",
+  neutral: "#a6abb5",
+  gold: "#f8ca65",
+  goldCore: "#fff5d7",
+  path: "#ffe3a3",
+  edge: "#cfd5ea",
+  label: "#c7cbd9",
+  labelStrong: "#f3f4f8",
+  focus: "#8b94f0",
+} as const;
+
+/** Area (galaxy) palette, in area order; the i-th area uses GALAXY[i % 12] (1.1). */
+export const GALAXY = [
+  "#5dcbff",
+  "#ff9b50",
+  "#6fda75",
+  "#f77cb0",
+  "#b58bf9",
+  "#49e9e0",
+  "#cae763",
+  "#f2716a",
+  "#6095fa",
+  "#97f4d4",
+  "#efa6f2",
+  "#bf825f",
+] as const;
