@@ -190,14 +190,18 @@ export type AreaProject = Project & { viaGoal: { id: string; title: string } | n
 /**
  * Projects of an area by the rule of `areas.inAreaWhere`: its own, plus area-less
  * projects working toward one of its goals (own or inherited, non-archived), flagged
- * with that goal. Non-archived, newest first. Fixed queries: goals, projects, tags.
+ * with that goal. Newest first; archived projects only with `includeArchived` (the
+ * goal chain is always the non-archived one). Fixed queries: goals, projects, tags.
  */
-export async function listForArea(areaId: string): Promise<AreaProject[]> {
+export async function listForArea(
+  areaId: string,
+  options: ArchiveOptions = {},
+): Promise<AreaProject[]> {
   const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
   const rows = await db()
     .select()
     .from(projects)
-    .where(and(archiveFilter(projects.archivedAt), inAreaWhere(areaId, areaGoals)))
+    .where(and(archiveFilter(projects.archivedAt, options), inAreaWhere(areaId, areaGoals)))
     .orderBy(...ORDER.updated);
   const titles = new Map(areaGoals.map((g) => [g.id, g.title]));
   return (await withTags(rows)).map((p) => ({
