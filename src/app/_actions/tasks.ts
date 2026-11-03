@@ -101,10 +101,7 @@ export async function moveTask(id: unknown, direction: unknown): Promise<ActionR
 }
 
 /** Drag and drop: right after `afterId` (null = first) among same-state siblings. */
-export async function moveTaskAfter(
-  id: unknown,
-  afterId: unknown,
-): Promise<ActionResult<boolean>> {
+export async function moveTaskAfter(id: unknown, afterId: unknown): Promise<ActionResult<boolean>> {
   return runAction(async () => {
     const taskId = parseId(id);
     const anchor = afterId === null ? null : parseId(afterId);

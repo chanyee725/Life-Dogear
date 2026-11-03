@@ -35,7 +35,10 @@ export function applyDrop(
  * `list` with the members (`order`'s ids) placed in `order`, each into a slot a member
  * held before; everything else keeps its place.
  */
-export function placeInOrder<T extends { id: string }>(list: readonly T[], order: readonly string[]): T[] {
+export function placeInOrder<T extends { id: string }>(
+  list: readonly T[],
+  order: readonly string[],
+): T[] {
   const members = new Set(order);
   const byId = new Map(list.map((t) => [t.id, t]));
   let n = 0;

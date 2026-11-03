@@ -159,9 +159,9 @@ describe("tasks repo: update, order, remove", () => {
 
     await tasks.remove(a!.id);
     const doneAt = "2026-10-01T03:00:00.000Z";
-    expect(await tasks.restore({ title: "a", parent, sortOrder: a!.sortOrder, doneAt })).toMatchObject(
-      { doneAt },
-    );
+    expect(
+      await tasks.restore({ title: "a", parent, sortOrder: a!.sortOrder, doneAt }),
+    ).toMatchObject({ doneAt });
     expect(await order()).toEqual(["a", "b", "c"]);
 
     // A stale order past the end, or none at all, appends.
