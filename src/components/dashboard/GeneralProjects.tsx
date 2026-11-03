@@ -6,13 +6,13 @@ import { DashboardEmpty } from "./DashboardSection";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 
-/** Active general (non-research) projects for the home "그 외" tab, soonest due first. */
+/** Active general (non-research) projects for the home "프로젝트" section, soonest due first. */
 export function GeneralProjects({ projects }: { projects: Project[] }) {
   if (projects.length === 0) {
     return (
       <DashboardEmpty>
-        진행 중인 일반 프로젝트가 없습니다.{" "}
-        <Link href="/projects/new" className={buttonClass("ghost", "sm", "align-baseline")}>
+        진행 중인 프로젝트가 없습니다.{" "}
+        <Link href="/projects/new?kind=general" className={buttonClass("ghost", "sm", "align-baseline")}>
           새 프로젝트 만들기
         </Link>
       </DashboardEmpty>

@@ -54,22 +54,19 @@ test("다크 모드 토글", async ({ page }) => {
   await expect(html).not.toHaveClass(/dark/);
 });
 
-test("진행 중인 프로젝트: 연구 칸반 / 그 외 탭, 선택은 새로고침 뒤에도 유지", async ({ page }) => {
+test("홈: 진행 중인 연구(칸반)와 프로젝트가 따로 보인다", async ({ page }) => {
   await page.goto("/");
-  const section = page.getByRole("region", { name: "진행 중인 프로젝트" });
-  const research = section.getByRole("tab", { name: /연구 칸반/ });
-  const general = section.getByRole("tab", { name: /그 외/ });
-  await expect(research).toHaveAttribute("aria-selected", "true");
-  // Seeded research projects show on the kanban.
-  await expect(section.getByRole("tabpanel")).toBeVisible();
+  const research = page.getByRole("region", { name: "진행 중인 연구" });
+  // Seeded research projects show on the kanban, general ones only in 프로젝트.
+  await expect(research.getByRole("link", { name: /소규모 언어모델 요약 품질 비교/ })).toBeVisible();
+  await expect(research.getByText("연구실 세미나 발표 준비")).toHaveCount(0);
 
-  await general.click();
-  await expect(general).toHaveAttribute("aria-selected", "true");
-  await expect(section.getByRole("tabpanel", { name: /그 외/ })).toBeVisible();
-  await page.reload();
-  await expect(
-    page.getByRole("region", { name: "진행 중인 프로젝트" }).getByRole("tab", { name: /그 외/ }),
-  ).toHaveAttribute("aria-selected", "true");
+  const general = page.getByRole("region", { name: "프로젝트", exact: true });
+  await expect(general.getByRole("link", { name: /연구실 세미나 발표 준비/ })).toBeVisible();
+  await expect(general.getByRole("link", { name: "모두 보기" })).toHaveAttribute(
+    "href",
+    "/projects?kind=general",
+  );
 });
 
 test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {

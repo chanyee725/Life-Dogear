@@ -1,4 +1,4 @@
-import { ActiveProjects } from "@/components/dashboard/ActiveProjects";
+import { ActiveGeneralProjects, ActiveResearch } from "@/components/dashboard/ActiveProjects";
 import { ContinueReading } from "@/components/dashboard/ContinueReading";
 import { InboxLine } from "@/components/dashboard/InboxLine";
 import { QuarterGoals } from "@/components/dashboard/QuarterGoals";
@@ -88,7 +88,8 @@ export default async function HomePage() {
         </div>
       ) : null}
       <ContinueReading papers={reading} />
-      <ActiveProjects stages={stages} general={general} />
+      <ActiveResearch stages={stages} />
+      <ActiveGeneralProjects projects={general} />
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
         <RecentThoughts thoughts={recentThoughts} />
         <RecentSeminars seminars={recentSeminars} />
