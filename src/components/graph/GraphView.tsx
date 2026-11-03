@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Kbd } from "@/components/ui/Kbd";
 import { Spinner } from "@/components/ui/Spinner";
 import { constellationPath } from "@/lib/cosmos/path";
-import { lonelyStars, neglectedImportant, rescore, topImportant } from "@/lib/cosmos/score";
+import { withStar } from "@/lib/cosmos/star-patch";
 import type { CosmosResponse } from "@/lib/cosmos/types";
 import type { GraphFilter, GraphNode, GraphNodeId, GraphPosition } from "@/lib/graph/types";
 import { fetchCosmos, fetchGraph, type GraphLoad, resetLayout, saveLayout, setStar } from "./api";
@@ -97,6 +97,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const [starBusy, setStarBusy] = useState(false);
   const panRef = useRef({ x: 0, y: 0 });
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
+  const loadRef = useRef(load);
+  loadRef.current = load;
   const [showSpinner, setShowSpinner] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [positions, setPositions] = useState<GraphPosition[]>([]);
@@ -288,38 +290,25 @@ export default function GraphView({ options }: { options: FilterOptions }) {
 
   async function toggleStar(id: GraphNodeId) {
     const current = cosmosData?.cosmos[id];
-    const node = byId.get(id);
-    if (!cosmosData || !current || !node || starBusy) return;
+    if (!cosmosData || !current || starBusy) return;
+    const startLoad = load.status === "ready" ? load.data : null;
     const starred = !current.starred;
     setStarBusy(true);
     try {
       await setStar(id, starred);
-      // Re-score locally (same nodes/edges, so the layout stays put).
-      const cosmos: CosmosResponse["cosmos"] = {
-        ...cosmosData.cosmos,
-        [id]: { ...current, starred, score: rescore(current, starred, node.archived) },
-      };
-      const scored = nodes.map((n) => ({
-        id: n.id,
-        type: n.type,
-        horizon: n.horizon,
-        degree: neighbors.get(n.id)?.size ?? 0,
-        lastActiveAt: cosmos[n.id]?.lastActiveAt ?? null,
-        direct: cosmos[n.id]?.direct ?? 0,
-        centrality: cosmos[n.id]?.centrality ?? 0,
-        recency: cosmos[n.id]?.recency ?? 0,
-        starred: cosmos[n.id]?.starred ?? false,
-        score: cosmos[n.id]?.score ?? 0,
-      }));
-      const next: Loaded = {
-        ...cosmosData,
-        mock: false,
-        cosmos,
-        top: topImportant(scored).map((x) => x.id),
-        lonely: lonelyStars(scored).map((x) => x.id),
-        neglected: neglectedImportant(scored, new Date()).map((x) => x.id),
-      };
-      setLoad({ status: "ready", data: next });
+      // Re-score locally (same nodes/edges, so the layout stays put) — but only if the
+      // data has not been replaced while the request was in flight.
+      const next = withStar(cosmosData, id, starred, new Date());
+      if (loadRef.current.status === "ready" && loadRef.current.data === startLoad && next) {
+        setLoad((prev) =>
+          prev.status === "ready" && prev.data === startLoad
+            ? { status: "ready", data: { ...next, mock: false } }
+            : prev,
+        );
+      } else {
+        // A newer load arrived meanwhile; fetch again so it includes this star.
+        setReloadKey((k) => k + 1);
+      }
       setAnnounce(starred ? "중요 표시함" : "중요 표시 해제함");
     } catch {
       setAnnounce("중요 표시를 바꾸지 못했습니다");
