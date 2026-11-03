@@ -60,8 +60,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
       case "area": {
         const row = await areas.get(ref.id);
+        // Same rule as the area page: own projects plus area-less ones toward its goals.
         const count = row
-          ? (await projects.list({ areaId: ref.id, includeArchived: !!row.archivedAt })).length
+          ? (await projects.listForArea(ref.id, { includeArchived: !!row.archivedAt })).length
           : 0;
         preview = row && areaPreview(row, count);
         break;

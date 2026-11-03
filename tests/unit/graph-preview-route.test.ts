@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it } from "vitest";
 import { GET } from "@/app/graph/preview/route";
 import type { NodePreview } from "@/components/graph/preview-types";
-import { goals, papers } from "@/lib/repo";
+import { archive, areas, goals, papers, projects } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { useFreshDb } from "./repo-helpers";
 
@@ -56,6 +56,28 @@ describe("GET /graph/preview", () => {
       { label: "상위", value: "좋은 연구자" },
     ]);
     expect((await get("goal:seed-missing")).status).toBe(404);
+  });
+
+  it("counts an area's projects like the area page, goal-reached ones included", async () => {
+    const area = await areas.create({ title: "연구" });
+    const other = await areas.create({ title: "건강" });
+    const life = await goals.create({ title: "인생", horizon: "life", areaId: area.id });
+    const year = await goals.create({
+      title: "연(상속)",
+      horizon: "year",
+      period: "2027",
+      parentId: life.id,
+    });
+    await projects.create({ title: "영역 프로젝트", areaId: area.id });
+    await projects.create({ title: "목표 경유 프로젝트", goalId: year.id });
+    await projects.create({ title: "다른 영역", areaId: other.id, goalId: year.id });
+    const shelved = await projects.create({ title: "보관 프로젝트", areaId: area.id });
+    await archive.archive({ type: "project", id: shelved.id });
+    const count = async () => ((await (await get(`area:${area.id}`)).json()) as NodePreview).props;
+    expect(await count()).toEqual([{ label: "프로젝트", value: "2개" }]);
+    // An archived area also counts its archived projects.
+    await archive.archive({ type: "area", id: area.id });
+    expect(await count()).toEqual([{ label: "프로젝트", value: "3개" }]);
   });
 
   it("includes the review period and state; 404 for a missing review", async () => {

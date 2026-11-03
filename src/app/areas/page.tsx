@@ -10,9 +10,8 @@ export const metadata: Metadata = { title: "영역" };
 export const dynamic = "force-dynamic";
 
 export default async function AreasPage() {
-  const [areaList, projectList] = await Promise.all([areas.list(), projects.list()]);
-  const counts = new Map<string, number>();
-  for (const p of projectList) if (p.areaId) counts.set(p.areaId, (counts.get(p.areaId) ?? 0) + 1);
+  // Counted like the area page: own projects plus area-less ones toward its goals.
+  const [areaList, counts] = await Promise.all([areas.list(), projects.countByArea()]);
 
   return (
     <Page>
