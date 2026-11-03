@@ -141,8 +141,8 @@ describe("goals repo", () => {
     ]);
     expect(yearNode.progress).toBe(35);
     expect(yearNode.children[0].projects).toEqual([
-      { id: done.id, title: "끝난 일", done: true, resourceCount: 0 },
-      { id: open.id, title: "진행 일", done: false, resourceCount: 2 },
+      { id: done.id, title: "끝난 일", done: true, resourceCount: 0, areaId: null },
+      { id: open.id, title: "진행 일", done: false, resourceCount: 2, areaId: null },
     ]);
 
     await archive.archive({ type: "goal", id: q2.id });

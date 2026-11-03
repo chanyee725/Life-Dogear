@@ -330,6 +330,7 @@ export type GoalProject = {
   done: boolean;
   /** Papers and seminars linked to the project (the goal map's "자료" count). */
   resourceCount: number;
+  areaId: string | null;
 };
 
 export type GoalNode = {
@@ -383,6 +384,7 @@ async function projectsByGoal(goalIds: string[]): Promise<Map<string, GoalProjec
       title: projects.title,
       status: projects.status,
       goalId: projects.goalId,
+      areaId: projects.areaId,
     })
     .from(projects)
     .where(and(inArray(projects.goalId, goalIds), isNull(projects.archivedAt)))
@@ -395,6 +397,7 @@ async function projectsByGoal(goalIds: string[]): Promise<Map<string, GoalProjec
       title: r.title,
       done: r.status === "done",
       resourceCount: counts.get(r.id) ?? 0,
+      areaId: r.areaId,
     });
     out.set(r.goalId!, list);
   }
@@ -508,13 +511,24 @@ export async function progressFor(ids?: readonly string[]): Promise<Record<strin
   return Object.fromEntries(wanted.filter((id) => all.has(id)).map((id) => [id, all.get(id)!]));
 }
 
-/** Keeps nodes of `areaId`; a matching goal under another area's goal moves up. */
-export function pruneToArea(nodes: readonly GoalNode[], areaId: string): GoalNode[] {
-  return nodes.flatMap((n) =>
-    n.goal.areaId === areaId
-      ? [{ ...n, children: pruneToArea(n.children, areaId) }]
-      : pruneToArea(n.children, areaId),
-  );
+/**
+ * The area's part of a goal forest. A goal belongs when its own area is `areaId`, or
+ * it has none and its parent belongs (the rule of `areas.effectiveAreas`); a belonging goal
+ * under another area's goal moves up. Projects are cut to the area's own projects;
+ * progress stays as computed over all of them.
+ */
+export function pruneToArea(
+  nodes: readonly GoalNode[],
+  areaId: string,
+  inherited: string | null = null,
+): GoalNode[] {
+  return nodes.flatMap((n) => {
+    const area = n.goal.areaId ?? inherited;
+    const children = pruneToArea(n.children, areaId, area);
+    return area === areaId
+      ? [{ ...n, children, projects: n.projects.filter((p) => p.areaId === areaId) }]
+      : children;
+  });
 }
 
 /**
