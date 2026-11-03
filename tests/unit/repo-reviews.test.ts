@@ -149,7 +149,7 @@ describe("weekly review draft", () => {
   const before = new Date(2026, 10, 1, 23, 59).toISOString();
   const after = new Date(2026, 10, 9, 0, 0).toISOString();
 
-  it("collects items made, projects finished this week once, with body links", async () => {
+  it("collects items made and projects finished this week once, as plain text", async () => {
     const made = await papers.create({ title: "이번 주 논문" });
     const old = await papers.create({ title: "지난주 논문" });
     const late = await papers.create({ title: "다음 주 논문" });
@@ -167,24 +167,18 @@ describe("weekly review draft", () => {
       .set({ createdAt: before, status: "done", completedAt: inWeek })
       .where(eq(projectsTable.id, done.id));
 
-    const digest = await reviews.weekDigest("2026-W45");
-    expect(digest).toEqual({
-      created: [{ title: "이번 주 논문" }],
+    expect(await reviews.weekDigest("2026-W45")).toEqual({
       doneTasks: [],
       finishedProjects: [{ title: "끝난 프로젝트" }],
+      created: [{ type: "paper", title: "이번 주 논문" }],
     });
 
     const { review } = await reviews.open("week", "2026-W45");
-    expect(review.body.startsWith("## 회고 메모")).toBe(true);
-    expect(review.body).toContain("### 만든 항목\n\n- [[이번 주 논문]]");
-    expect(review.body).toContain("### 끝난 프로젝트\n\n- [[끝난 프로젝트]]");
-    const rows = await db.select().from(linksTable);
-    expect(rows.map((r) => [r.sourceType, r.targetType, r.targetId, r.via]).sort()).toEqual(
-      [
-        ["review", "paper", made.id, "body"],
-        ["review", "project", done.id, "body"],
-      ].sort(),
-    );
+    expect(review.body.startsWith("## 이번 주 모음")).toBe(true);
+    expect(review.body).toContain("### 끝난 프로젝트 1\n- 끝난 프로젝트");
+    expect(review.body).toContain("### 새로 만든 항목 1\n- 논문 · 이번 주 논문");
+    expect(review.body.endsWith("## 회고 메모\n\n")).toBe(true);
+    expect(await db.select().from(linksTable)).toHaveLength(0);
 
     // Only once: reopening keeps what the user wrote.
     await reviews.update(review.id, { body: "고친 내용" });

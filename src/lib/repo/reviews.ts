@@ -8,7 +8,7 @@ import {
   seminars as seminarsTable,
   thoughts as thoughtsTable,
 } from "@/db/schema";
-import { ITEM_TYPE, REVIEW_KIND, type ReviewKind } from "@/lib/enums";
+import { ITEM_TYPE, REVIEW_KIND, type ItemType, type ReviewKind } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { weekDigestMarkdown, type WeekDigest } from "@/lib/reviews/draft";
 import {
@@ -182,14 +182,15 @@ export function weekBounds(period: string): { from: string; to: string } {
 }
 
 /**
- * What happened in a week, for the new weekly review's draft: non-archived items created
- * in it (oldest first), tasks done in it and projects completed in it. Fixed query count
+ * What happened in a week, for the new weekly review's draft: tasks done in it, projects
+ * completed in it and non-archived items created in it (oldest first). Fixed query count
  * (one per item table plus the tasks query), independent of the number of items.
  */
 export async function weekDigest(period: string): Promise<WeekDigest> {
   const { from, to } = weekBounds(period);
   const d = db();
-  const pick = (
+  const pick = <K extends ItemType>(
+    type: K,
     t:
       | typeof areasTable
       | typeof goalsTable
@@ -201,15 +202,16 @@ export async function weekDigest(period: string): Promise<WeekDigest> {
     d
       .select({ title: t.title, createdAt: t.createdAt })
       .from(t)
-      .where(and(gte(t.createdAt, from), lt(t.createdAt, to), isNull(t.archivedAt)));
+      .where(and(gte(t.createdAt, from), lt(t.createdAt, to), isNull(t.archivedAt)))
+      .then((rows) => rows.map((r) => ({ type, ...r })));
   const [areaRows, goalRows, projectRows, paperRows, seminarRows, thoughtRows, finished, done] =
     await Promise.all([
-      pick(areasTable),
-      pick(goalsTable),
-      pick(projectsTable),
-      pick(papersTable),
-      pick(seminarsTable),
-      pick(thoughtsTable),
+      pick("area", areasTable),
+      pick("goal", goalsTable),
+      pick("project", projectsTable),
+      pick("paper", papersTable),
+      pick("seminar", seminarsTable),
+      pick("thought", thoughtsTable),
       d
         .select({ title: projectsTable.title })
         .from(projectsTable)
@@ -232,11 +234,11 @@ export async function weekDigest(period: string): Promise<WeekDigest> {
     ...thoughtRows,
   ].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   return {
-    created: created.map((r) => ({ title: r.title })),
     doneTasks: [...done]
       .sort((a, b) => (a.doneAt ?? "").localeCompare(b.doneAt ?? ""))
       .map((t) => ({ title: t.title, parentTitle: t.parentTitle ?? null })),
     finishedProjects: finished,
+    created: created.map((r) => ({ type: r.type, title: r.title })),
   };
 }
 
@@ -268,7 +270,8 @@ export async function open(
     const raced = await findByPeriod(kind, period, tx);
     if (raced) return { review: raced, created: false };
     const now = nowIso();
-    const body = reviewTemplate(kind, templateGoals) + (digest ? weekDigestMarkdown(digest) : "");
+    // The week's digest goes above the memo (plain text, no body links).
+    const body = (digest ? weekDigestMarkdown(digest) : "") + reviewTemplate(kind, templateGoals);
     const row: Row = {
       id: newId(),
       kind,
@@ -283,8 +286,6 @@ export async function open(
       updatedAt: now,
     };
     await tx.insert(reviews).values(row);
-    // The draft's `[[제목]]` links count like any typed ones.
-    if (digest) await syncBodyLinks(tx, ref(row.id), body);
     return { review: toReview(row), created: true };
   });
 }
