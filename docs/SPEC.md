@@ -4,6 +4,7 @@
 - DB: Turso(libSQL) + Drizzle. `@libsql/client` 사용. `DATABASE_URL`이 없으면 로컬 파일 `file:./data/local.db`, 있으면 Turso(`DATABASE_URL`, `DATABASE_AUTH_TOKEN`). 원문의 "외부 서버로 데이터 보내지 않기"는 DB에 한해 사용자가 Turso로 바꿈. 토큰 값은 사용자가 .env에 직접 넣음 — 세션은 .env를 읽거나 만들지 말고 .env.example만 작성.
 - PDF 파일: 로컬 `data/pdfs/`에 저장 (클라우드 업로드 없음).
 - 실제 데이터는 사용자가 나중에 올림. 샘플 데이터는 seed 스크립트로만.
+- 3단계 범위 축소 (2026-11-03): 데이터 내보내기(JSON/Markdown)와 백업은 하지 않는다(사용자 결정, 범위 제외).
 - git 커밋은 이 저장소 local config 사용자(chanyee725)로. 커밋 메시지 `feat(scope): ...` / `fix(scope): ...` 영어.
 
 ## 원문
