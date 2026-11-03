@@ -84,13 +84,19 @@ export async function fetchPreview(
   return (await res.json()) as NodePreview;
 }
 
-export async function saveLayout(positions: GraphPosition[], mockMode: boolean): Promise<void> {
+export async function saveLayout(
+  positions: GraphPosition[],
+  mockMode: boolean,
+  opts: { keepalive?: boolean } = {},
+): Promise<void> {
   if (mockMode || positions.length === 0) return;
   const body: GraphLayoutBody = { positions };
   const res = await fetch("/api/graph/layout", {
     method: "PUT",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+    // Survives page unload; browsers cap keepalive bodies at 64KB.
+    keepalive: !!opts.keepalive && JSON.stringify(body).length < 60_000,
   });
   if (!res.ok) throw new Error(`layout ${res.status}`);
 }
