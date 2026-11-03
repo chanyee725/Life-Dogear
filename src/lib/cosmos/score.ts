@@ -101,6 +101,9 @@ export function directValue(input: ScoreInput, now: Date): number {
       return 0.2;
     case "tag":
       return 0.15;
+    case "task":
+      // Tasks never appear in the cosmos view.
+      return 0;
   }
 }
 

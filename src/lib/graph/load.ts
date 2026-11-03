@@ -9,6 +9,7 @@ import {
   reviews,
   seminars,
   tags,
+  tasks,
   thoughts,
 } from "@/db/schema";
 import { listPositions } from "@/lib/repo/graph-layout";
@@ -163,7 +164,7 @@ export async function existingNodeIds(nodeIds: readonly GraphNodeId[]): Promise<
   }
   const found = new Set<GraphNodeId>();
   for (const [type, ids] of byType) {
-    const t = type === "tag" ? tags : tableFor(type);
+    const t = type === "tag" ? tags : type === "task" ? tasks : tableFor(type);
     for (let i = 0; i < ids.length; i += IN_CHUNK) {
       const rows = await db()
         .select({ id: t.id })

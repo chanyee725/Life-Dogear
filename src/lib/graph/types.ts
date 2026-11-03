@@ -25,6 +25,7 @@ export const GRAPH_NODE_TYPE_ORDER = [
   "thought",
   "review",
   "tag",
+  "task",
 ] as const satisfies readonly GraphNodeType[];
 
 type MissingFromOrder = Exclude<GraphNodeType, (typeof GRAPH_NODE_TYPE_ORDER)[number]>;

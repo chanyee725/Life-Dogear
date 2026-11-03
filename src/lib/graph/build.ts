@@ -20,7 +20,8 @@ import {
 /** Node cap for the local graph (a hub's 2-step neighbourhood can be most of the graph). */
 export const MAX_LOCAL_NODES = 500;
 
-export type ItemNodeType = Exclude<GraphNodeType, "tag">;
+/** Item kinds (not topic or task nodes). */
+export type ItemNodeType = Exclude<GraphNodeType, "tag" | "task">;
 
 /** One row per item. Membership columns are filled only where the type has them. */
 export type SourceItem = {
@@ -59,7 +60,9 @@ export type GraphSource = {
   itemTags?: SourceTagging[];
 };
 
-export const ITEM_NODE_TYPES = GRAPH_NODE_TYPE_ORDER.filter((t): t is ItemNodeType => t !== "tag");
+export const ITEM_NODE_TYPES = GRAPH_NODE_TYPE_ORDER.filter(
+  (t): t is ItemNodeType => t !== "tag" && t !== "task",
+);
 
 const edgeKey = (a: string, b: string, kind: GraphEdgeKind) =>
   a < b ? `${kind}|${a}|${b}` : `${kind}|${b}|${a}`;
