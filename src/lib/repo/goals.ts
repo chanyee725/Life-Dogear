@@ -514,7 +514,8 @@ export async function progressFor(ids?: readonly string[]): Promise<Record<strin
 /**
  * The area's part of a goal forest. A goal belongs when its own area is `areaId`, or
  * it has none and its parent belongs (the rule of `areas.effectiveAreas`); a belonging goal
- * under another area's goal moves up. Projects are cut to the area's own projects;
+ * under another area's goal moves up. Projects are cut to the area's own projects and
+ * area-less ones (they count toward the goal's area, as in `areas.inAreaWhere`);
  * progress stays as computed over all of them.
  */
 export function pruneToArea(
@@ -526,7 +527,7 @@ export function pruneToArea(
     const area = n.goal.areaId ?? inherited;
     const children = pruneToArea(n.children, areaId, area);
     return area === areaId
-      ? [{ ...n, children, projects: n.projects.filter((p) => p.areaId === areaId) }]
+      ? [{ ...n, children, projects: n.projects.filter((p) => (p.areaId ?? areaId) === areaId) }]
       : children;
   });
 }

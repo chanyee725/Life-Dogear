@@ -9,7 +9,7 @@ import {
   type ProjectStatus,
 } from "@/lib/enums";
 import { PROJECT_TEMPLATE } from "@/lib/templates";
-import { isAssignable } from "./areas";
+import { goalsOfArea, inAreaWhere, isAssignable, liveGoalAreas, projectArea } from "./areas";
 import { isAssignable as isAssignableGoal } from "./goals";
 import { removeLinksFor, syncBodyLinks } from "./links";
 import {
@@ -182,6 +182,49 @@ export async function list(options: ProjectListOptions = {}): Promise<Project[]>
     .where(and(...where))
     .orderBy(...orderFor(ORDER, options.sort, "updated"));
   return withTags(rows);
+}
+
+/** A project on an area's page; `viaGoal` is set when it belongs only through a goal. */
+export type AreaProject = Project & { viaGoal: { id: string; title: string } | null };
+
+/**
+ * Projects of an area by the rule of `areas.inAreaWhere`: its own, plus area-less
+ * projects working toward one of its goals (own or inherited, non-archived), flagged
+ * with that goal. Non-archived, newest first. Fixed queries: goals, projects, tags.
+ */
+export async function listForArea(areaId: string): Promise<AreaProject[]> {
+  const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
+  const rows = await db()
+    .select()
+    .from(projects)
+    .where(and(archiveFilter(projects.archivedAt), inAreaWhere(areaId, areaGoals)))
+    .orderBy(...ORDER.updated);
+  const titles = new Map(areaGoals.map((g) => [g.id, g.title]));
+  return (await withTags(rows)).map((p) => ({
+    ...p,
+    viaGoal:
+      p.areaId === areaId || !p.goalId ? null : { id: p.goalId, title: titles.get(p.goalId)! },
+  }));
+}
+
+/**
+ * Non-archived project count per area, by the same rule as {@link listForArea}.
+ * Areas without projects are absent. Two queries.
+ */
+export async function countByArea(): Promise<Map<string, number>> {
+  const [{ areaOf }, rows] = await Promise.all([
+    liveGoalAreas(),
+    db()
+      .select({ areaId: projects.areaId, goalId: projects.goalId })
+      .from(projects)
+      .where(archiveFilter(projects.archivedAt)),
+  ]);
+  const out = new Map<string, number>();
+  for (const p of rows) {
+    const area = projectArea(p, areaOf);
+    if (area) out.set(area, (out.get(area) ?? 0) + 1);
+  }
+  return out;
 }
 
 export async function get(id: string): Promise<Project | null> {

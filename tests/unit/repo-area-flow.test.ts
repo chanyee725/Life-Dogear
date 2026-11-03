@@ -120,6 +120,12 @@ describe("areas.listMaterials", () => {
     const [, smallGoals] = await counted(() => goals.listTreeForArea(small.id));
     const [, bigGoals] = await counted(() => goals.listTreeForArea(big.id));
     expect(bigGoals).toBeLessThanOrEqual(smallGoals + 3);
+    const [, smallProjects] = await counted(() => projects.listForArea(small.id));
+    const [bigList, bigProjects] = await counted(() => projects.listForArea(big.id));
+    expect(bigList).toHaveLength(6);
+    expect(bigProjects).toBe(smallProjects);
+    const [, countQueries] = await counted(() => projects.countByArea());
+    expect(countQueries).toBe(2);
   });
 });
 
@@ -186,8 +192,8 @@ describe("goal area inheritance", () => {
     expect(root.children.map((n) => n.goal.id)).toEqual([year.id]);
     const qNode = root.children[0].children[0];
     expect(qNode.goal.id).toBe(q.id);
-    // Only this area's projects are listed; progress still counts all three.
-    expect(qNode.projects.map((p) => p.id)).toEqual([own.id]);
+    // This area's projects and area-less ones toward its goal; not B's. Progress counts all three.
+    expect(qNode.projects.map((p) => p.id)).toEqual([loose.id, own.id]);
     expect((await goals.listTreeForArea(B.id)).map((n) => n.goal.id)).toEqual([other.id]);
 
     expect(
@@ -197,5 +203,38 @@ describe("goal area inheritance", () => {
       ["영역 없는 프로젝트 세미나", ["project"]],
     ]);
     expect((await areas.listMaterials(B.id)).map((m) => m.title)).toEqual(["건강 목표 생각"]);
+
+    // The project section and counts reach the same projects as the material list.
+    const listed = await projects.listForArea(A.id);
+    expect(listed.map((p) => [p.id, p.viaGoal])).toEqual(
+      expect.arrayContaining([
+        [own.id, null],
+        [loose.id, { id: q.id, title: "분기(상속)" }],
+      ]),
+    );
+    expect(listed).toHaveLength(2);
+    expect((await projects.listForArea(B.id)).map((p) => p.title)).toEqual(["건강 프로젝트"]);
+    const counts = await projects.countByArea();
+    expect([counts.get(A.id), counts.get(B.id)]).toEqual([2, 1]);
+  });
+
+  it("leaves out projects whose goal chain is archived, or that are archived", async () => {
+    const A = await areas.create({ title: "연구" });
+    const life = await goals.create({ title: "인생", horizon: "life", areaId: A.id });
+    const year = await goals.create({
+      title: "연",
+      horizon: "year",
+      period: "2027",
+      parentId: life.id,
+    });
+    const viaYear = await projects.create({ title: "연 목표 프로젝트", goalId: year.id });
+    const shelved = await projects.create({ title: "보관 프로젝트", goalId: life.id });
+    await archive.archive({ type: "project", id: shelved.id });
+    expect((await projects.listForArea(A.id)).map((p) => p.id)).toEqual([viaYear.id]);
+    expect((await projects.countByArea()).get(A.id)).toBe(1);
+    // Archiving the parent breaks the inheritance.
+    await archive.archive({ type: "goal", id: life.id });
+    expect(await projects.listForArea(A.id)).toEqual([]);
+    expect((await projects.countByArea()).has(A.id)).toBe(false);
   });
 });

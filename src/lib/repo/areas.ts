@@ -222,6 +222,54 @@ export function effectiveAreas(
   return out;
 }
 
+export type GoalHead = {
+  id: string;
+  title: string;
+  parentId: string | null;
+  areaId: string | null;
+};
+
+/**
+ * Non-archived goals with the area each counts toward ({@link effectiveAreas}; an
+ * archived parent breaks the chain). One query.
+ */
+export async function liveGoalAreas(
+  exec: Executor = db(),
+): Promise<{ goals: GoalHead[]; areaOf: Map<string, string | null> }> {
+  const list = await exec
+    .select({ id: goals.id, title: goals.title, parentId: goals.parentId, areaId: goals.areaId })
+    .from(goals)
+    .where(isNull(goals.archivedAt));
+  return { goals: list, areaOf: effectiveAreas(list) };
+}
+
+/** The goals (from {@link liveGoalAreas}) that count toward `areaId`. */
+export const goalsOfArea = (
+  live: { goals: GoalHead[]; areaOf: Map<string, string | null> },
+  areaId: string,
+): GoalHead[] => live.goals.filter((g) => live.areaOf.get(g.id) === areaId);
+
+/**
+ * Projects of an area: its own, plus area-less projects working toward one of its
+ * goals (`areaGoals`, from {@link goalsOfArea}). Archive state is left to the caller.
+ */
+export function inAreaWhere(areaId: string, areaGoals: readonly { id: string }[]): SQL {
+  const goalIds = areaGoals.map((g) => g.id);
+  return or(
+    eq(projects.areaId, areaId),
+    goalIds.length ? and(isNull(projects.areaId), inArray(projects.goalId, goalIds)) : undefined,
+  )!;
+}
+
+/**
+ * Area a project counts toward by the rule of {@link inAreaWhere}: its own area, else the
+ * area of the goal it works toward (`areaOf` from {@link liveGoalAreas}).
+ */
+export const projectArea = (
+  p: { areaId: string | null; goalId: string | null },
+  areaOf: ReadonlyMap<string, string | null>,
+): string | null => p.areaId ?? (p.goalId ? (areaOf.get(p.goalId) ?? null) : null);
+
 // ---------------------------------------------------------------------------
 // Material (논문·세미나·생각) around an area
 
@@ -249,29 +297,11 @@ const typeOrder = (t: string) => MATERIAL_TYPES.indexOf(t);
  * per material type.
  */
 export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
-  // Goals count toward the area by the inheritance rule (non-archived chain only).
-  const liveGoals = await db()
-    .select({ id: goals.id, title: goals.title, parentId: goals.parentId, areaId: goals.areaId })
-    .from(goals)
-    .where(isNull(goals.archivedAt));
-  const areaOf = effectiveAreas(liveGoals);
-  const areaGoals = liveGoals.filter((g) => areaOf.get(g.id) === areaId);
-  // The area's projects, plus area-less projects working toward one of its goals.
-  const goalIds = areaGoals.map((g) => g.id);
+  const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
   const areaProjects = await db()
     .select({ id: projects.id, title: projects.title })
     .from(projects)
-    .where(
-      and(
-        isNull(projects.archivedAt),
-        or(
-          eq(projects.areaId, areaId),
-          goalIds.length
-            ? and(isNull(projects.areaId), inArray(projects.goalId, goalIds))
-            : undefined,
-        ),
-      ),
-    );
+    .where(and(isNull(projects.archivedAt), inAreaWhere(areaId, areaGoals)));
 
   const sources = new Map<string, MaterialVia>([[refKey(ref(areaId)), { type: "area" }]]);
   for (const p of areaProjects) sources.set(`project:${p.id}`, { type: "project", ...p });
