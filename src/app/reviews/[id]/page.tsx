@@ -7,6 +7,7 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { DetailBody } from "@/components/fields/ItemDetail";
 import { ItemForm } from "@/components/fields/ItemForm";
+import { LocalGraph } from "@/components/graph/LocalGraph";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -226,6 +227,7 @@ export default async function ReviewDetailPage({ params }: Props) {
         </Step>
       ) : null}
       <ConnectedItems item={ref} />
+      <LocalGraph node={`review:${review.id}`} />
     </Page>
   );
 }
