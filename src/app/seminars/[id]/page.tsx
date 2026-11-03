@@ -4,7 +4,7 @@ import { isValidItemId } from "@/lib/ids";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
-import { ConnectedItems } from "@/components/links";
+import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
 import { seminars, tags } from "@/lib/repo";
 import { deleteSeminar, updateSeminar } from "../actions";
@@ -69,7 +69,7 @@ export default async function SeminarDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      <ConnectedItems item={{ type: "seminar", id: seminar.id }} />
+      <ConnectedWithGraph item={{ type: "seminar", id: seminar.id }} />
     </Page>
   );
 }
