@@ -8,12 +8,15 @@ import { currentPeriod } from "@/lib/repo/goals";
 import { areaOptionsFor } from "../../projects/ProjectFields";
 import { createGoal } from "../actions";
 import { GoalFields } from "../GoalFields";
-import { parentOptionsFor } from "../options";
+import { initialAreaId, parentOptionsFor } from "../options";
 
 export const metadata: Metadata = { title: "새 목표" };
 export const dynamic = "force-dynamic";
 
-/** `?horizon=life|year|quarter` picks the level; `?parent=<id>` preselects the parent. */
+/**
+ * `?horizon=life|year|quarter` picks the level; `?parent=<id>` preselects the parent;
+ * `?area=<id>` preselects the area (ignored unless it is a non-archived area).
+ */
 export default async function NewGoalPage({
   searchParams,
 }: {
@@ -55,7 +58,7 @@ export default async function NewGoalPage({
             horizon,
             period,
             parentId: fitsParent ? parent.id : null,
-            areaId: parent?.areaId ?? null,
+            areaId: initialAreaId(firstParam(params, "area"), areaList, parent?.areaId),
             why: "",
             status: "active",
             progressMode: "auto",

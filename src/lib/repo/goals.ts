@@ -507,3 +507,20 @@ export async function progressFor(ids?: readonly string[]): Promise<Record<strin
   const wanted = ids ?? [...all.keys()];
   return Object.fromEntries(wanted.filter((id) => all.has(id)).map((id) => [id, all.get(id)!]));
 }
+
+/** Keeps nodes of `areaId`; a matching goal under another area's goal moves up. */
+export function pruneToArea(nodes: readonly GoalNode[], areaId: string): GoalNode[] {
+  return nodes.flatMap((n) =>
+    n.goal.areaId === areaId
+      ? [{ ...n, children: pruneToArea(n.children, areaId) }]
+      : pruneToArea(n.children, areaId),
+  );
+}
+
+/**
+ * Non-archived goals of an area as a tree (life → year → quarter), with progress as on
+ * `/goals` (computed over all child goals). Same fixed queries as {@link listTree}.
+ */
+export async function listTreeForArea(areaId: string): Promise<GoalNode[]> {
+  return pruneToArea(await listTree(), areaId);
+}

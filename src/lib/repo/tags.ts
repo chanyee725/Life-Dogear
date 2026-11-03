@@ -1,5 +1,7 @@
 import { and, asc, eq, inArray, notExists, sql } from "drizzle-orm";
-import { areas, itemTags, papers, projects, seminars, tags, thoughts } from "@/db/schema";
+import { itemTags, tags } from "@/db/schema";
+import { ITEM_TYPE } from "@/lib/enums";
+import { tableFor } from "./items";
 import {
   assertItemRef,
   db,
@@ -102,18 +104,12 @@ export async function getTagsFor(
   return result;
 }
 
-/** item_tags row whose item is archived (any type). */
+/** item_tags row whose item is archived. Built from `ITEM_TYPE`, so every item type counts. */
 const onArchivedItem = sql.join(
-  [
-    ["project", projects],
-    ["paper", papers],
-    ["seminar", seminars],
-    ["thought", thoughts],
-    ["area", areas],
-  ].map(
-    ([type, t]) =>
-      sql`(${itemTags.itemType} = ${type} and exists (select 1 from ${t} where ${t}.id = ${itemTags.itemId} and ${t}.archived_at is not null))`,
-  ),
+  ITEM_TYPE.values.map((type) => {
+    const t = tableFor(type);
+    return sql`(${itemTags.itemType} = ${type} and exists (select 1 from ${t} where ${t.id} = ${itemTags.itemId} and ${t.archivedAt} is not null))`;
+  }),
   sql` or `,
 );
 

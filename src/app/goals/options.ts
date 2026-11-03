@@ -36,3 +36,18 @@ export function goalOptionsFor(
     .filter((g) => !g.archivedAt || g.id === current)
     .map((g) => ({ value: g.id, label: labelFor(g) }));
 }
+
+/**
+ * Area preselected on the new-goal page: `?area=` when it names a selectable
+ * (non-archived) area, else the parent goal's area if selectable, else none.
+ */
+export function initialAreaId(
+  areaParam: string | undefined,
+  selectable: readonly { id: string; archivedAt?: string | null }[],
+  parentAreaId: string | null = null,
+): string | null {
+  const ok = (id: string | null | undefined) =>
+    !!id && selectable.some((a) => a.id === id && !a.archivedAt);
+  if (ok(areaParam)) return areaParam!;
+  return ok(parentAreaId) ? parentAreaId : null;
+}
