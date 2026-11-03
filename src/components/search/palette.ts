@@ -24,6 +24,7 @@ export function isPaletteShortcut(e: PaletteKeyEvent): boolean {
 }
 
 export function typeLabel(type: SearchHitType): string {
+  if (type === "task") return "할 일";
   return type === "highlight" ? "하이라이트" : ITEM_TYPE.label(type);
 }
 
@@ -31,12 +32,14 @@ export function typeLabel(type: SearchHitType): string {
 export const HIGHLIGHT_TONE: BadgeTone = "green";
 
 export function typeTone(type: SearchHitType): BadgeTone {
+  if (type === "task") return "gray";
   return type === "highlight" ? HIGHLIGHT_TONE : ITEM_TYPE.tone(type);
 }
 
 /** Short hint for where a non-title match was found. */
 export function fieldHint(hit: SearchHit): string | null {
   if (hit.type === "highlight") return hit.page ? `${hit.page}쪽` : null;
+  if (hit.type === "task") return hit.parentTitle ?? null;
   switch (hit.field) {
     case "meta":
       return "정보";

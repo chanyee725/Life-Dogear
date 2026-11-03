@@ -1,7 +1,10 @@
 import type { ItemType } from "@/lib/enums";
 
-/** What a hit points at: an item (project, area, paper, seminar, thought, goal, review), or a PDF highlight. */
-export type SearchHitType = ItemType | "highlight";
+/**
+ * What a hit points at: an item (project, area, paper, seminar, thought, goal, review),
+ * a PDF highlight, or a task (opens its parent's page, or `/tasks` without one).
+ */
+export type SearchHitType = ItemType | "highlight" | "task";
 
 /** Which text matched; drives ranking and the hint shown next to the snippet. */
 export type SearchField = "title" | "meta" | "body" | "highlight" | "note";
@@ -18,6 +21,8 @@ export type SearchHit = {
   field: SearchField;
   /** Detail page, or the PDF reader at the highlight's page. */
   href: string;
+  /** Tasks only: the parent's title (absent for inbox tasks). */
+  parentTitle?: string;
   /** Highlights only. */
   paperId?: string;
   page?: number;

@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { setDb } from "@/db/client";
 import * as schema from "@/db/schema";
-import { archive, areas, goals, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { archive, areas, goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { searchAll } from "@/lib/search";
 import {
@@ -457,13 +457,41 @@ describe("query count", () => {
     return queries;
   }
 
-  it("runs one query per source (7 item types + highlights), however many rows match", async () => {
-    expect(await countSearch("목표")).toBe(8);
+  it("runs one query per source (7 item types + highlights + tasks), however many rows match", async () => {
+    expect(await countSearch("목표")).toBe(9);
     for (let i = 0; i < 3; i++) {
       await goals.create({ title: `목표 ${i}`, horizon: "life" });
       await thoughts.create({ title: `목표 생각 ${i}` });
     }
     await reviews.open("week", "2026-W44");
-    expect(await countSearch("목표")).toBe(8);
+    const g = await goals.create({ title: "할 일 목표", horizon: "life" });
+    for (let i = 0; i < 3; i++)
+      await tasks.create({ title: `목표 할 일 ${i}`, parent: { type: "goal", id: g.id } });
+    expect(await countSearch("목표")).toBe(9);
+  });
+});
+
+describe("task source", () => {
+  beforeEach(async () => {
+    const db = drizzle(createClient({ url: ":memory:" }), { schema });
+    await migrate(db, { migrationsFolder: "drizzle" });
+    setDb(db);
+  });
+
+  it("finds tasks by title, opening the parent or /tasks", async () => {
+    const p = await projects.create({ title: "논문 A" });
+    await tasks.create({ title: "초안 쓰기", parent: { type: "project", id: p.id } });
+    await tasks.create({ title: "초안 인쇄" });
+    await tasks.create({ title: "관계 없음" });
+    const hits = (await searchAll("초안")).filter((h) => h.type === "task");
+    expect(hits.map((h) => [h.type, h.title, h.href, h.parentTitle]).sort()).toEqual(
+      [
+        ["task", "초안 쓰기", `/projects/${p.id}`, "논문 A"],
+        ["task", "초안 인쇄", "/tasks?tab=by-parent", undefined],
+      ].sort(),
+    );
+    await archive.archive({ type: "project", id: p.id });
+    const after = await searchAll("초안 쓰기");
+    expect(after[0]).toMatchObject({ type: "task", archived: true });
   });
 });
