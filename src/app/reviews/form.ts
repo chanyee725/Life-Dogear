@@ -2,8 +2,9 @@ import { formText, MAX_BODY, optionalText } from "@/app/_actions/parse";
 import { RepoError } from "@/lib/repo";
 import type { ReviewPatch } from "@/lib/repo/reviews";
 
-/** Hidden input of the focus picker: `type:id` refs joined by commas (empty = none). */
-export const FOCUS_FIELD = "focus";
+import { FOCUS_FIELD } from "./focus-field";
+
+export { FOCUS_FIELD };
 const MAX_FOCUS_FIELD = 400;
 
 /** `"project:…,goal:…"` → refs (validated again by the repo). */

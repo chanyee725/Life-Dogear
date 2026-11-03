@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
-import { FOCUS_FIELD } from "./form";
+import { FOCUS_FIELD } from "./focus-field";
 
 export type FocusOption = {
   key: string;
