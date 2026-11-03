@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, useId } from "react";
-import { Button } from "@/components/ui/Button";
+import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
@@ -24,9 +24,16 @@ const Divider = () => <span aria-hidden className="h-4 w-px shrink-0 bg-border" 
 const selectClass =
   "rb-select h-7 max-w-44 cursor-pointer rounded-md border border-border bg-bg pr-7 pl-2 text-[13px] text-fg hover:border-border-strong focus:border-accent focus:ring-2 focus:ring-ring focus:outline-none";
 
+/** Conditions kept behind the compact bar's "필터" button (area, topic, archived, orphans). */
+export function hiddenFilterCount(filter: GraphFilter): number {
+  return [filter.area, filter.tag, filter.archived, filter.orphans].filter(Boolean).length;
+}
+
 /**
  * Filter controls (design 6.2): type chips (also the legend), area and topic selects,
  * archived / orphans checkboxes, reset. `stacked` lays them out vertically (narrow panel).
+ * `compact` (medium widths, where one row would wrap): the chips stay in the row and the
+ * selects and checkboxes move into a "필터" popover.
  */
 export function GraphFilterControls({
   filter,
@@ -34,12 +41,14 @@ export function GraphFilterControls({
   options,
   theme,
   stacked = false,
+  compact = false,
 }: {
   filter: GraphFilter;
   onChange: (next: GraphFilter) => void;
   options: FilterOptions;
   theme: GraphTheme;
   stacked?: boolean;
+  compact?: boolean;
 }) {
   const id = useId();
   const types = new Set(shownTypes(filter));
@@ -78,7 +87,7 @@ export function GraphFilterControls({
   };
 
   const main = GRAPH_TYPE_ORDER.filter((t) => !OPT_IN_TYPES.includes(t));
-  const sections = [
+  const typesSection = (
     <div key="types" role="group" aria-label="종류" className="flex flex-wrap items-center gap-1.5">
       {main.map(chip)}
       <Divider />
@@ -93,8 +102,13 @@ export function GraphFilterControls({
           완료 포함
         </label>
       ) : null}
-    </div>,
-    <div key="selects" className="flex flex-wrap items-center gap-3">
+    </div>
+  );
+  const selectsSection = (
+    <div
+      key="selects"
+      className={cn("flex flex-wrap gap-3", compact ? "flex-col items-start" : "items-center")}
+    >
       <span className="inline-flex items-center gap-1.5">
         <label htmlFor={`${id}-area`} className="text-[13px] text-muted">
           영역
@@ -134,8 +148,13 @@ export function GraphFilterControls({
           ))}
         </select>
       </span>
-    </div>,
-    <div key="checks" className="flex flex-wrap items-center gap-3">
+    </div>
+  );
+  const checksSection = (
+    <div
+      key="checks"
+      className={cn("flex flex-wrap gap-3", compact ? "flex-col items-start" : "items-center")}
+    >
       <label className="inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-fg">
         <input
           type="checkbox"
@@ -152,9 +171,30 @@ export function GraphFilterControls({
         />
         연결 없는 항목만
       </label>
-    </div>,
-  ];
+    </div>
+  );
+  const reset = !isDefaultFilter(filter) ? (
+    <Button variant="ghost" size="sm" className="shrink-0" onClick={() => onChange({})}>
+      필터 초기화
+    </Button>
+  ) : null;
 
+  if (compact) {
+    const hidden = hiddenFilterCount(filter);
+    return (
+      <div className="flex items-center gap-3">
+        {typesSection}
+        <Divider />
+        <FilterPopover label={`필터${hidden ? ` ${hidden}` : ""}`}>
+          {selectsSection}
+          {checksSection}
+        </FilterPopover>
+        {reset}
+      </div>
+    );
+  }
+
+  const sections = [typesSection, selectsSection, checksSection];
   return (
     <div className={cn("flex", stacked ? "flex-col items-start gap-3" : "items-center gap-3")}>
       {sections.map((s, i) => (
@@ -163,11 +203,55 @@ export function GraphFilterControls({
           {s}
         </Fragment>
       ))}
-      {!isDefaultFilter(filter) ? (
-        <Button variant="ghost" size="sm" onClick={() => onChange({})}>
-          필터 초기화
-        </Button>
-      ) : null}
+      {reset}
+    </div>
+  );
+}
+
+/** "필터 n" button with the less-used controls in a popover (closes on Esc or outside click). */
+function FilterPopover({ label, children }: { label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+  return (
+    <div
+      ref={rootRef}
+      className="relative shrink-0"
+      onKeyDown={(e) => {
+        if (open && e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(false);
+          buttonRef.current?.focus();
+        }
+      }}
+    >
+      <button
+        ref={buttonRef}
+        type="button"
+        className={buttonClass("secondary", "sm")}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label}
+      </button>
+      <div
+        id={panelId}
+        hidden={!open}
+        className="absolute top-full left-0 z-30 mt-1.5 flex w-max flex-col gap-3 rounded-lg border border-border bg-bg p-3 shadow-overlay"
+      >
+        {children}
+      </div>
     </div>
   );
 }
