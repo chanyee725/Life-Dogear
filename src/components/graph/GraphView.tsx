@@ -3,6 +3,8 @@
 /**
  * `/graph` screen (docs/design/graph.md 6–7, 9–11): top bar, filter bar, force canvas with
  * PARA columns, node search, preview panel, keyboard navigation. Client only.
+ * `[기본 | ✦ 우주]` switches to the cosmos view (docs/design/cosmos.md): its own canvas,
+ * star field, side panel and "왜 중요한가" preview, with the same keyboard and search.
  */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,21 +17,28 @@ import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Kbd } from "@/components/ui/Kbd";
 import { Spinner } from "@/components/ui/Spinner";
+import { constellationPath } from "@/lib/cosmos/path";
+import { withStar } from "@/lib/cosmos/star-patch";
+import type { CosmosResponse } from "@/lib/cosmos/types";
 import type { GraphFilter, GraphNode, GraphNodeId, GraphPosition } from "@/lib/graph/types";
-import { fetchGraph, type GraphLoad, resetLayout, saveLayout } from "./api";
+import { fetchCosmos, fetchGraph, type GraphLoad, resetLayout, saveLayout, setStar } from "./api";
+import { CosmosPanel, useCosmosPanelCollapsed } from "./CosmosPanel";
+import { freeArea } from "./cosmos-model";
 import { createLayoutSaver } from "./layout-saver";
 import type { GraphCanvasApi } from "./GraphCanvas";
-import { GraphCanvasLazy } from "./GraphCanvasLazy";
+import { CosmosCanvasLazy, GraphCanvasLazy } from "./GraphCanvasLazy";
 import { type FilterOptions, GraphFilterControls } from "./GraphFilterBar";
 import { GraphPreview } from "./GraphPreview";
 import { GraphSearch } from "./GraphSearch";
-import { useGraphTheme, useReducedMotion } from "./graph-theme";
+import { COSMOS_THEME, useGraphTheme, useReducedMotion } from "./graph-theme";
 import {
   activeFilterCount,
   buildNeighbors,
   cycleNeighbor,
   type Direction,
   goalLabel,
+  GRAPH_MODE_STORAGE_KEY,
+  type GraphMode,
   graphQuery,
   GRAPH_TYPE_LABEL,
   type GraphView as ViewMode,
@@ -43,13 +52,22 @@ import {
   parsePageQuery,
   shownTypes,
 } from "./model";
+import { StarField } from "./StarField";
 import { useElementSize } from "./use-element-size";
 
 const PANEL_OFFSET = 168; // (320 + 16) / 2: keeps the selected node clear of the preview.
 const NARROW = 900;
 const LARGE_NOTICE_KEY = "rb-graph-large-notice";
 
-type LoadState = { status: "loading" } | { status: "error" } | { status: "ready"; data: GraphLoad };
+type Loaded = GraphLoad & Partial<Omit<CosmosResponse, keyof GraphLoad>>;
+type LoadState = { status: "loading" } | { status: "error" } | { status: "ready"; data: Loaded };
+
+/** Cosmos data when this load came from `/api/graph/cosmos`. */
+function asCosmos(data: Loaded | null): CosmosResponse | null {
+  return data?.cosmos && data.galaxies && data.top && data.lonely && data.neglected
+    ? (data as CosmosResponse)
+    : null;
+}
 
 function typeLabel(node: GraphNode): string {
   return node.type === "goal" ? goalLabel(node) : GRAPH_TYPE_LABEL[node.type];
@@ -68,7 +86,20 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   );
   const [filter, setFilter] = useState<GraphFilter>(initial.filter);
   const [view, setView] = useState<ViewMode>(initial.view);
+  const [graphMode, setGraphMode] = useState<GraphMode>(
+    () =>
+      initial.mode ??
+      (typeof window !== "undefined" && localStorage.getItem(GRAPH_MODE_STORAGE_KEY) === "cosmos"
+        ? "cosmos"
+        : "basic"),
+  );
+  const cosmosMode = graphMode === "cosmos";
+  const [externalHover, setExternalHover] = useState<GraphNodeId | null>(null);
+  const [starBusy, setStarBusy] = useState(false);
+  const panRef = useRef({ x: 0, y: 0 });
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
+  const loadRef = useRef(load);
+  loadRef.current = load;
   const [showSpinner, setShowSpinner] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [positions, setPositions] = useState<GraphPosition[]>([]);
@@ -86,6 +117,11 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const [rootRef, rootSize] = useElementSize<HTMLDivElement>();
   const [canvasRef, canvasSize] = useElementSize<HTMLDivElement>();
   const narrow = rootSize.width > 0 && rootSize.width < NARROW;
+  const [panelCollapsed, togglePanel] = useCosmosPanelCollapsed(narrow);
+  /** Cosmos camera move to run after the render that opens the preview (insets change). */
+  const pendingCamera = useRef<{ id: GraphNodeId; zoom?: number } | null>(null);
+  /** Bumped on every cosmos selection so re-selecting the same node still moves the camera. */
+  const [cameraTick, setCameraTick] = useState(0);
 
   useEffect(() => {
     setLargeDismissed(sessionStorage.getItem(LARGE_NOTICE_KEY) === "1");
@@ -96,7 +132,10 @@ export default function GraphView({ options }: { options: FilterOptions }) {
     const controller = new AbortController();
     setLoad((prev) => (prev.status === "ready" ? prev : { status: "loading" }));
     const spinner = setTimeout(() => setShowSpinner(true), 300);
-    fetchGraph(filter, controller.signal)
+    const request: Promise<Loaded> = cosmosMode
+      ? fetchCosmos(filter, controller.signal).then((d) => ({ ...d, mock: false }))
+      : fetchGraph(filter, controller.signal);
+    request
       .then((data) => {
         pins.current = new Map(data.positions.map((p) => [p.node, p]));
         setPositions(data.positions);
@@ -113,11 +152,13 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       controller.abort();
       clearTimeout(spinner);
     };
-  }, [filter, reloadKey]);
+  }, [filter, reloadKey, cosmosMode]);
 
   // URL mirrors filter/view/selection (refresh and share keep the view).
   useEffect(() => {
-    const params = new URLSearchParams(pageQuery({ filter, view, focus: selectedId }));
+    const params = new URLSearchParams(
+      pageQuery({ filter, view, focus: selectedId, mode: graphMode }),
+    );
     // Keep the performance-check mock (`?mock=<n>`) across filter changes.
     const mock = new URLSearchParams(window.location.search).get("mock");
     if (mock) params.set("mock", mock);
@@ -127,9 +168,11 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       "",
       `${window.location.pathname}${q ? `?${q}` : ""}`,
     );
-  }, [filter, view, selectedId]);
+  }, [filter, view, selectedId, graphMode]);
 
   const data = load.status === "ready" ? load.data : null;
+  // The canvas switches only once data of the matching kind has arrived.
+  const cosmosData = cosmosMode ? asCosmos(data) : null;
   const nodes = useMemo(() => data?.nodes ?? [], [data]);
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const neighbors = useMemo(() => buildNeighbors(data?.edges ?? []), [data]);
@@ -178,6 +221,14 @@ export default function GraphView({ options }: { options: FilterOptions }) {
     setView(next);
   }
 
+  function changeMode(next: GraphMode) {
+    if (next === graphMode) return;
+    if (next === "basic") setPositions([...pins.current.values()]);
+    setGraphMode(next);
+    localStorage.setItem(GRAPH_MODE_STORAGE_KEY, next);
+    setAnnounce(next === "cosmos" ? "우주 보기" : "기본 보기");
+  }
+
   async function confirmReset() {
     setResetOpen(false);
     try {
@@ -194,19 +245,107 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   }
 
   // ----- Selection, search, keyboard -----
+  const pathFor = useCallback(
+    (id: GraphNodeId) => constellationPath(id, nodes, data?.edges ?? []),
+    [nodes, data],
+  );
+  const constellation = useMemo(
+    () => (cosmosData && selectedId ? pathFor(selectedId) : null),
+    [cosmosData, selectedId, pathFor],
+  );
+
   const select = useCallback(
     (id: GraphNodeId | null, opts: { center?: boolean; zoom?: number } = {}) => {
       setSelectedId(id);
       if (!id) return;
       const node = byId.get(id);
-      if (node) setAnnounce(`${typeLabel(node)} ${node.title}, 연결 ${node.size}개. 미리보기 열림`);
+      if (node) {
+        let text = `${typeLabel(node)} ${node.title}, 연결 ${node.size}개. 미리보기 열림`;
+        const info = cosmosData?.cosmos[id];
+        if (info) {
+          const steps = pathFor(id).stepsToLife;
+          text += `. 중요도 ${info.score.toFixed(2)}`;
+          text += steps === null ? "." : `, 인생 목표까지 ${steps}단계.`;
+        }
+        setAnnounce(text);
+      }
+      if (cosmosData) {
+        // 6.2: done after render, against the free area with the preview open.
+        pendingCamera.current = { id, zoom: opts.center ? opts.zoom : undefined };
+        setCameraTick((t) => t + 1);
+        return;
+      }
       const api = apiRef.current;
       if (!api) return;
       if (opts.center) api.focusNode(id, { zoom: opts.zoom, offsetX: PANEL_OFFSET, duration: 400 });
       else if (api.isHidden(id, 336)) api.focusNode(id, { offsetX: PANEL_OFFSET, duration: 300 });
     },
-    [byId],
+    [byId, cosmosData, pathFor],
   );
+
+  const insets = freeArea(canvasSize.width, !!cosmosData && !panelCollapsed, !!selected);
+  useEffect(() => {
+    const move = pendingCamera.current;
+    const api = apiRef.current;
+    if (!move || !api || move.id !== selectedId) return;
+    pendingCamera.current = null;
+    if (move.zoom) {
+      // Search pick: centre the node in the free area and zoom in (6.3 of graph.md).
+      api.focusNode(move.id, {
+        zoom: move.zoom,
+        offsetX: (insets.right - insets.left) / 2,
+        duration: 400,
+      });
+    } else if (constellation) {
+      api.fitNodes?.(constellation.order, 300, move.id);
+    }
+  }, [selectedId, constellation, insets.left, insets.right, cameraTick]);
+
+  /** Keyboard start: in the cosmos view the brightest sun, else the top-scored node. */
+  const startFocus = useCallback((): GraphNodeId | null => {
+    if (cosmosData) {
+      if (selectedId && byId.has(selectedId)) return selectedId;
+      const score = (id: GraphNodeId) => cosmosData.cosmos[id]?.score ?? 0;
+      const suns = nodes.filter((n) => cosmosData.cosmos[n.id]?.sun);
+      const pool = suns.length ? suns : nodes;
+      return (
+        pool.reduce<GraphNode | null>(
+          (best, n) => (!best || score(n.id) > score(best.id) ? n : best),
+          null,
+        )?.id ?? null
+      );
+    }
+    return initialFocus(nodes, selectedId);
+  }, [cosmosData, nodes, selectedId, byId]);
+
+  async function toggleStar(id: GraphNodeId) {
+    const current = cosmosData?.cosmos[id];
+    if (!cosmosData || !current || starBusy) return;
+    const startLoad = load.status === "ready" ? load.data : null;
+    const starred = !current.starred;
+    setStarBusy(true);
+    try {
+      await setStar(id, starred);
+      // Re-score locally (same nodes/edges, so the layout stays put) — but only if the
+      // data has not been replaced while the request was in flight.
+      const next = withStar(cosmosData, id, starred, new Date());
+      if (loadRef.current.status === "ready" && loadRef.current.data === startLoad && next) {
+        setLoad((prev) =>
+          prev.status === "ready" && prev.data === startLoad
+            ? { status: "ready", data: { ...next, mock: false } }
+            : prev,
+        );
+      } else {
+        // A newer load arrived meanwhile; fetch again so it includes this star.
+        setReloadKey((k) => k + 1);
+      }
+      setAnnounce(starred ? "중요 표시함" : "중요 표시 해제함");
+    } catch {
+      setAnnounce("중요 표시를 바꾸지 못했습니다");
+    } finally {
+      setStarBusy(false);
+    }
+  }
 
   useEffect(() => {
     const open = () => setSearchOpen(true);
@@ -233,7 +372,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   function onCanvasKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.target !== e.currentTarget) return;
     const api = apiRef.current;
-    const current = focusId ?? initialFocus(nodes, selectedId);
+    const current = focusId ?? startFocus();
     const arrows: Record<string, Direction> = {
       ArrowLeft: "left",
       ArrowRight: "right",
@@ -314,7 +453,10 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const onReady = useCallback((api: GraphCanvasApi) => {
     apiRef.current = api;
   }, []);
-  const onTransform = useCallback(() => setTransformTick((t) => t + 1), []);
+  const onTransform = useCallback((t?: { k: number; x: number; y: number }) => {
+    if (t) panRef.current = { x: t.x, y: t.y };
+    setTransformTick((n) => n + 1);
+  }, []);
 
   // ----- Pieces -----
   const counts = data ? `노드 ${data.nodes.length} · 선 ${data.edges.length}` : "";
@@ -354,6 +496,52 @@ export default function GraphView({ options }: { options: FilterOptions }) {
             view === value ? "bg-bg font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
           )}
         >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const modeToggle = (
+    <div
+      role="radiogroup"
+      aria-label="보기"
+      className="inline-flex h-8 shrink-0 rounded-lg border border-border bg-surface p-0.5"
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          const next = cosmosMode ? "basic" : "cosmos";
+          changeMode(next);
+          (e.currentTarget.querySelector(`[data-mode="${next}"]`) as HTMLElement | null)?.focus();
+        }
+      }}
+    >
+      {(
+        [
+          ["basic", "기본"],
+          ["cosmos", "우주"],
+        ] as const
+      ).map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          data-mode={value}
+          aria-checked={graphMode === value}
+          tabIndex={graphMode === value ? 0 : -1}
+          onClick={() => changeMode(value)}
+          className={cn(
+            "inline-flex h-7 items-center gap-1 rounded-md px-3 text-[13px] transition-colors",
+            graphMode === value
+              ? "bg-bg font-medium text-fg shadow-sm"
+              : "text-muted hover:text-fg",
+          )}
+        >
+          {value === "cosmos" ? (
+            <span aria-hidden className="text-[12px] leading-none">
+              ✦
+            </span>
+          ) : null}
           {label}
         </button>
       ))}
@@ -460,8 +648,9 @@ export default function GraphView({ options }: { options: FilterOptions }) {
               필터{filterCount ? ` ${filterCount}` : ""}
             </Button>
           ) : null}
-          {segmented}
-          {view === "free" ? (
+          {modeToggle}
+          {cosmosMode ? null : segmented}
+          {!cosmosMode && view === "free" ? (
             <Button variant="ghost" size="sm" onClick={() => setResetOpen(true)}>
               배치 초기화
             </Button>
@@ -513,8 +702,11 @@ export default function GraphView({ options }: { options: FilterOptions }) {
         </div>
       ) : null}
 
-      {/* Canvas */}
-      <div className="relative min-h-0 flex-1">
+      {/* Canvas (the cosmos view is always dark: `.dark` gives overlays dark tokens) */}
+      <div
+        className={cn("relative min-h-0 flex-1", cosmosMode && "dark")}
+        style={cosmosMode ? { background: COSMOS_THEME.space } : undefined}
+      >
         <div
           ref={canvasRef}
           tabIndex={0}
@@ -523,12 +715,42 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           aria-describedby={helpId}
           onKeyDown={onCanvasKeyDown}
           onFocus={(e) => {
-            if (e.target === e.currentTarget && !focusId)
-              moveFocus(initialFocus(nodes, selectedId));
+            if (e.target === e.currentTarget && !focusId) moveFocus(startFocus());
           }}
           className="absolute inset-0 overflow-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
         >
-          {data && nodes.length > 0 && canvasSize.width > 0 ? (
+          {cosmosMode && canvasSize.width > 0 ? (
+            <StarField
+              width={canvasSize.width}
+              height={canvasSize.height}
+              reducedMotion={reducedMotion}
+              pan={panRef}
+            />
+          ) : null}
+          {cosmosData && nodes.length > 0 && canvasSize.width > 0 ? (
+            <div className="relative">
+              <CosmosCanvasLazy
+                data={cosmosData}
+                reducedMotion={reducedMotion}
+                width={canvasSize.width}
+                height={canvasSize.height}
+                selectedId={selectedId}
+                focusId={focusId}
+                externalHoverId={selectedId ? null : externalHover}
+                insets={insets}
+                constellation={constellation}
+                fitKey={`cosmos:${graphQuery(filter)}`}
+                onNodeClick={(node) => {
+                  setFocusId(node.id);
+                  select(node.id);
+                }}
+                onBackgroundClick={() => setSelectedId(null)}
+                onReady={onReady}
+                onTransform={onTransform}
+              />
+            </div>
+          ) : null}
+          {!cosmosMode && data && nodes.length > 0 && canvasSize.width > 0 ? (
             <GraphCanvasLazy
               data={data}
               theme={theme}
@@ -561,7 +783,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           {announce}
         </div>
 
-        {view === "para" && data && nodes.length > 0 && apiRef.current ? (
+        {!cosmosMode && view === "para" && data && nodes.length > 0 && apiRef.current ? (
           <div className="pointer-events-none absolute inset-x-0 top-0 h-8 overflow-hidden border-b border-border bg-bg/90">
             {columns.map((c) => {
               const x = apiRef.current!.toScreen(c.x, 0).x;
@@ -638,6 +860,25 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           </>
         ) : null}
 
+        {cosmosData && nodes.length > 0 ? (
+          <CosmosPanel
+            data={cosmosData}
+            byId={byId}
+            collapsed={panelCollapsed}
+            onToggle={togglePanel}
+            onSelect={(id) => {
+              setExternalHover(null);
+              setFocusId(id);
+              select(id);
+            }}
+            onHover={setExternalHover}
+            onShowAllLonely={() => {
+              setFilter({ ...filter, orphans: true });
+              changeMode("basic");
+            }}
+          />
+        ) : null}
+
         {selected ? (
           <GraphPreview
             node={selected}
@@ -649,6 +890,28 @@ export default function GraphView({ options }: { options: FilterOptions }) {
               setFocusId(id);
               select(id);
             }}
+            cosmos={
+              cosmosData?.cosmos[selected.id] && constellation
+                ? (() => {
+                    const info = cosmosData.cosmos[selected.id]!;
+                    const rank =
+                      1 +
+                      nodes.filter((n) => (cosmosData.cosmos[n.id]?.score ?? 0) > info.score)
+                        .length;
+                    return {
+                      ...info,
+                      rank,
+                      chain: constellation.chain
+                        .map((id) => byId.get(id))
+                        .filter((n): n is GraphNode => !!n),
+                      reachesLife: constellation.stepsToLife !== null,
+                      canStar: selected.type !== "tag",
+                      onToggleStar: () => void toggleStar(selected.id),
+                      starBusy,
+                    };
+                  })()
+                : undefined
+            }
           />
         ) : null}
 

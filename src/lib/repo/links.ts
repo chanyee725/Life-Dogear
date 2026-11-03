@@ -1,5 +1,5 @@
 import { and, desc, eq, or } from "drizzle-orm";
-import { graphLayout, links, thoughts } from "@/db/schema";
+import { graphLayout, itemStars, links, thoughts } from "@/db/schema";
 import { cleanTitle, extractWikiTitles, renameWikiTitle, titleKey } from "@/lib/wikilinks";
 import {
   exists,
@@ -120,6 +120,9 @@ export async function removeLinksFor(exec: Executor, ref: ItemRef): Promise<void
   await exec
     .delete(graphLayout)
     .where(and(eq(graphLayout.nodeType, ref.type), eq(graphLayout.nodeId, ref.id)));
+  await exec
+    .delete(itemStars)
+    .where(and(eq(itemStars.itemType, ref.type), eq(itemStars.itemId, ref.id)));
 }
 
 // ---------------------------------------------------------------------------

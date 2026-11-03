@@ -276,3 +276,17 @@ export const graphLayout = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.nodeType, t.nodeId] })],
 );
+
+/**
+ * "중요" stars for the cosmos view's importance score. One row per starred item; removed
+ * with the item (`removeLinksFor`). A separate table so item tables stay untouched.
+ */
+export const itemStars = sqliteTable(
+  "item_stars",
+  {
+    itemType: text("item_type", { enum: ITEM_TYPE.values }).notNull(),
+    itemId: text("item_id").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.itemType, t.itemId] })],
+);

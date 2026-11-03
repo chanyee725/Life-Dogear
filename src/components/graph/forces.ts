@@ -120,3 +120,36 @@ export function forceCollideGrid<N extends ForceNode>(
   };
   return force;
 }
+
+/**
+ * Pulls nodes toward a circle of `radius(node)` around the origin (like d3.forceRadial).
+ * `radius` returning null leaves the node alone; pinned nodes are skipped.
+ */
+export function forceRadial<N extends ForceNode>(
+  radius: (node: N) => number | null,
+  strength: (node: N) => number,
+): CustomForce<N> {
+  let nodes: N[] = [];
+  let radii: (number | null)[] = [];
+  let strengths: number[] = [];
+  const force = ((alpha: number) => {
+    for (let i = 0; i < nodes.length; i++) {
+      const r = radii[i];
+      if (r == null) continue;
+      const n = nodes[i]!;
+      if (n.fx != null || n.fy != null) continue;
+      const x = n.x ?? 0;
+      const y = n.y ?? 0;
+      const d = Math.hypot(x, y) || 1e-6;
+      const k = ((r - d) * strengths[i]! * alpha) / d;
+      n.vx = (n.vx ?? 0) + x * k;
+      n.vy = (n.vy ?? 0) + y * k;
+    }
+  }) as CustomForce<N>;
+  force.initialize = (next: N[]) => {
+    nodes = next;
+    radii = next.map(radius);
+    strengths = next.map(strength);
+  };
+  return force;
+}

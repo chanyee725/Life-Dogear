@@ -12,6 +12,7 @@ import type {
   GraphResponse,
   LocalGraphData,
 } from "@/lib/graph/types";
+import type { CosmosResponse } from "@/lib/cosmos/types";
 import type { MockGraph } from "./mock";
 import { drawableEdges, graphQuery, localSubgraph, shownTypes } from "./model";
 import type { NodePreview } from "./preview-types";
@@ -105,4 +106,24 @@ export async function resetLayout(mockMode: boolean): Promise<void> {
   if (mockMode) return;
   const res = await fetch("/api/graph/layout", { method: "DELETE" });
   if (!res.ok) throw new Error(`layout ${res.status}`);
+}
+
+/** Cosmos view data (`GET /api/graph/cosmos`, same filter as the graph). */
+export async function fetchCosmos(
+  filter: GraphFilter,
+  signal?: AbortSignal,
+): Promise<CosmosResponse> {
+  const res = await fetch(`/api/graph/cosmos${graphQuery(filter)}`, { signal, cache: "no-store" });
+  if (!res.ok) throw new Error(`cosmos ${res.status}`);
+  return (await res.json()) as CosmosResponse;
+}
+
+/** Stars or unstars an item ("중요"). */
+export async function setStar(node: GraphNodeId, starred: boolean): Promise<void> {
+  const res = await fetch("/api/graph/stars", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ node, starred }),
+  });
+  if (!res.ok) throw Object.assign(new Error(`star ${res.status}`), { status: res.status });
 }

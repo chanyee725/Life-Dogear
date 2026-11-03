@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/components/ui/cn";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { ITEM_TYPE } from "@/lib/enums";
 import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
@@ -21,6 +22,24 @@ function badgeOf(node: GraphNode): { text: string; tone: string } {
 }
 
 /** Right-hand preview of the selected node (design 6.4). Not a dialog: focus is not trapped. */
+/** Cosmos view additions (docs/design/cosmos.md 6.3). */
+export type CosmosPreviewInfo = {
+  score: number;
+  /** 1-based rank by score among shown nodes. */
+  rank: number;
+  direct: number;
+  centrality: number;
+  recency: number;
+  starred: boolean;
+  /** S → … → highest goal, as nodes (clickable). */
+  chain: readonly GraphNode[];
+  reachesLife: boolean;
+  /** Topics cannot be starred. */
+  canStar: boolean;
+  onToggleStar: () => void;
+  starBusy: boolean;
+};
+
 export function GraphPreview({
   node,
   neighbors,
@@ -28,6 +47,7 @@ export function GraphPreview({
   mock,
   onClose,
   onSelect,
+  cosmos,
 }: {
   node: GraphNode;
   neighbors: readonly GraphNode[];
@@ -35,6 +55,7 @@ export function GraphPreview({
   mock: boolean;
   onClose: () => void;
   onSelect: (id: GraphNodeId) => void;
+  cosmos?: CosmosPreviewInfo;
 }) {
   const [detail, setDetail] = useState<{ id: string; data: NodePreview | null } | null>(null);
 
@@ -64,12 +85,28 @@ export function GraphPreview({
       <div className="flex items-center gap-1.5">
         <Badge tone={badge.tone}>{data?.badge ?? badge.text}</Badge>
         {archived ? <Badge tone="gray">보관</Badge> : null}
+        {cosmos?.canStar ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-pressed={cosmos.starred}
+            aria-label={cosmos.starred ? "중요 표시 해제" : "중요 표시"}
+            title="중요 표시하면 우주 보기에서 더 밝게 보입니다"
+            disabled={cosmos.starBusy}
+            onClick={cosmos.onToggleStar}
+            className={cn("ml-auto h-7 w-7", cosmos.starred && "text-fg")}
+          >
+            <span aria-hidden className="text-sm leading-none">
+              {cosmos.starred ? "★" : "☆"}
+            </span>
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
           aria-label="미리보기 닫기"
           onClick={onClose}
-          className="ml-auto h-7 w-7"
+          className={cn("h-7 w-7", !cosmos?.canStar && "ml-auto")}
         >
           <svg
             width="12"
@@ -89,6 +126,51 @@ export function GraphPreview({
       <h2 className="line-clamp-3 text-lg font-semibold tracking-tight break-words text-fg">
         {node.title}
       </h2>
+
+      {cosmos ? (
+        <div className="flex flex-col gap-2" aria-label="왜 중요한가">
+          <p className="text-[13px] text-fg tabular-nums">
+            중요도 {cosmos.score.toFixed(2)} <span className="text-muted">· {cosmos.rank}위</span>
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {[
+              `직접 ${cosmos.direct.toFixed(2)}`,
+              `연결 ${cosmos.centrality.toFixed(2)}`,
+              `최근 ${cosmos.recency.toFixed(2)}`,
+              ...(cosmos.starred ? ["★ 중요"] : []),
+            ].map((chip) => (
+              <span
+                key={chip}
+                className="inline-flex h-6 items-center rounded-md bg-subtle px-2 text-xs text-muted tabular-nums"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+          {cosmos.reachesLife ? (
+            <p className="text-[13px] text-muted">
+              {cosmos.chain.map((n, i) => (
+                <span key={n.id}>
+                  {i > 0 ? " → " : null}
+                  {n.id === node.id ? (
+                    n.title
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onSelect(n.id)}
+                      className="underline-offset-2 hover:text-fg hover:underline"
+                    >
+                      {n.title}
+                    </button>
+                  )}
+                </span>
+              ))}
+            </p>
+          ) : (
+            <p className="text-[13px] text-muted">아직 인생 목표와 이어지지 않았습니다.</p>
+          )}
+        </div>
+      ) : null}
 
       {data && data.props.length > 0 ? (
         <dl className="flex flex-col gap-1 text-[13px]">

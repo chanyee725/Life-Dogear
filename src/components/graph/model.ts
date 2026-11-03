@@ -342,7 +342,16 @@ export function nodeHref(node: Pick<GraphNode, "id" | "title">): string | null {
 // ---------- Filter and URL state (design 6.2) ----------
 
 export type GraphView = "free" | "para";
-export type GraphUrlState = { filter: GraphFilter; view: GraphView; focus: GraphNodeId | null };
+/** `basic` = the quiet graph (docs/design/graph.md); `cosmos` = docs/design/cosmos.md. */
+export type GraphMode = "basic" | "cosmos";
+export type GraphUrlState = {
+  filter: GraphFilter;
+  view: GraphView;
+  focus: GraphNodeId | null;
+  /** Absent from the URL when not given (the screen then uses the last choice). */
+  mode?: GraphMode;
+};
+export const GRAPH_MODE_STORAGE_KEY = "rb-graph-mode";
 
 const sameTypes = (a: readonly GraphNodeType[], b: readonly GraphNodeType[]) =>
   a.length === b.length && a.every((t) => b.includes(t));
@@ -398,6 +407,7 @@ export function graphQuery(filter: GraphFilter): string {
 export function pageQuery(state: GraphUrlState): string {
   const p = new URLSearchParams(graphQuery(state.filter));
   if (state.view === "para") p.set("view", "para");
+  if (state.mode === "cosmos") p.set("mode", "cosmos");
   if (state.focus) p.set("focus", state.focus);
   const s = p.toString();
   return s ? `?${s}` : "";
@@ -421,6 +431,11 @@ export function parsePageQuery(params: URLSearchParams): GraphUrlState {
   return {
     filter: normalizeFilter(filter),
     view: params.get("view") === "para" ? "para" : "free",
+    ...(params.get("mode") === "cosmos"
+      ? { mode: "cosmos" as const }
+      : params.get("mode") === "basic"
+        ? { mode: "basic" as const }
+        : {}),
     focus: focusRef ? (`${focusRef.type}:${focusRef.id}` as GraphNodeId) : null,
   };
 }
