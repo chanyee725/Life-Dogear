@@ -98,3 +98,24 @@ export function saveKey(
   if (field !== "text" && !e.shiftKey) return "close";
   return null;
 }
+
+/** The 생각 box grows with its text from 3 lines up to 12, then scrolls (today.md 6절). */
+export const THOUGHT_MIN_ROWS = 3;
+export const THOUGHT_MAX_ROWS = 12;
+
+/**
+ * Height (px, border-box) for an auto-growing textarea: the content height clamped to
+ * `minRows`..`maxRows` lines, and whether it has to scroll. `chrome` = vertical padding + border.
+ */
+export function autosizeHeight(
+  contentHeight: number,
+  lineHeight: number,
+  chrome: number,
+  minRows = THOUGHT_MIN_ROWS,
+  maxRows = THOUGHT_MAX_ROWS,
+): { height: number; scroll: boolean } {
+  const min = minRows * lineHeight + chrome;
+  const max = maxRows * lineHeight + chrome;
+  const wanted = contentHeight + chrome;
+  return { height: Math.min(Math.max(wanted, min), max), scroll: wanted > max };
+}

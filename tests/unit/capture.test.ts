@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  autosizeHeight,
   draftToText,
   EMPTY_DRAFT,
   hasContent,
@@ -70,5 +71,34 @@ describe("quick capture", () => {
     expect(saveKey(enter({ metaKey: true, isComposing: true }), "text")).toBeNull();
     expect(saveKey(enter({ keyCode: 229 }), "url")).toBeNull();
     expect(saveKey({ ...enter(), key: "a", metaKey: true }, "text")).toBeNull();
+  });
+});
+
+describe("생각 box height", () => {
+  // 15px text, line-height 1.5 = 22.5px; py-2 + 1px borders = 18px.
+  const line = 22.5;
+  const chrome = 18;
+  it("is 3 lines when empty or short", () => {
+    expect(autosizeHeight(line, line, chrome)).toEqual({
+      height: 3 * line + chrome,
+      scroll: false,
+    });
+    expect(autosizeHeight(0, line, chrome).height).toBe(3 * line + chrome);
+  });
+  it("grows with the text", () => {
+    expect(autosizeHeight(7 * line, line, chrome)).toEqual({
+      height: 7 * line + chrome,
+      scroll: false,
+    });
+  });
+  it("stops at 12 lines and scrolls", () => {
+    expect(autosizeHeight(12 * line, line, chrome)).toEqual({
+      height: 12 * line + chrome,
+      scroll: false,
+    });
+    expect(autosizeHeight(30 * line, line, chrome)).toEqual({
+      height: 12 * line + chrome,
+      scroll: true,
+    });
   });
 });

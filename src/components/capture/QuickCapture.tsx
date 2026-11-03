@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ClipboardEvent,
@@ -16,6 +17,7 @@ import { safeAction } from "@/components/links/safe-action";
 import { useModKey } from "@/components/shell/mod-key";
 import { Button, cn, controlClass, Kbd, Spinner } from "@/components/ui";
 import {
+  autosizeHeight,
   draftToText,
   EMPTY_DRAFT,
   ESC_CONFIRM_MS,
@@ -25,6 +27,7 @@ import {
   saveKey,
   TOAST_MS,
   type CaptureDraft,
+  THOUGHT_MIN_ROWS,
   type CaptureKind,
 } from "./capture";
 
@@ -56,6 +59,22 @@ export function QuickCapture() {
   const saving = useRef(false);
   const statusId = useId();
   const modKey = useModKey();
+
+  // 생각 box: 3 lines, growing with the text up to 12, then it scrolls. Measured in JS:
+  // CSS `field-sizing` ignores `rows` and is not available everywhere.
+  useLayoutEffect(() => {
+    const el = firstRef.current;
+    if (!open || draft.kind !== "thought" || !el) return;
+    const style = getComputedStyle(el);
+    const px = (v: string) => Number.parseFloat(v) || 0;
+    const lineHeight = px(style.lineHeight) || px(style.fontSize) * 1.5;
+    const padding = px(style.paddingTop) + px(style.paddingBottom);
+    const chrome = padding + px(style.borderTopWidth) + px(style.borderBottomWidth);
+    el.style.height = "0px";
+    const { height, scroll } = autosizeHeight(el.scrollHeight - padding, lineHeight, chrome);
+    el.style.height = `${height}px`;
+    el.style.overflowY = scroll ? "auto" : "hidden";
+  }, [open, draft.kind, draft.text]);
 
   const dirty = open && hasContent(draft);
   useUnsavedChangesGuard(dirty);
@@ -214,7 +233,7 @@ export function QuickCapture() {
             {draft.kind === "thought" ? (
               <textarea
                 ref={firstRef}
-                rows={3}
+                rows={THOUGHT_MIN_ROWS}
                 aria-label="생각"
                 aria-describedby={statusId}
                 placeholder="떠오른 생각을 적으세요"
@@ -223,10 +242,7 @@ export function QuickCapture() {
                 onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
                 onPaste={onPasteText}
                 onKeyDown={onKeyDown("text")}
-                className={cn(
-                  controlClass,
-                  "max-h-[18rem] resize-none py-2 text-[15px] field-sizing-content",
-                )}
+                className={cn(controlClass, "resize-none py-2 text-[15px] leading-normal")}
               />
             ) : (
               <div className="flex flex-col gap-2">
