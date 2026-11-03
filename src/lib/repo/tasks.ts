@@ -300,8 +300,8 @@ export async function update(id: string, patch: TaskPatch): Promise<Task | null>
 }
 
 /**
- * Moves a task one step up or down among its parent's tasks (swapping order with the
- * neighbour). Returns false when it is missing or already at that end.
+ * Moves a task one step up or down among its parent's tasks in the same state (open or
+ * done), swapping order with that neighbour. Returns false when it is missing or already at that end.
  */
 export async function move(id: string, direction: "up" | "down"): Promise<boolean> {
   if (direction !== "up" && direction !== "down") {
@@ -311,7 +311,7 @@ export async function move(id: string, direction: "up" | "down"): Promise<boolea
     const [current] = await tx.select().from(tasks).where(eq(tasks.id, id));
     if (!current) return false;
     const siblings = await tx
-      .select({ id: tasks.id })
+      .select({ id: tasks.id, doneAt: tasks.doneAt })
       .from(tasks)
       .where(
         parentWhere(
@@ -322,7 +322,11 @@ export async function move(id: string, direction: "up" | "down"): Promise<boolea
       )
       .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt), asc(tasks.id));
     const i = siblings.findIndex((s) => s.id === id);
-    const j = direction === "up" ? i - 1 : i + 1;
+    // The neighbour is the next task in the same state: open tasks move among open ones.
+    const isOpen = !current.doneAt;
+    const step = direction === "up" ? -1 : 1;
+    let j = i + step;
+    while (j >= 0 && j < siblings.length && !siblings[j]!.doneAt !== isOpen) j += step;
     if (j < 0 || j >= siblings.length) return false;
     [siblings[i], siblings[j]] = [siblings[j]!, siblings[i]!];
     // Renumber so equal or gapped orders end up distinct.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { dayLabel, isoWeekRange } from "@/components/tasks/dates";
 import { addDays, formatDue, localDate } from "@/components/tasks/format";
 
 describe("formatDue", () => {
@@ -24,5 +25,16 @@ describe("formatDue", () => {
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
     expect(localDate(new Date(2026, 10, 3, 23, 59))).toBe("2026-11-03");
+  });
+});
+
+describe("task dates", () => {
+  it("finds the ISO week and labels days", () => {
+    expect(isoWeekRange("2026-11-03")).toEqual({ from: "2026-11-02", to: "2026-11-08" });
+    expect(isoWeekRange("2026-11-08")).toEqual({ from: "2026-11-02", to: "2026-11-08" });
+    expect(isoWeekRange("2026-11-02")).toEqual({ from: "2026-11-02", to: "2026-11-08" });
+    expect(dayLabel("2026-11-03", "2026-11-03")).toBe("오늘");
+    expect(dayLabel("2026-11-04", "2026-11-03")).toBe("내일");
+    expect(dayLabel("2026-11-05", "2026-11-03")).toBe("11.05 목");
   });
 });

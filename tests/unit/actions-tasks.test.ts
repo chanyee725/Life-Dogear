@@ -24,14 +24,14 @@ describe("task actions", () => {
     const bId = b.ok ? b.data.id : "";
     const aId = a.ok ? a.data.id : "";
 
-    const done = await updateTask(aId, { done: true, dueDate: null });
-    expect(done.ok && done.data.doneAt).toBeTruthy();
-    expect(done.ok && done.data.dueDate).toBeNull();
-
     expect(await moveTask(bId, "up")).toEqual({ ok: true, data: true });
     expect(
       (await tasks.list({ parent: { type: "project", id: p.id } })).map((t) => t.title),
     ).toEqual(["b", "a"]);
+
+    const done = await updateTask(aId, { done: true, dueDate: null });
+    expect(done.ok && done.data.doneAt).toBeTruthy();
+    expect(done.ok && done.data.dueDate).toBeNull();
 
     expect(await deleteTask(aId)).toEqual({ ok: true, data: null });
     expect(await deleteTask(aId)).toMatchObject({ ok: false });

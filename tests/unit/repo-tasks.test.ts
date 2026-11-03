@@ -93,6 +93,13 @@ describe("tasks repo: update, order, remove", () => {
     expect(await tasks.move(b!.id, "down")).toBe(false);
     expect(await tasks.move("missing", "down")).toBe(false);
 
+    // a c b → finish c: b skips it and swaps with a.
+    await tasks.update(c!.id, { done: true });
+    expect(await tasks.move(b!.id, "up")).toBe(true);
+    expect(await order()).toEqual(["b", "c", "a"]);
+    expect(await tasks.move(a!.id, "down")).toBe(false);
+    await tasks.update(c!.id, { done: false });
+
     await tasks.reorder(parent, [b!.id, a!.id, c!.id]);
     expect(await order()).toEqual(["b", "a", "c"]);
     await expect(tasks.reorder(parent, [a!.id, b!.id])).rejects.toMatchObject({
