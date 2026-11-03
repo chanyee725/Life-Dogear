@@ -25,11 +25,12 @@ export const GRAPH_TYPE_LABEL: Record<GraphNodeType, string> = {
   thought: "생각",
   review: "회고",
   tag: "주제",
+  task: "할 일",
 };
 
 /** Filter chip order; reviews and topics come after a divider and start off. */
 export const GRAPH_TYPE_ORDER: readonly GraphNodeType[] = GRAPH_NODE_TYPE_ORDER;
-export const OPT_IN_TYPES: readonly GraphNodeType[] = ["review", "tag"];
+export const OPT_IN_TYPES: readonly GraphNodeType[] = ["review", "tag", "task"];
 
 /** Goal label with its horizon, e.g. "연 목표 2027". */
 export function goalLabel(node: Pick<GraphNode, "horizon" | "period">): string {
@@ -329,6 +330,7 @@ const ROUTE: Record<GraphNodeType, string> = {
   thought: "/thoughts",
   review: "/reviews",
   tag: "/tags",
+  task: "/tasks",
 };
 
 /** Detail page of a node. Topic nodes open the tag page by name. */
@@ -336,6 +338,7 @@ export function nodeHref(node: Pick<GraphNode, "id" | "title">): string | null {
   const parsed = parseGraphNodeId(node.id);
   if (!parsed) return null;
   if (parsed.type === "tag") return `/tags/${encodeURIComponent(node.title)}`;
+  if (parsed.type === "task") return ROUTE.task;
   return `${ROUTE[parsed.type]}/${encodeURIComponent(parsed.id)}`;
 }
 

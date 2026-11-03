@@ -260,8 +260,8 @@ export const reviews = sqliteTable(
   ],
 );
 
-/** Graph node kinds: every item type plus tag (topic) nodes. */
-export const GRAPH_NODE_TYPES = [...ITEM_TYPE.values, "tag"] as const;
+/** Graph node kinds: every item type plus tag (topic) and task nodes. */
+export const GRAPH_NODE_TYPES = [...ITEM_TYPE.values, "tag", "task"] as const;
 
 /** Pinned node positions on `/graph` (the only graph-specific table). */
 export const graphLayout = sqliteTable(
@@ -289,4 +289,33 @@ export const itemStars = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [primaryKey({ columns: [t.itemType, t.itemId] })],
+);
+
+/** Who a task belongs to; tasks without a parent sit in the task inbox. */
+export const TASK_PARENT_TYPES = ["project", "goal", "area"] as const;
+
+/**
+ * Tasks (할 일). Not an item type: no detail page, links or tags. The parent is a plain
+ * (type, id) pair without FK; `links.removeLinksFor` deletes a parent's tasks.
+ */
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    /** Completion time; null = open. */
+    doneAt: text("done_at"),
+    dueDate: text("due_date"),
+    parentType: text("parent_type", { enum: TASK_PARENT_TYPES }),
+    parentId: text("parent_id"),
+    /** Order among tasks of the same parent. */
+    sortOrder: integer("sort_order").notNull(),
+    /** Reserved: tasks are hidden with an archived parent (computed), never archived alone. */
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [
+    index("tasks_parent_idx").on(t.parentType, t.parentId, t.sortOrder),
+    index("tasks_due_idx").on(t.doneAt, t.dueDate),
+  ],
 );
