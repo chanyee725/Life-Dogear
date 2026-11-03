@@ -5,7 +5,7 @@
  *   npm run storage:push              # upload
  *   npm run storage:push -- --dry-run # only count what would be uploaded
  */
-import { describeError } from "./describe-error";
+import { describeError } from "../src/lib/storage/describe-error";
 import { loadEnvIfPresent } from "../src/db/env";
 import { LocalBlobStore, S3BlobStore, s3ConfigFromEnv } from "../src/lib/storage/blob";
 import { pushLocalFiles } from "../src/lib/storage/maintenance";

@@ -1,8 +1,13 @@
 import { join, resolve } from "node:path";
 import { pdfDirSetting } from "@/lib/data-dir";
 import { isValidItemId } from "@/lib/ids";
-import { blobStore, type StoreOptions as BlobOptions } from "./blob";
-import type { ByteRange } from "./range";
+import {
+  blobStore,
+  type BlobRead,
+  type BlobUnsatisfiable,
+  type StoreOptions as BlobOptions,
+} from "./blob";
+import type { RangeSpec } from "./range";
 
 /**
  * Directory holding uploaded PDFs: `<DATA_DIR>/pdfs`, relative to the project root
@@ -96,16 +101,15 @@ export async function pdfExists(id: string, options: StorageOptions = {}): Promi
 }
 
 /**
- * The file, optionally limited to an inclusive byte range (a ranged GET on the bucket);
- * null when there is no file. `size` is always the whole file's size.
+ * The file, or the part a `Range` spec asks for (one ranged GET on the bucket); null when
+ * there is no file, `{ unsatisfiable }` when the range starts past the end.
  */
 export async function openPdf(
   id: string,
-  range?: ByteRange,
+  range?: RangeSpec,
   options: StorageOptions = {},
-): Promise<{ body: ReadableStream<Uint8Array>; size: number } | null> {
-  const read = await blobStore(options).get(pdfKey(id), range);
-  return read && { body: read.body, size: read.size };
+): Promise<BlobRead | BlobUnsatisfiable | null> {
+  return blobStore(options).get(pdfKey(id), range);
 }
 
 /** Deletes the file for `id`. Returns false when there was nothing to delete. */

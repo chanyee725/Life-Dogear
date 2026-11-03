@@ -16,7 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
     return new NextResponse(image.body, {
       headers: {
         "Content-Type": imageContentType(name),
-        "Content-Length": String(image.size),
+        ...(image.size ? { "Content-Length": String(image.size) } : {}),
         "Cache-Control": "private, max-age=31536000, immutable",
         "X-Content-Type-Options": "nosniff",
         "Content-Security-Policy": "sandbox",

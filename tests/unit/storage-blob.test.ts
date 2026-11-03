@@ -37,6 +37,11 @@ const ENV = {
 const IMG = "3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png";
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 
+const text = async (read: unknown) => {
+  if (!read || typeof read !== "object" || !("body" in read)) throw new Error("no body");
+  return new Response(read.body as ReadableStream).text();
+};
+
 /** In-memory bucket answering the requests the store sends. */
 function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
   const objects = new Map<string, Uint8Array>(
@@ -87,9 +92,19 @@ function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
         });
       case "GET": {
         if (!data) return new Response("<Error><Code>NoSuchKey</Code></Error>", { status: 404 });
-        const range = /^bytes=(\d+)-(\d+)$/.exec(request.headers.get("range") ?? "");
+        const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
         if (range && !ignoreRange) {
-          const [start, end] = [Number(range[1]), Number(range[2])];
+          const n = data.length;
+          let [start, end] = range[1]
+            ? [Number(range[1]), range[2] ? Math.min(Number(range[2]), n - 1) : n - 1]
+            : [Math.max(0, n - Number(range[2])), n - 1];
+          if (start >= n) {
+            return new Response(null, {
+              status: 416,
+              headers: { "content-range": `bytes */${n}` },
+            });
+          }
+          end = Math.min(end, n - 1);
           return new Response(data.slice(start, end + 1), {
             status: 206,
             headers: { "content-range": `bytes ${start}-${end}/${data.length}` },
@@ -154,15 +169,31 @@ describe("S3BlobStore", () => {
     const part = await bucket.store.get("pdfs/seed-paper-1.pdf", { start: 5, end: 7 });
     expect(bucket.requests[0].headers.get("range")).toBe("bytes=5-7");
     expect(part?.size).toBe(15);
-    expect(part?.range).toEqual({ start: 5, end: 7 });
-    expect(await new Response(part!.body).text()).toBe("1.7");
+    expect(part && "range" in part && part.range).toEqual({ start: 5, end: 7 });
+    expect(await text(part)).toBe("1.7");
+  });
+
+  it("sends suffix and open ranges as asked and maps 416", async () => {
+    const bucket = fakeBucket({ "pdfs/seed-paper-1.pdf": "%PDF-1.7 abcdef" });
+    expect(await text(await bucket.store.get("pdfs/seed-paper-1.pdf", { suffix: 3 }))).toBe("def");
+    expect(await text(await bucket.store.get("pdfs/seed-paper-1.pdf", { start: 12 }))).toBe("def");
+    expect(await bucket.store.get("pdfs/seed-paper-1.pdf", { start: 15 })).toEqual({
+      unsatisfiable: true,
+      size: 15,
+    });
+    expect(bucket.requests.map((r) => [r.method, r.headers.get("range")])).toEqual([
+      ["GET", "bytes=-3"],
+      ["GET", "bytes=12-"],
+      ["GET", "bytes=15-"],
+    ]);
   });
 
   it("cuts the slice itself when the server ignores Range", async () => {
     const bucket = fakeBucket({ "pdfs/seed-paper-1.pdf": "%PDF-1.7 abcdef" });
     bucket.ignoreRanges();
     const part = await bucket.store.get("pdfs/seed-paper-1.pdf", { start: 9, end: 11 });
-    expect(await new Response(part!.body).text()).toBe("abc");
+    expect(await text(part)).toBe("abc");
+    expect(await text(await bucket.store.get("pdfs/seed-paper-1.pdf", { suffix: 2 }))).toBe("ef");
   });
 
   it("returns null for missing files and false for missing deletes", async () => {
@@ -224,12 +255,29 @@ describe("FallbackBlobStore", () => {
     expect(bucket.requests.map((r) => r.method)).toEqual(["GET"]);
   });
 
+  it("falls back to the local copy when the bucket fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const failing = new S3BlobStore(CONFIG, async () => new Response("boom", { status: 503 }));
+    const local = new LocalBlobStore(root);
+    await local.put(`images/${IMG}`, PNG);
+    const store = new FallbackBlobStore(failing, local);
+    expect((await store.head(`images/${IMG}`))?.size).toBe(PNG.length);
+    expect((await openImage(IMG, { store }))?.size).toBe(PNG.length);
+    expect(error).toHaveBeenCalledWith(expect.any(String), "BlobStoreError(s3_get_503)");
+    expect(JSON.stringify(error.mock.calls)).not.toContain("r2.example");
+    // No local copy: the bucket error surfaces (500, not a misleading 404).
+    await expect(store.get(`images/0${IMG.slice(1)}`)).rejects.toMatchObject({
+      code: "s3_get_503",
+    });
+    error.mockRestore();
+  });
+
   it("prefers the bucket, writes only there and deletes both copies", async () => {
     const bucket = fakeBucket({ [`images/${IMG}`]: "remote" });
     const local = new LocalBlobStore(root);
     await local.put(`images/${IMG}`, new TextEncoder().encode("local"));
     const store = new FallbackBlobStore(bucket.store, local);
-    expect(await new Response((await store.get(`images/${IMG}`))!.body).text()).toBe("remote");
+    expect(await text(await store.get(`images/${IMG}`))).toBe("remote");
 
     const name = await writeImage(PNG, { store });
     expect(bucket.objects.has(`images/${name}`)).toBe(true);
@@ -317,8 +365,31 @@ describe("routes proxy the bucket", () => {
     expect(part.status).toBe(206);
     expect(part.headers.get("content-range")).toBe("bytes 0-4/15");
     expect(await part.text()).toBe("%PDF-");
-    const get = bucket.requests.find((r) => r.method === "GET");
-    expect(get?.headers.get("range")).toBe("bytes=0-4");
+    // One ranged GET, no HEAD.
+    expect(bucket.requests.map((r) => [r.method, r.headers.get("range")])).toEqual([
+      ["GET", "bytes=0-4"],
+    ]);
+
+    bucket.requests.length = 0;
+    const tail = await pdfRoute.GET(
+      new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=-3" } }),
+      ctx,
+    );
+    expect(tail.headers.get("content-range")).toBe("bytes 12-14/15");
+    expect(await tail.text()).toBe("def");
+    expect(bucket.requests.map((r) => r.method)).toEqual(["GET"]);
+    const past = await pdfRoute.GET(
+      new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=99-" } }),
+      ctx,
+    );
+    expect(past.status).toBe(416);
+    expect(past.headers.get("content-range")).toBe("bytes */15");
+    const full = await pdfRoute.GET(
+      new NextRequest(url, { headers: { host: "localhost:3000" } }),
+      ctx,
+    );
+    expect(full.headers.get("content-length")).toBe("15");
+    expect(await full.text()).toBe("%PDF-1.7 abcdef");
 
     const removed = await pdfRoute.DELETE(new NextRequest(url, { method: "DELETE", headers }), ctx);
     expect(removed.status).toBe(204);

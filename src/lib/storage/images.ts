@@ -97,5 +97,5 @@ export async function imageSize(name: string, options: StoreOptions = {}) {
 /** The photo's bytes and size, or null when it does not exist. */
 export async function openImage(name: string, options: StoreOptions = {}) {
   const read = await blobStore(options).get(imageKey(name));
-  return read && { body: read.body, size: read.size };
+  return read && "body" in read ? { body: read.body, size: read.size } : null;
 }

@@ -4,7 +4,8 @@ import { dirname, join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { AwsClient } from "aws4fetch";
 import { dataDir, type Env } from "@/lib/data-dir";
-import type { ByteRange } from "./range";
+import { describeError } from "./describe-error";
+import { rangeHeader, resolveRange, type ByteRange, type RangeSpec } from "./range";
 
 /**
  * Where uploaded files live. Keys are `images/<name>` and `pdfs/<id>.pdf`.
@@ -16,17 +17,25 @@ import type { ByteRange } from "./range";
  */
 export type BlobInfo = { size: number; lastModified: Date | null };
 export type BlobEntry = BlobInfo & { key: string };
-export type BlobRead = BlobInfo & {
+export type BlobRead = {
+  /** Whole file size; null when the bucket did not say. */
+  size: number | null;
+  lastModified: Date | null;
   body: ReadableStream<Uint8Array>;
-  /** Present when only part of the file is returned. */
+  /** Present when only part of the file is returned (size is then always known). */
   range?: ByteRange;
 };
+/** The requested range starts past the end of the file (HTTP 416). */
+export type BlobUnsatisfiable = { unsatisfiable: true; size: number };
 
 export interface BlobStore {
   readonly kind: "local" | "s3";
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>;
-  /** The file (or an inclusive byte range of it); null when missing. */
-  get(key: string, range?: ByteRange): Promise<BlobRead | null>;
+  /**
+   * The file, or the part a range asks for (resolved against the real size, so a bucket
+   * needs one request); null when missing.
+   */
+  get(key: string, range?: RangeSpec): Promise<BlobRead | BlobUnsatisfiable | null>;
   head(key: string): Promise<BlobInfo | null>;
   /** False when there was nothing to delete. */
   delete(key: string): Promise<boolean>;
@@ -97,9 +106,11 @@ export class LocalBlobStore implements BlobStore {
     }
   }
 
-  async get(key: string, range?: ByteRange): Promise<BlobRead | null> {
+  async get(key: string, spec?: RangeSpec): Promise<BlobRead | BlobUnsatisfiable | null> {
     const info = await this.head(key);
     if (!info) return null;
+    const range = spec && resolveRange(spec, info.size);
+    if (range === "unsatisfiable") return { unsatisfiable: true, size: info.size };
     const stream = createReadStream(this.path(key), range);
     return {
       ...info,
@@ -237,7 +248,10 @@ export class S3BlobStore implements BlobStore {
 
   async head(key: string): Promise<BlobInfo | null> {
     const response = await this.send(this.url(key), { method: "HEAD" });
-    if (response.status === 404) return null;
+    if (response.status === 404) {
+      void response.body?.cancel();
+      return null;
+    }
     if (!response.ok) this.fail(response, "head");
     return {
       size: Number(response.headers.get("content-length") ?? 0),
@@ -245,13 +259,19 @@ export class S3BlobStore implements BlobStore {
     };
   }
 
-  async get(key: string, range?: ByteRange): Promise<BlobRead | null> {
+  async get(key: string, spec?: RangeSpec): Promise<BlobRead | BlobUnsatisfiable | null> {
     const headers: Record<string, string> = {};
-    if (range) headers.Range = `bytes=${range.start}-${range.end}`;
+    if (spec) headers.Range = rangeHeader(spec);
     const response = await this.send(this.url(key), { method: "GET", headers });
     if (response.status === 404) {
       void response.body?.cancel();
       return null;
+    }
+    if (response.status === 416) {
+      void response.body?.cancel();
+      const total = /^bytes \*\/(\d+)$/.exec(response.headers.get("content-range") ?? "");
+      const size = total ? Number(total[1]) : (await this.head(key))?.size;
+      return size === undefined ? null : { unsatisfiable: true, size };
     }
     if (!response.ok || !response.body) this.fail(response, "get");
     const lastModified = parseDate(response.headers.get("last-modified"));
@@ -265,9 +285,15 @@ export class S3BlobStore implements BlobStore {
         range: { start: Number(match[1]), end: Number(match[2]) },
       };
     }
-    // 200: the server ignored Range. Callers asked for a slice, so cut it here.
-    const size = Number(response.headers.get("content-length") ?? 0);
-    if (range) {
+    // 200: the whole file. If a range was asked for and the size is known, cut it here.
+    const length = response.headers.get("content-length");
+    const size = length ? Number(length) : null;
+    if (spec && size !== null) {
+      const range = resolveRange(spec, size);
+      if (range === "unsatisfiable") {
+        void response.body.cancel();
+        return { unsatisfiable: true, size };
+      }
       return { size, lastModified, body: slice(response.body, range), range };
     }
     return { size, lastModified, body: response.body };
@@ -352,11 +378,25 @@ export class FallbackBlobStore implements BlobStore {
   put(key: string, bytes: Uint8Array, contentType: string) {
     return this.remote.put(key, bytes, contentType);
   }
-  async head(key: string) {
-    return (await this.remote.head(key)) ?? (await this.local.head(key));
+  head(key: string) {
+    return this.read((store) => store.head(key));
   }
-  async get(key: string, range?: ByteRange) {
-    return (await this.remote.get(key, range)) ?? (await this.local.get(key, range));
+  get(key: string, range?: RangeSpec) {
+    return this.read((store) => store.get(key, range));
+  }
+
+  /** Bucket first; the local copy when the bucket lacks the file or fails (logged, no details). */
+  private async read<T>(op: (store: BlobStore) => Promise<T | null>): Promise<T | null> {
+    let remote: T | null;
+    try {
+      remote = await op(this.remote);
+    } catch (error) {
+      const local = await op(this.local);
+      if (local === null) throw error;
+      console.error("[storage] bucket read failed, using local copy:", describeError(error));
+      return local;
+    }
+    return remote ?? (await op(this.local));
   }
   async delete(key: string) {
     const [remote, local] = await Promise.all([this.remote.delete(key), this.local.delete(key)]);

@@ -24,7 +24,7 @@ export async function pushLocalFiles(
         }
         if (!options.dryRun) {
           const read = await local.get(entry.key);
-          if (!read) continue; // removed meanwhile
+          if (!read || !("body" in read)) continue; // removed meanwhile
           const bytes = new Uint8Array(await new Response(read.body).arrayBuffer());
           const type =
             prefix === "pdfs/" ? "application/pdf" : imageContentType(entry.key.slice(7));

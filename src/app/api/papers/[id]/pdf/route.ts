@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
-import { deletePdf, MAX_PDF_BYTES, openPdf, pdfSize, writePdf } from "@/lib/storage/pdf";
-import { parseRange } from "@/lib/storage/range";
+import { deletePdf, MAX_PDF_BYTES, openPdf, writePdf } from "@/lib/storage/pdf";
+import { parseRangeHeader } from "@/lib/storage/range";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
   errorResponse,
@@ -37,32 +37,30 @@ export async function GET(request: NextRequest, { params }: IdParams) {
   try {
     const paper = await papers.get(id);
     if (!paper?.pdfPath) return notFound();
-    const size = await pdfSize(id);
-    if (size === null) return jsonError(404, "PDF 파일을 찾을 수 없습니다.");
-
-    const range = parseRange(request.headers.get("range"), size);
-    if (range === "unsatisfiable") {
+    // One GET, ranged when asked (the bucket resolves suffix and open ranges itself);
+    // headers come from what storage returned, so a replaced file cannot mismatch them.
+    const file = await openPdf(id, parseRangeHeader(request.headers.get("range")) ?? undefined);
+    if (!file) return jsonError(404, "PDF 파일을 찾을 수 없습니다.");
+    if ("unsatisfiable" in file) {
       return new NextResponse(null, {
         status: 416,
-        headers: { ...BASE_HEADERS, "Content-Range": `bytes */${size}` },
+        headers: { ...BASE_HEADERS, "Content-Range": `bytes */${file.size}` },
       });
     }
-    // Shared storage: a ranged GET on the bucket, proxied so the browser never sees it.
-    const file = await openPdf(id, range ?? undefined);
-    if (!file) return jsonError(404, "PDF 파일을 찾을 수 없습니다.");
-    if (range) {
+    if (file.range) {
+      const { start, end } = file.range;
       return new NextResponse(file.body, {
         status: 206,
         headers: {
           ...BASE_HEADERS,
-          "Content-Length": String(range.end - range.start + 1),
-          "Content-Range": `bytes ${range.start}-${range.end}/${size}`,
+          "Content-Length": String(end - start + 1),
+          "Content-Range": `bytes ${start}-${end}/${file.size}`,
         },
       });
     }
     return new NextResponse(file.body, {
       status: 200,
-      headers: { ...BASE_HEADERS, "Content-Length": String(size) },
+      headers: { ...BASE_HEADERS, ...(file.size ? { "Content-Length": String(file.size) } : {}) },
     });
   } catch (error) {
     return errorResponse(error);

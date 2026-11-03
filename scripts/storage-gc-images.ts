@@ -7,7 +7,7 @@
  *   npm run storage:gc-images            # dry run: count
  *   npm run storage:gc-images -- --apply # delete
  */
-import { describeError } from "./describe-error";
+import { describeError } from "../src/lib/storage/describe-error";
 import { createClient } from "@libsql/client";
 import { ensureLocalDir, resolveDbConfig } from "../src/db/config";
 import { loadEnvIfPresent } from "../src/db/env";
