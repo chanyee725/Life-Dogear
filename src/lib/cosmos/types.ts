@@ -2,20 +2,30 @@
  * `GET /api/graph/cosmos` contract (same query as `/api/graph`). Plain types only: safe
  * to import from client components.
  */
-import type { GraphNodeId, GraphResponse } from "@/lib/graph/types";
+import type { GraphNode, GraphNodeId, GraphResponse } from "@/lib/graph/types";
 
-export type CosmosNodeInfo = {
+/** A node's importance and its parts (what the home screen needs). */
+export type CosmosScore = {
   /** Importance 0..1 (docs/design/cosmos.md 8절; src/lib/cosmos/score.ts). */
   score: number;
   direct: number;
   centrality: number;
   recency: number;
   starred: boolean;
+  lastActiveAt: string | null;
+};
+
+/** `getCosmosScores`: nodes and scores only (no galaxies or panel lists). */
+export type CosmosScores = {
+  nodes: GraphNode[];
+  cosmos: Record<GraphNodeId, CosmosScore>;
+};
+
+export type CosmosNodeInfo = CosmosScore & {
   /** An active life goal: drawn as a sun at the centre (achieved/dropped ones are not). */
   sun: boolean;
   /** Area id of the node's galaxy; null = neutral (no area) or a life goal (the sun). */
   galaxy: string | null;
-  lastActiveAt: string | null;
 };
 
 export type CosmosResponse = GraphResponse & {
