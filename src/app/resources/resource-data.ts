@@ -1,12 +1,16 @@
 /**
  * Data for `/resources` (자료): topics first, then — for a chosen topic — its papers,
- * seminars and thoughts in one list, most recently updated first. Archived items are
- * left out (repo default). Topics come from those same items, so tags used only by
- * projects, areas or goals do not show. Fixed query count: three lists (each with its tags).
+ * seminars and thoughts in one list, most recently updated first; with no topic, the
+ * most recently updated resources. Archived items are left out (repo default). Topics
+ * come from those same items, so tags used only by projects, areas or goals do not show.
+ * Fixed query count: three lists (each with its tags).
  */
 import { ITEM_ROUTE, READ_STATUS, SEMINAR_KIND, THOUGHT_KIND, type BadgeTone } from "@/lib/enums";
 import { papers, seminars, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
+import type { TopicSort } from "./topic-index";
+
+export * from "./topic-index";
 
 export type ResourceType = "paper" | "seminar" | "thought";
 
@@ -28,7 +32,36 @@ export type ResourcesData = {
   /** `?topic=` was given but no visible item uses it. */
   unknownTopic: boolean;
   items: ResourceItem[];
+  /** With no topic chosen: the most recently updated resources (all topics). */
+  recent: ResourceItem[];
 };
+
+/** How many resources "최근 자료" shows when no topic is chosen. */
+export const RECENT_LIMIT = 20;
+
+export const RESOURCE_TYPES = ["paper", "seminar", "thought"] as const;
+
+/** `?type=` value: paper | seminar | thought; anything else means all. */
+export function parseTypeParam(value: unknown): ResourceType | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return (RESOURCE_TYPES as readonly unknown[]).includes(raw) ? (raw as ResourceType) : null;
+}
+
+/** Items per type, for the type tabs. */
+export function countByType(
+  items: readonly { type: ResourceType }[],
+): Record<ResourceType, number> {
+  const counts: Record<ResourceType, number> = { paper: 0, seminar: 0, thought: 0 };
+  for (const item of items) counts[item.type] += 1;
+  return counts;
+}
+
+export function filterByType<T extends { type: ResourceType }>(
+  items: readonly T[],
+  type: ResourceType | null,
+): T[] {
+  return type ? items.filter((i) => i.type === type) : [...items];
+}
 
 /** `?topic=` value: first string, NFC, trimmed; null when empty. */
 export function parseTopicParam(value: unknown): string | null {
@@ -60,8 +93,17 @@ export function collectTopics(rows: readonly { tags: readonly string[] }[]): Tag
 const hasTag = (row: { tags: readonly string[] }, lower: string) =>
   row.tags.some((t) => t.toLowerCase() === lower);
 
-export const resourcesHref = (topic?: string | null) =>
-  topic ? `/resources?topic=${encodeURIComponent(topic)}` : "/resources";
+/** `/resources` link; default sort (`count`) and no type are left out of the URL. */
+export function resourcesHref(
+  topic?: string | null,
+  opts: { type?: ResourceType | null; sort?: TopicSort } = {},
+): string {
+  const parts: string[] = [];
+  if (topic) parts.push(`topic=${encodeURIComponent(topic)}`);
+  if (topic && opts.type) parts.push(`type=${opts.type}`);
+  if (opts.sort === "name") parts.push("sort=name");
+  return parts.length ? `/resources?${parts.join("&")}` : "/resources";
+}
 
 type PaperLike = {
   id: string;
@@ -144,14 +186,16 @@ export async function loadResources(rawTopic: string | null): Promise<ResourcesD
     thoughts.list(),
   ]);
   const topics = collectTopics([...paperRows, ...seminarRows, ...thoughtRows]);
-  if (!rawTopic) return { topics, topic: null, unknownTopic: false, items: [] };
+  const latest = () => mergeResources(paperRows, seminarRows, thoughtRows).slice(0, RECENT_LIMIT);
+  if (!rawTopic) return { topics, topic: null, unknownTopic: false, items: [], recent: latest() };
   const found = findTopic(topics, rawTopic);
-  if (!found) return { topics, topic: null, unknownTopic: true, items: [] };
+  if (!found) return { topics, topic: null, unknownTopic: true, items: [], recent: [] };
   const lower = found.name.toLowerCase();
   return {
     topics,
     topic: found.name,
     unknownTopic: false,
+    recent: [],
     items: mergeResources(
       paperRows.filter((r) => hasTag(r, lower)),
       seminarRows.filter((r) => hasTag(r, lower)),

@@ -6,6 +6,7 @@ import {
   loadResources,
   mergeResources,
   parseTopicParam,
+  RECENT_LIMIT,
   resourcesHref,
 } from "@/app/resources/resource-data";
 import { archive, papers, projects, seminars, thoughts } from "@/lib/repo";
@@ -105,6 +106,16 @@ describe("loadResources", () => {
     const data = await loadResources(null);
     expect(data.topics.map((t) => t.name)).toEqual(["통계"]);
     expect(data).toMatchObject({ topic: null, unknownTopic: false, items: [] });
+    expect(data.recent.map((i) => i.title)).toEqual(["논문"]);
+  });
+
+  it("shows the most recently updated resources, at most RECENT_LIMIT, when no topic is chosen", async () => {
+    for (let i = 0; i < RECENT_LIMIT + 2; i++) await thoughts.create({ title: `생각 ${i}` });
+    const data = await loadResources(null);
+    expect(data.recent).toHaveLength(RECENT_LIMIT);
+    const stamps = data.recent.map((i) => i.updatedAt);
+    expect([...stamps].sort().reverse()).toEqual(stamps);
+    expect((await loadResources("없는 주제")).recent).toEqual([]);
   });
 
   it("collects the topic's papers, seminars and thoughts, without archived items or projects", async () => {
