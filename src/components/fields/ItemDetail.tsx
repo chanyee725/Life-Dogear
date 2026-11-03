@@ -30,12 +30,15 @@ export function DetailHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-3", className)}>
-      <Link href={backHref} className="text-[13px] text-muted hover:text-fg">
+    <div className={cn("flex flex-wrap items-center justify-between gap-x-3 gap-y-1", className)}>
+      <Link
+        href={backHref}
+        className="shrink-0 text-[13px] whitespace-nowrap text-muted hover:text-fg"
+      >
         ← {backLabel}
       </Link>
-      <div className="flex items-center gap-1">
-        {status ? <div className="mr-2">{status}</div> : null}
+      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
+        {status ? <div className="mr-2 whitespace-nowrap">{status}</div> : null}
         {actions}
       </div>
     </div>
@@ -87,7 +90,7 @@ export function QuietButton({
     <button
       type={type}
       className={cn(
-        "h-7 rounded-md px-2 text-[13px] text-muted transition-colors hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-50",
+        "h-7 shrink-0 rounded-md px-2 text-[13px] whitespace-nowrap text-muted transition-colors hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
       {...props}
