@@ -7,7 +7,6 @@ import {
   useId,
   useRef,
   useState,
-  useTransition,
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
@@ -50,7 +49,10 @@ export function QuickCapture() {
   /** Bumped per save so a new toast restarts its timer; 0 = none. */
   const [toast, setToast] = useState(0);
   const hideToast = useCallback(() => setToast(0), []);
-  const [pending, startTransition] = useTransition();
+  // Plain state, not useTransition: a transition stays pending through the server action's
+  // revalidation refresh, which would lock the fields for ⇧⌘Enter "keep writing".
+  const [pending, setPending] = useState(false);
+  const saving = useRef(false);
   const statusId = useId();
 
   const dirty = open && hasContent(draft);
@@ -96,14 +98,16 @@ export function QuickCapture() {
     setStatus({ text: DEFAULT_STATUS });
   }
 
-  function save(mode: "close" | "continue") {
-    if (pending) return;
+  async function save(mode: "close" | "continue") {
+    if (saving.current) return;
     const result = draftToText(draft);
     if ("error" in result) {
       setStatus({ text: result.error, error: true });
       return;
     }
-    startTransition(async () => {
+    saving.current = true;
+    setPending(true);
+    try {
       const saved = await safeAction(() => createQuickThought(result.text));
       if (!saved.ok) {
         setStatus({ text: saved.error, error: true });
@@ -117,7 +121,10 @@ export function QuickCapture() {
         setOpen(false);
         setToast((n) => n + 1);
       }
-    });
+    } finally {
+      saving.current = false;
+      setPending(false);
+    }
   }
 
   function onKeyDown(field: "text" | "url" | "note") {
@@ -128,7 +135,7 @@ export function QuickCapture() {
       );
       if (!key) return;
       e.preventDefault();
-      save(key);
+      void save(key);
     };
   }
 
@@ -261,7 +268,7 @@ export function QuickCapture() {
                 <Kbd>⌘</Kbd>
                 <Kbd>Enter</Kbd> 저장
               </span>
-              <Button size="sm" onClick={() => save("close")} disabled={pending}>
+              <Button size="sm" onClick={() => void save("close")} disabled={pending}>
                 {pending ? <Spinner /> : null}
                 저장
               </Button>

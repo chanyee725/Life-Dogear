@@ -60,3 +60,21 @@ test("빠른 캡처: Cmd/Ctrl+K 팔레트의 '빠른 캡처' 명령으로도 열
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("textbox", { name: "생각" })).toBeFocused();
 });
+
+test("빠른 캡처: ⇧⌘/Ctrl+Enter는 저장 후 창을 비우고 바로 이어 쓸 수 있다", async ({ page }) => {
+  const first = uniqueTitle("E2E capture first");
+  const second = uniqueTitle("E2E capture second");
+  await page.goto("/");
+  const { dialog, input } = await openCapture(page);
+  await input.fill(first);
+  await input.press("ControlOrMeta+Shift+Enter");
+  await expect(dialog.getByText("저장했습니다. 이어서 적으세요.")).toBeVisible();
+  await expect(input).toHaveValue("");
+  await expect(input).toBeEditable();
+  await input.pressSequentially(second);
+  await input.press("ControlOrMeta+Enter");
+  await expect(dialog).toBeHidden();
+  await page.goto("/inbox");
+  await expect(page.getByText(first).first()).toBeVisible();
+  await expect(page.getByText(second).first()).toBeVisible();
+});
