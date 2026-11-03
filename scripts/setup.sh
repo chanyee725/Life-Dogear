@@ -83,7 +83,13 @@ else
   cp .env.example .env
   echo ".env.example을 복사해 .env를 만들었습니다 (값은 비어 있음)."
 fi
-if grep -qsE '^DATABASE_URL=.+' .env .env.local; then
+# True when KEY has a non-empty value ("" and '' count as empty). Values are never printed.
+env_files() { for f in .env .env.local; do [ -f "$f" ] && echo "$f"; done; return 0; }
+has_value() { env_files | xargs -r grep -qE "^$1=[\"']?[^\"'[:space:]]"; }
+# DATA_DIR as the app reads it (.env.local wins), default data.
+DATA="$(grep -hsE '^DATA_DIR=' .env .env.local | tail -n 1 | cut -d= -f2- | tr -d "\"'" | sed 's/[[:space:]]*$//')"
+DATA="${DATA:-data}"
+if has_value DATABASE_URL; then
   MODE="turso"
   echo "DB: Turso (DATABASE_URL 설정됨)"
 else
@@ -92,7 +98,7 @@ else
 fi
 S3_SET=0
 for key in S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY; do
-  grep -qsE "^${key}=.+" .env .env.local && S3_SET=$((S3_SET + 1))
+  if has_value "$key"; then S3_SET=$((S3_SET + 1)); fi
 done
 if [ "$S3_SET" = 4 ]; then
   FILES="r2"
@@ -101,7 +107,7 @@ else
   FILES="local"
   echo "파일: 로컬 폴더. 여러 PC에서 PDF·사진을 같이 보려면 .env에 S3_ENDPOINT·S3_BUCKET·S3_ACCESS_KEY_ID·S3_SECRET_ACCESS_KEY를 넣으세요 (README '공유 파일 저장소')."
 fi
-mkdir -p data/pdfs
+mkdir -p "$DATA/pdfs"
 
 # 5. Database ------------------------------------------------------------------------------------
 step "DB 마이그레이션"
@@ -127,9 +133,9 @@ cat <<EOF
 접속:   http://127.0.0.1:$PORT
 EOF
 if [ "$MODE" = turso ] && [ "$FILES" = local ]; then
-  echo "참고: PDF·사진은 DB가 아니라 이 PC의 data/에 저장됩니다. 다른 PC와 같이 보려면 R2를 설정하세요 (README '공유 파일 저장소')."
+  echo "참고: PDF·사진은 DB가 아니라 이 PC의 $DATA/에 저장됩니다. 다른 PC와 같이 보려면 R2를 설정하세요 (README '공유 파일 저장소')."
 fi
-if [ "$FILES" = r2 ] && { [ -n "$(ls -A data/pdfs 2>/dev/null)" ] || [ -n "$(ls -A data/images 2>/dev/null)" ]; }; then
+if [ "$FILES" = r2 ] && { [ -n "$(ls -A "$DATA/pdfs" 2>/dev/null)" ] || [ -n "$(ls -A "$DATA/images" 2>/dev/null)" ]; }; then
   echo "참고: 이 PC에 로컬 PDF·사진이 있습니다. 버킷으로 옮기려면: npm run storage:push -- --dry-run 후 npm run storage:push"
 fi
 
