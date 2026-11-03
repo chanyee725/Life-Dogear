@@ -8,12 +8,17 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
 import { buttonClass } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Section } from "@/components/ui/Card";
 import { isValidItemId } from "@/lib/ids";
-import { areas, projects, tags } from "@/lib/repo";
+import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
+import { areas, goals, projects, tags } from "@/lib/repo";
+import type { Project } from "@/lib/repo/projects";
+import { GoalTree } from "../../goals/GoalTree";
 import { ProgressBadge } from "../../projects/ProgressBadge";
 import { updateAreaPatch } from "../actions";
 import { AreaFields } from "../AreaFields";
+import { goalOrder, groupProjectsByGoal, viaLabel } from "../flow";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +33,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function AreaDetailPage({ params }: Props) {
   const { id } = await params;
   if (!isValidItemId(id)) notFound();
-  const [area, allTags, areaProjects] = await Promise.all([
+  const [area, allTags, areaProjects, areaGoals, allGoals, materials] = await Promise.all([
     areas.get(id),
     tags.listAll({ visibleOnly: true }),
     projects.list({ areaId: id }),
+    goals.listTreeForArea(id),
+    goals.list({ includeArchived: true }),
+    areas.listMaterials(id),
   ]);
   if (!area) notFound();
   const ref = { type: "area" as const, id: area.id };
+  const goalTitles = new Map(
+    allGoals.map((g) => [g.id, g.archivedAt ? `${g.title} (보관됨)` : g.title]),
+  );
+  const projectGroups = groupProjectsByGoal(areaProjects, goalOrder(areaGoals), goalTitles);
+  // One group without a goal reads better as the plain list it used to be.
+  const showGroupTitles = projectGroups.some((g) => g.goalId !== null);
 
   return (
     <Page className="flex flex-col gap-12">
@@ -71,7 +85,23 @@ export default async function AreaDetailPage({ params }: Props) {
         </ItemForm>
       </div>
       <Section
-        title={`프로젝트${areaProjects.length ? ` ${areaProjects.length}` : ""}`}
+        title={`목표${countLabel(goalOrder(areaGoals).length)}`}
+        action={
+          <Link href="/goals" className={buttonClass("ghost", "sm")}>
+            목표 보기
+          </Link>
+        }
+      >
+        {areaGoals.length === 0 ? (
+          <p className="text-sm text-muted">
+            이 영역에 속한 목표가 없습니다. 목표 화면에서 영역을 고르면 여기 보입니다.
+          </p>
+        ) : (
+          <GoalTree nodes={areaGoals} />
+        )}
+      </Section>
+      <Section
+        title={`프로젝트${countLabel(areaProjects.length)}`}
         action={
           <Link href={`/projects/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
             새 프로젝트
@@ -81,20 +111,50 @@ export default async function AreaDetailPage({ params }: Props) {
         {areaProjects.length === 0 ? (
           <p className="text-sm text-muted">이 영역에 속한 프로젝트가 없습니다.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
-            {areaProjects.map((p) => (
-              <li key={p.id}>
+          <div className="flex flex-col gap-4">
+            {projectGroups.map((group) => (
+              <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
+                {showGroupTitles ? (
+                  <h3 className="text-xs text-muted">
+                    {group.goalId ? (
+                      <>
+                        목표{" "}
+                        <Link href={`/goals/${group.goalId}`} className="text-fg hover:underline">
+                          {group.title}
+                        </Link>
+                      </>
+                    ) : (
+                      "목표 없음"
+                    )}
+                  </h3>
+                ) : null}
+                <ProjectList list={group.projects} />
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+      <Section title={`자료${countLabel(materials.length)}`}>
+        {materials.length === 0 ? (
+          <p className="text-sm text-muted">
+            이 영역이나 소속 프로젝트·목표에 연결된 논문·세미나·생각이 없습니다.
+          </p>
+        ) : (
+          <ul
+            aria-label="연결된 자료"
+            className="flex flex-col divide-y divide-border rounded-lg border border-border"
+          >
+            {materials.map((m) => (
+              <li key={`${m.ref.type}:${m.ref.id}`}>
                 <Link
-                  href={`/projects/${p.id}`}
+                  href={`${ITEM_ROUTE[m.ref.type]}/${m.ref.id}`}
                   className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
                 >
-                  <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
-                  {p.nextAction ? (
-                    <span className="hidden max-w-64 truncate text-muted sm:inline">
-                      다음: {p.nextAction}
-                    </span>
-                  ) : null}
-                  <ProgressBadge project={p} />
+                  <Badge tone={ITEM_TYPE.tone(m.ref.type)}>{ITEM_TYPE.label(m.ref.type)}</Badge>
+                  <span className="min-w-0 flex-1 truncate font-medium">{m.title}</span>
+                  <span className="max-w-72 shrink-0 truncate text-xs text-muted">
+                    {viaLabel(m.via)}
+                  </span>
                 </Link>
               </li>
             ))}
@@ -103,5 +163,30 @@ export default async function AreaDetailPage({ params }: Props) {
       </Section>
       <ConnectedWithGraph item={ref} />
     </Page>
+  );
+}
+
+const countLabel = (n: number) => (n ? ` ${n}` : "");
+
+function ProjectList({ list }: { list: Project[] }) {
+  return (
+    <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+      {list.map((p) => (
+        <li key={p.id}>
+          <Link
+            href={`/projects/${p.id}`}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
+          >
+            <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
+            {p.nextAction ? (
+              <span className="hidden max-w-64 truncate text-muted sm:inline">
+                다음: {p.nextAction}
+              </span>
+            ) : null}
+            <ProgressBadge project={p} />
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
