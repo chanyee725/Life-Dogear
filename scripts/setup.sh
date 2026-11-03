@@ -12,7 +12,8 @@
 #   --start        start the production server on --port when done
 #   --port N       port for --start (default: 3100)
 #
-# It never prints .env values. Fill DATABASE_URL / DATABASE_AUTH_TOKEN yourself (empty = local SQLite file).
+# It never prints .env values. Fill DATABASE_URL / DATABASE_AUTH_TOKEN yourself (empty = local SQLite file),
+# and the four S3_* values for shared photo/PDF storage on Cloudflare R2 (empty = local files).
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/chanyee725/Life-Dogear.git}"
@@ -89,6 +90,17 @@ else
   MODE="local"
   echo "DB: 로컬 SQLite 파일. Turso를 쓰려면 .env에 DATABASE_URL·DATABASE_AUTH_TOKEN을 직접 넣고 다시 실행하세요."
 fi
+S3_SET=0
+for key in S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY; do
+  grep -qsE "^${key}=.+" .env .env.local && S3_SET=$((S3_SET + 1))
+done
+if [ "$S3_SET" = 4 ]; then
+  FILES="r2"
+  echo "파일: 공유 저장소 R2 (S3_* 설정됨)"
+else
+  FILES="local"
+  echo "파일: 로컬 폴더. 여러 PC에서 PDF·사진을 같이 보려면 .env에 S3_ENDPOINT·S3_BUCKET·S3_ACCESS_KEY_ID·S3_SECRET_ACCESS_KEY를 넣으세요 (README '공유 파일 저장소')."
+fi
 mkdir -p data/pdfs
 
 # 5. Database ------------------------------------------------------------------------------------
@@ -114,8 +126,11 @@ cat <<EOF
         (코드를 받은 뒤 다시 빌드까지 하려면: npm run serve)
 접속:   http://127.0.0.1:$PORT
 EOF
-if [ "$MODE" = turso ]; then
-  echo "참고: PDF 파일은 DB가 아니라 이 PC의 data/pdfs/에 저장됩니다. 다른 PC에서 올린 PDF는 따로 복사해야 열립니다."
+if [ "$MODE" = turso ] && [ "$FILES" = local ]; then
+  echo "참고: PDF·사진은 DB가 아니라 이 PC의 data/에 저장됩니다. 다른 PC와 같이 보려면 R2를 설정하세요 (README '공유 파일 저장소')."
+fi
+if [ "$FILES" = r2 ] && { [ -n "$(ls -A data/pdfs 2>/dev/null)" ] || [ -n "$(ls -A data/images 2>/dev/null)" ]; }; then
+  echo "참고: 이 PC에 로컬 PDF·사진이 있습니다. 버킷으로 옮기려면: npm run storage:push -- --dry-run 후 npm run storage:push"
 fi
 
 if [ "$START" = 1 ]; then
