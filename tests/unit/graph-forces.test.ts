@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { forceAxis, forceCollideGrid, type ForceNode } from "@/components/graph/forces";
+import {
+  forceAxis,
+  forceCollideGrid,
+  forceRadial,
+  type ForceNode,
+} from "@/components/graph/forces";
 
 type N = ForceNode & { col: number };
 
@@ -73,5 +78,26 @@ describe("forceCollideGrid", () => {
     const t = performance.now();
     f(1);
     expect(performance.now() - t).toBeLessThan(500);
+  });
+});
+
+describe("forceRadial", () => {
+  it("pushes nodes out to / in to the ring and skips pinned or opted-out nodes", () => {
+    const nodes: N[] = [
+      { x: 10, y: 0, vx: 0, vy: 0, col: 0 }, // inside a 100 ring → pushed out
+      { x: 0, y: 200, vx: 0, vy: 0, col: 0 }, // outside → pulled in
+      { x: 10, y: 0, vx: 0, vy: 0, fx: 10, col: 0 },
+      { x: 10, y: 0, vx: 0, vy: 0, col: -1 },
+    ];
+    const f = forceRadial<N>(
+      (n) => (n.col < 0 ? null : 100),
+      () => 0.5,
+    );
+    f.initialize(nodes);
+    f(1);
+    expect(nodes[0]!.vx).toBeCloseTo(45);
+    expect(nodes[1]!.vy).toBeCloseTo(-50);
+    expect(nodes[2]!.vx).toBe(0);
+    expect(nodes[3]!.vx).toBe(0);
   });
 });

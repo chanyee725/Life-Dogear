@@ -5,7 +5,7 @@ import { GET } from "@/app/api/graph/cosmos/route";
 import { getCosmos } from "@/lib/cosmos/load";
 import type { CosmosResponse } from "@/lib/cosmos/types";
 import { areas as areasTable } from "@/db/schema";
-import { areas, links, papers, projects, thoughts } from "@/lib/repo";
+import { areas, goals, links, papers, projects, thoughts } from "@/lib/repo";
 import { setStarred } from "@/lib/repo/stars";
 import { useFreshDb } from "./repo-helpers";
 
@@ -46,6 +46,16 @@ describe("GET /api/graph/cosmos", () => {
     expect(body.galaxies).toEqual([{ id: area.id, title: "연구 분야" }]);
     expect(body.top).toHaveLength(5);
     expect(body.lonely).toEqual([`thought:${alone.id}`]);
+  });
+
+  it("marks active life goals as suns", async () => {
+    const life = await goals.create({ title: "인생", horizon: "life" });
+    const done = await goals.create({ title: "이룬 인생", horizon: "life", status: "achieved" });
+    const year = await goals.create({ title: "연", horizon: "year", period: "2027" });
+    const body = await getCosmos();
+    expect(body.cosmos[`goal:${life.id}`]!.sun).toBe(true);
+    expect(body.cosmos[`goal:${done.id}`]!.sun).toBe(false);
+    expect(body.cosmos[`goal:${year.id}`]!.sun).toBe(false);
   });
 
   it("orders galaxies by sort_order, then id (not title)", async () => {

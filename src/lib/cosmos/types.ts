@@ -11,6 +11,8 @@ export type CosmosNodeInfo = {
   centrality: number;
   recency: number;
   starred: boolean;
+  /** An active life goal: drawn as a sun at the centre (achieved/dropped ones are not). */
+  sun: boolean;
   /** Area id of the node's galaxy; null = neutral (no area) or a life goal (the sun). */
   galaxy: string | null;
   lastActiveAt: string | null;

@@ -149,6 +149,11 @@ export async function getCosmos(
       centrality: s.centrality,
       recency: s.recency,
       starred: starred.has(n.id),
+      sun:
+        n.type === "goal" &&
+        n.horizon === "life" &&
+        s.status !== "achieved" &&
+        s.status !== "dropped",
       galaxy: galaxies.get(n.id) ?? null,
       lastActiveAt: s.lastActiveAt,
     };

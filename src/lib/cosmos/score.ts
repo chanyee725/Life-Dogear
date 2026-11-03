@@ -206,6 +206,7 @@ export type ScoredNode = ScoreParts & {
   id: GraphNodeId;
   type: GraphNodeType;
   horizon?: string;
+  status?: string;
   degree: number;
   lastActiveAt: string | null;
 };
@@ -225,6 +226,7 @@ export function scoreGraph(
       id: input.id,
       type: input.type,
       horizon: input.horizon,
+      status: input.status,
       degree: adj[i]!.length,
       lastActiveAt: input.lastActiveAt,
       ...importanceScore(input, centrality.get(input.id) ?? 0, now),
