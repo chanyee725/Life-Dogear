@@ -1,6 +1,7 @@
 import type { Client } from "@libsql/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  collectTopics,
   findTopic,
   loadResources,
   mergeResources,
@@ -31,6 +32,17 @@ describe("parseTopicParam / findTopic / resourcesHref", () => {
     expect(resourcesHref("질적 연구")).toBe(
       "/resources?topic=%EC%A7%88%EC%A0%81%20%EC%97%B0%EA%B5%AC",
     );
+  });
+});
+
+describe("collectTopics", () => {
+  it("counts each item once per topic and sorts by name", () => {
+    expect(
+      collectTopics([{ tags: ["통계", "설계"] }, { tags: ["통계", "통계"] }, { tags: [] }]),
+    ).toEqual([
+      { name: "설계", count: 1 },
+      { name: "통계", count: 2 },
+    ]);
   });
 });
 
@@ -120,25 +132,33 @@ describe("loadResources", () => {
     });
   });
 
-  it("shows a project-only topic with no resources", async () => {
+  it("offers only topics used by non-archived papers, seminars or thoughts", async () => {
+    await papers.create({ title: "논문", tags: ["통계"] });
     await projects.create({ title: "프로젝트", tags: ["학위"] });
-    expect(await loadResources("학위")).toMatchObject({ topic: "학위", items: [] });
+    const gone = await seminars.create({ title: "보관한 세미나", tags: ["옛 주제"] });
+    await archive.archive({ type: "seminar", id: gone.id });
+
+    const data = await loadResources(null);
+    expect(data.topics).toEqual([{ name: "통계", count: 1 }]);
+    expect(await loadResources("학위")).toMatchObject({ topic: null, unknownTopic: true });
+    expect(await loadResources("옛 주제")).toMatchObject({ topic: null, unknownTopic: true });
   });
 
   it("uses a fixed number of queries regardless of how many items there are", async () => {
     // drizzle keeps the libSQL client on `$client` (not in the `Db` type).
     const client = (db as unknown as { $client: Client }).$client;
     const execute = vi.spyOn(client, "execute");
-    const count = async () => {
+    const count = async (topic: string | null = "통계") => {
       execute.mockClear();
-      await loadResources("통계");
+      await loadResources(topic);
       return execute.mock.calls.length;
     };
     await papers.create({ title: "논문 0", tags: ["통계"] });
     await seminars.create({ title: "세미나 0", tags: ["통계"] });
     await thoughts.create({ title: "생각 0", tags: ["통계"] });
     const small = await count();
-    expect(small).toBeLessThanOrEqual(7); // topics + 3 × (list + tags)
+    expect(small).toBeLessThanOrEqual(6); // 3 × (list + tags)
+    expect(await count(null)).toBe(small); // choosing a topic adds no queries
     for (let i = 1; i < 20; i++) {
       await papers.create({ title: `논문 ${i}`, tags: ["통계"] });
       await seminars.create({ title: `세미나 ${i}`, tags: ["통계"] });
