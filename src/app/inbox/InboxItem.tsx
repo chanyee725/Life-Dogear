@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setItemTags } from "@/app/_actions/tags";
+import { deleteThought } from "@/app/thoughts/actions";
 import { ArchiveButton } from "@/components/fields/ArchiveButton";
+import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { QuietButton } from "@/components/fields/ItemDetail";
 import { TagInput } from "@/components/fields/TagInput";
 import { LinkPicker } from "@/components/links/LinkPicker";
@@ -12,7 +14,8 @@ import { safeAction } from "@/components/links/safe-action";
 
 /**
  * One inbox thought with quick actions. Tagging or linking files it (it leaves the
- * inbox); 보관 hides it. Each action refreshes the page and the sidebar count.
+ * inbox); 보관 hides it; 삭제 removes it for good (after a confirmation). Each action
+ * refreshes the page and the sidebar count.
  */
 export function InboxItem({
   id,
@@ -67,6 +70,14 @@ export function InboxItem({
         </QuietButton>
         <LinkPicker item={item} label="연결" />
         <ArchiveButton item={item} archived={false} />
+        {/* Apart from the filing actions: deleting can't be undone. */}
+        <span className="ml-auto">
+          <DeleteItemButton
+            action={() => deleteThought(id)}
+            redirectTo="/inbox"
+            itemLabel="이 생각"
+          />
+        </span>
       </div>
       {tagging ? (
         <div className="flex items-center gap-2">

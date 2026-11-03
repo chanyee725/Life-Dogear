@@ -66,3 +66,27 @@ test("수집함: 태그를 달면 정리되어 빠진다", async ({ page }) => {
   await row.getByRole("button", { name: "태그 저장" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: title })).toHaveCount(0);
 });
+
+test("수집함: 삭제는 확인 후 생각을 아예 지운다", async ({ page }) => {
+  const title = uniqueTitle("E2E inbox delete");
+  await createItem(page, "thoughts", title);
+
+  await page.goto("/inbox");
+  const row = page.getByRole("listitem").filter({ hasText: title });
+  await expect(row).toBeVisible();
+
+  // Cancelling keeps it.
+  await row.getByRole("button", { name: "삭제", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "취소" }).click();
+  await expect(row).toBeVisible();
+
+  await row.getByRole("button", { name: "삭제", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "삭제" }).click();
+  await expect(page.getByRole("listitem").filter({ hasText: title })).toHaveCount(0);
+
+  // Gone everywhere, not just filed away.
+  await page.goto("/thoughts");
+  await expect(page.getByText(title)).toHaveCount(0);
+  await page.goto("/archive");
+  await expect(page.getByText(title)).toHaveCount(0);
+});
