@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dayLabel, isoWeekRange } from "@/components/tasks/dates";
-import { addDays, formatDue, localDate } from "@/components/tasks/format";
+import { addDays, formatDue, localDate, parentHref } from "@/components/tasks/format";
 
 describe("formatDue", () => {
   const today = "2026-11-03";
@@ -36,5 +36,13 @@ describe("task dates", () => {
     expect(dayLabel("2026-11-03", "2026-11-03")).toBe("오늘");
     expect(dayLabel("2026-11-04", "2026-11-03")).toBe("내일");
     expect(dayLabel("2026-11-05", "2026-11-03")).toBe("11.05 목");
+  });
+});
+
+describe("parentHref", () => {
+  it("links to the parent's page, or nothing for inbox tasks", () => {
+    expect(parentHref({ parentType: "goal", parentId: "g1" })).toBe("/goals/g1");
+    expect(parentHref({ parentType: "area", parentId: "a1" })).toBe("/areas/a1");
+    expect(parentHref({ parentType: null, parentId: null })).toBeNull();
   });
 });
