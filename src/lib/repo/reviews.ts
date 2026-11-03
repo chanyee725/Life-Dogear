@@ -1,8 +1,23 @@
-import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
-import { goals as goalsTable, reviews } from "@/db/schema";
+import { and, asc, desc, eq, gte, inArray, isNull, lt, or } from "drizzle-orm";
+import {
+  areas as areasTable,
+  goals as goalsTable,
+  papers as papersTable,
+  projects as projectsTable,
+  reviews,
+  seminars as seminarsTable,
+  thoughts as thoughtsTable,
+} from "@/db/schema";
 import { ITEM_TYPE, REVIEW_KIND, type ReviewKind } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
-import { goalPeriodsFor, isValidPeriod, reviewTitle, shiftPeriod } from "@/lib/reviews/period";
+import { weekDigestMarkdown, type WeekDigest } from "@/lib/reviews/draft";
+import {
+  goalPeriodsFor,
+  isValidPeriod,
+  periodRange,
+  reviewTitle,
+  shiftPeriod,
+} from "@/lib/reviews/period";
 import { reviewTemplate } from "@/lib/reviews/templates";
 import { createWith as createGoalWith, progressFor, type GoalInput } from "./goals";
 import { exists } from "./items";
@@ -20,6 +35,7 @@ import {
   type ItemRef,
 } from "./shared";
 import { removeTagsFor } from "./tags";
+import { listCompletedBetween } from "./tasks";
 
 type Row = typeof reviews.$inferSelect;
 
@@ -158,6 +174,72 @@ async function snapshot(kind: ReviewKind, period: string): Promise<GoalProgressS
   return ids.length ? progressFor(ids) : {};
 }
 
+/** `[from, to)` ISO instants covering a week's local days (Mon 00:00 – next Mon 00:00). */
+export function weekBounds(period: string): { from: string; to: string } {
+  const { start, end } = periodRange("week", period);
+  const next = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+  return { from: start.toISOString(), to: next.toISOString() };
+}
+
+/**
+ * What happened in a week, for the new weekly review's draft: non-archived items created
+ * in it (oldest first), tasks done in it and projects completed in it. Fixed query count
+ * (one per item table plus the tasks query), independent of the number of items.
+ */
+export async function weekDigest(period: string): Promise<WeekDigest> {
+  const { from, to } = weekBounds(period);
+  const d = db();
+  const pick = (
+    t:
+      | typeof areasTable
+      | typeof goalsTable
+      | typeof projectsTable
+      | typeof papersTable
+      | typeof seminarsTable
+      | typeof thoughtsTable,
+  ) =>
+    d
+      .select({ title: t.title, createdAt: t.createdAt })
+      .from(t)
+      .where(and(gte(t.createdAt, from), lt(t.createdAt, to), isNull(t.archivedAt)));
+  const [areaRows, goalRows, projectRows, paperRows, seminarRows, thoughtRows, finished, done] =
+    await Promise.all([
+      pick(areasTable),
+      pick(goalsTable),
+      pick(projectsTable),
+      pick(papersTable),
+      pick(seminarsTable),
+      pick(thoughtsTable),
+      d
+        .select({ title: projectsTable.title })
+        .from(projectsTable)
+        .where(
+          and(
+            gte(projectsTable.completedAt, from),
+            lt(projectsTable.completedAt, to),
+            isNull(projectsTable.archivedAt),
+          ),
+        )
+        .orderBy(asc(projectsTable.completedAt)),
+      listCompletedBetween(from, to),
+    ]);
+  const created = [
+    ...areaRows,
+    ...goalRows,
+    ...projectRows,
+    ...paperRows,
+    ...seminarRows,
+    ...thoughtRows,
+  ].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return {
+    created: created.map((r) => ({ title: r.title })),
+    doneTasks: [...done]
+      .sort((a, b) => (a.doneAt ?? "").localeCompare(b.doneAt ?? ""))
+      .map((t) => ({ title: t.title, parentTitle: t.parentTitle ?? null })),
+    finishedProjects: finished,
+  };
+}
+
 /**
  * Opens the review for `kind` + `period`: returns the existing one (one per period) or
  * creates it with the kind's template and a goal progress snapshot.
@@ -172,9 +254,10 @@ export async function open(
   if (existing) return { review: existing, created: false };
 
   // Read outside the write transaction (progressFor uses its own queries).
-  const [periodGoals, goalProgress] = await Promise.all([
+  const [periodGoals, goalProgress, digest] = await Promise.all([
     goalsForPeriod(kind, period),
     snapshot(kind, period),
+    kind === "week" ? weekDigest(period) : null,
   ]);
   const templateGoals = periodGoals.filter((g) =>
     kind === "year" ? g.horizon === "year" : g.horizon === "quarter",
@@ -185,12 +268,13 @@ export async function open(
     const raced = await findByPeriod(kind, period, tx);
     if (raced) return { review: raced, created: false };
     const now = nowIso();
+    const body = reviewTemplate(kind, templateGoals) + (digest ? weekDigestMarkdown(digest) : "");
     const row: Row = {
       id: newId(),
       kind,
       period,
       title: reviewTitle(kind, period),
-      body: reviewTemplate(kind, templateGoals),
+      body,
       focus: "[]",
       goalProgress: JSON.stringify(goalProgress),
       completedAt: null,
@@ -199,6 +283,8 @@ export async function open(
       updatedAt: now,
     };
     await tx.insert(reviews).values(row);
+    // The draft's `[[제목]]` links count like any typed ones.
+    if (digest) await syncBodyLinks(tx, ref(row.id), body);
     return { review: toReview(row), created: true };
   });
 }

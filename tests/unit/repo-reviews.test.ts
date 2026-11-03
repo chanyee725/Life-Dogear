@@ -1,7 +1,9 @@
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   goals,
   links as linksTable,
+  papers as papersTable,
   projects as projectsTable,
   reviews as reviewsTable,
 } from "@/db/schema";
@@ -138,5 +140,61 @@ describe("reviews repo", () => {
     const { review } = await reviews.open("week", "2026-W45");
     await db.update(reviewsTable).set({ focus: "nope", goalProgress: "[1]" });
     expect(await reviews.get(review.id)).toMatchObject({ focus: [], goalProgress: {} });
+  });
+});
+
+describe("weekly review draft", () => {
+  // 2026-W45 = Mon 11/2 – Sun 11/8 (local days).
+  const inWeek = new Date(2026, 10, 4, 12).toISOString();
+  const before = new Date(2026, 10, 1, 23, 59).toISOString();
+  const after = new Date(2026, 10, 9, 0, 0).toISOString();
+
+  it("collects items made, projects finished this week once, with body links", async () => {
+    const made = await papers.create({ title: "이번 주 논문" });
+    const old = await papers.create({ title: "지난주 논문" });
+    const late = await papers.create({ title: "다음 주 논문" });
+    const archived = await papers.create({ title: "보관한 논문" });
+    const done = await projects.create({ title: "끝난 프로젝트" });
+    await db.update(papersTable).set({ createdAt: inWeek }).where(eq(papersTable.id, made.id));
+    await db.update(papersTable).set({ createdAt: before }).where(eq(papersTable.id, old.id));
+    await db.update(papersTable).set({ createdAt: after }).where(eq(papersTable.id, late.id));
+    await db
+      .update(papersTable)
+      .set({ createdAt: inWeek, archivedAt: inWeek })
+      .where(eq(papersTable.id, archived.id));
+    await db
+      .update(projectsTable)
+      .set({ createdAt: before, status: "done", completedAt: inWeek })
+      .where(eq(projectsTable.id, done.id));
+
+    const digest = await reviews.weekDigest("2026-W45");
+    expect(digest).toEqual({
+      created: [{ title: "이번 주 논문" }],
+      doneTasks: [],
+      finishedProjects: [{ title: "끝난 프로젝트" }],
+    });
+
+    const { review } = await reviews.open("week", "2026-W45");
+    expect(review.body.startsWith("## 회고 메모")).toBe(true);
+    expect(review.body).toContain("### 만든 항목\n\n- [[이번 주 논문]]");
+    expect(review.body).toContain("### 끝난 프로젝트\n\n- [[끝난 프로젝트]]");
+    const rows = await db.select().from(linksTable);
+    expect(rows.map((r) => [r.sourceType, r.targetType, r.targetId, r.via]).sort()).toEqual(
+      [
+        ["review", "paper", made.id, "body"],
+        ["review", "project", done.id, "body"],
+      ].sort(),
+    );
+
+    // Only once: reopening keeps what the user wrote.
+    await reviews.update(review.id, { body: "고친 내용" });
+    expect((await reviews.open("week", "2026-W45")).review.body).toBe("고친 내용");
+  });
+
+  it("leaves other kinds and quiet weeks plain", async () => {
+    const quiet = await reviews.open("week", "2020-W10");
+    expect(quiet.review.body).toBe("## 회고 메모\n\n");
+    const month = await reviews.open("month", "2026-11");
+    expect(month.review.body).not.toContain("이번 주 모음");
   });
 });
