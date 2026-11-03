@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 import { Kbd } from "@/components/ui/Kbd";
 import {
@@ -41,6 +41,9 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   graph: GraphIcon,
   task: TaskIcon,
 };
+
+/** Below Tailwind's `md`: the sidebar becomes a drawer. */
+const NARROW_QUERY = "(max-width: 767.98px)";
 
 const linkClass = (active: boolean) =>
   cn(
@@ -94,14 +97,27 @@ function SectionTitle({ children, action }: { children: ReactNode; action?: Reac
 
 export function SidebarNav({
   areas,
+  hasAreas = areas.length > 0,
   inboxCount,
   searchSlot,
 }: {
+  /** Areas to list (the pinned ones). */
   areas: { id: string; title: string }[];
+  /** False when no areas exist at all: recommended areas are offered instead. */
+  hasAreas?: boolean;
   inboxCount: number;
   searchSlot?: ReactNode;
 }) {
   const pathname = usePathname() ?? "/";
+  // Narrow screens: the sidebar is a drawer over the page, open until the next navigation.
+  const [drawerOn, setDrawerOn] = useState<string | null>(null);
+  const drawerOpen = drawerOn === pathname;
+  const narrow = () => window.matchMedia(NARROW_QUERY).matches;
+  const asideRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // Move focus into the drawer so keyboard users land in the menu they opened.
+    if (drawerOpen) asideRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
+  }, [drawerOpen]);
   const item = (entry: { href: string; label: string; icon: NavIcon }, badge?: ReactNode) => {
     const Icon = ICONS[entry.icon];
     return (
@@ -118,24 +134,42 @@ export function SidebarNav({
 
   return (
     <>
-      {/* Shown only while collapsed (focus mode): brings the sidebar back on any page. */}
+      {/* Shown while collapsed (focus mode) and on narrow screens: brings the sidebar back. */}
       <button
         type="button"
-        onClick={() => setSidebarCollapsed(false)}
+        onClick={() => (narrow() ? setDrawerOn(pathname) : setSidebarCollapsed(false))}
         aria-label="사이드바 열기"
         title="사이드바 열기"
-        className="fixed top-3 left-3 z-30 hidden h-8 w-8 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:flex"
+        aria-expanded={drawerOpen || undefined}
+        className="fixed top-3 left-3 z-30 hidden h-8 w-8 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:flex max-md:flex"
       >
         <SidebarIcon />
       </button>
-      <aside className="sticky top-0 flex h-dvh w-56 shrink-0 flex-col border-r border-border bg-surface in-data-[sidebar=collapsed]:hidden">
+      {drawerOpen ? (
+        <div
+          aria-hidden
+          onClick={() => setDrawerOn(null)}
+          className="fixed inset-0 z-40 bg-fg/20 md:hidden"
+        />
+      ) : null}
+      <aside
+        ref={asideRef}
+        onKeyDown={(e) => {
+          if (drawerOpen && e.key === "Escape") setDrawerOn(null);
+        }}
+        className={cn(
+          "sticky top-0 flex h-dvh w-56 shrink-0 flex-col border-r border-border bg-surface in-data-[sidebar=collapsed]:hidden",
+          "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
+          drawerOpen ? "max-md:in-data-[sidebar=collapsed]:flex" : "max-md:hidden",
+        )}
+      >
         <div className="flex h-14 items-center justify-between pr-2 pl-5">
           <Link href="/" className="text-[15px] font-semibold tracking-tight">
             Research Brain
           </Link>
           <button
             type="button"
-            onClick={() => setSidebarCollapsed(true)}
+            onClick={() => (narrow() ? setDrawerOn(null) : setSidebarCollapsed(true))}
             aria-label="사이드바 접기"
             title="사이드바 접기"
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
@@ -175,13 +209,16 @@ export function SidebarNav({
               </Link>
             }
           >
-            <Link href="/areas" className="hover:text-fg">
+            <Link
+              href="/areas"
+              aria-current={pathname === "/areas" ? "page" : undefined}
+              className="hover:text-fg aria-[current=page]:text-fg"
+            >
               영역
             </Link>
           </SectionTitle>
-          {areas.length === 0 ? (
-            <RecommendedAreas />
-          ) : (
+          {/* Only pinned areas; all of them live on the 영역 page (the title link). */}
+          {hasAreas ? (
             areas.map((area) => (
               <NavLink
                 key={area.id}
@@ -191,6 +228,8 @@ export function SidebarNav({
                 pathname={pathname}
               />
             ))
+          ) : (
+            <RecommendedAreas />
           )}
 
           <SectionTitle>

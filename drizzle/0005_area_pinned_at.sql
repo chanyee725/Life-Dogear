@@ -1,0 +1,1 @@
+ALTER TABLE `areas` ADD `pinned_at` text;

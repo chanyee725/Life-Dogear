@@ -1,5 +1,5 @@
-import { and, asc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
-import { areas, goals, links, projects } from "@/db/schema";
+import { and, asc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
+import { areas, goals, links, projects, tasks } from "@/db/schema";
 import { getHeads, refKey } from "./items";
 import { removeLinksFor, syncBodyLinks } from "./links";
 import {
@@ -177,6 +177,25 @@ export async function reorder(ids: readonly string[]): Promise<void> {
     }
   });
 }
+
+/**
+ * Pins the area to the sidebar (or unpins it). Not an edit of the area: `updatedAt` stays,
+ * so pinning never counts as activity. False when the area doesn't exist.
+ */
+export async function setPinned(id: string, pinned: boolean): Promise<boolean> {
+  // Through the write queue, like every other write on the single connection.
+  const updated = await withTx((tx) =>
+    tx
+      .update(areas)
+      .set({ pinnedAt: pinned ? nowIso() : null })
+      .where(eq(areas.id, id))
+      .returning({ id: areas.id }),
+  );
+  return updated.length > 0;
+}
+
+export const pin = (id: string) => setPinned(id, true);
+export const unpin = (id: string) => setPinned(id, false);
 
 /** Deletes the area; its projects stay but lose the area, links and tags are removed. */
 export async function remove(id: string): Promise<boolean> {
@@ -363,4 +382,134 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
       (a, b) =>
         typeOrder(a.ref.type) - typeOrder(b.ref.type) || a.title.localeCompare(b.title, "ko"),
     );
+}
+
+// ---------------------------------------------------------------------------
+// Care signal: when each area was last touched, and what is still open in it
+
+export type AreaCare = {
+  /** Latest `updatedAt` of the area, its projects, goals and their tasks (ISO). */
+  lastActivity: string;
+  /** Non-archived projects not done (counted like {@link inAreaWhere}). */
+  openProjects: number;
+  /** Non-archived goals in progress that count toward the area ({@link effectiveAreas}). */
+  activeGoals: number;
+  /** Open tasks on the area itself, its projects or its goals. */
+  openTasks: number;
+};
+
+export type CareSource = {
+  areas: readonly { id: string; updatedAt: string }[];
+  goals: readonly {
+    id: string;
+    parentId: string | null;
+    areaId: string | null;
+    status: string;
+    updatedAt: string;
+  }[];
+  projects: readonly {
+    id: string;
+    areaId: string | null;
+    goalId: string | null;
+    status: string;
+    updatedAt: string;
+  }[];
+  /** Tasks grouped by parent: latest `updatedAt` and the open count. */
+  tasks: readonly {
+    parentType: string | null;
+    parentId: string | null;
+    lastUpdated: string | null;
+    open: number;
+  }[];
+};
+
+/** Pure part of {@link listCare}: folds goals, projects and tasks into their areas. */
+export function summarizeCare(src: CareSource): Map<string, AreaCare> {
+  const out = new Map<string, AreaCare>(
+    src.areas.map((a) => [
+      a.id,
+      { lastActivity: a.updatedAt, openProjects: 0, activeGoals: 0, openTasks: 0 },
+    ]),
+  );
+  const touch = (areaId: string | null | undefined, at: string | null) => {
+    const care = areaId ? out.get(areaId) : undefined;
+    if (care && at && at > care.lastActivity) care.lastActivity = at;
+    return care;
+  };
+  const areaOf = effectiveAreas(src.goals);
+  for (const g of src.goals) {
+    const care = touch(areaOf.get(g.id), g.updatedAt);
+    if (care && g.status === "active") care.activeGoals++;
+  }
+  const projectAreas = new Map<string, string | null>();
+  for (const p of src.projects) {
+    const area = projectArea(p, areaOf);
+    projectAreas.set(p.id, area);
+    const care = touch(area, p.updatedAt);
+    if (care && p.status !== "done") care.openProjects++;
+  }
+  for (const t of src.tasks) {
+    if (!t.parentId) continue;
+    const area =
+      t.parentType === "area"
+        ? t.parentId
+        : t.parentType === "project"
+          ? projectAreas.get(t.parentId)
+          : t.parentType === "goal"
+            ? areaOf.get(t.parentId)
+            : undefined;
+    const care = touch(area, t.lastUpdated);
+    if (care) care.openTasks += Number(t.open);
+  }
+  return out;
+}
+
+/**
+ * {@link AreaCare} for every non-archived area, keyed by id. Archived projects and goals
+ * (and their tasks) don't count. Four queries, run together; no per-area queries.
+ */
+export async function listCare(): Promise<Map<string, AreaCare>> {
+  const exec = db();
+  const [areaRows, goalRows, projectRows, taskRows] = await Promise.all([
+    exec
+      .select({ id: areas.id, updatedAt: areas.updatedAt })
+      .from(areas)
+      .where(isNull(areas.archivedAt)),
+    exec
+      .select({
+        id: goals.id,
+        parentId: goals.parentId,
+        areaId: goals.areaId,
+        status: goals.status,
+        updatedAt: goals.updatedAt,
+      })
+      .from(goals)
+      .where(isNull(goals.archivedAt)),
+    exec
+      .select({
+        id: projects.id,
+        areaId: projects.areaId,
+        goalId: projects.goalId,
+        status: projects.status,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projects)
+      .where(isNull(projects.archivedAt)),
+    exec
+      .select({
+        parentType: tasks.parentType,
+        parentId: tasks.parentId,
+        lastUpdated: sql<string | null>`max(${tasks.updatedAt})`,
+        open: sql<number>`sum(case when ${tasks.doneAt} is null then 1 else 0 end)`,
+      })
+      .from(tasks)
+      .where(isNotNull(tasks.parentType))
+      .groupBy(tasks.parentType, tasks.parentId),
+  ]);
+  return summarizeCare({
+    areas: areaRows,
+    goals: goalRows,
+    projects: projectRows,
+    tasks: taskRows,
+  });
 }
