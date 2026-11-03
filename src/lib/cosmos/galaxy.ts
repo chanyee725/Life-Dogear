@@ -5,16 +5,20 @@
  *
  * 1. an area is its own galaxy;
  * 2. a node with `areaId` (projects, goals) belongs to that area;
- * 3. other nodes take the most common galaxy among their neighbours from steps 1–2
- *    (ties: the smaller area id), so papers follow their projects.
+ * 3. other nodes take the most common galaxy among their neighbours from steps 1–2, so
+ *    papers follow their projects; a tie stays neutral (no single galaxy wins);
+ * 4. reviews and topics are always neutral (docs/design/cosmos.md 1.1).
  */
 import type { GraphEdge, GraphNode, GraphNodeId } from "@/lib/graph/types";
 
 export function assignGalaxies(
   nodes: readonly Pick<GraphNode, "id" | "type" | "areaId" | "horizon">[],
   edges: readonly Pick<GraphEdge, "source" | "target">[],
+  /** Every existing area id (so `areaId` counts even when area nodes are filtered out). */
+  knownAreas?: Iterable<string>,
 ): Map<GraphNodeId, string | null> {
-  const areaIds = new Set(nodes.filter((n) => n.type === "area").map((n) => n.id.slice(5)));
+  const areaIds = new Set(knownAreas ?? []);
+  for (const n of nodes) if (n.type === "area") areaIds.add(n.id.slice(5));
   const direct = new Map<GraphNodeId, string>();
   for (const n of nodes) {
     if (n.type === "goal" && n.horizon === "life") continue;
@@ -37,7 +41,7 @@ export function assignGalaxies(
 
   const out = new Map<GraphNodeId, string | null>();
   for (const n of nodes) {
-    if (n.type === "goal" && n.horizon === "life") {
+    if ((n.type === "goal" && n.horizon === "life") || n.type === "review" || n.type === "tag") {
       out.set(n.id, null);
       continue;
     }
@@ -48,13 +52,17 @@ export function assignGalaxies(
     }
     let best: string | null = null;
     let bestCount = 0;
+    let tied = false;
     for (const [g, c] of votes.get(n.id) ?? []) {
-      if (c > bestCount || (c === bestCount && best !== null && g < best)) {
+      if (c > bestCount) {
         best = g;
         bestCount = c;
+        tied = false;
+      } else if (c === bestCount) {
+        tied = true;
       }
     }
-    out.set(n.id, best);
+    out.set(n.id, tied ? null : best);
   }
   return out;
 }

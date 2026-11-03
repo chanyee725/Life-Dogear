@@ -1,84 +1,113 @@
 /**
- * "왜 중요한가" path for the cosmos view (docs/PLAN-COSMOS.md 2절): from a node up to a
- * life goal — item → project → quarter → year → life goal — drawn as a constellation.
- * Pure, BFS over a fixed graph: O(n + e).
- *
- * Allowed steps (so the path always climbs toward goals):
- * - `belongs` edges, child → parent (source → target);
- * - from a paper / seminar / thought / review / tag, one `link`/`body`/`topic` hop to a
- *   project or a goal (how notes attach to the structure).
+ * "왜 중요한가" constellation — docs/design/cosmos.md 6.2. From the selected node S, climb
+ * `belongs` edges only (source = child → target = parent) toward life goals: item →
+ * project → quarter → year → life goal. A node with no `belongs` parent (papers,
+ * thoughts, …) first steps over `link`/`body` edges to **every** linked project. The
+ * highlighted path is the union of all such climbs. Pure, O(n + e).
  */
-import type { GraphEdge, GraphNode, GraphNodeId, GraphNodeType } from "@/lib/graph/types";
+import type { GraphEdge, GraphNode, GraphNodeId } from "@/lib/graph/types";
 
-const NOTE_TYPES: ReadonlySet<GraphNodeType> = new Set([
-  "paper",
-  "seminar",
-  "thought",
-  "review",
-  "tag",
-]);
-const STRUCTURE_TYPES: ReadonlySet<GraphNodeType> = new Set(["project", "goal"]);
+export type Constellation = {
+  /** P: nodes on the path, S included. */
+  nodes: Set<GraphNodeId>;
+  /** Path edges as `"source|target"` keys (as given in the edge list). */
+  edges: Set<string>;
+  /** One shortest chain S → … → its highest goal (for the preview text). */
+  chain: GraphNodeId[];
+  /** Steps from S to the nearest life goal; null when none is reached. */
+  stepsToLife: number | null;
+};
 
-const typeOf = (id: GraphNodeId) => id.slice(0, id.indexOf(":")) as GraphNodeType;
+export const edgeKey = (e: Pick<GraphEdge, "source" | "target">) => `${e.source}|${e.target}`;
 
-/**
- * Shortest path (node ids, start first) from `start` to a life goal, or — when none is
- * reachable — to the highest goal reached (year over quarter), or to a project. Returns
- * `[start]` when nothing above it is reachable.
- */
 export function constellationPath(
   start: GraphNodeId,
   nodes: readonly Pick<GraphNode, "id" | "type" | "horizon">[],
   edges: readonly GraphEdge[],
-): GraphNodeId[] {
+): Constellation {
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  if (!byId.has(start)) return [start];
-
-  const up = new Map<GraphNodeId, GraphNodeId[]>();
-  const add = (from: GraphNodeId, to: GraphNodeId) => {
-    if (!byId.has(from) || !byId.has(to) || from === to) return;
-    const list = up.get(from);
-    if (list) list.push(to);
-    else up.set(from, [to]);
+  const empty: Constellation = {
+    nodes: new Set([start]),
+    edges: new Set(),
+    chain: [start],
+    stepsToLife: null,
   };
+  if (!byId.has(start)) return empty;
+
+  // Parent edges per child (belongs only).
+  const parents = new Map<GraphNodeId, GraphEdge[]>();
   for (const e of edges) {
-    if (e.kind === "belongs") {
-      add(e.source, e.target);
-      continue;
-    }
-    // Notes attach to the structure in either direction of the link.
-    for (const [a, b] of [
-      [e.source, e.target],
-      [e.target, e.source],
-    ] as const) {
-      if (NOTE_TYPES.has(typeOf(a)) && STRUCTURE_TYPES.has(typeOf(b))) add(a, b);
+    if (e.kind !== "belongs" || !byId.has(e.source) || !byId.has(e.target)) continue;
+    if (e.source === e.target) continue;
+    const list = parents.get(e.source);
+    if (list) list.push(e);
+    else parents.set(e.source, [e]);
+  }
+  for (const list of parents.values()) list.sort((a, b) => (a.target < b.target ? -1 : 1));
+
+  // First step: S's own parents, or — if it has none — every project linked to it.
+  let first: { to: GraphNodeId; edge: GraphEdge }[] = (parents.get(start) ?? []).map((e) => ({
+    to: e.target,
+    edge: e,
+  }));
+  if (first.length === 0) {
+    first = edges
+      .filter(
+        (e) =>
+          (e.kind === "link" || e.kind === "body") && (e.source === start || e.target === start),
+      )
+      .map((e) => ({ to: e.source === start ? e.target : e.source, edge: e }))
+      .filter(({ to }) => byId.get(to)?.type === "project")
+      .sort((a, b) => (a.to < b.to ? -1 : 1));
+  }
+  if (first.length === 0) return empty;
+
+  const pathNodes = new Set<GraphNodeId>([start]);
+  const pathEdges = new Set<string>();
+  const prev = new Map<GraphNodeId, GraphNodeId | null>([[start, null]]);
+  const dist = new Map<GraphNodeId, number>([[start, 0]]);
+  const queue: GraphNodeId[] = [];
+  for (const { to, edge } of first) {
+    pathEdges.add(edgeKey(edge));
+    pathNodes.add(to);
+    if (!prev.has(to)) {
+      prev.set(to, start);
+      dist.set(to, 1);
+      queue.push(to);
     }
   }
-  // Deterministic: visit parents in id order.
-  for (const list of up.values()) list.sort();
+  for (let i = 0; i < queue.length; i++) {
+    const id = queue[i]!;
+    for (const e of parents.get(id) ?? []) {
+      pathEdges.add(edgeKey(e));
+      pathNodes.add(e.target);
+      if (prev.has(e.target)) continue;
+      prev.set(e.target, id);
+      dist.set(e.target, dist.get(id)! + 1);
+      queue.push(e.target);
+    }
+  }
 
-  const rank = (id: GraphNodeId): number => {
+  // Chain to the highest goal reached (life > year > quarter > project), nearest first.
+  const rank = (id: GraphNodeId) => {
     const n = byId.get(id)!;
     if (n.type === "goal") return n.horizon === "life" ? 3 : n.horizon === "year" ? 2 : 1;
     return n.type === "project" ? 0.5 : 0;
   };
-
-  const prev = new Map<GraphNodeId, GraphNodeId | null>([[start, null]]);
-  const queue: GraphNodeId[] = [start];
   let best: GraphNodeId = start;
-  for (let i = 0; i < queue.length; i++) {
-    const id = queue[i]!;
-    // BFS order = shortest first; keep the first node of the highest rank.
-    if (rank(id) > rank(best)) best = id;
-    if (rank(best) === 3) break;
-    for (const next of up.get(id) ?? []) {
-      if (prev.has(next)) continue;
-      prev.set(next, id);
-      queue.push(next);
+  for (const id of queue) {
+    if (rank(id) > rank(best) || (rank(id) === rank(best) && dist.get(id)! < dist.get(best)!)) {
+      best = id;
     }
   }
+  const chain: GraphNodeId[] = [];
+  for (let at: GraphNodeId | null = best; at; at = prev.get(at) ?? null) chain.push(at);
+  chain.reverse();
 
-  const path: GraphNodeId[] = [];
-  for (let at: GraphNodeId | null = best; at; at = prev.get(at) ?? null) path.push(at);
-  return path.reverse();
+  return {
+    nodes: pathNodes,
+    edges: pathEdges,
+    chain,
+    stepsToLife: rank(best) === 3 ? dist.get(best)! : null,
+  };
 }

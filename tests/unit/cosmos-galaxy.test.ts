@@ -41,9 +41,20 @@ describe("assignGalaxies", () => {
     expect(g.get("goal:y" as GraphNodeId)).toBe("b");
   });
 
-  it("lets other nodes follow the majority of their neighbours (ties: smaller id)", () => {
+  it("lets other nodes follow the majority of their neighbours; a tie stays neutral", () => {
     expect(g.get("paper:x" as GraphNodeId)).toBe("b"); // a: 1 (p), b: 2 (y, q)
-    expect(g.get("paper:tie" as GraphNodeId)).toBe("a");
+    expect(g.get("paper:tie" as GraphNodeId)).toBeNull();
+  });
+
+  it("keeps reviews and topics neutral and counts areaId even when area nodes are hidden", () => {
+    const only = assignGalaxies(
+      [n("project:p", { areaId: "a" }), n("review:r"), n("paper:x")],
+      [e("review:r", "project:p"), e("paper:x", "project:p")],
+      ["a"],
+    );
+    expect(only.get("project:p" as GraphNodeId)).toBe("a");
+    expect(only.get("paper:x" as GraphNodeId)).toBe("a");
+    expect(only.get("review:r" as GraphNodeId)).toBeNull();
   });
 
   it("keeps life goals, unconnected items and unknown areas neutral", () => {

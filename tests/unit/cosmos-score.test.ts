@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-  intrinsicValue,
+  centralityScores,
+  directValue,
+  importanceScore,
   lonelyStars,
   neglectedImportant,
-  pageRank,
   recencyValue,
   scoreGraph,
-  scoreNode,
   STAR_FLOOR,
   topImportant,
   WEIGHTS,
   type ScoreInput,
 } from "@/lib/cosmos/score";
-import type { GraphNodeId } from "@/lib/graph/types";
+import type { GraphEdge, GraphNodeId } from "@/lib/graph/types";
 
 const NOW = new Date("2026-11-03T12:00:00.000Z");
 const id = (s: string) => s as GraphNodeId;
@@ -25,148 +25,186 @@ const input = (s: string, extra: Partial<ScoreInput> = {}): ScoreInput => ({
   ...extra,
 });
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOString();
+const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
 describe("weights", () => {
-  it("sum to 1", () => {
-    expect(WEIGHTS.intrinsic + WEIGHTS.centrality + WEIGHTS.recency + WEIGHTS.star).toBeCloseTo(1);
+  it("are 0.40 / 0.25 / 0.20 / 0.15", () => {
+    expect(WEIGHTS).toEqual({ direct: 0.4, centrality: 0.25, recency: 0.2, star: 0.15 });
+    expect(STAR_FLOOR).toBe(0.7);
   });
 });
 
-describe("intrinsicValue", () => {
-  it("ranks papers by importance and goals by horizon", () => {
-    expect(intrinsicValue(input("paper:a", { importance: "core" }), NOW)).toBe(1);
-    expect(intrinsicValue(input("paper:a", { importance: "reference" }), NOW)).toBe(0.6);
-    expect(intrinsicValue(input("paper:a", { importance: "light" }), NOW)).toBe(0.3);
-    expect(intrinsicValue(input("goal:a", { horizon: "life" }), NOW)).toBe(1);
-    expect(intrinsicValue(input("goal:a", { horizon: "year" }), NOW)).toBe(0.8);
-    expect(intrinsicValue(input("goal:a", { horizon: "quarter" }), NOW)).toBe(0.6);
-    expect(intrinsicValue(input("goal:a", { horizon: "year", status: "achieved" }), NOW)).toBe(0.4);
-  });
-
-  it("gives active projects a deadline bonus that grows as the due date nears", () => {
-    const p = (dueDate: string | null, status = "active") =>
-      intrinsicValue(input("project:a", { status, dueDate }), NOW);
-    expect(p(null)).toBe(0.7);
-    expect(p("2026-12-31")).toBe(0.7); // outside 14 days
-    expect(p("2026-11-10")).toBeCloseTo(0.7 + 0.3 * 0.5); // 7 days left
-    expect(p("2026-11-03")).toBeCloseTo(1); // due today
-    expect(p("2026-10-01")).toBeCloseTo(1); // overdue keeps the full bonus
-    expect(p("2026-11-03", "done")).toBe(0.25);
-    expect(p("2026-11-03", "on_hold")).toBeCloseTo(0.65);
-  });
-
-  it("covers the other kinds", () => {
-    expect(intrinsicValue(input("thought:a", { maturity: "refined" }), NOW)).toBe(0.7);
-    expect(intrinsicValue(input("thought:a"), NOW)).toBe(0.3);
-    expect(intrinsicValue(input("area:a"), NOW)).toBe(0.6);
-    expect(intrinsicValue(input("seminar:a"), NOW)).toBe(0.4);
-    expect(intrinsicValue(input("review:a"), NOW)).toBe(0.3);
-    expect(intrinsicValue(input("tag:a"), NOW)).toBe(0.2);
-  });
-});
-
-describe("recencyValue", () => {
-  it("halves every 30 days", () => {
-    expect(recencyValue(NOW.toISOString(), NOW)).toBe(1);
-    expect(recencyValue(daysAgo(30), NOW)).toBeCloseTo(0.5);
-    expect(recencyValue(daysAgo(60), NOW)).toBeCloseTo(0.25);
-    expect(recencyValue(null, NOW)).toBe(0);
-    expect(recencyValue("not a date", NOW)).toBe(0);
-    expect(recencyValue("2027-01-01T00:00:00.000Z", NOW)).toBe(1); // future: treated as now
-  });
-});
-
-describe("scoreNode", () => {
-  it("combines the parts with the weights", () => {
-    const s = scoreNode(
-      input("paper:a", { importance: "core", lastActiveAt: daysAgo(30) }),
+describe("design 8.6 reference values", () => {
+  it("core paper, centrality 0.5, 15 days ago → 0.626", () => {
+    const s = importanceScore(
+      input("paper:a", { importance: "core", lastActiveAt: daysAgo(15) }),
       0.5,
       NOW,
     );
-    expect(s.score).toBeCloseTo(0.3 * 1 + 0.3 * 0.5 + 0.25 * 0.5);
+    expect(r3(s.recency)).toBe(0.707);
+    expect(r3(s.score)).toBe(0.626);
   });
 
-  it("keeps starred items at least at the floor and halves archived ones", () => {
-    const starred = scoreNode(input("thought:a", { starred: true }), 0, NOW);
-    expect(starred.score).toBe(STAR_FLOOR);
-    const archived = scoreNode(input("thought:a", { starred: true, archived: true }), 0, NOW);
-    expect(archived.score).toBeCloseTo(STAR_FLOOR / 2);
-  });
-
-  it("stays within 0..1", () => {
-    const s = scoreNode(
-      input("goal:a", { horizon: "life", starred: true, lastActiveAt: NOW.toISOString() }),
-      5,
+  it("active project due in 7 days, centrality 1, today → 0.81", () => {
+    const s = importanceScore(
+      input("project:a", {
+        status: "active",
+        dueDate: "2026-11-10",
+        lastActiveAt: NOW.toISOString(),
+      }),
+      1,
       NOW,
     );
-    expect(s.score).toBe(1);
+    expect(s.direct).toBeCloseTo(0.9);
+    expect(r3(s.score)).toBe(0.81);
+  });
+
+  it("seed thought, alone, 90 days ago, starred → 0.70", () => {
+    const s = importanceScore(
+      input("thought:a", { maturity: "seed", starred: true, lastActiveAt: daysAgo(90) }),
+      0,
+      NOW,
+    );
+    expect(r3(s.recency)).toBe(0.125);
+    expect(r3(s.score)).toBe(0.7);
+  });
+
+  it("light paper, archived, centrality 0.2, 60 days ago → 0.09", () => {
+    const s = importanceScore(
+      input("paper:a", { importance: "light", archived: true, lastActiveAt: daysAgo(60) }),
+      0.2,
+      NOW,
+    );
+    expect(r3(s.score)).toBe(0.09);
   });
 });
 
-describe("pageRank", () => {
-  it("puts the hub first, normalised to 1", () => {
-    const ids = ["a", "b", "c", "d"].map((s) => id(`paper:${s}`));
-    const pr = pageRank(ids, [
-      { source: ids[0]!, target: ids[1]! },
-      { source: ids[0]!, target: ids[2]! },
-      { source: ids[0]!, target: ids[3]! },
-    ]);
-    expect(pr.get(ids[0]!)).toBe(1);
-    expect(pr.get(ids[1]!)).toBeLessThan(1);
-    expect(pr.get(ids[1]!)).toBeCloseTo(pr.get(ids[2]!)!);
+describe("directValue (8.2)", () => {
+  const d = (s: string, extra: Partial<ScoreInput> = {}) => directValue(input(s, extra), NOW);
+  it("goals by horizon and status", () => {
+    expect(d("goal:a", { horizon: "life" })).toBe(1);
+    expect(d("goal:a", { horizon: "year" })).toBe(0.8);
+    expect(d("goal:a", { horizon: "quarter" })).toBe(0.65);
+    expect(d("goal:a", { horizon: "year", status: "achieved" })).toBeCloseTo(0.48);
+    expect(d("goal:a", { horizon: "life", status: "dropped" })).toBeCloseTo(0.2);
   });
 
-  it("is zero for a graph without edges and ignores duplicates, loops and unknown ends", () => {
-    const ids = [id("paper:a"), id("paper:b")];
-    expect([...pageRank(ids, []).values()]).toEqual([0, 0]);
-    const pr = pageRank(ids, [
-      { source: ids[0]!, target: ids[1]! },
-      { source: ids[1]!, target: ids[0]! },
-      { source: ids[0]!, target: ids[0]! },
-      { source: ids[0]!, target: id("paper:zzz") },
-    ]);
-    expect(pr.get(ids[0]!)).toBeCloseTo(pr.get(ids[1]!)!);
-    expect(pageRank([], []).size).toBe(0);
+  it("projects: active 0.6 (+0.3 within 14 days or overdue), on hold 0.3, done 0.25", () => {
+    expect(d("project:a", { status: "active" })).toBe(0.6);
+    expect(d("project:a", { status: "active", dueDate: "2026-11-30" })).toBe(0.6);
+    expect(d("project:a", { status: "active", dueDate: "2026-11-17" })).toBeCloseTo(0.9);
+    expect(d("project:a", { status: "active", dueDate: "2026-01-01" })).toBeCloseTo(0.9);
+    expect(d("project:a", { status: "on_hold", dueDate: "2026-11-04" })).toBe(0.3);
+    expect(d("project:a", { status: "done", dueDate: "2026-11-04" })).toBe(0.25);
+  });
+
+  it("papers, thoughts and the rest", () => {
+    expect(d("paper:a", { importance: "core" })).toBe(0.9);
+    expect(d("paper:a", { importance: "reference" })).toBe(0.5);
+    expect(d("paper:a", { importance: "light" })).toBe(0.2);
+    expect(d("thought:a", { maturity: "seed" })).toBe(0.3);
+    expect(d("thought:a", { maturity: "growing" })).toBe(0.45);
+    expect(d("thought:a", { maturity: "refined" })).toBe(0.6);
+    expect(d("area:a")).toBe(0.6);
+    expect(d("seminar:a")).toBe(0.4);
+    expect(d("review:a")).toBe(0.2);
+    expect(d("tag:a")).toBe(0.15);
   });
 });
 
-describe("panel lists", () => {
+describe("recencyValue (8.4)", () => {
+  const rv = (type: string, at: string | null) =>
+    recencyValue({ type: type as ScoreInput["type"], lastActiveAt: at }, NOW);
+  it("halves every 30 days, future counts as now, unknown is 0", () => {
+    expect(rv("paper", daysAgo(30))).toBeCloseTo(0.5);
+    expect(rv("paper", daysAgo(60))).toBeCloseTo(0.25);
+    expect(rv("paper", daysAgo(90))).toBeCloseTo(0.125);
+    expect(rv("paper", "2027-01-01T00:00:00.000Z")).toBe(1);
+    expect(rv("paper", null)).toBe(0);
+    expect(rv("paper", "nope")).toBe(0);
+  });
+
+  it("pins goals and areas to 0.5", () => {
+    expect(rv("goal", daysAgo(400))).toBe(0.5);
+    expect(rv("area", NOW.toISOString())).toBe(0.5);
+  });
+});
+
+describe("centralityScores (8.3)", () => {
+  const ids = ["a", "b", "c", "d", "e", "f"].map((s) => id(`paper:${s}`));
+  const e = (i: number, j: number, kind: GraphEdge["kind"] = "link"): GraphEdge => ({
+    source: ids[i]!,
+    target: ids[j]!,
+    kind,
+  });
+
+  it("puts the hub at 1 with sqrt normalisation", () => {
+    const c = centralityScores(ids, [e(0, 1), e(0, 2), e(0, 3), e(0, 4), e(0, 5)]);
+    expect(c.get(ids[0]!)).toBe(1);
+    const leaf = c.get(ids[1]!)!;
+    expect(leaf).toBeGreaterThan(0);
+    expect(leaf).toBeLessThan(1);
+    // sqrt spreads small values: a leaf's raw PageRank share is well below its centrality.
+    expect(leaf ** 2).toBeLessThan(leaf);
+  });
+
+  it("weights belongs over links over topics", () => {
+    const strong = centralityScores(ids, [e(0, 1, "belongs"), e(0, 2, "topic"), e(3, 4), e(4, 5)]);
+    expect(strong.get(ids[1]!)!).toBeGreaterThan(strong.get(ids[2]!)!);
+  });
+
+  it("uses sqrt(degree / max) below 5 nodes and 0 without edges", () => {
+    const small = ids.slice(0, 3);
+    const c = centralityScores(small, [e(0, 1), e(0, 2)]);
+    expect(c.get(small[0]!)).toBe(1);
+    expect(c.get(small[1]!)).toBeCloseTo(Math.sqrt(0.5));
+    expect([...centralityScores(ids, []).values()].every((v) => v === 0)).toBe(true);
+    expect(centralityScores([], []).size).toBe(0);
+  });
+});
+
+describe("panel lists (7.3)", () => {
   const inputs = [
-    input("goal:life", { horizon: "life", lastActiveAt: daysAgo(1) }),
+    input("goal:life", { horizon: "life" }),
     input("project:p", { status: "active", lastActiveAt: daysAgo(2) }),
-    input("paper:core-old", { importance: "core", lastActiveAt: daysAgo(90) }),
+    input("paper:core-old", { importance: "core", lastActiveAt: daysAgo(90), starred: true }),
+    input("paper:core-older", { importance: "core", lastActiveAt: daysAgo(120), starred: true }),
     input("paper:light-old", { importance: "light", lastActiveAt: daysAgo(90) }),
     input("thought:alone", { lastActiveAt: daysAgo(10) }),
     input("seminar:alone-older", { lastActiveAt: daysAgo(40) }),
+    input("review:r"),
     input("tag:t"),
   ];
-  const edges = [
-    { source: id("project:p"), target: id("goal:life") },
-    { source: id("paper:core-old"), target: id("project:p") },
-    { source: id("paper:light-old"), target: id("project:p") },
+  const edges: GraphEdge[] = [
+    { source: id("project:p"), target: id("goal:life"), kind: "belongs" },
+    { source: id("paper:core-old"), target: id("project:p"), kind: "link" },
+    { source: id("paper:core-older"), target: id("project:p"), kind: "link" },
+    { source: id("paper:light-old"), target: id("project:p"), kind: "link" },
   ];
   const scored = scoreGraph(inputs, edges, NOW);
 
-  it("scores and counts degree per node", () => {
-    expect(scored.get(id("project:p"))!.degree).toBe(3);
+  it("counts degree per node", () => {
+    expect(scored.get(id("project:p"))!.degree).toBe(4);
     expect(scored.get(id("thought:alone"))!.degree).toBe(0);
-    expect(scored.get(id("project:p"))!.centrality).toBe(1);
   });
 
-  it("lists the top nodes by score", () => {
-    const top = topImportant(scored.values(), 3).map((s) => s.id);
-    expect(top[0]).toBe("project:p");
-    expect(top).toHaveLength(3);
+  it("Top 10 leaves the life goal out", () => {
+    const top = topImportant(scored.values()).map((s) => s.id);
+    expect(top).not.toContain("goal:life");
+    expect(top).toHaveLength(8);
   });
 
-  it("lists unconnected nodes, oldest first, without topics", () => {
+  it("lonely stars: no reviews or topics, most recently edited first", () => {
     expect(lonelyStars(scored.values()).map((s) => s.id)).toEqual([
-      "seminar:alone-older",
       "thought:alone",
+      "seminar:alone-older",
     ]);
   });
 
-  it("lists important nodes untouched for 60+ days", () => {
-    expect(neglectedImportant(scored.values(), NOW).map((s) => s.id)).toEqual(["paper:core-old"]);
+  it("neglected: score ≥ 0.55 and over 45 days, oldest first", () => {
+    expect(neglectedImportant(scored.values(), NOW).map((s) => s.id)).toEqual([
+      "paper:core-older",
+      "paper:core-old",
+    ]);
   });
 });

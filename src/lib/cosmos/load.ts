@@ -134,14 +134,18 @@ export async function getCosmos(
     ...signals.get(n.id),
   }));
   const scored = scoreGraph(inputs, graph.edges, now);
-  const galaxies = assignGalaxies(graph.nodes, graph.edges);
+  const galaxies = assignGalaxies(
+    graph.nodes,
+    graph.edges,
+    areaOrder.map((a) => a.id),
+  );
 
   const cosmos = {} as Record<GraphNodeId, CosmosNodeInfo>;
   for (const n of graph.nodes) {
     const s = scored.get(n.id)!;
     cosmos[n.id] = {
       score: s.score,
-      intrinsic: s.intrinsic,
+      direct: s.direct,
       centrality: s.centrality,
       recency: s.recency,
       starred: starred.has(n.id),

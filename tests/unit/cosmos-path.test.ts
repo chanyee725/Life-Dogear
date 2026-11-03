@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { constellationPath } from "@/lib/cosmos/path";
+import { constellationPath, edgeKey } from "@/lib/cosmos/path";
 import type { GraphEdge, GraphNode, GraphNodeId } from "@/lib/graph/types";
 
 const n = (s: string, horizon?: GraphNode["horizon"]) => ({
@@ -12,12 +12,14 @@ const e = (source: string, target: string, kind: GraphEdge["kind"]): GraphEdge =
   target: target as GraphNodeId,
   kind,
 });
+const S = (s: string) => s as GraphNodeId;
 
 const nodes = [
   n("goal:life", "life"),
   n("goal:year", "year"),
   n("goal:q", "quarter"),
   n("project:p"),
+  n("project:p2"),
   n("area:a"),
   n("paper:x"),
   n("thought:y"),
@@ -27,49 +29,53 @@ const edges = [
   e("goal:q", "goal:year", "belongs"),
   e("goal:year", "goal:life", "belongs"),
   e("project:p", "goal:q", "belongs"),
+  e("project:p2", "goal:year", "belongs"),
   e("project:p", "area:a", "belongs"),
-  e("project:p", "paper:x", "link"), // project → paper: the note still climbs
-  e("thought:y", "paper:x", "body"), // note ↔ note: not a step
+  e("project:p", "paper:x", "link"),
+  e("paper:x", "project:p2", "body"),
+  e("thought:y", "paper:x", "body"),
 ];
 
 describe("constellationPath", () => {
-  it("climbs item → project → quarter → year → life goal", () => {
-    expect(constellationPath("paper:x" as GraphNodeId, nodes, edges)).toEqual([
-      "paper:x",
-      "project:p",
-      "goal:q",
-      "goal:year",
-      "goal:life",
-    ]);
+  const c = constellationPath(S("paper:x"), nodes, edges);
+
+  it("climbs from a note through every linked project, belongs only after that", () => {
+    expect([...c.nodes].sort()).toEqual(
+      ["area:a", "goal:life", "goal:q", "goal:year", "paper:x", "project:p", "project:p2"].sort(),
+    );
+    expect(c.edges.has(edgeKey(e("project:p", "paper:x", "link")))).toBe(true);
+    expect(c.edges.has(edgeKey(e("paper:x", "project:p2", "body")))).toBe(true);
+    expect(c.edges.has(edgeKey(e("goal:year", "goal:life", "belongs")))).toBe(true);
+    expect(c.edges.has(edgeKey(e("thought:y", "paper:x", "body")))).toBe(false);
   });
 
-  it("does not wander through other notes or down the tree", () => {
-    expect(constellationPath("thought:y" as GraphNodeId, nodes, edges)).toEqual(["thought:y"]);
-    expect(constellationPath("goal:life" as GraphNodeId, nodes, edges)).toEqual(["goal:life"]);
-    expect(constellationPath("paper:lonely" as GraphNodeId, nodes, edges)).toEqual([
-      "paper:lonely",
-    ]);
+  it("gives one shortest chain to the life goal and its step count", () => {
+    expect(c.chain).toEqual(["paper:x", "project:p2", "goal:year", "goal:life"]);
+    expect(c.stepsToLife).toBe(3);
   });
 
-  it("stops at the highest goal when no life goal is reachable", () => {
+  it("does not hop from note to note or climb down", () => {
+    expect([...constellationPath(S("thought:y"), nodes, edges).nodes]).toEqual(["thought:y"]);
+    const life = constellationPath(S("goal:life"), nodes, edges);
+    expect([...life.nodes]).toEqual(["goal:life"]);
+    expect(life.stepsToLife).toBeNull();
+  });
+
+  it("uses belongs parents first when the node has them", () => {
+    const p = constellationPath(S("project:p"), nodes, edges);
+    expect(p.nodes.has(S("paper:x"))).toBe(false);
+    expect(p.chain).toEqual(["project:p", "goal:q", "goal:year", "goal:life"]);
+  });
+
+  it("stops where the climb ends when no life goal is reached", () => {
     const cut = edges.filter((x) => !(x.source === "goal:year" && x.target === "goal:life"));
-    expect(constellationPath("project:p" as GraphNodeId, nodes, cut)).toEqual([
-      "project:p",
-      "goal:q",
-      "goal:year",
-    ]);
+    const p = constellationPath(S("project:p"), nodes, cut);
+    expect(p.chain).toEqual(["project:p", "goal:q", "goal:year"]);
+    expect(p.stepsToLife).toBeNull();
   });
 
-  it("takes the shortest way when a project points straight at a year goal", () => {
-    const direct = [...edges, e("project:p", "goal:year", "belongs")];
-    expect(constellationPath("project:p" as GraphNodeId, nodes, direct)).toEqual([
-      "project:p",
-      "goal:year",
-      "goal:life",
-    ]);
-  });
-
-  it("returns the start alone for an unknown node", () => {
-    expect(constellationPath("paper:nope" as GraphNodeId, nodes, edges)).toEqual(["paper:nope"]);
+  it("returns the start alone for an unknown or unconnected node", () => {
+    expect([...constellationPath(S("paper:nope"), nodes, edges).nodes]).toEqual(["paper:nope"]);
+    expect(constellationPath(S("paper:lonely"), nodes, edges).chain).toEqual(["paper:lonely"]);
   });
 });
