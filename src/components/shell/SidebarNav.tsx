@@ -21,7 +21,7 @@ import {
   TagIcon,
   ThoughtIcon,
 } from "./icons";
-import { isActivePath, NAV_SECTIONS, type NavIcon } from "./nav";
+import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
@@ -191,7 +191,15 @@ export function SidebarNav({
             ))
           )}
 
-          <SectionTitle>자료</SectionTitle>
+          <SectionTitle>
+            <Link
+              href={LIBRARY_HREF}
+              aria-current={isActivePath(pathname, LIBRARY_HREF) ? "page" : undefined}
+              className="hover:text-fg aria-[current=page]:text-fg"
+            >
+              자료
+            </Link>
+          </SectionTitle>
           {NAV_SECTIONS.library.map((entry) => item(entry))}
 
           <div className="mt-4" />
