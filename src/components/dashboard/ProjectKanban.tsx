@@ -9,31 +9,35 @@ import { NextAction } from "./NextAction";
 /**
  * Research projects by stage (submitted excluded); used inside the home
  * "진행 중인 프로젝트" tabs. Stage changes happen on the detail page.
+ *
+ * The full pipeline is a one-line strip (every stage with its count); only stages that
+ * hold projects get a column, and those columns share the section width instead of
+ * scrolling sideways past empty ones.
  */
 export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
   const total = columns.reduce((sum, c) => sum + c.items.length, 0);
+  const filled = columns.filter((c) => c.items.length > 0);
 
-  return total === 0 ? (
-    <DashboardEmpty>
-      진행 중인 연구가 없습니다.{" "}
-      <Link href="/projects/new" className={buttonClass("ghost", "sm", "align-baseline")}>
-        새 연구 만들기
-      </Link>
-    </DashboardEmpty>
-  ) : (
-    // Right-edge fade hints that more stages scroll in; the trailing pr-8 keeps the
-    // last column clear of the fade once scrolled to the end.
-    <div className="-mx-1 overflow-x-auto px-1 pb-2 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]">
-      <ol className="flex min-w-max gap-3 pr-8">
-        {columns.map((column) => (
+  if (total === 0) {
+    return (
+      <DashboardEmpty>
+        진행 중인 연구가 없습니다.{" "}
+        <Link href="/projects/new" className={buttonClass("ghost", "sm", "align-baseline")}>
+          새 연구 만들기
+        </Link>
+      </DashboardEmpty>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <StageStrip columns={columns} />
+      <ol className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3">
+        {filled.map((column) => (
           <li
             key={column.stage}
             aria-label={`${PROJECT_STAGE.label(column.stage)} ${column.items.length}건`}
-            className={cn(
-              "flex shrink-0 flex-col gap-2 rounded-lg bg-surface p-2",
-              // Empty stages stay as slim placeholders so filled ones get the room.
-              column.items.length ? "w-52" : "w-24",
-            )}
+            className="flex flex-col gap-2 rounded-lg bg-surface p-2"
           >
             <div className="flex items-center justify-between px-1 text-xs">
               <span className="font-medium text-muted">{PROJECT_STAGE.label(column.stage)}</span>
@@ -63,5 +67,27 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
         ))}
       </ol>
     </div>
+  );
+}
+
+/** Every stage in order with its count; empty stages are faint so the pipeline stays readable. */
+function StageStrip({ columns }: { columns: StageColumn[] }) {
+  return (
+    <ol aria-label="연구 단계별 개수" className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs">
+      {columns.map((column, i) => {
+        const count = column.items.length;
+        return (
+          <li key={column.stage} className="flex items-center gap-1">
+            {i > 0 ? (
+              <span aria-hidden className="h-px w-3 bg-border-strong" />
+            ) : null}
+            <span className={cn(count ? "text-fg" : "text-faint")}>
+              {PROJECT_STAGE.label(column.stage)}
+              <span className={cn("ml-1 tabular-nums", count ? "font-medium" : "")}>{count}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
