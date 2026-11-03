@@ -98,7 +98,7 @@ export async function saveLayout(
     // Survives page unload; browsers cap keepalive bodies at 64KB.
     keepalive: !!opts.keepalive && JSON.stringify(body).length < 60_000,
   });
-  if (!res.ok) throw new Error(`layout ${res.status}`);
+  if (!res.ok) throw Object.assign(new Error(`layout ${res.status}`), { status: res.status });
 }
 
 export async function resetLayout(mockMode: boolean): Promise<void> {
