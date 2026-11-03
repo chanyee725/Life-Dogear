@@ -84,10 +84,12 @@ export const InboxIcon = () => (
     <path d="M3.6 3.5h8.8L14 9.5V13a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 2 13V9.5Z" />
   </Icon>
 );
+/** Stacked layers: ongoing areas of responsibility (distinct from the goal target). */
 export const AreaIcon = () => (
   <Icon>
-    <circle cx="8" cy="8" r="5.75" />
-    <circle cx="8" cy="8" r="2.25" />
+    <path d="M8 2.25 14 5.5 8 8.75 2 5.5Z" />
+    <path d="m2 8.25 6 3.25 6-3.25" />
+    <path d="m2 11 6 3.25L14 11" />
   </Icon>
 );
 export const ArchiveIcon = () => (

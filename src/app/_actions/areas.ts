@@ -45,20 +45,6 @@ export async function deleteArea(id: unknown): Promise<ActionResult<null>> {
   });
 }
 
-/** Pins the area to the sidebar (`pinned: true`) or unpins it. */
-export async function setAreaPinned(
-  id: unknown,
-  pinned: unknown,
-): Promise<ActionResult<{ id: string; pinned: boolean }>> {
-  return runAction(async () => {
-    const areaId = parseId(id);
-    if (typeof pinned !== "boolean") throw new RepoError("invalid", "고정 값이 올바르지 않습니다.");
-    if (!(await areas.setPinned(areaId, pinned))) throw new RepoError("not_found", NOT_FOUND);
-    revalidateAll();
-    return { id: areaId, pinned };
-  });
-}
-
 /** New order: every non-archived area id exactly once. */
 export async function reorderAreas(ids: unknown): Promise<ActionResult<null>> {
   return runAction(async () => {
@@ -73,7 +59,6 @@ export async function reorderAreas(ids: unknown): Promise<ActionResult<null>> {
  * Creates the chosen recommended areas (연구 분야·학위·건강·커리어) with their suggested
  * standards. Unknown names are rejected. Titles that already exist are skipped and
  * reported; `archived: true` means the user can restore it from the archive instead.
- * Created from the sidebar, they are pinned there right away.
  */
 export async function createRecommendedAreas(
   names: unknown,
@@ -87,7 +72,6 @@ export async function createRecommendedAreas(
     const { created, skipped } = await areas.createMissing(
       picks.map((a) => ({ title: a.title, standard: a.standard })),
     );
-    for (const area of created) await areas.pin(area.id);
     revalidateAll();
     return { ids: created.map((a) => a.id), skipped };
   });

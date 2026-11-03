@@ -10,7 +10,6 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { formatDate } from "@/components/ui/format";
 import { Input } from "@/components/ui/Input";
-import { PinIconButton } from "./PinButton";
 import { AREA_SORTS, careSignal, filterAreas, sortAreas, type AreaSort } from "./list";
 
 export type AreaRow = {
@@ -21,16 +20,13 @@ export type AreaRow = {
   openProjects: number;
   activeGoals: number;
   openTasks: number;
-  /** Shown in the sidebar. */
-  pinned: boolean;
 };
 
-const DESCRIPTION =
-  "끝나지 않고 꾸준히 돌봐야 하는 책임. 핀으로 고정한 영역은 사이드바에도 보입니다.";
+const DESCRIPTION = "끝나지 않고 꾸준히 돌봐야 하는 책임. 오래 손대지 않은 영역이 표시됩니다.";
 
 /**
  * Areas list: filter (title + 유지 기준, kept in `?q=`), sort (`?sort=`), and a 순서 바꾸기
- * mode that shows 위로/아래로 buttons for the sidebar order. Each row ends with its care
+ * mode that shows 위로/아래로 buttons for the area order. Each row ends with its care
  * signal: when it was last touched, flagged after `STALE_AFTER_DAYS` days.
  */
 export function AreasView({
@@ -205,8 +201,7 @@ function Counts({ area }: { area: AreaRow }) {
 function AreaListRow({ area, now }: { area: AreaRow; now: Date }) {
   const signal = careSignal(area.lastActivity, now);
   return (
-    <li className="group/row flex items-start gap-1 py-2 pr-3 pl-1.5 sm:items-center">
-      <PinIconButton areaId={area.id} title={area.title} pinned={area.pinned} />
+    <li className="flex items-start gap-1 px-3 py-2 sm:items-center">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5 sm:flex-row sm:items-center sm:gap-4 sm:pt-0">
         <Link
           href={`/areas/${area.id}`}
@@ -271,7 +266,7 @@ function ReorderList({ areas }: { areas: AreaRow[] }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13px] text-muted">
-        위·아래 버튼으로 순서를 바꾸면 바로 저장되고 사이드바에도 같은 순서로 보입니다.
+        위·아래 버튼으로 순서를 바꾸면 바로 저장됩니다.
       </p>
       <ul
         aria-label="영역 순서"
