@@ -5,7 +5,7 @@
  */
 import {
   DEFAULT_GRAPH_NODE_TYPES,
-  GRAPH_NODE_TYPES,
+  GRAPH_NODE_TYPE_ORDER as GRAPH_NODE_TYPES,
   type GraphData,
   type GraphEdge,
   type GraphFilter,
