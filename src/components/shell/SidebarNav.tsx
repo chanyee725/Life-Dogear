@@ -94,10 +94,14 @@ function SectionTitle({ children, action }: { children: ReactNode; action?: Reac
 
 export function SidebarNav({
   areas,
+  hasAreas = areas.length > 0,
   inboxCount,
   searchSlot,
 }: {
+  /** Areas to list (the pinned ones). */
   areas: { id: string; title: string }[];
+  /** False when no areas exist at all: recommended areas are offered instead. */
+  hasAreas?: boolean;
   inboxCount: number;
   searchSlot?: ReactNode;
 }) {
@@ -175,13 +179,16 @@ export function SidebarNav({
               </Link>
             }
           >
-            <Link href="/areas" className="hover:text-fg">
+            <Link
+              href="/areas"
+              aria-current={pathname === "/areas" ? "page" : undefined}
+              className="hover:text-fg aria-[current=page]:text-fg"
+            >
               영역
             </Link>
           </SectionTitle>
-          {areas.length === 0 ? (
-            <RecommendedAreas />
-          ) : (
+          {/* Only pinned areas; all of them live on the 영역 page (the title link). */}
+          {hasAreas ? (
             areas.map((area) => (
               <NavLink
                 key={area.id}
@@ -191,6 +198,8 @@ export function SidebarNav({
                 pathname={pathname}
               />
             ))
+          ) : (
+            <RecommendedAreas />
           )}
 
           <SectionTitle>

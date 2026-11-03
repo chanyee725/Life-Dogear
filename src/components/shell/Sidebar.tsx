@@ -4,15 +4,25 @@ import { describeError } from "@/app/_actions/result";
 import { areas, thoughts } from "@/lib/repo";
 import { SidebarNav } from "./SidebarNav";
 
-type SidebarData = { areas: { id: string; title: string }[]; inboxCount: number };
+type SidebarData = {
+  /** Pinned areas only, in the user's order. */
+  areas: { id: string; title: string }[];
+  /** False with no (non-archived) areas at all: the sidebar offers recommended ones. */
+  hasAreas: boolean;
+  inboxCount: number;
+};
 
-const EMPTY: SidebarData = { areas: [], inboxCount: 0 };
+const EMPTY: SidebarData = { areas: [], hasAreas: true, inboxCount: 0 };
 
 /** Areas and inbox count; on any database error the sidebar still renders, just without them. */
 async function loadSidebarData(): Promise<SidebarData> {
   try {
     const [areaList, inboxCount] = await Promise.all([areas.list(), thoughts.countInbox()]);
-    return { areas: areaList.map((a) => ({ id: a.id, title: a.title })), inboxCount };
+    return {
+      areas: areaList.filter((a) => a.pinnedAt).map((a) => ({ id: a.id, title: a.title })),
+      hasAreas: areaList.length > 0,
+      inboxCount,
+    };
   } catch (error) {
     // Name and code only: the error object carries SQL, params, stacks and local paths.
     console.error("[sidebar] could not load areas or the inbox count", describeError(error));
@@ -21,7 +31,7 @@ async function loadSidebarData(): Promise<SidebarData> {
 }
 
 /**
- * App sidebar (server): reads the areas and the inbox count, then renders the client nav.
+ * App sidebar (server): reads the pinned areas and the inbox count, then renders the client nav.
  * Area/archive/inbox actions revalidate the root layout, so this stays current.
  *
  * `connection()` defers the database reads to request time, so `next build` never
@@ -33,7 +43,14 @@ export async function Sidebar({ searchSlot }: { searchSlot?: ReactNode } = {}) {
   // Outside the try: it signals dynamic rendering to Next and must not be swallowed.
   await connection();
   const data = await loadSidebarData();
-  return <SidebarNav areas={data.areas} inboxCount={data.inboxCount} searchSlot={searchSlot} />;
+  return (
+    <SidebarNav
+      areas={data.areas}
+      hasAreas={data.hasAreas}
+      inboxCount={data.inboxCount}
+      searchSlot={searchSlot}
+    />
+  );
 }
 
 export { NAV_SECTIONS, isActivePath } from "./nav";

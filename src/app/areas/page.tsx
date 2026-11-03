@@ -48,6 +48,7 @@ export default async function AreasPage({ searchParams }: { searchParams: Promis
             openProjects: c?.openProjects ?? 0,
             activeGoals: c?.activeGoals ?? 0,
             openTasks: c?.openTasks ?? 0,
+            pinned: a.pinnedAt !== null,
           };
         })}
       />

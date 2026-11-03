@@ -10,6 +10,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { formatDate } from "@/components/ui/format";
 import { Input } from "@/components/ui/Input";
+import { PinIconButton } from "./PinButton";
 import { AREA_SORTS, careSignal, filterAreas, sortAreas, type AreaSort } from "./list";
 
 export type AreaRow = {
@@ -20,9 +21,12 @@ export type AreaRow = {
   openProjects: number;
   activeGoals: number;
   openTasks: number;
+  /** Shown in the sidebar. */
+  pinned: boolean;
 };
 
-const DESCRIPTION = "끝나지 않고 꾸준히 돌봐야 하는 책임.";
+const DESCRIPTION =
+  "끝나지 않고 꾸준히 돌봐야 하는 책임. 핀으로 고정한 영역은 사이드바에도 보입니다.";
 
 /**
  * Areas list: filter (title + 유지 기준, kept in `?q=`), sort (`?sort=`), and a 순서 바꾸기
@@ -201,32 +205,35 @@ function Counts({ area }: { area: AreaRow }) {
 function AreaListRow({ area, now }: { area: AreaRow; now: Date }) {
   const signal = careSignal(area.lastActivity, now);
   return (
-    <li className="flex flex-col gap-0.5 px-3 py-2 sm:flex-row sm:items-center sm:gap-4">
-      <Link
-        href={`/areas/${area.id}`}
-        className="group flex min-w-0 flex-1 flex-col rounded-md sm:flex-row sm:items-baseline sm:gap-3"
-      >
-        <span className="truncate text-sm font-medium group-hover:underline sm:max-w-[40%] sm:shrink-0">
-          {area.title}
-        </span>
-        {area.standard ? (
-          <span className="min-w-0 truncate text-[13px] text-muted">{area.standard}</span>
-        ) : null}
-      </Link>
-      <div className="flex items-center justify-between gap-3 sm:contents">
-        <Counts area={area} />
-        <span
-          className={cn(
-            "ml-auto flex shrink-0 items-center justify-end gap-1.5 text-xs tabular-nums sm:w-36",
-            signal.stale ? "text-tone-amber-fg" : "text-faint",
-          )}
-          title={`마지막 활동 ${formatDate(area.lastActivity)}`}
+    <li className="group/row flex items-start gap-1 py-2 pr-3 pl-1.5 sm:items-center">
+      <PinIconButton areaId={area.id} title={area.title} pinned={area.pinned} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5 sm:flex-row sm:items-center sm:gap-4 sm:pt-0">
+        <Link
+          href={`/areas/${area.id}`}
+          className="group flex min-w-0 flex-1 flex-col rounded-md sm:flex-row sm:items-baseline sm:gap-3"
         >
-          {signal.stale ? (
-            <span aria-hidden className="size-1.5 rounded-full bg-tone-amber-fg" />
+          <span className="truncate text-sm font-medium group-hover:underline sm:max-w-[40%] sm:shrink-0">
+            {area.title}
+          </span>
+          {area.standard ? (
+            <span className="min-w-0 truncate text-[13px] text-muted">{area.standard}</span>
           ) : null}
-          {signal.label}
-        </span>
+        </Link>
+        <div className="flex items-center justify-between gap-3 sm:contents">
+          <Counts area={area} />
+          <span
+            className={cn(
+              "ml-auto flex shrink-0 items-center justify-end gap-1.5 text-xs tabular-nums sm:w-36",
+              signal.stale ? "text-tone-amber-fg" : "text-faint",
+            )}
+            title={`마지막 활동 ${formatDate(area.lastActivity)}`}
+          >
+            {signal.stale ? (
+              <span aria-hidden className="size-1.5 rounded-full bg-tone-amber-fg" />
+            ) : null}
+            {signal.label}
+          </span>
+        </div>
       </div>
     </li>
   );

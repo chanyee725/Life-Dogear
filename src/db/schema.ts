@@ -45,6 +45,8 @@ export const areas = sqliteTable(
     standard: text("standard").notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
     body: text("body").notNull().default(""),
+    /** Set (ISO) when the area is pinned to the sidebar; null = not pinned. */
+    pinnedAt: text("pinned_at"),
     archivedAt: archivedAt(),
     ...timestamps,
   },

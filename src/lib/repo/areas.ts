@@ -178,6 +178,25 @@ export async function reorder(ids: readonly string[]): Promise<void> {
   });
 }
 
+/**
+ * Pins the area to the sidebar (or unpins it). Not an edit of the area: `updatedAt` stays,
+ * so pinning never counts as activity. False when the area doesn't exist.
+ */
+export async function setPinned(id: string, pinned: boolean): Promise<boolean> {
+  // Through the write queue, like every other write on the single connection.
+  const updated = await withTx((tx) =>
+    tx
+      .update(areas)
+      .set({ pinnedAt: pinned ? nowIso() : null })
+      .where(eq(areas.id, id))
+      .returning({ id: areas.id }),
+  );
+  return updated.length > 0;
+}
+
+export const pin = (id: string) => setPinned(id, true);
+export const unpin = (id: string) => setPinned(id, false);
+
 /** Deletes the area; its projects stay but lose the area, links and tags are removed. */
 export async function remove(id: string): Promise<boolean> {
   return withTx(async (tx) => {
