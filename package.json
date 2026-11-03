@@ -7,6 +7,7 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start -H 127.0.0.1",
+    "serve": "NEXT_DIST_DIR=.next-prod next build && NEXT_DIST_DIR=.next-prod next start -H 127.0.0.1 -p 3100",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
