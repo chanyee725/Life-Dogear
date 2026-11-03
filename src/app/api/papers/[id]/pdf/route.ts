@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
-import { deletePdf, MAX_PDF_BYTES, pdfSize, readPdfStream, writePdf } from "@/lib/storage/pdf";
+import { deletePdf, MAX_PDF_BYTES, openPdf, pdfSize, writePdf } from "@/lib/storage/pdf";
 import { parseRange } from "@/lib/storage/range";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -47,8 +47,11 @@ export async function GET(request: NextRequest, { params }: IdParams) {
         headers: { ...BASE_HEADERS, "Content-Range": `bytes */${size}` },
       });
     }
+    // Shared storage: a ranged GET on the bucket, proxied so the browser never sees it.
+    const file = await openPdf(id, range ?? undefined);
+    if (!file) return jsonError(404, "PDF 파일을 찾을 수 없습니다.");
     if (range) {
-      return new NextResponse(readPdfStream(id, range), {
+      return new NextResponse(file.body, {
         status: 206,
         headers: {
           ...BASE_HEADERS,
@@ -57,7 +60,7 @@ export async function GET(request: NextRequest, { params }: IdParams) {
         },
       });
     }
-    return new NextResponse(readPdfStream(id), {
+    return new NextResponse(file.body, {
       status: 200,
       headers: { ...BASE_HEADERS, "Content-Length": String(size) },
     });

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { describeError } from "@/app/_actions/result";
 import {
   IMAGE_URL_PREFIX,
   ImageStorageError,
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: `${IMAGE_URL_PREFIX}${name}` }, { status: 201 });
   } catch (error) {
     if (error instanceof ImageStorageError) return jsonError(STATUS[error.code], error.message);
-    console.error("[api/images]", error instanceof Error ? error.name : "unknown error");
+    console.error("[api/images]", describeError(error));
     return jsonError(500, "사진을 저장하지 못했습니다.");
   }
 }

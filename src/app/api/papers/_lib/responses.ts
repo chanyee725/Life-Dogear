@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { describeError } from "@/app/_actions/result";
 import { RepoError } from "@/lib/repo";
 import { PdfStorageError } from "@/lib/storage/pdf";
 
@@ -25,6 +26,6 @@ export function errorResponse(error: unknown): NextResponse {
   if (error instanceof RepoError) {
     return jsonError(error.code === "not_found" ? 404 : 400, error.message);
   }
-  console.error("[api/papers]", error instanceof Error ? error.name : "unknown error");
+  console.error("[api/papers]", describeError(error));
   return jsonError(500, "요청을 처리하지 못했습니다.");
 }

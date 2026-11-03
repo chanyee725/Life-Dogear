@@ -1,10 +1,8 @@
-import { createReadStream } from "node:fs";
-import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { Readable } from "node:stream";
-import { isValidItemId } from "@/lib/ids";
-
 import { pdfDirSetting } from "@/lib/data-dir";
+import { isValidItemId } from "@/lib/ids";
+import { blobStore, type StoreOptions as BlobOptions } from "./blob";
+import type { ByteRange } from "./range";
 
 /**
  * Directory holding uploaded PDFs: `<DATA_DIR>/pdfs`, relative to the project root
@@ -65,69 +63,52 @@ export function assertPdfBytes(bytes: Uint8Array, maxBytes: number = MAX_PDF_BYT
   if (!isPdfBytes(bytes)) throw new PdfStorageError("not_pdf", "PDF 파일이 아닙니다.");
 }
 
-export type StorageOptions = { root?: string; maxBytes?: number };
+export type StorageOptions = BlobOptions & { maxBytes?: number };
+
+/** Storage key: `pdfs/<id>.pdf` (local: `<DATA_DIR>/pdfs/<id>.pdf`). */
+export function pdfKey(id: string): string {
+  assertId(id);
+  return `pdfs/${id}.pdf`;
+}
 
 /**
- * Writes the PDF for `id`, replacing any existing file atomically (temp file +
- * rename). Returns the relative path to store in the database.
+ * Writes the PDF for `id`, replacing any existing file (atomically on disk). Returns the
+ * relative path to store in the database.
  */
 export async function writePdf(
   id: string,
   bytes: Uint8Array,
   options: StorageOptions = {},
 ): Promise<string> {
-  const target = pdfAbsolutePath(id, options.root);
+  const key = pdfKey(id);
   assertPdfBytes(bytes, options.maxBytes);
-  await mkdir(pdfDir(options.root), { recursive: true });
-  const temp = `${target}.${crypto.randomUUID()}.tmp`;
-  try {
-    await writeFile(temp, bytes, { flag: "wx" });
-    await rename(temp, target);
-  } catch (error) {
-    await rm(temp, { force: true });
-    throw error;
-  }
+  await blobStore(options).put(key, bytes, "application/pdf");
   return pdfRelativePath(id);
 }
 
 /** Size in bytes, or null when no file exists for `id`. */
 export async function pdfSize(id: string, options: StorageOptions = {}): Promise<number | null> {
-  try {
-    const info = await stat(pdfAbsolutePath(id, options.root));
-    return info.isFile() ? info.size : null;
-  } catch (error) {
-    if (isNotFound(error)) return null;
-    throw error;
-  }
+  return (await blobStore(options).head(pdfKey(id)))?.size ?? null;
 }
 
 export async function pdfExists(id: string, options: StorageOptions = {}): Promise<boolean> {
   return (await pdfSize(id, options)) !== null;
 }
 
-/** Web stream of the file, optionally limited to an inclusive byte range. */
-export function readPdfStream(
+/**
+ * The file, optionally limited to an inclusive byte range (a ranged GET on the bucket);
+ * null when there is no file. `size` is always the whole file's size.
+ */
+export async function openPdf(
   id: string,
-  range?: { start: number; end: number },
+  range?: ByteRange,
   options: StorageOptions = {},
-): ReadableStream<Uint8Array> {
-  const stream = createReadStream(pdfAbsolutePath(id, options.root), range);
-  return Readable.toWeb(stream) as ReadableStream<Uint8Array>;
+): Promise<{ body: ReadableStream<Uint8Array>; size: number } | null> {
+  const read = await blobStore(options).get(pdfKey(id), range);
+  return read && { body: read.body, size: read.size };
 }
 
 /** Deletes the file for `id`. Returns false when there was nothing to delete. */
 export async function deletePdf(id: string, options: StorageOptions = {}): Promise<boolean> {
-  const path = pdfAbsolutePath(id, options.root);
-  try {
-    await stat(path);
-  } catch (error) {
-    if (isNotFound(error)) return false;
-    throw error;
-  }
-  await rm(path, { force: true });
-  return true;
-}
-
-function isNotFound(error: unknown): boolean {
-  return (error as NodeJS.ErrnoException | undefined)?.code === "ENOENT";
+  return blobStore(options).delete(pdfKey(id));
 }

@@ -27,6 +27,8 @@ export default defineConfig({
       DATA_DIR: "data/e2e",
       DATABASE_URL: "file:./data/e2e/e2e.db",
       DATABASE_AUTH_TOKEN: "",
+      // Never write test photos and PDFs to the shared bucket.
+      BLOB_STORE: "local",
     },
   },
 });
