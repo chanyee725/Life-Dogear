@@ -29,6 +29,8 @@ export const ITEM_TYPE = defineEnum([
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
   { value: "area", label: "영역", tone: "rose" },
+  { value: "goal", label: "목표", tone: "red" },
+  { value: "review", label: "회고", tone: "gray" },
 ] as const);
 export type ItemType = (typeof ITEM_TYPE.values)[number];
 
@@ -39,6 +41,8 @@ export const ITEM_ROUTE: Record<ItemType, string> = {
   paper: "/papers",
   seminar: "/seminars",
   thought: "/thoughts",
+  goal: "/goals",
+  review: "/reviews",
 };
 
 /** Project kind: research projects use the 8 stages, general ones only a status. */
@@ -105,6 +109,21 @@ export const THOUGHT_MATURITY = defineEnum([
   { value: "refined", label: "정리됨", tone: "green" },
 ] as const);
 export type ThoughtMaturity = (typeof THOUGHT_MATURITY.values)[number];
+
+export const GOAL_HORIZON = defineEnum([
+  { value: "life", label: "인생", tone: "red" },
+  { value: "year", label: "연간", tone: "amber" },
+  { value: "quarter", label: "분기", tone: "blue" },
+] as const);
+export type GoalHorizon = (typeof GOAL_HORIZON.values)[number];
+
+export const REVIEW_KIND = defineEnum([
+  { value: "week", label: "주간", tone: "blue" },
+  { value: "month", label: "월간", tone: "teal" },
+  { value: "quarter", label: "분기", tone: "violet" },
+  { value: "year", label: "연간", tone: "amber" },
+] as const);
+export type ReviewKind = (typeof REVIEW_KIND.values)[number];
 
 /** Areas offered when the user has none yet (created only when chosen). */
 export const RECOMMENDED_AREAS = [

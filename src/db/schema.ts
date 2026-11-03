@@ -9,12 +9,14 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import {
+  GOAL_HORIZON,
   IMPORTANCE,
   ITEM_TYPE,
   PROJECT_KIND,
   PROJECT_STAGE,
   PROJECT_STATUS,
   READ_STATUS,
+  REVIEW_KIND,
   SEMINAR_KIND,
   THOUGHT_KIND,
   THOUGHT_MATURITY,
@@ -45,6 +47,28 @@ export const areas = sqliteTable(
   (t) => [index("areas_order_idx").on(t.archivedAt, t.sortOrder)],
 );
 
+/** Life / year / quarter goals. Projects can point to a goal via `goal_id`. */
+export const goals = sqliteTable(
+  "goals",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    horizon: text("horizon", { enum: GOAL_HORIZON.values }).notNull().default("quarter"),
+    /** null for life goals; "2027" for year goals; "2027-Q1" for quarter goals. */
+    period: text("period"),
+    areaId: text("area_id").references(() => areas.id, { onDelete: "set null" }),
+    /** Parent goal (life → year → quarter). No FK to allow forward references. */
+    parentId: text("parent_id"),
+    body: text("body").notNull().default(""),
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [
+    index("goals_horizon_idx").on(t.horizon, t.archivedAt),
+    index("goals_parent_idx").on(t.parentId),
+  ],
+);
+
 export const projects = sqliteTable(
   "projects",
   {
@@ -54,6 +78,7 @@ export const projects = sqliteTable(
     /** General projects use this; research projects keep it in sync with `stage`. */
     status: text("status", { enum: PROJECT_STATUS.values }).notNull().default("active"),
     areaId: text("area_id").references(() => areas.id, { onDelete: "set null" }),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
     nextAction: text("next_action").notNull().default(""),
     researchQuestion: text("research_question").notNull().default(""),
     stage: text("stage", { enum: PROJECT_STAGE.values }).notNull().default("exploring"),
@@ -67,6 +92,7 @@ export const projects = sqliteTable(
   (t) => [
     index("projects_kind_status_idx").on(t.kind, t.status, t.archivedAt),
     index("projects_area_idx").on(t.areaId),
+    index("projects_goal_idx").on(t.goalId),
   ],
 );
 
@@ -165,6 +191,8 @@ export const links = sqliteTable(
     sourceId: text("source_id").notNull(),
     targetType: text("target_type", { enum: ITEM_TYPE.values }).notNull(),
     targetId: text("target_id").notNull(),
+    /** "manual" = user-created; "body" = inferred from [[wikilink]] in the body text. */
+    via: text("via").notNull().default("manual"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [
@@ -190,4 +218,42 @@ export const highlights = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [index("highlights_paper_idx").on(t.paperId, t.page)],
+);
+
+/** Periodic reviews (weekly, monthly, quarterly, annual). */
+export const reviews = sqliteTable(
+  "reviews",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind", { enum: REVIEW_KIND.values }).notNull(),
+    /** ISO period string: "2026-W45" / "2026-11" / "2026-Q4" / "2026". */
+    period: text("period").notNull(),
+    /** Display title derived from kind + period, e.g. "2026-W45 주간 회고". */
+    title: text("title").notNull().default(""),
+    body: text("body").notNull().default(""),
+    /** JSON: { focus: string[] } — weekly reviews only. */
+    focus: text("focus"),
+    /** JSON: { goalId: string; progress: number }[] */
+    goalProgress: text("goal_progress"),
+    completedAt: text("completed_at"),
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("reviews_kind_period_idx").on(t.kind, t.period),
+    index("reviews_archived_idx").on(t.archivedAt),
+  ],
+);
+
+/** Persists user-dragged node positions in the graph view. */
+export const graphLayout = sqliteTable(
+  "graph_layout",
+  {
+    nodeType: text("node_type", { enum: ITEM_TYPE.values }).notNull(),
+    nodeId: text("node_id").notNull(),
+    x: real("x").notNull(),
+    y: real("y").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.nodeType, t.nodeId] })],
 );

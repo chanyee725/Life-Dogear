@@ -1,0 +1,1 @@
+ALTER TABLE `reviews` ADD `title` text DEFAULT '' NOT NULL;
