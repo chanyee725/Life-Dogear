@@ -211,6 +211,12 @@ export async function get(id: string): Promise<Goal | null> {
 }
 
 export async function create(input: GoalInput): Promise<Goal> {
+  const id = await withTx((tx) => createWith(tx, input));
+  return (await get(id))!;
+}
+
+/** Creates a goal inside an open transaction (e.g. together with a link); returns its id. */
+export async function createWith(exec: Executor, input: GoalInput): Promise<string> {
   const now = nowIso();
   const id = newId();
   const horizon = requireEnum(GOAL_HORIZON, input.horizon ?? "quarter", "기간 단위");
@@ -218,23 +224,21 @@ export async function create(input: GoalInput): Promise<Goal> {
   const parentId = blankToNull(input.parentId) ?? null;
   const areaId = blankToNull(input.areaId) ?? null;
   const columns = toColumns({ ...input, title: undefined });
-  await withTx(async (tx) => {
-    await validateShape(tx, { horizon, period, parentId, areaId }, null);
-    await tx.insert(goals).values({
-      id,
-      title: requireTitle(input.title),
-      ...columns,
-      horizon,
-      period,
-      parentId,
-      areaId,
-      createdAt: now,
-      updatedAt: now,
-    });
-    if (input.tags) await setTagsWith(tx, ref(id), input.tags);
-    if (input.body) await syncBodyLinks(tx, ref(id), input.body);
+  await validateShape(exec, { horizon, period, parentId, areaId }, null);
+  await exec.insert(goals).values({
+    id,
+    title: requireTitle(input.title),
+    ...columns,
+    horizon,
+    period,
+    parentId,
+    areaId,
+    createdAt: now,
+    updatedAt: now,
   });
-  return (await get(id))!;
+  if (input.tags) await setTagsWith(exec, ref(id), input.tags);
+  if (input.body) await syncBodyLinks(exec, ref(id), input.body);
+  return id;
 }
 
 /**

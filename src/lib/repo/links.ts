@@ -53,34 +53,36 @@ const touching = (ref: ItemRef) =>
  * in either direction, that link is kept; a `body` link is promoted to `manual` so
  * removing the `[[…]]` from the body no longer removes it.
  */
-export async function link(a: ItemRef, b: ItemRef): Promise<Link> {
+export function link(a: ItemRef, b: ItemRef): Promise<Link> {
+  return withTx((tx) => linkWith(tx, a, b));
+}
+
+/** {@link link} inside an open transaction. */
+export async function linkWith(tx: Executor, a: ItemRef, b: ItemRef): Promise<Link> {
   assertItemRef(a);
   assertItemRef(b);
   if (sameRef(a, b)) throw new RepoError("invalid", "자기 자신과는 연결할 수 없습니다.");
+  if (!(await exists(a, tx)) || !(await exists(b, tx))) {
+    throw new RepoError("not_found", "연결할 항목을 찾을 수 없습니다.");
+  }
+  const [existing] = await tx.select().from(links).where(between(a, b)).limit(1);
+  if (existing) {
+    if (existing.via === "manual") return existing;
+    await tx.update(links).set({ via: "manual" }).where(eq(links.id, existing.id));
+    return { ...existing, via: "manual" };
+  }
 
-  return withTx(async (tx) => {
-    if (!(await exists(a, tx)) || !(await exists(b, tx))) {
-      throw new RepoError("not_found", "연결할 항목을 찾을 수 없습니다.");
-    }
-    const [existing] = await tx.select().from(links).where(between(a, b)).limit(1);
-    if (existing) {
-      if (existing.via === "manual") return existing;
-      await tx.update(links).set({ via: "manual" }).where(eq(links.id, existing.id));
-      return { ...existing, via: "manual" };
-    }
-
-    const row: Link = {
-      id: newId(),
-      sourceType: a.type,
-      sourceId: a.id,
-      targetType: b.type,
-      targetId: b.id,
-      via: "manual",
-      createdAt: nowIso(),
-    };
-    await tx.insert(links).values(row);
-    return row;
-  });
+  const row: Link = {
+    id: newId(),
+    sourceType: a.type,
+    sourceId: a.id,
+    targetType: b.type,
+    targetId: b.id,
+    via: "manual",
+    createdAt: nowIso(),
+  };
+  await tx.insert(links).values(row);
+  return row;
 }
 
 /** Removes the link between `a` and `b`, whichever direction it was created in. */

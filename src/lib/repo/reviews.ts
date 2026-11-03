@@ -4,8 +4,9 @@ import { ITEM_TYPE, REVIEW_KIND, type ReviewKind } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { goalPeriodsFor, isValidPeriod, reviewTitle, shiftPeriod } from "@/lib/reviews/period";
 import { reviewTemplate } from "@/lib/reviews/templates";
-import { progressFor } from "./goals";
-import { removeLinksFor } from "./links";
+import { createWith as createGoalWith, progressFor, type GoalInput } from "./goals";
+import { exists } from "./items";
+import { linkWith, removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   db,
@@ -202,6 +203,22 @@ export async function open(
   });
 }
 
+/**
+ * Focus to save: newly picked items must exist; items already saved that were deleted
+ * since are dropped (the picker shows them as "삭제됨" so they can be cleared).
+ */
+async function checkFocus(current: Review, value: readonly unknown[]): Promise<ItemRef[]> {
+  const saved = new Set(current.focus.map((r) => `${r.type}:${r.id}`));
+  const out: ItemRef[] = [];
+  for (const r of normalizeFocus(value)) {
+    if (await exists(r)) out.push(r);
+    else if (!saved.has(`${r.type}:${r.id}`)) {
+      throw new RepoError("not_found", "집중할 항목을 찾을 수 없습니다.");
+    }
+  }
+  return out;
+}
+
 export type ReviewPatch = {
   body?: string;
   focus?: readonly unknown[];
@@ -215,7 +232,7 @@ export async function update(id: string, patch: ReviewPatch): Promise<Review | n
 
   const set: Partial<Row> = { updatedAt: nowIso() };
   if (patch.body !== undefined) set.body = patch.body;
-  if (patch.focus !== undefined) set.focus = JSON.stringify(normalizeFocus(patch.focus));
+  if (patch.focus !== undefined) set.focus = JSON.stringify(await checkFocus(current, patch.focus));
   if (patch.completed === true) {
     set.completedAt = current.completedAt ?? nowIso();
     set.goalProgress = JSON.stringify(await snapshot(current.kind, current.period));
@@ -223,9 +240,11 @@ export async function update(id: string, patch: ReviewPatch): Promise<Review | n
     set.completedAt = null;
   }
 
-  const [row] = await withTx((tx) =>
-    tx.update(reviews).set(set).where(eq(reviews.id, id)).returning(),
-  );
+  const [row] = await withTx(async (tx) => {
+    const rows = await tx.update(reviews).set(set).where(eq(reviews.id, id)).returning();
+    if (rows.length && patch.body !== undefined) await syncBodyLinks(tx, ref(id), patch.body);
+    return rows;
+  });
   return row ? toReview(row) : null;
 }
 
@@ -254,4 +273,21 @@ export async function existingPeriods(
     .from(reviews)
     .where(and(eq(reviews.kind, kind), inArray(reviews.period, [...periods])));
   return new Set(rows.map((r) => r.period));
+}
+
+/**
+ * "다음 목표 초안": creates the goal and links it to the review in one transaction, so
+ * a failed link never leaves an unlinked goal. Returns the goal id.
+ */
+export async function createLinkedGoal(reviewId: string, input: GoalInput): Promise<string> {
+  return withTx(async (tx) => {
+    const [review] = await tx
+      .select({ id: reviews.id })
+      .from(reviews)
+      .where(eq(reviews.id, reviewId));
+    if (!review) throw new RepoError("not_found", "회고를 찾을 수 없습니다.");
+    const goalId = await createGoalWith(tx, input);
+    await linkWith(tx, ref(reviewId), { type: "goal", id: goalId });
+    return goalId;
+  });
 }
