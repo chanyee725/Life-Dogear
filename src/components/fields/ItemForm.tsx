@@ -157,6 +157,16 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
+  /** Shown for a moment after an explicit 저장 that left nothing unsaved. */
+  const [confirmed, setConfirmed] = useState(false);
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const failedRef = useRef(false);
+  useEffect(
+    () => () => {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+    },
+    [],
+  );
   const [titleMissing, setTitleMissing] = useState(false);
   /** Edited since the form was last read into the queue. */
   const [unread, setUnread] = useState(false);
@@ -170,6 +180,8 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       (patch) => safeAction(() => action(patchToFormData(patch))),
       (next, message) => {
         setState(next);
+        failedRef.current = next === "error";
+        if (next !== "saved" && next !== "idle") setConfirmed(false);
         if (next === "error") setError(message);
         if (next === "saved") {
           setError(null);
@@ -224,17 +236,26 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     };
   }, []);
 
-  function saveNow() {
+  async function saveNow() {
     autosave.cancel();
     readIntoQueue(false);
+    await queue.flush();
+    // Nothing left to send and no failure: answer the click, even if autosave had
+    // already stored everything (then there was nothing new to send).
+    if (queue.dirty() || failedRef.current || unreadRef.current) return;
+    setSavedOnce(true);
+    setConfirmed(true);
+    if (confirmTimer.current) clearTimeout(confirmTimer.current);
+    confirmTimer.current = setTimeout(() => setConfirmed(false), 2500);
   }
 
   useFormEdits(formRef, () => {
     unreadRef.current = true;
     setUnread(true);
+    setConfirmed(false);
     autosave();
   });
-  useSaveShortcut(saveNow);
+  useSaveShortcut(() => void saveNow());
 
   const dirty = unread || queue.dirty() || state === "error";
   useUnsavedChangesGuard(dirty);
@@ -245,14 +266,14 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       ref={formRef}
       onSubmit={(event) => {
         event.preventDefault();
-        saveNow();
+        void saveNow();
       }}
       className={cn("flex flex-col gap-6", className)}
     >
       <DetailHeader
         backHref={basePath}
         backLabel={backLabel}
-        status={<SaveStatus state={shown} savedOnce={savedOnce} />}
+        status={<SaveStatus state={shown} savedOnce={savedOnce} confirmed={confirmed} />}
         actions={
           <>
             {actions}
