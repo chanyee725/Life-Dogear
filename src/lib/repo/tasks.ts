@@ -279,6 +279,61 @@ export async function create(input: TaskInput): Promise<Task> {
   });
 }
 
+export type TaskRestoreInput = TaskInput & {
+  /** The deleted task's `sortOrder`: it goes back in front of the task that followed it. */
+  sortOrder?: number;
+  /** The deleted task's completion time (ISO); null or omitted = open. */
+  doneAt?: string | null;
+};
+
+/**
+ * Undo for delete: re-creates the task (new id) at its old place in the parent's list and,
+ * when it was done, with its old completion time. Without `sortOrder` it goes to the end.
+ */
+export async function restore(input: TaskRestoreInput): Promise<Task> {
+  const title = requireTaskTitle(input.title);
+  const parent = requireParent(input.parent);
+  const dueDate = optionalDate(input.dueDate, "마감일");
+  const doneAt =
+    input.doneAt === undefined || input.doneAt === null
+      ? null
+      : requireInstant(input.doneAt, "완료");
+  const order = input.sortOrder;
+  if (order !== undefined && (!Number.isInteger(order) || order < 0)) {
+    throw new RepoError("invalid", "순서가 올바르지 않습니다.");
+  }
+  return withTx(async (tx) => {
+    await assertAssignableParent(tx, parent);
+    const [{ max } = { max: null }] = await tx
+      .select({ max: sql<number | null>`max(${tasks.sortOrder})` })
+      .from(tasks)
+      .where(parentWhere(parent));
+    const end = (max ?? -1) + 1;
+    const sortOrder = order === undefined ? end : Math.min(order, end);
+    // Make room: everything from that slot on moves one down.
+    if (sortOrder < end) {
+      await tx
+        .update(tasks)
+        .set({ sortOrder: sql`${tasks.sortOrder} + 1` })
+        .where(and(parentWhere(parent), gte(tasks.sortOrder, sortOrder)));
+    }
+    const now = nowIso();
+    const id = newId();
+    await tx.insert(tasks).values({
+      id,
+      title,
+      dueDate,
+      doneAt,
+      parentType: parent?.type ?? null,
+      parentId: parent?.id ?? null,
+      sortOrder,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return (await get(id, tx))!;
+  });
+}
+
 /** Patch update; `done` sets or clears the completion time. Null when missing. */
 export async function update(id: string, patch: TaskPatch): Promise<Task | null> {
   const set: Partial<typeof tasks.$inferInsert> = {};
@@ -299,6 +354,27 @@ export async function update(id: string, patch: TaskPatch): Promise<Task | null>
   });
 }
 
+type TaskRow = typeof tasks.$inferSelect;
+
+const rowParent = (row: Pick<TaskRow, "parentType" | "parentId">): TaskParent =>
+  row.parentType && row.parentId ? { type: row.parentType, id: row.parentId } : null;
+
+/** A parent's tasks in display order (ties broken by creation, then id). */
+function siblingsOf(exec: Executor, parent: TaskParent) {
+  return exec
+    .select({ id: tasks.id, doneAt: tasks.doneAt })
+    .from(tasks)
+    .where(parentWhere(parent))
+    .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt), asc(tasks.id));
+}
+
+/** Writes 0, 1, 2, … so equal or gapped orders end up distinct. */
+async function renumber(exec: Executor, ids: readonly string[]): Promise<void> {
+  for (const [n, id] of ids.entries()) {
+    await exec.update(tasks).set({ sortOrder: n }).where(eq(tasks.id, id));
+  }
+}
+
 /**
  * Moves a task one step up or down among its parent's tasks in the same state (open or
  * done), swapping order with that neighbour. Returns false when it is missing or already at that end.
@@ -310,17 +386,7 @@ export async function move(id: string, direction: "up" | "down"): Promise<boolea
   return withTx(async (tx) => {
     const [current] = await tx.select().from(tasks).where(eq(tasks.id, id));
     if (!current) return false;
-    const siblings = await tx
-      .select({ id: tasks.id, doneAt: tasks.doneAt })
-      .from(tasks)
-      .where(
-        parentWhere(
-          current.parentType && current.parentId
-            ? { type: current.parentType, id: current.parentId }
-            : null,
-        ),
-      )
-      .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt), asc(tasks.id));
+    const siblings = await siblingsOf(tx, rowParent(current));
     const i = siblings.findIndex((s) => s.id === id);
     // The neighbour is the next task in the same state: open tasks move among open ones.
     const isOpen = !current.doneAt;
@@ -329,10 +395,42 @@ export async function move(id: string, direction: "up" | "down"): Promise<boolea
     while (j >= 0 && j < siblings.length && !siblings[j]!.doneAt !== isOpen) j += step;
     if (j < 0 || j >= siblings.length) return false;
     [siblings[i], siblings[j]] = [siblings[j]!, siblings[i]!];
-    // Renumber so equal or gapped orders end up distinct.
-    for (const [n, s] of siblings.entries()) {
-      await tx.update(tasks).set({ sortOrder: n }).where(eq(tasks.id, s.id));
+    await renumber(
+      tx,
+      siblings.map((s) => s.id),
+    );
+    return true;
+  });
+}
+
+/**
+ * Drag and drop: puts a task right after `afterId` (null = first) among its parent's tasks
+ * in the same state. Tasks in the other state keep their places. `afterId` must be a
+ * sibling in the same state. Returns false when the task is missing or already there.
+ */
+export async function moveAfter(id: string, afterId: string | null): Promise<boolean> {
+  if (afterId === id) return false;
+  return withTx(async (tx) => {
+    const [current] = await tx.select().from(tasks).where(eq(tasks.id, id));
+    if (!current) return false;
+    const siblings = await siblingsOf(tx, rowParent(current));
+    const isOpen = !current.doneAt;
+    const same = siblings.filter((s) => !s.doneAt === isOpen).map((s) => s.id);
+    const without = same.filter((s) => s !== id);
+    let at = 0;
+    if (afterId !== null) {
+      const k = without.indexOf(afterId);
+      if (k < 0) {
+        throw new RepoError("invalid", "할 일 목록이 바뀌었습니다. 새로고침 후 다시 시도하세요.");
+      }
+      at = k + 1;
     }
+    const next = [...without.slice(0, at), id, ...without.slice(at)];
+    if (next.every((s, n) => s === same[n])) return false;
+    // Same-state slots in the full order get the new sequence; the others stay put.
+    let n = 0;
+    const order = siblings.map((s) => (!s.doneAt === isOpen ? next[n++]! : s.id));
+    await renumber(tx, order);
     return true;
   });
 }
@@ -350,9 +448,7 @@ export async function reorder(parent: TaskParent, ids: readonly string[]): Promi
     if (ids.length !== known.size || ids.some((id) => !known.has(id))) {
       throw new RepoError("invalid", "할 일 목록이 바뀌었습니다. 새로고침 후 다시 시도하세요.");
     }
-    for (const [i, id] of ids.entries()) {
-      await tx.update(tasks).set({ sortOrder: i }).where(eq(tasks.id, id));
-    }
+    await renumber(tx, ids);
   });
 }
 

@@ -8,8 +8,16 @@ import {
   useState,
   useTransition,
   type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
-import { createTask, deleteTask, moveTask, restoreTask, updateTask } from "@/app/_actions/tasks";
+import {
+  createTask,
+  deleteTask,
+  moveTask,
+  moveTaskAfter,
+  restoreTask,
+  updateTask,
+} from "@/app/_actions/tasks";
 import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
@@ -17,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
+import { applyDrop, dropSlot, placeInOrder } from "./reorder";
 
 const TITLE_MAX = 300;
 /** A just-checked task stays in place this long before moving to 완료 (today.md 2.1). */
@@ -57,6 +66,24 @@ function nextMonday(today: string): string {
   return addDays(today, (8 - dow) % 7 || 7);
 }
 
+/** Pointer travel (px) before a press on the handle becomes a drag. */
+const DRAG_THRESHOLD = 4;
+
+/** Drag in progress: fixed geometry from the press, plus what the screen shows. */
+type DragState = {
+  id: string;
+  pointerId: number;
+  startY: number;
+  /** Vertical middles of the other movable rows (viewport px), in list order. */
+  mids: number[];
+  /** Top and bottom of the other movable rows relative to the list, for the drop line. */
+  edges: { top: number; bottom: number }[];
+  /** False until the pointer has moved past the threshold. */
+  active: boolean;
+  dy: number;
+  slot: number;
+};
+
 const isAltArrow = (e: ReactKeyboardEvent) =>
   e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown");
 
@@ -83,8 +110,10 @@ export function TaskList({
   const [lingering, setLingering] = useState<ReadonlySet<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
-  const [undo, setUndo] = useState<Task | null>(null);
+  /** The just-deleted task and where it sat in `items`, for 되돌리기. */
+  const [undo, setUndo] = useState<{ task: Task; index: number } | null>(null);
   const [showDone, setShowDone] = useState(false);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const [, startTransition] = useTransition();
   const listRef = useRef<HTMLUListElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -202,11 +231,68 @@ export function TaskList({
     );
   };
 
+  /** Open, not-done tasks in list order: the only ones that can be dragged. */
+  const movableIds = () => open.filter((t) => !t.doneAt).map((t) => t.id);
+
+  const dragStart = (task: Task, e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!reorderable || task.doneAt || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const list = listRef.current;
+    if (!list) return;
+    const listTop = list.getBoundingClientRect().top;
+    const others = movableIds()
+      .filter((id) => id !== task.id)
+      .map((id) => list.querySelector<HTMLElement>(`[data-task-row="${id}"]`))
+      .filter((el): el is HTMLElement => !!el)
+      .map((el) => el.getBoundingClientRect());
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({
+      id: task.id,
+      pointerId: e.pointerId,
+      startY: e.clientY,
+      mids: others.map((r) => r.top + r.height / 2),
+      edges: others.map((r) => ({ top: r.top - listTop, bottom: r.bottom - listTop })),
+      active: false,
+      dy: 0,
+      slot: movableIds().indexOf(task.id),
+    });
+  };
+
+  const dragMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    const dy = e.clientY - drag.startY;
+    if (!drag.active && Math.abs(dy) < DRAG_THRESHOLD) return;
+    e.preventDefault();
+    setDrag({ ...drag, active: true, dy, slot: dropSlot(drag.mids, e.clientY) });
+  };
+
+  const dragEnd = (task: Task, e: ReactPointerEvent<HTMLButtonElement>, cancel = false) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    setDrag(null);
+    if (cancel || !drag.active) return;
+    const ids = movableIds();
+    const drop = applyDrop(ids, task.id, drag.slot);
+    if (!drop) return;
+    const snapshot = items;
+    setItems((list) => placeInOrder(list, drop.order));
+    setAnnounce(`${task.title}, ${ids.length}개 중 ${drop.order.indexOf(task.id) + 1}번째로 옮김`);
+    run(
+      () => moveTaskAfter(task.id, drop.afterId),
+      () => setItems(snapshot),
+    );
+  };
+
+  /** Where the drop line sits (px from the list top) while dragging. */
+  const dropLineTop = (() => {
+    if (!drag?.active || drag.edges.length === 0) return null;
+    if (drag.slot === 0) return drag.edges[0]!.top;
+    return drag.edges[Math.min(drag.slot, drag.edges.length) - 1]!.bottom;
+  })();
+
   const remove = (task: Task) => {
     keepFocus(task.id);
     const snapshot = items;
     setItems((list) => list.filter((t) => t.id !== task.id));
-    setUndo(task);
+    setUndo({ task, index: items.findIndex((t) => t.id === task.id) });
     setAnnounce(`‘${task.title}’을 지웠습니다.`);
     run(
       () => deleteTask(task.id),
@@ -217,7 +303,8 @@ export function TaskList({
     );
   };
 
-  const restore = (task: Task) => {
+  /** Undo: back at its old place (server `sortOrder`, local index), done or not as before. */
+  const restore = ({ task, index }: { task: Task; index: number }) => {
     setUndo(null);
     startTransition(async () => {
       const result = await safeAction(() =>
@@ -225,14 +312,16 @@ export function TaskList({
           title: task.title,
           parent: parentOf(task),
           dueDate: task.dueDate,
-          done: Boolean(task.doneAt),
+          sortOrder: task.sortOrder,
+          doneAt: task.doneAt,
         }),
       );
       if (result.ok) {
+        const back = { ...result.data, parentTitle: task.parentTitle };
         setItems((list) =>
-          list.some((t) => t.id === result.data.id)
+          list.some((t) => t.id === back.id)
             ? list
-            : [...list, { ...result.data, parentTitle: task.parentTitle }],
+            : [...list.slice(0, Math.max(index, 0)), back, ...list.slice(Math.max(index, 0))],
         );
         setAnnounce(`‘${task.title}’을 되돌렸습니다.`);
         setError(null);
@@ -265,6 +354,12 @@ export function TaskList({
     onDue: setDue,
     onMove: move,
     onRemove: remove,
+    drag: {
+      start: dragStart,
+      move: dragMove,
+      end: dragEnd,
+      cancel: () => setDrag(null),
+    },
   };
 
   return (
@@ -278,10 +373,22 @@ export function TaskList({
         <p className="py-1.5 text-[13px] text-muted">{done.length > 0 ? allDoneText : emptyText}</p>
       ) : null}
       {open.length > 0 ? (
-        <ul ref={listRef} aria-label={label} className="flex flex-col">
+        <ul ref={listRef} aria-label={label} className="relative flex flex-col">
           {open.map((t) => (
-            <TaskRow key={t.id} task={t} {...rowProps} />
+            <TaskRow
+              key={t.id}
+              task={t}
+              {...rowProps}
+              dragOffset={drag?.active && drag.id === t.id ? drag.dy : null}
+            />
           ))}
+          {dropLineTop !== null ? (
+            <li
+              aria-hidden
+              className="pointer-events-none absolute right-0 left-0 h-0.5 -translate-y-1/2 rounded-full bg-accent"
+              style={{ top: dropLineTop }}
+            />
+          ) : null}
         </ul>
       ) : null}
       {addTo ? <AddLine onAdd={add} /> : null}
@@ -293,7 +400,7 @@ export function TaskList({
       <p aria-live="polite" className="text-[13px] text-muted">
         {undo ? (
           <>
-            ‘{undo.title}’을 지웠습니다.{" "}
+            ‘{undo.task.title}’을 지웠습니다.{" "}
             <button type="button" className="underline" onClick={() => restore(undo)}>
               되돌리기
             </button>
@@ -346,6 +453,14 @@ type RowProps = {
   onDue: (task: Task, dueDate: string | null) => void;
   onMove: (task: Task, direction: "up" | "down") => void;
   onRemove: (task: Task) => void;
+  drag: {
+    start: (task: Task, e: ReactPointerEvent<HTMLButtonElement>) => void;
+    move: (e: ReactPointerEvent<HTMLButtonElement>) => void;
+    end: (task: Task, e: ReactPointerEvent<HTMLButtonElement>, cancel?: boolean) => void;
+    cancel: () => void;
+  };
+  /** Vertical offset while this row is being dragged; null when it isn't. */
+  dragOffset?: number | null;
 };
 
 function TaskRow({
@@ -360,6 +475,8 @@ function TaskRow({
   onDue,
   onMove,
   onRemove,
+  drag,
+  dragOffset = null,
 }: RowProps) {
   const [editing, setEditing] = useState(false);
   const [dueOpen, setDueOpen] = useState(false);
@@ -380,7 +497,11 @@ function TaskRow({
     <li
       data-task-row={task.id}
       onKeyDown={onRowKeyDown}
-      className="group relative flex h-9 items-center gap-2 rounded-md px-1.5 focus-within:bg-hover hover:bg-hover"
+      style={dragOffset !== null ? { transform: `translateY(${dragOffset}px)` } : undefined}
+      className={cn(
+        "group relative flex h-9 items-center gap-2 rounded-md px-1.5 focus-within:bg-hover hover:bg-hover",
+        dragOffset !== null && "z-10 bg-bg shadow-overlay hover:bg-bg",
+      )}
     >
       {reorderable ? (
         canMove ? (
@@ -390,12 +511,24 @@ function TaskRow({
             aria-label={`순서 바꾸기: ${task.title}`}
             aria-describedby={helpId}
             onKeyDown={(e) => {
-              if (!e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+              if (e.key === "Escape" && dragOffset !== null) {
+                e.preventDefault();
+                drag.cancel();
+              } else if (!e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
                 e.preventDefault();
                 onMove(task, e.key === "ArrowUp" ? "up" : "down");
               }
             }}
-            className="grid h-6 w-5 shrink-0 cursor-grab place-items-center rounded text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            // Pointer and touch drag; `touch-none` keeps a finger on the handle from scrolling.
+            onPointerDown={(e) => drag.start(task, e)}
+            onPointerMove={drag.move}
+            onPointerUp={(e) => drag.end(task, e)}
+            onPointerCancel={(e) => drag.end(task, e, true)}
+            onLostPointerCapture={(e) => drag.end(task, e, true)}
+            className={cn(
+              "grid h-6 w-5 shrink-0 cursor-grab touch-none place-items-center rounded text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing [@media(hover:none)]:opacity-100",
+              dragOffset !== null && "cursor-grabbing opacity-100",
+            )}
           >
             <GripIcon />
           </button>

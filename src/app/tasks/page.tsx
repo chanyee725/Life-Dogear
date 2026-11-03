@@ -72,6 +72,9 @@ export default async function TasksPage({ searchParams }: Props) {
           label: t.label,
           href: t.value === "today" ? "/tasks" : `/tasks?tab=${t.value}`,
           count: counts[t.value],
+          // Design: the overdue count (only the number) turns red once anything is late.
+          countClassName:
+            t.value === "overdue" && counts.overdue > 0 ? "text-tone-red-fg" : undefined,
         }))}
       />
       <div className="mt-6 flex flex-col gap-6">

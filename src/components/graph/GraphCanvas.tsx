@@ -21,6 +21,7 @@ import type {
   GraphPosition,
 } from "@/lib/graph/types";
 import { drawLabel, drawNodeShape, drawRing, measureLabel, shapeBottom, withAlpha } from "./draw";
+import { EARLY_FIT_TICKS, grewBeyond, seedNear, type Box } from "./fit";
 import { forceAxis, forceCollideGrid } from "./forces";
 import type { GraphTheme } from "./graph-theme";
 import {
@@ -189,6 +190,14 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       next.set(n.id, node);
       return node;
     });
+    // New nodes (a type switched on) start beside a linked node that is already placed.
+    if (prev.size > 0 && mode === "free") {
+      for (const node of nodes) {
+        if (prev.has(node.id) || node.x != null) continue;
+        const seed = seedNear(node.id, data.edges, prev);
+        if (seed) Object.assign(node, seed);
+      }
+    }
     simCache.current = next;
     const links: SimLink[] = data.edges.map((e) => ({
       source: e.source,
@@ -546,10 +555,38 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   );
 
   // ----- Fit on first settle and after filter changes -----
+  // First load: fit when the simulation stops (focus may take over). After a filter change
+  // (cosmos.md 4절, same rule): fit shortly after the new data arrives instead of waiting
+  // seconds for it to settle, then refit on stop only if the graph grew by more than 15%.
   const pendingFit = useRef(true);
+  const loadedOnce = useRef(false);
+  const earlyFit = useRef<{ data: unknown; ticks: number } | null>(null);
+  const earlyBox = useRef<Box | null>(null);
+  const graphDataRef = useRef(graphData);
+  graphDataRef.current = graphData;
   useEffect(() => {
     pendingFit.current = true;
+    earlyBox.current = null;
+    // Waits for data newer than what is on screen now.
+    earlyFit.current = loadedOnce.current ? { data: graphDataRef.current, ticks: -1 } : null;
   }, [fitKey, mode]);
+  const onEngineTick = () => {
+    const early = earlyFit.current;
+    if (!early) return;
+    if (early.ticks < 0) {
+      if (graphDataRef.current === early.data) return;
+      early.data = graphDataRef.current;
+      early.ticks = 0;
+    }
+    if (++early.ticks < EARLY_FIT_TICKS) return;
+    earlyFit.current = null;
+    const fg = fgRef.current;
+    if (!fg) return;
+    fitView(fitDuration);
+    earlyBox.current = fg.getGraphBbox();
+    pendingFit.current = false;
+    onTransform?.();
+  };
   const fitDuration = reducedMotion ? 0 : 400;
   const focusUsed = useRef(false);
 
@@ -645,7 +682,16 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         node.fy = node.y;
         onPin?.({ node: node.id as GraphNodeId, x: node.x, y: node.y });
       }}
+      onEngineTick={onEngineTick}
       onEngineStop={() => {
+        loadedOnce.current = true;
+        const box = earlyBox.current;
+        earlyBox.current = null;
+        if (box && fgRef.current && grewBeyond(box, fgRef.current.getGraphBbox())) {
+          fitView(fitDuration);
+          onTransform?.();
+          return;
+        }
         if (!pendingFit.current) return;
         pendingFit.current = false;
         const fg = fgRef.current;

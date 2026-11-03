@@ -2,7 +2,7 @@ import type { Client } from "@libsql/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/graph/cosmos/route";
-import { getCosmos } from "@/lib/cosmos/load";
+import { getCosmos, getCosmosScores } from "@/lib/cosmos/load";
 import type { CosmosResponse } from "@/lib/cosmos/types";
 import { areas as areasTable } from "@/db/schema";
 import { areas, goals, links, papers, projects, tasks, thoughts } from "@/lib/repo";
@@ -92,6 +92,30 @@ describe("GET /api/graph/cosmos", () => {
     await thoughts.create({ title: "생각" });
     const body = (await (await get(HOST, "?types=paper")).json()) as CosmosResponse;
     expect(body.nodes.map((n) => n.type)).toEqual(["paper"]);
+  });
+
+  it("gives the home screen the same scores without galaxies or panel lists", async () => {
+    const area = await areas.create({ title: "영역" });
+    const project = await projects.create({ title: "프로젝트", areaId: area.id });
+    const core = await papers.create({ title: "핵심", importance: "core" });
+    const t = await thoughts.create({ title: "생각" });
+    await links.link({ type: "paper", id: core.id }, { type: "project", id: project.id });
+    await setStarred({ type: "thought", id: t.id }, true);
+    await goals.create({ title: "인생", horizon: "life" });
+    const now = new Date("2026-11-04T00:00:00.000Z");
+
+    const full = await getCosmos({}, now);
+    const light = await getCosmosScores({}, now);
+    expect(light.nodes).toEqual(full.nodes);
+    expect(Object.keys(light)).toEqual(["nodes", "cosmos"]);
+    for (const [id, info] of Object.entries(full.cosmos)) {
+      expect({
+        ...light.cosmos[id as keyof typeof light.cosmos],
+        sun: info.sun,
+        galaxy: info.galaxy,
+      }).toEqual(info);
+    }
+    expect(Object.keys(light.cosmos)).toHaveLength(Object.keys(full.cosmos).length);
   });
 
   it("uses a fixed number of queries regardless of graph size", async () => {
