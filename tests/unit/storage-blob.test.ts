@@ -18,7 +18,7 @@ import {
   type S3Config,
 } from "@/lib/storage/blob";
 import { openImage, writeImage } from "@/lib/storage/images";
-import { gcImages, pushLocalFiles, referencedImages } from "@/lib/storage/maintenance";
+import { gcGuard, gcImages, pushLocalFiles, referencedImages } from "@/lib/storage/maintenance";
 import { useFreshDb } from "./repo-helpers";
 
 const CONFIG: S3Config = {
@@ -433,6 +433,17 @@ describe("storage maintenance", () => {
       skipped: 3,
       failed: 0,
     });
+  });
+
+  it("gc guard blocks a shared bucket with a local DB and an empty reference set", () => {
+    const base = { storeKind: "local", dbKind: "local", referenced: 1, total: 3 } as const;
+    expect(gcGuard(base)).toBeNull();
+    expect(gcGuard({ ...base, storeKind: "s3", dbKind: "turso" })).toBeNull();
+    expect(gcGuard({ ...base, storeKind: "s3" })).toBe("shared_store_local_db");
+    expect(gcGuard({ ...base, storeKind: "s3", referenced: 0 })).toBe("shared_store_local_db");
+    expect(gcGuard({ ...base, referenced: 0 })).toBe("no_references");
+    expect(gcGuard({ ...base, dbKind: "turso", referenced: 0 })).toBe("no_references");
+    expect(gcGuard({ ...base, referenced: 0, total: 0 })).toBeNull();
   });
 
   it("finds photo names in any text", () => {

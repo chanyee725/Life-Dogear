@@ -56,6 +56,25 @@ export function referencedImages(values: Iterable<unknown>): Set<string> {
   return names;
 }
 
+/** Why deleting would be unsafe, or null when `--apply` may go ahead. */
+export type GcBlock = "shared_store_local_db" | "no_references";
+
+/**
+ * Safety checks before deleting photos:
+ * - a bucket shared through Turso must not be judged against one PC's local DB;
+ * - zero references while photos exist most likely means the wrong DB.
+ */
+export function gcGuard(input: {
+  storeKind: "local" | "s3";
+  dbKind: "local" | "turso";
+  referenced: number;
+  total: number;
+}): GcBlock | null {
+  if (input.storeKind === "s3" && input.dbKind === "local") return "shared_store_local_db";
+  if (input.referenced === 0 && input.total > 0) return "no_references";
+  return null;
+}
+
 export const GC_MIN_AGE_MS = 24 * 60 * 60 * 1000;
 
 export type GcResult = {
