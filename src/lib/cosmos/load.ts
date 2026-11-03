@@ -120,8 +120,10 @@ export async function getCosmos(
   filter: GraphFilter = {},
   now = new Date(),
 ): Promise<CosmosResponse> {
+  // Tasks never appear in the cosmos view (PLAN-TODAY 3절).
+  const types = filter.types?.filter((t) => t !== "task");
   const [graph, { signals, starred, areaOrder }] = await Promise.all([
-    getGraph(filter),
+    getGraph({ ...filter, types: types?.length ? types : undefined, doneTasks: undefined }),
     loadSignals(),
   ]);
 

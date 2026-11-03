@@ -18,3 +18,9 @@ describe("sidebar 자료 section", () => {
     ]);
   });
 });
+
+describe("tasks menu", () => {
+  it("sits between 수집함 and 회고", () => {
+    expect(NAV_SECTIONS.top.map((e) => e.href)).toEqual(["/", "/inbox", "/tasks", "/reviews"]);
+  });
+});

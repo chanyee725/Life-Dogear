@@ -115,6 +115,12 @@ export const ReviewIcon = () => (
     <path d="M8 5.25V8l1.75 1.25" />
   </Icon>
 );
+export const TaskIcon = () => (
+  <Icon>
+    <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
+    <path d="m5.25 8.25 1.9 1.85 3.6-4" />
+  </Icon>
+);
 export const GraphIcon = () => (
   <Icon>
     <circle cx="4" cy="4.5" r="1.75" />

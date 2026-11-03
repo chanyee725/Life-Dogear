@@ -7,6 +7,7 @@ import { cn } from "@/components/ui/cn";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { ITEM_TYPE } from "@/lib/enums";
 import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
+import { formatDue, localDate } from "@/components/tasks/format";
 import { fetchPreview } from "./api";
 import type { GraphTheme } from "./graph-theme";
 import { goalLabel, GRAPH_TYPE_LABEL, nodeHref } from "./model";
@@ -19,6 +20,32 @@ function badgeOf(node: GraphNode): { text: string; tone: string } {
   if (node.type === "tag") return { text: "주제", tone: "gray" };
   const text = node.type === "goal" ? goalLabel(node) : GRAPH_TYPE_LABEL[node.type];
   return { text, tone: ITEM_TYPE.is(node.type) ? ITEM_TYPE.tone(node.type) : "gray" };
+}
+
+/** Task fields (today.md 7절 6.4): due date (shared `formatDue`) and parent. */
+function TaskProps({ node, neighbors }: { node: GraphNode; neighbors: readonly GraphNode[] }) {
+  const due = formatDue(node.dueDate, localDate(), node.done);
+  const parent = node.parent ? neighbors.find((n) => n.id === node.parent) : undefined;
+  return (
+    <dl className="flex flex-col gap-1 text-[13px]">
+      <div className="flex gap-2">
+        <dt className="w-16 shrink-0 text-muted">상태</dt>
+        <dd className="text-fg">{node.done ? "완료" : "미완료"}</dd>
+      </div>
+      {due ? (
+        <div className="flex gap-2">
+          <dt className="w-16 shrink-0 text-muted">마감일</dt>
+          <dd className={due.className} aria-label={due.label}>
+            {due.text}
+          </dd>
+        </div>
+      ) : null}
+      <div className="flex gap-2">
+        <dt className="w-16 shrink-0 text-muted">소속</dt>
+        <dd className="min-w-0 text-fg break-words">{parent?.title ?? "소속 없음"}</dd>
+      </div>
+    </dl>
+  );
 }
 
 /** Right-hand preview of the selected node (design 6.4). Not a dialog: focus is not trapped. */
@@ -60,7 +87,8 @@ export function GraphPreview({
   const [detail, setDetail] = useState<{ id: string; data: NodePreview | null } | null>(null);
 
   useEffect(() => {
-    if (mock || node.type === "tag") return;
+    // Topics and tasks have no preview route; tasks show their own fields below.
+    if (mock || node.type === "tag" || node.type === "task") return;
     const controller = new AbortController();
     fetchPreview(node.id, controller.signal)
       .then((data) => setDetail({ id: node.id, data }))
@@ -172,6 +200,8 @@ export function GraphPreview({
         </div>
       ) : null}
 
+      {node.type === "task" ? <TaskProps node={node} neighbors={neighbors} /> : null}
+
       {data && data.props.length > 0 ? (
         <dl className="flex flex-col gap-1 text-[13px]">
           {data.props.map((p) => (
@@ -211,7 +241,7 @@ export function GraphPreview({
       {href ? (
         <div>
           <Link href={href} className={buttonClass("primary", "sm")}>
-            열기
+            {node.type === "task" ? "소속 열기" : "열기"}
           </Link>
         </div>
       ) : null}

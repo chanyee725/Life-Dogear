@@ -5,6 +5,7 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
+import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { buttonClass } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Card";
@@ -151,6 +152,7 @@ export default async function GoalDetailPage({ params }: Props) {
           )}
         </Section>
       )}
+      <TaskSection parent={ref} archived={Boolean(goal.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>
   );

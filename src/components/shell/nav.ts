@@ -10,6 +10,7 @@ export const NAV_SECTIONS = {
   top: [
     { href: "/", label: "홈", icon: "home" },
     { href: "/inbox", label: "수집함", icon: "inbox" },
+    { href: "/tasks", label: "할 일", icon: "task" },
     { href: "/reviews", label: "회고", icon: "review" },
   ],
   projects: [

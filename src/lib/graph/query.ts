@@ -37,6 +37,7 @@ export function parseGraphFilter(params: URLSearchParams): GraphFilter {
 
   if (flag(params.get("archived"))) filter.archived = true;
   if (flag(params.get("orphans"))) filter.orphans = true;
+  if (flag(params.get("doneTasks"))) filter.doneTasks = true;
   return filter;
 }
 

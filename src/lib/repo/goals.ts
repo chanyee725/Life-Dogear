@@ -28,6 +28,7 @@ import {
   type ItemRef,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
+import { countFor as countTasksFor } from "./tasks";
 
 export type Goal = typeof goals.$inferSelect & { tags: string[] };
 
@@ -352,7 +353,8 @@ type ProgressInput = {
  * Progress rule (pure; exported for tests):
  * - life: none (direction only).
  * - achieved: 100. Manual mode: `manualProgress`.
- * - quarter (auto): share of linked projects that are done; no projects → manual value.
+ * - quarter (auto): share of linked projects that are done; no projects but tasks directly
+ *   on the goal → share of those tasks that are done; neither → manual value.
  * - year (auto): average of child goals that have a value (dropped ones left out);
  *   none → manual value.
  */
@@ -360,12 +362,16 @@ export function computeProgress(
   goal: ProgressInput,
   projectsDone: readonly boolean[],
   children: readonly { status: GoalStatus; progress: number | null }[],
+  tasks: { done: number; total: number } = { done: 0, total: 0 },
 ): number | null {
   if (goal.horizon === "life") return null;
   if (goal.status === "achieved") return 100;
   if (goal.progressMode === "manual") return goal.manualProgress;
   if (goal.horizon === "quarter") {
-    if (!projectsDone.length) return goal.manualProgress;
+    if (!projectsDone.length) {
+      if (!tasks.total) return goal.manualProgress;
+      return Math.round((tasks.done / tasks.total) * 100);
+    }
     return Math.round((projectsDone.filter(Boolean).length / projectsDone.length) * 100);
   }
   const values = children
@@ -443,6 +449,7 @@ async function resourceCounts(projectIds: string[]): Promise<Map<string, number>
 export async function listTree(options: ArchiveOptions = {}): Promise<GoalNode[]> {
   const all = await list(options);
   const byProject = await projectsByGoal(all.map((g) => g.id));
+  const taskCounts = await countTasksFor(all.map((g) => ({ type: "goal" as const, id: g.id })));
   const ids = new Set(all.map((g) => g.id));
   const childrenOf = new Map<string, Goal[]>();
   const roots: Goal[] = [];
@@ -464,6 +471,7 @@ export async function listTree(options: ArchiveOptions = {}): Promise<GoalNode[]
         goal,
         goalProjects.map((p) => p.done),
         children.map((c) => ({ status: c.goal.status, progress: c.progress })),
+        taskCounts[`goal:${goal.id}`],
       ),
     };
   };

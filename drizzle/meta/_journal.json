@@ -29,6 +29,13 @@
       "when": 1793681700530,
       "tag": "0003_item_stars",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793689647750,
+      "tag": "0004_tasks",
+      "breakpoints": true
     }
   ]
 }

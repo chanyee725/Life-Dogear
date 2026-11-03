@@ -18,7 +18,6 @@ import type {
   GraphEdgeKind,
   GraphNode,
   GraphNodeId,
-  GraphNodeType,
   GraphPosition,
 } from "@/lib/graph/types";
 import { drawLabel, drawNodeShape, drawRing, measureLabel, shapeBottom, withAlpha } from "./draw";
@@ -35,6 +34,7 @@ import {
   LARGE_GRAPH,
   nodeRadius,
   type ParaColumn,
+  paraTargetX,
   paraXByType,
 } from "./model";
 
@@ -166,8 +166,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
             ? 8
             : dist === 1
               ? Math.min(nodeRadius({ ...n }, n.size) + 1, 10)
-              : n.type === "review" || n.type === "tag"
-                ? 3.5
+              : n.type === "review" || n.type === "tag" || n.type === "task"
+                ? nodeRadius(n, 0)
                 : base;
       } else {
         node.r = nodeRadius(n, n.size, large);
@@ -184,7 +184,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         node.fx = undefined;
         node.fy = undefined;
       }
-      if (!old && mode === "para" && paraX) node.x = paraX[n.type] + (Math.random() - 0.5) * 40;
+      if (!old && mode === "para" && paraX)
+        node.x = paraTargetX(n, paraX) + (Math.random() - 0.5) * 40;
       next.set(n.id, node);
       return node;
     });
@@ -216,7 +217,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         "paraX",
         forceAxis<SimNode>(
           "x",
-          (n) => paraX[n.type as GraphNodeType],
+          (n) => paraTargetX(n, paraX),
           () => 1,
         ),
       );
