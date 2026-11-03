@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { links as linksTable } from "@/db/schema";
 import { archive, goals, items, links, papers, projects, thoughts } from "@/lib/repo";
+import * as reviews from "@/lib/repo/reviews";
 import { useFreshDb } from "./repo-helpers";
 
 let db: Awaited<ReturnType<typeof useFreshDb>>;
@@ -107,5 +108,56 @@ describe("title rename", () => {
     expect((await thoughts.get(t.id))?.body).toBe("[[새 제목]] 그리고 `[[옛 제목]]`");
     expect((await thoughts.get(unrelated.id))?.body).toBe("옛 제목 언급만");
     expect(await links.countTitleMentions(P, "옛 제목")).toBe(0);
+  });
+});
+
+describe("review follow-ups", () => {
+  it("resolves non-ASCII case and extra spaces", async () => {
+    const p = await papers.create({ title: "Étude Über" });
+    const t = await thoughts.create({ title: "공백  두 칸" });
+    const r = await items.resolveTitles(["étude über", "공백 두 칸", "  ÉTUDE   ÜBER "]);
+    expect(r.get("étude über")?.ref).toEqual({ type: "paper", id: p.id });
+    expect(r.get("공백 두 칸")?.ref).toEqual({ type: "thought", id: t.id });
+    await thoughts.create({ title: "본문", body: "[[ÉTUDE ÜBER]]" });
+    expect(await links.listConnected({ type: "paper", id: p.id })).toHaveLength(1);
+  });
+
+  it("syncs [[…]] in review bodies", async () => {
+    const g = await goals.create({ title: "1저자 논문", horizon: "life" });
+    const { review } = await reviews.open("week", "2026-W45");
+    await reviews.update(review.id, { body: "이번 주는 [[1저자 논문]]" });
+    expect(await rows()).toEqual([
+      { from: `review:${review.id}`, to: `goal:${g.id}`, via: "body" },
+    ]);
+    await reviews.update(review.id, { body: "" });
+    expect(await rows()).toEqual([]);
+  });
+
+  it("re-syncs rewritten bodies after a rename", async () => {
+    const a = await papers.create({ title: "A" });
+    const b = await papers.create({ title: "B" });
+    const t = await thoughts.create({ title: "생각", body: "[[A]]" });
+    await papers.update(a.id, { title: "A2" });
+    await links.renameTitleMentions({ type: "paper", id: a.id }, "A", "A2");
+    expect((await thoughts.get(t.id))?.body).toBe("[[A2]]");
+    expect(await rows()).toEqual([{ from: `thought:${t.id}`, to: `paper:${a.id}`, via: "body" }]);
+    // A rename to an existing other title moves the body link to what it now resolves to.
+    await papers.remove(b.id);
+    const c = await papers.create({ title: "C" });
+    await papers.update(a.id, { title: "A3" });
+    await links.renameTitleMentions({ type: "paper", id: a.id }, "A2", "C");
+    expect(await rows()).toEqual([{ from: `thought:${t.id}`, to: `paper:${c.id}`, via: "body" }]);
+  });
+
+  it("ensureTitledThought finds or creates in one go", async () => {
+    const src = await thoughts.create({ title: "출처", body: "[[새 것]]" });
+    const S = { type: "thought" as const, id: src.id };
+    const [x, y] = await Promise.all([
+      links.ensureTitledThought("새 것", S),
+      links.ensureTitledThought("새  것", S),
+    ]);
+    expect(x).toEqual(y);
+    expect((await thoughts.list()).filter((t) => t.title === "새 것")).toHaveLength(1);
+    expect(await links.listConnected(S)).toHaveLength(1);
   });
 });

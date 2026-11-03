@@ -14,8 +14,9 @@ const QUOTE_RE = /^ {0,3}>/;
 const LINK_RE = /\[\[([^[\]\n]+)\]\]/g;
 const MAX_TITLE = 300;
 
-/** Comparison key for titles: NFC, trimmed, case-insensitive. */
-export const titleKey = (title: string): string => title.normalize("NFC").trim().toLowerCase();
+/** Comparison key for titles: NFC, runs of whitespace as one space, trimmed, case-insensitive (Unicode). */
+export const titleKey = (title: string): string =>
+  title.normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
 
 /** Clean display form of a title written inside `[[…]]`; null when unusable. */
 export function cleanTitle(raw: string): string | null {

@@ -1,6 +1,6 @@
 import { and, desc, eq, or } from "drizzle-orm";
-import { graphLayout, links } from "@/db/schema";
-import { extractWikiTitles, renameWikiTitle } from "@/lib/wikilinks";
+import { graphLayout, links, thoughts } from "@/db/schema";
+import { cleanTitle, extractWikiTitles, renameWikiTitle, titleKey } from "@/lib/wikilinks";
 import {
   exists,
   getBody,
@@ -239,6 +239,8 @@ export async function renameTitleMentions(
       if (!count) continue;
       const t = tableFor(m.ref.type);
       await tx.update(t).set({ body, updatedAt: nowIso() }).where(eq(t.id, m.ref.id));
+      // Same transaction: the rewritten body's links stay in step with it.
+      await syncBodyLinks(tx, m.ref, body);
       changed.push(m.ref);
     }
     return changed;
@@ -253,5 +255,34 @@ export async function resyncBody(ref: ItemRef): Promise<boolean> {
     if (body === null) return false;
     await syncBodyLinks(tx, ref, body);
     return true;
+  });
+}
+
+/**
+ * "생각으로 만들기" for a `[[title]]` nothing has: in one transaction, returns the item
+ * that has the title by now or creates a thought with it, then re-syncs `source`'s
+ * stored body so the link appears.
+ */
+export async function ensureTitledThought(title: string, source?: ItemRef): Promise<ItemRef> {
+  const wanted = cleanTitle(title);
+  if (!wanted) throw new RepoError("invalid", "제목을 입력하세요.");
+  if (source) assertItemRef(source);
+  return withTx(async (tx) => {
+    const found = (await resolveTitles([wanted], tx)).get(titleKey(wanted));
+    let ref: ItemRef;
+    if (found) {
+      ref = found.ref;
+    } else {
+      const now = nowIso();
+      ref = { type: "thought", id: newId() };
+      await tx
+        .insert(thoughts)
+        .values({ id: ref.id, title: wanted, createdAt: now, updatedAt: now });
+    }
+    if (source) {
+      const body = await getBody(source, tx);
+      if (body !== null) await syncBodyLinks(tx, source, body);
+    }
+    return ref;
   });
 }

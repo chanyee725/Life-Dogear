@@ -108,7 +108,9 @@ export async function searchTitles(
 }
 
 /**
- * Items for `[[title]]` links, keyed by `titleKey` (case-insensitive, trimmed). When
+ * Items for `[[title]]` links, keyed by `titleKey` (NFC, whitespace-collapsed, Unicode
+ * case-insensitive). Titles are compared in JS — SQLite's lower() only folds ASCII —
+ * so every title is read; fine for a personal library of thousands of items. When
  * several items share a title, a non-archived one wins, then the most recently updated.
  * Titles nothing matches are absent.
  */
@@ -116,17 +118,17 @@ export async function resolveTitles(
   titles: readonly string[],
   exec: Executor = db(),
 ): Promise<Map<string, ItemSummary>> {
-  const keys = [...new Set(titles.map(titleKey).filter(Boolean))];
+  const keys = new Set(titles.map(titleKey).filter(Boolean));
   const best = new Map<string, ItemSummary & { updatedAt: string }>();
-  if (!keys.length) return new Map();
+  if (!keys.size) return new Map();
   for (const type of ITEM_TYPE.values) {
     const t = tableFor(type);
     const rows = await exec
       .select({ id: t.id, title: t.title, archivedAt: t.archivedAt, updatedAt: t.updatedAt })
-      .from(t)
-      .where(inArray(sql`lower(trim(${t.title}))`, keys));
+      .from(t);
     for (const r of rows) {
       const key = titleKey(r.title);
+      if (!keys.has(key)) continue;
       const archived = r.archivedAt !== null;
       const current = best.get(key);
       const better =

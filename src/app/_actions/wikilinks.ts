@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { items, links, RepoError, thoughts, type ItemRef } from "@/lib/repo";
+import { items, links, RepoError, type ItemRef } from "@/lib/repo";
 import type { ItemSummary } from "@/lib/repo/items";
 import { cleanTitle, titleKey } from "@/lib/wikilinks";
 import { itemPath, MAX_TITLE, optionalStringList, parseItemRef, parseText } from "./parse";
@@ -36,15 +36,8 @@ export async function createThoughtForTitle(
   return runAction(async () => {
     const wanted = requireWikiTitle(title);
     const from = source == null ? undefined : parseItemRef(source, "출처");
-    const existing = (await items.resolveTitles([wanted])).get(titleKey(wanted));
-    const ref = existing?.ref ?? {
-      type: "thought" as const,
-      id: (await thoughts.create({ title: wanted })).id,
-    };
-    if (from) {
-      await links.resyncBody(from);
-      revalidatePath(itemPath(from));
-    }
+    const ref = await links.ensureTitledThought(wanted, from);
+    if (from) revalidatePath(itemPath(from));
     revalidatePath("/thoughts");
     // The inbox count in the sidebar.
     revalidatePath("/", "layout");
