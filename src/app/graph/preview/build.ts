@@ -5,7 +5,10 @@
  */
 import type { NodePreview } from "@/components/graph/preview-types";
 import {
+  GOAL_HORIZON,
+  GOAL_STATUS,
   PROJECT_STAGE,
+  REVIEW_KIND,
   PROJECT_STATUS,
   READ_STATUS,
   SEMINAR_KIND,
@@ -148,5 +151,58 @@ export function areaPreview(a: AreaRow, projectCount: number): NodePreview {
     archived: !!a.archivedAt,
     props: [{ label: "프로젝트", value: `${projectCount}개` }],
     summary: nonEmpty(a.standard) ? clip(a.standard) : firstParagraph(a.body),
+  };
+}
+
+export type GoalRow = {
+  horizon: string;
+  period: string | null;
+  status: string;
+  why: string;
+  body: string;
+  archivedAt: string | null;
+};
+
+/** Goal: progress (not for life goals), period, parent, area; summary = why. */
+export function goalPreview(
+  g: GoalRow,
+  extra: { progress: number | null; parentTitle?: string | null; areaTitle?: string | null },
+): NodePreview {
+  const horizon = GOAL_HORIZON.is(g.horizon) ? `${GOAL_HORIZON.label(g.horizon)} 목표` : "목표";
+  return {
+    archived: !!g.archivedAt,
+    badge: g.period ? `${horizon} ${g.period}` : horizon,
+    props: [
+      ...(g.horizon !== "life" && extra.progress != null
+        ? [{ label: "진행률", value: `${Math.round(extra.progress)}%` }]
+        : []),
+      ...(g.status !== "active" ? prop("상태", label(GOAL_STATUS, g.status)) : []),
+      ...prop("기간", g.period),
+      ...prop("상위", extra.parentTitle),
+      ...prop("영역", extra.areaTitle),
+    ],
+    summary: nonEmpty(g.why) ? clip(g.why) : firstParagraph(g.body),
+  };
+}
+
+export type ReviewRow = {
+  kind: string;
+  period: string;
+  completedAt: string | null;
+  body: string;
+  archivedAt: string | null;
+};
+
+/** Review: period and whether it is done; summary = first paragraph. */
+export function reviewPreview(r: ReviewRow): NodePreview {
+  const kind = REVIEW_KIND.is(r.kind) ? REVIEW_KIND.label(r.kind) : "";
+  return {
+    archived: !!r.archivedAt,
+    badge: kind ? `${kind} 회고` : "회고",
+    props: [
+      { label: "기간", value: r.period },
+      { label: "상태", value: r.completedAt ? `완료 ${r.completedAt.slice(0, 10)}` : "작성 중" },
+    ],
+    summary: firstParagraph(r.body),
   };
 }

@@ -8,11 +8,14 @@ import { Kbd } from "@/components/ui/Kbd";
 import {
   ArchiveIcon,
   AreaIcon,
+  GoalIcon,
+  GraphIcon,
   HomeIcon,
   InboxIcon,
   PaperIcon,
   PlusIcon,
   ProjectIcon,
+  ReviewIcon,
   SeminarIcon,
   SidebarIcon,
   TagIcon,
@@ -32,6 +35,9 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   thought: ThoughtIcon,
   tag: TagIcon,
   archive: ArchiveIcon,
+  review: ReviewIcon,
+  goal: GoalIcon,
+  graph: GraphIcon,
 };
 
 const linkClass = (active: boolean) =>
@@ -138,8 +144,9 @@ export function SidebarNav({
               </span>
             ) : undefined,
           )}
+          {NAV_SECTIONS.top.slice(2).map((entry) => item(entry))}
 
-          <div className="mt-4" />
+          <SectionTitle>목표와 프로젝트</SectionTitle>
           {NAV_SECTIONS.projects.map((entry) => item(entry))}
 
           <SectionTitle
@@ -185,6 +192,9 @@ export function SidebarNav({
             </span>
             <span className="flex items-center gap-1.5">
               <Kbd>/</Kbd> 빠른 입력
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Kbd>G</Kbd> 그래프
             </span>
           </div>
           <ThemeToggle />

@@ -4,7 +4,7 @@ import { isValidItemId } from "@/lib/ids";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
-import { ConnectedItems } from "@/components/links";
+import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
 import { tags, thoughts } from "@/lib/repo";
 import { deleteThought, updateThought } from "../actions";
@@ -65,7 +65,7 @@ export default async function ThoughtDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      <ConnectedItems item={{ type: "thought", id: thought.id }} />
+      <ConnectedWithGraph item={{ type: "thought", id: thought.id }} />
     </Page>
   );
 }

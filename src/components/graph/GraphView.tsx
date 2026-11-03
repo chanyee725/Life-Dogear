@@ -17,6 +17,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { Spinner } from "@/components/ui/Spinner";
 import type { GraphFilter, GraphNode, GraphNodeId, GraphPosition } from "@/lib/graph/types";
 import { fetchGraph, type GraphLoad, resetLayout, saveLayout } from "./api";
+import { createLayoutSaver } from "./layout-saver";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { GraphCanvasLazy } from "./GraphCanvasLazy";
 import { type FilterOptions, GraphFilterControls } from "./GraphFilterBar";
@@ -143,31 +144,32 @@ export default function GraphView({ options }: { options: FilterOptions }) {
     if (focusId && !byId.has(focusId)) setFocusId(null);
   }, [data, byId, selectedId, focusId]);
 
-  // ----- Layout saving (300ms debounce, batched) -----
-  const pending = useRef(new Map<GraphNodeId, GraphPosition>());
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ----- Layout saving: batched, one PUT at a time, flushed with keepalive on leave -----
+  const mockRef = useRef(false);
+  mockRef.current = !!data?.mock;
+  const saver = useMemo(
+    () =>
+      createLayoutSaver((batch, opts) => saveLayout(batch, mockRef.current, opts), {
+        onResult: (ok) => setSaveError(!ok),
+      }),
+    [],
+  );
   const onPin = useCallback(
     (p: GraphPosition) => {
       pins.current.set(p.node, p);
-      pending.current.set(p.node, p);
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        const batch = [...pending.current.values()];
-        pending.current.clear();
-        saveLayout(batch, !!data?.mock).then(
-          () => setSaveError(false),
-          () => setSaveError(true),
-        );
-      }, 300);
+      saver.add(p);
     },
-    [data?.mock],
+    [saver],
   );
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    },
-    [],
-  );
+  useEffect(() => {
+    const leave = () => saver.flushNow();
+    window.addEventListener("pagehide", leave);
+    return () => {
+      window.removeEventListener("pagehide", leave);
+      saver.flushNow();
+      saver.dispose();
+    };
+  }, [saver]);
 
   function changeView(next: ViewMode) {
     if (next === view) return;
@@ -179,6 +181,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   async function confirmReset() {
     setResetOpen(false);
     try {
+      // Drop queued drags and wait for an in-flight PUT so it cannot land after the reset.
+      await saver.clear();
       await resetLayout(!!data?.mock);
       pins.current.clear();
       setPositions([]);
@@ -462,7 +466,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
               배치 초기화
             </Button>
           ) : null}
-          <Link href="/goals" className={buttonClass("ghost", "sm")}>
+          <Link href="/goals?view=map" className={buttonClass("ghost", "sm")}>
             목표 지도로 보기
           </Link>
         </div>

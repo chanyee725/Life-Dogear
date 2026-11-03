@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
-import { ConnectedItems } from "@/components/links";
+import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
 import { areas, goals, projects, tags } from "@/lib/repo";
@@ -77,7 +77,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      <ConnectedItems item={ref} />
+      <ConnectedWithGraph item={ref} />
     </Page>
   );
 }
