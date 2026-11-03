@@ -54,6 +54,9 @@ export function traceShape(
     case "review":
       roundRect(ctx, x, y, 1.75 * r, 1);
       break;
+    case "task":
+      roundRect(ctx, x, y, 1.75 * r, 0.75);
+      break;
     case "project":
     case "tag": {
       const s = 1.3 * r;
@@ -84,6 +87,7 @@ export function shapeBottom(type: GraphNodeType, r: number): number {
   switch (type) {
     case "area":
     case "review":
+    case "task":
       return 0.875 * r;
     case "project":
     case "tag":
@@ -98,7 +102,7 @@ export function shapeBottom(type: GraphNodeType, r: number): number {
 /** Draws a node in its kind's shape and color at the current `ctx.globalAlpha`. */
 export function drawNodeShape(
   ctx: CanvasRenderingContext2D,
-  node: Pick<GraphNode, "type" | "horizon">,
+  node: Pick<GraphNode, "type" | "horizon" | "done">,
   x: number,
   y: number,
   r: number,
@@ -140,6 +144,22 @@ export function drawNodeShape(
       ctx.lineWidth = 1.25 / k;
       ctx.strokeStyle = theme.gray5;
       ctx.stroke();
+      return;
+    case "task":
+      // Open: an empty check box. Done: filled, faded (today.md 7절).
+      if (node.done) {
+        const alpha = ctx.globalAlpha;
+        ctx.globalAlpha = alpha * 0.45;
+        ctx.fillStyle = theme.gray4;
+        ctx.fill();
+        ctx.globalAlpha = alpha;
+      } else {
+        ctx.fillStyle = theme.canvasBg;
+        ctx.fill();
+        ctx.lineWidth = 1.25 / k;
+        ctx.strokeStyle = theme.gray4;
+        ctx.stroke();
+      }
       return;
     default:
       ctx.fillStyle = nodeFill(type, theme);

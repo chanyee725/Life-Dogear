@@ -10,6 +10,7 @@ import {
   tableFor,
   type ItemSummary,
 } from "./items";
+import { removeTasksOf } from "./tasks";
 import {
   assertItemRef,
   db,
@@ -112,8 +113,8 @@ export async function listConnected(ref: ItemRef): Promise<ItemSummary[]> {
 }
 
 /**
- * Delete-time clean-up of an item's connections: its links and its pinned graph
- * position. Every repo `remove` calls this inside its transaction.
+ * Delete-time clean-up of an item's connections: its links, pinned graph position, star
+ * and (projects, goals, areas) its tasks. Every repo `remove` calls this inside its transaction.
  */
 export async function removeLinksFor(exec: Executor, ref: ItemRef): Promise<void> {
   await exec.delete(links).where(touching(ref));
@@ -123,6 +124,7 @@ export async function removeLinksFor(exec: Executor, ref: ItemRef): Promise<void
   await exec
     .delete(itemStars)
     .where(and(eq(itemStars.itemType, ref.type), eq(itemStars.itemId, ref.id)));
+  await removeTasksOf(exec, ref);
 }
 
 // ---------------------------------------------------------------------------

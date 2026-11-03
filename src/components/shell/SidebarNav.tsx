@@ -19,6 +19,7 @@ import {
   SeminarIcon,
   SidebarIcon,
   TagIcon,
+  TaskIcon,
   ThoughtIcon,
 } from "./icons";
 import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
@@ -38,6 +39,7 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   review: ReviewIcon,
   goal: GoalIcon,
   graph: GraphIcon,
+  task: TaskIcon,
 };
 
 const linkClass = (active: boolean) =>

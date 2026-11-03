@@ -9,6 +9,7 @@ import {
   reviews,
   seminars,
   tags,
+  tasks,
   thoughts,
 } from "@/db/schema";
 import { listPositions } from "@/lib/repo/graph-layout";
@@ -29,7 +30,9 @@ import {
  * Loads every row the graph needs with a fixed number of queries (one per table),
  * independent of the number of items — never one query per node.
  */
-export async function loadGraphSource(options: { tags?: boolean } = {}): Promise<GraphSource> {
+export async function loadGraphSource(
+  options: { tags?: boolean; tasks?: boolean } = {},
+): Promise<GraphSource> {
   const d = db();
   const [
     goalRows,
@@ -129,14 +132,35 @@ export async function loadGraphSource(options: { tags?: boolean } = {}): Promise
     source.tags = tagRows;
     source.itemTags = taggingRows;
   }
+  if (options.tasks) {
+    const rows = await d
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        doneAt: tasks.doneAt,
+        dueDate: tasks.dueDate,
+        parentType: tasks.parentType,
+        parentId: tasks.parentId,
+      })
+      .from(tasks);
+    source.tasks = rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      done: r.doneAt !== null,
+      dueDate: r.dueDate,
+      parentType: r.parentType,
+      parentId: r.parentId,
+    }));
+  }
   return source;
 }
 
 /** Filtered graph plus saved positions of the returned nodes (stale positions are dropped). */
 export async function getGraph(filter: GraphFilter = {}): Promise<GraphResponse> {
   const needsTags = Boolean(filter.tag) || Boolean(filter.types?.includes("tag"));
+  const needsTasks = Boolean(filter.types?.includes("task"));
   const [source, positions] = await Promise.all([
-    loadGraphSource({ tags: needsTags }),
+    loadGraphSource({ tags: needsTags, tasks: needsTasks }),
     listPositions(),
   ]);
   const graph = buildGraph(source, filter);
@@ -163,7 +187,7 @@ export async function existingNodeIds(nodeIds: readonly GraphNodeId[]): Promise<
   }
   const found = new Set<GraphNodeId>();
   for (const [type, ids] of byType) {
-    const t = type === "tag" ? tags : tableFor(type);
+    const t = type === "tag" ? tags : type === "task" ? tasks : tableFor(type);
     for (let i = 0; i < ids.length; i += IN_CHUNK) {
       const rows = await db()
         .select({ id: t.id })

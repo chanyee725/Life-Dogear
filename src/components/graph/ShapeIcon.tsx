@@ -81,5 +81,20 @@ export function ShapeIcon({
           <path d="M5 1 9 5 5 9 1 5Z" fill="none" stroke={theme.gray5} strokeWidth="1.2" />
         </svg>
       );
+    case "task":
+      return (
+        <svg {...common}>
+          <rect
+            x="1.6"
+            y="1.6"
+            width="6.8"
+            height="6.8"
+            rx="1"
+            fill="none"
+            stroke={theme.gray4}
+            strokeWidth="1.2"
+          />
+        </svg>
+      );
   }
 }

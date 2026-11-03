@@ -25,6 +25,7 @@ export const GRAPH_NODE_TYPE_ORDER = [
   "thought",
   "review",
   "tag",
+  "task",
 ] as const satisfies readonly GraphNodeType[];
 
 type MissingFromOrder = Exclude<GraphNodeType, (typeof GRAPH_NODE_TYPE_ORDER)[number]>;
@@ -60,10 +61,17 @@ export type GraphNode = {
   horizon?: GoalHorizon;
   /** Goals (`2027`, `2027-Q1`; absent for life goals) and reviews (`2026-W45`, `2026-11`, …). */
   period?: string;
+  /** Tasks only: completed. */
+  done?: boolean;
+  /** Tasks only: `YYYY-MM-DD`. */
+  dueDate?: string;
+  /** Tasks only: the parent project/goal/area node (absent for unfiled tasks). */
+  parent?: GraphNodeId;
 };
 
 /**
- * - `belongs`: membership (quarter → year → life goal, project → goal, project → area, goal → area);
+ * - `belongs`: membership (quarter → year → life goal, project → goal, project → area, goal → area,
+ *   task → its project/goal/area);
  *   source is the child, target the parent.
  * - `link`: a manual link (`links.via = 'manual'`).
  * - `body`: a `[[wikilink]]` in a body (`links.via = 'body'`).
@@ -95,6 +103,8 @@ export type GraphFilter = {
   archived?: boolean;
   /** Only nodes with no edges ("연결 없는 항목만"). Default false. */
   orphans?: boolean;
+  /** With `task` in `types`: also completed tasks (`doneTasks=1`). Default false. */
+  doneTasks?: boolean;
 };
 
 /**
