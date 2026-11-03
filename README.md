@@ -7,6 +7,15 @@
 - Node.js 22.12 이상의 22.x 또는 24 이상 (검증은 Node 24에서 합니다)
 - npm (이 프로젝트는 `package-lock.json`으로 의존성을 고정합니다)
 
+## 한 번에 설정 (새 PC)
+
+```bash
+git clone -b develop https://github.com/chanyee725/Life-Dogear.git && cd Life-Dogear
+bash scripts/setup.sh --start          # 샘플 데이터까지: --seed
+```
+
+Node 확인(없으면 nvm으로 24 설치) → `npm ci` → `.env` 준비(값은 직접 입력) → `data/pdfs` 생성 → `db:migrate` → 프로덕션 빌드(`.next-prod`)를 차례로 하고, `--start`면 `http://127.0.0.1:3100`에 띄웁니다. 다시 실행해도 안전합니다(기존 `.env`는 그대로 둠). 옵션은 `bash scripts/setup.sh --help`.
+
 ## 설치
 
 ```bash
