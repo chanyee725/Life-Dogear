@@ -631,7 +631,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   return (
     <div ref={rootRef} className="flex h-dvh min-h-0 flex-col bg-bg">
       {/* Top bar */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-5">
+      {/* Narrow screens: room on the left for the fixed "사이드바 열기" button (ends at 44px). */}
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-5 max-md:pl-14">
         <h1 className="text-base font-semibold tracking-tight">그래프</h1>
         <span className="ml-3 text-xs text-muted tabular-nums">{counts}</span>
         {saveError ? (
