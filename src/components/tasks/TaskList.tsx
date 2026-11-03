@@ -83,7 +83,8 @@ export function TaskList({
   const [lingering, setLingering] = useState<ReadonlySet<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
-  const [undo, setUndo] = useState<Task | null>(null);
+  /** The just-deleted task and where it sat in `items`, for 되돌리기. */
+  const [undo, setUndo] = useState<{ task: Task; index: number } | null>(null);
   const [showDone, setShowDone] = useState(false);
   const [, startTransition] = useTransition();
   const listRef = useRef<HTMLUListElement>(null);
@@ -206,7 +207,7 @@ export function TaskList({
     keepFocus(task.id);
     const snapshot = items;
     setItems((list) => list.filter((t) => t.id !== task.id));
-    setUndo(task);
+    setUndo({ task, index: items.findIndex((t) => t.id === task.id) });
     setAnnounce(`‘${task.title}’을 지웠습니다.`);
     run(
       () => deleteTask(task.id),
@@ -217,7 +218,8 @@ export function TaskList({
     );
   };
 
-  const restore = (task: Task) => {
+  /** Undo: back at its old place (server `sortOrder`, local index), done or not as before. */
+  const restore = ({ task, index }: { task: Task; index: number }) => {
     setUndo(null);
     startTransition(async () => {
       const result = await safeAction(() =>
@@ -225,14 +227,16 @@ export function TaskList({
           title: task.title,
           parent: parentOf(task),
           dueDate: task.dueDate,
-          done: Boolean(task.doneAt),
+          sortOrder: task.sortOrder,
+          doneAt: task.doneAt,
         }),
       );
       if (result.ok) {
+        const back = { ...result.data, parentTitle: task.parentTitle };
         setItems((list) =>
-          list.some((t) => t.id === result.data.id)
+          list.some((t) => t.id === back.id)
             ? list
-            : [...list, { ...result.data, parentTitle: task.parentTitle }],
+            : [...list.slice(0, Math.max(index, 0)), back, ...list.slice(Math.max(index, 0))],
         );
         setAnnounce(`‘${task.title}’을 되돌렸습니다.`);
         setError(null);
@@ -293,7 +297,7 @@ export function TaskList({
       <p aria-live="polite" className="text-[13px] text-muted">
         {undo ? (
           <>
-            ‘{undo.title}’을 지웠습니다.{" "}
+            ‘{undo.task.title}’을 지웠습니다.{" "}
             <button type="button" className="underline" onClick={() => restore(undo)}>
               되돌리기
             </button>
