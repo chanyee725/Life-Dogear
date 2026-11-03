@@ -3,7 +3,9 @@
  * `belongs` edges only (source = child → target = parent) toward life goals: item →
  * project → quarter → year → life goal. A node with no `belongs` parent (papers,
  * thoughts, …) first steps over `link`/`body` edges to **every** linked project. The
- * highlighted path is the union of all such climbs. Pure, O(n + e).
+ * highlighted path is the union of the climbs that end at a life goal; dead-end branches
+ * (e.g. project → area) are dropped. When no branch reaches a life goal, everything
+ * reached is drawn. Pure, O(n + e).
  */
 import type { GraphEdge, GraphNode, GraphNodeId } from "@/lib/graph/types";
 
@@ -67,10 +69,13 @@ export function constellationPath(
 
   const pathNodes = new Set<GraphNodeId>([start]);
   const pathEdges = new Set<string>();
+  /** Every upward step taken: [from, to, edge key]. */
+  const steps: [GraphNodeId, GraphNodeId, string][] = [];
   const prev = new Map<GraphNodeId, GraphNodeId | null>([[start, null]]);
   const dist = new Map<GraphNodeId, number>([[start, 0]]);
   const queue: GraphNodeId[] = [];
   for (const { to, edge } of first) {
+    steps.push([start, to, edgeKey(edge)]);
     pathEdges.add(edgeKey(edge));
     pathNodes.add(to);
     if (!prev.has(to)) {
@@ -82,6 +87,7 @@ export function constellationPath(
   for (let i = 0; i < queue.length; i++) {
     const id = queue[i]!;
     for (const e of parents.get(id) ?? []) {
+      steps.push([id, e.target, edgeKey(e)]);
       pathEdges.add(edgeKey(e));
       pathNodes.add(e.target);
       if (prev.has(e.target)) continue;
@@ -107,11 +113,43 @@ export function constellationPath(
   for (let at: GraphNodeId | null = best; at; at = prev.get(at) ?? null) chain.push(at);
   chain.reverse();
 
+  const reachesLife = rank(best) === 3;
+  if (!reachesLife) {
+    // No branch reaches a life goal: draw as far as it got (every climb).
+    return {
+      nodes: pathNodes,
+      edges: pathEdges,
+      chain,
+      stepsToLife: null,
+      order: [start, ...queue],
+    };
+  }
+
+  // Keep only the branches that end at a life goal (e.g. project → area is a dead end):
+  // walk the steps backwards from every life goal reached.
+  const into = new Map<GraphNodeId, [GraphNodeId, string][]>();
+  for (const [from, to, key] of steps) {
+    const list = into.get(to);
+    if (list) list.push([from, key]);
+    else into.set(to, [[from, key]]);
+  }
+  const keepNodes = new Set<GraphNodeId>();
+  const keepEdges = new Set<string>();
+  const back = queue.filter((id) => rank(id) === 3);
+  for (const id of back) keepNodes.add(id);
+  for (let i = 0; i < back.length; i++) {
+    for (const [from, key] of into.get(back[i]!) ?? []) {
+      keepEdges.add(key);
+      if (keepNodes.has(from)) continue;
+      keepNodes.add(from);
+      back.push(from);
+    }
+  }
   return {
-    nodes: pathNodes,
-    edges: pathEdges,
+    nodes: keepNodes,
+    edges: keepEdges,
     chain,
-    stepsToLife: rank(best) === 3 ? dist.get(best)! : null,
-    order: [start, ...queue],
+    stepsToLife: dist.get(best)!,
+    order: [start, ...queue].filter((id) => keepNodes.has(id)),
   };
 }

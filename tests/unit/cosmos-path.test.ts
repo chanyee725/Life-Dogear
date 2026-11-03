@@ -41,7 +41,7 @@ describe("constellationPath", () => {
 
   it("climbs from a note through every linked project, belongs only after that", () => {
     expect([...c.nodes].sort()).toEqual(
-      ["area:a", "goal:life", "goal:q", "goal:year", "paper:x", "project:p", "project:p2"].sort(),
+      ["goal:life", "goal:q", "goal:year", "paper:x", "project:p", "project:p2"].sort(),
     );
     expect(c.edges.has(edgeKey(e("project:p", "paper:x", "link")))).toBe(true);
     expect(c.edges.has(edgeKey(e("paper:x", "project:p2", "body")))).toBe(true);
@@ -68,17 +68,39 @@ describe("constellationPath", () => {
     expect(life.stepsToLife).toBeNull();
   });
 
+  it("drops branches that do not reach a life goal (project → area)", () => {
+    expect(c.nodes.has(S("area:a"))).toBe(false);
+    expect(c.edges.has(edgeKey(e("project:p", "area:a", "belongs")))).toBe(false);
+    expect(c.order).not.toContain("area:a");
+  });
+
+  it("drops a whole project branch that dead-ends, keeps the one that reaches", () => {
+    const deadEnd = [...nodes, n("project:dead"), n("area:b")];
+    const withDead = [
+      ...edges,
+      e("paper:x", "project:dead", "link"),
+      e("project:dead", "area:b", "belongs"),
+    ];
+    const p = constellationPath(S("paper:x"), deadEnd, withDead);
+    expect(p.nodes.has(S("project:dead"))).toBe(false);
+    expect(p.nodes.has(S("area:b"))).toBe(false);
+    expect(p.edges.has(edgeKey(e("paper:x", "project:dead", "link")))).toBe(false);
+    expect(p.nodes.has(S("goal:life"))).toBe(true);
+  });
+
   it("uses belongs parents first when the node has them", () => {
     const p = constellationPath(S("project:p"), nodes, edges);
     expect(p.nodes.has(S("paper:x"))).toBe(false);
     expect(p.chain).toEqual(["project:p", "goal:q", "goal:year", "goal:life"]);
   });
 
-  it("stops where the climb ends when no life goal is reached", () => {
+  it("draws everything reached when no branch reaches a life goal", () => {
     const cut = edges.filter((x) => !(x.source === "goal:year" && x.target === "goal:life"));
     const p = constellationPath(S("project:p"), nodes, cut);
     expect(p.chain).toEqual(["project:p", "goal:q", "goal:year"]);
     expect(p.stepsToLife).toBeNull();
+    // Dead ends are kept in this case — it is all there is.
+    expect([...p.nodes].sort()).toEqual(["area:a", "goal:q", "goal:year", "project:p"]);
   });
 
   it("returns the start alone for an unknown or unconnected node", () => {
