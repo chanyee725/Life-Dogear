@@ -78,3 +78,31 @@ export function moveActive(index: number, delta: number, count: number): number 
 }
 
 export const hitKey = (hit: SearchHit): string => `${hit.type}:${hit.id}`;
+
+/** A palette command (not a search hit): runs an action instead of opening a page. */
+export type PaletteCommand = {
+  id: "capture";
+  label: string;
+  /** Single-key shortcut shown on the right. */
+  shortcut: string;
+  /** Lower-case words the query is matched against. */
+  keywords: readonly string[];
+};
+
+export const PALETTE_COMMANDS: readonly PaletteCommand[] = [
+  { id: "capture", label: "빠른 캡처", shortcut: "C", keywords: ["빠른 캡처", "캡처", "capture"] },
+];
+
+/**
+ * Commands for a query: all of them when empty, else those with a keyword (or a word of
+ * one) that starts with the query, from 2 characters on — so a lone "a" or "c" does not
+ * pull 캡처 to the top of ordinary searches.
+ */
+export function matchCommands(query: string): PaletteCommand[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [...PALETTE_COMMANDS];
+  if (q.length < 2) return [];
+  return PALETTE_COMMANDS.filter((c) =>
+    c.keywords.some((k) => k.startsWith(q) || k.split(" ").some((w) => w.startsWith(q))),
+  );
+}

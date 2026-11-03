@@ -11,6 +11,7 @@ export type ShortcutAction =
   | { kind: "navigate"; href: string }
   | { kind: "focus-quick-input" }
   | { kind: "focus-graph-search" }
+  | { kind: "open-capture" }
   | null;
 
 export type ShortcutKeyEvent = {
@@ -47,6 +48,8 @@ export function resolveShortcut(
   const isSlash = event.key === "/" || (event.code === "Slash" && !event.shiftKey);
   // `code` keeps `G` working while a Korean input mode turns `key` into "ㅎ".
   const isG = event.key === "g" || event.key === "G" || event.code === "KeyG";
+  // `C` = quick capture (docs/design/today.md 6.1); `code` for the Korean input mode ("ㅊ").
+  const isC = event.key === "c" || event.key === "C" || event.code === "KeyC";
   const onGraph = pathname === GRAPH_HREF || pathname.startsWith(`${GRAPH_HREF}/`);
 
   if (isN) {
@@ -57,6 +60,8 @@ export function resolveShortcut(
     const href = `/${section}/new`;
     return pathname === href ? null : { kind: "navigate", href };
   }
+
+  if (isC) return { kind: "open-capture" };
 
   if (isG) return onGraph ? null : { kind: "navigate", href: GRAPH_HREF };
 

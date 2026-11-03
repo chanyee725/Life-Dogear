@@ -117,3 +117,21 @@ describe("SearchButton", () => {
     expect(html).toContain('aria-label="단축키 Ctrl K"');
   });
 });
+
+describe("palette commands", () => {
+  it("lists 빠른 캡처 when empty or matching, not for other queries", async () => {
+    const { matchCommands } = await import("@/components/search/palette");
+    expect(matchCommands("").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands("캡처").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands(" Capt ").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands("빠른").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands("논문")).toEqual([]);
+    // Prefix only: a single letter inside a keyword does not match.
+    expect(matchCommands("a")).toEqual([]);
+    expect(matchCommands("pt")).toEqual([]);
+    expect(matchCommands("처")).toEqual([]);
+    expect(matchCommands("c")).toEqual([]);
+    expect(matchCommands("캡")).toEqual([]);
+    expect(matchCommands("ca").map((c) => c.id)).toEqual(["capture"]);
+  });
+});
