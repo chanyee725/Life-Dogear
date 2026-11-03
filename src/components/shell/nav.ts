@@ -3,6 +3,9 @@
  * IA: docs/PROPOSAL-SECOND-BRAIN.md 4절 — reviews sit near home, goals with projects,
  * the graph under 자료.
  */
+/** The "자료" section title links to the topic-first resources page. */
+export const LIBRARY_HREF = "/resources";
+
 export const NAV_SECTIONS = {
   top: [
     { href: "/", label: "홈", icon: "home" },
