@@ -174,6 +174,32 @@
     accent-color: var(--rb-accent);
   }
 
+  /* Everything you can click or tap shows the hand cursor (Tailwind v4 resets buttons to
+     default). Base layer: explicit cursor-* utilities (grab on the graph etc.) still win. */
+  a[href],
+  button,
+  summary,
+  select,
+  [role="button"],
+  [role="tab"],
+  [role="option"],
+  [role="menuitem"],
+  [role="switch"],
+  [role="checkbox"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="file"],
+  input[type="color"],
+  label:has(> input[type="checkbox"], > input[type="radio"]) {
+    cursor: pointer;
+  }
+  :is(button, select, input):disabled,
+  [aria-disabled="true"],
+  label:has(> input:disabled) {
+    cursor: not-allowed;
+  }
+
   ::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.55;

@@ -47,7 +47,8 @@ const NARROW_QUERY = "(max-width: 767.98px)";
 
 const linkClass = (active: boolean) =>
   cn(
-    "flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors",
+    // 18px icons (the shell icons are drawn at 16): easier to scan and to hit.
+    "flex h-9 shrink-0 items-center gap-3 rounded-lg px-3 text-sm transition-colors [&>svg]:size-[18px] [&>svg]:shrink-0",
     active ? "bg-hover font-medium text-fg" : "text-muted hover:bg-hover hover:text-fg",
   );
 
@@ -88,7 +89,7 @@ function PendingDot() {
 
 function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mt-4 mb-1 flex h-6 items-center justify-between pr-1 pl-2.5">
+    <div className="mt-6 mb-1.5 flex h-6 shrink-0 items-center justify-between pr-1 pl-3">
       <span className="text-xs font-medium text-muted">{children}</span>
       {action}
     </div>
@@ -155,7 +156,7 @@ export function SidebarNav({
           if (drawerOpen && e.key === "Escape") setDrawerOn(null);
         }}
         className={cn(
-          "sticky top-0 flex h-dvh w-56 shrink-0 flex-col border-r border-border bg-surface in-data-[sidebar=collapsed]:hidden",
+          "sticky top-0 flex h-dvh w-60 shrink-0 flex-col border-r border-border bg-surface in-data-[sidebar=collapsed]:hidden",
           "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
           drawerOpen ? "max-md:in-data-[sidebar=collapsed]:flex" : "max-md:hidden",
         )}
@@ -178,7 +179,7 @@ export function SidebarNav({
         {searchSlot ? <div className="px-3 pb-2">{searchSlot}</div> : null}
         <nav
           aria-label="주 메뉴"
-          className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3"
+          className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pt-1 pb-3"
         >
           {item(NAV_SECTIONS.top[0])}
           {item(
@@ -208,11 +209,12 @@ export function SidebarNav({
           </SectionTitle>
           {NAV_SECTIONS.library.map((entry) => item(entry))}
 
-          <div className="mt-4" />
+          <div className="mt-6 shrink-0" />
           {NAV_SECTIONS.bottom.map((entry) => item(entry))}
         </nav>
         <div className="flex flex-col gap-3 px-4 pb-4">
-          <div className="flex flex-col gap-1 text-xs text-muted">
+          {/* Short windows: the menu needs the room more than the shortcut hints. */}
+          <div className="flex flex-col gap-1 text-xs text-muted [@media(max-height:799px)]:hidden">
             <span className="flex items-center gap-1.5">
               <Kbd>N</Kbd> 새 항목
             </span>
