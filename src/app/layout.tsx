@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { QuickCapture } from "@/components/capture/QuickCapture";
 import { CommandPalette } from "@/components/search/CommandPalette";
 import { SearchButton } from "@/components/search/SearchButton";
 import { Shortcuts } from "@/components/shell/Shortcuts";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main className="min-w-0 flex-1">{children}</main>
         <Shortcuts />
         <CommandPalette />
+        <QuickCapture />
       </body>
     </html>
   );

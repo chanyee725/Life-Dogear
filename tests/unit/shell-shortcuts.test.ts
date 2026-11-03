@@ -153,3 +153,24 @@ describe("isTypingTarget", () => {
     expect(isTypingTarget(null)).toBe(false);
   });
 });
+
+describe("C — quick capture", () => {
+  const open = { kind: "open-capture" };
+  it("opens capture anywhere, also in Korean input mode", () => {
+    expect(resolveShortcut(key("c"), "/", { typing: false })).toEqual(open);
+    expect(resolveShortcut(key("C"), "/graph", { typing: false })).toEqual(open);
+    expect(resolveShortcut(key("ㅊ", { code: "KeyC" }), "/papers", { typing: false })).toEqual(
+      open,
+    );
+  });
+
+  it("is ignored while typing, in a dialog, composing or with ⌘/Ctrl/Alt (copy stays copy)", () => {
+    expect(resolveShortcut(key("c"), "/", { typing: true })).toBeNull();
+    expect(resolveShortcut(key("c"), "/", { typing: false, dialogOpen: true })).toBeNull();
+    expect(resolveShortcut(key("c", { isComposing: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("c", { keyCode: 229 }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("c", { ctrlKey: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("c", { metaKey: true }), "/", { typing: false })).toBeNull();
+    expect(resolveShortcut(key("c", { altKey: true }), "/", { typing: false })).toBeNull();
+  });
+});
