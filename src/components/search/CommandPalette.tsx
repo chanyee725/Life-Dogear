@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { OPEN_CAPTURE_EVENT } from "@/components/capture/capture";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Badge, Kbd, Spinner, cn } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
@@ -11,9 +12,11 @@ import {
   groupHits,
   hitKey,
   isPaletteShortcut,
+  matchCommands,
   moveActive,
   OPEN_PALETTE_EVENT,
   SEARCH_DEBOUNCE_MS,
+  type PaletteCommand,
   typeLabel,
   typeTone,
 } from "./palette";
@@ -41,6 +44,9 @@ export function CommandPalette() {
   const [active, setActive] = useState(-1);
 
   const { groups, flat } = groupHits(hits);
+  // Commands come first in the ↑/↓ order; hits follow (index offset by `commands.length`).
+  const commands = matchCommands(query);
+  const total = commands.length + flat.length;
 
   async function runSearch(q: string) {
     abortRef.current?.abort();
@@ -67,7 +73,7 @@ export function CommandPalette() {
         if (top) return go(top);
       }
       setHits(data.hits);
-      setActive(data.hits.length ? 0 : -1);
+      setActive(data.hits.length || matchCommands(q).length ? 0 : -1);
       setStatus("done");
     } catch (error) {
       if (controller.signal.aborted) return; // superseded by a newer query
@@ -131,21 +137,37 @@ export function CommandPalette() {
     router.push(hit.href);
   }
 
+  function run(command: PaletteCommand) {
+    close();
+    // After the palette dialog has closed (capture will not open over another dialog).
+    if (command.id === "capture") {
+      requestAnimationFrame(() => window.dispatchEvent(new Event(OPEN_CAPTURE_EVENT)));
+    }
+  }
+
+  function choose(index: number) {
+    if (index < 0) return;
+    if (index < commands.length) run(commands[index]!);
+    else go(flat[index - commands.length]);
+  }
+
   function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     // Enter while the IME is composing commits the syllable; do not navigate.
     if (event.nativeEvent.isComposing || event.keyCode === 229) return;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      setActive((i) => moveActive(i, event.key === "ArrowDown" ? 1 : -1, flat.length));
+      setActive((i) => moveActive(i, event.key === "ArrowDown" ? 1 : -1, total));
     } else if (event.key === "Enter") {
       event.preventDefault();
+      // A command chosen with ↑/↓ runs at once.
+      if (active >= 0 && active < commands.length) return choose(active);
       // Results may lag behind fast typing: search now and open the top hit when it lands.
       if (debouncedSearch.pending() || status === "loading") {
         enterPending.current = true;
         debouncedSearch.flush();
         return;
       }
-      go(flat[active]);
+      choose(active);
     }
   }
 
@@ -179,7 +201,7 @@ export function CommandPalette() {
               autoFocus
               type="text"
               role="combobox"
-              aria-expanded={flat.length > 0}
+              aria-expanded={total > 0}
               aria-controls={listId}
               aria-activedescendant={activeId}
               aria-autocomplete="list"
@@ -206,6 +228,29 @@ export function CommandPalette() {
             aria-busy={status === "loading"}
             className="min-h-0 flex-1 overflow-y-auto p-2"
           >
+            {commands.length ? (
+              <div role="group" aria-label="명령" className="mb-1">
+                <div className="px-2 pt-2 pb-1 text-xs font-medium text-faint">명령</div>
+                {commands.map((command, index) => (
+                  <div
+                    key={command.id}
+                    id={`${listId}-${index}`}
+                    role="option"
+                    aria-selected={index === active}
+                    data-index={index}
+                    onMouseMove={() => setActive(index)}
+                    onClick={() => run(command)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-2",
+                      index === active ? "bg-hover" : "hover:bg-hover",
+                    )}
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm">{command.label}</span>
+                    <Kbd>{command.shortcut}</Kbd>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {!trimmed ? (
               <p className="px-2 py-6 text-center text-[13px] text-muted">
                 프로젝트·영역·논문·세미나·생각·목표·회고의 제목과 본문, 하이라이트를 검색합니다.
@@ -215,15 +260,17 @@ export function CommandPalette() {
                 검색하지 못했습니다. 잠시 후 다시 시도해 주세요.
               </p>
             ) : flat.length === 0 ? (
-              <p className="px-2 py-6 text-center text-[13px] text-muted">
-                {status === "done" ? "검색 결과가 없습니다." : "검색 중…"}
-              </p>
+              commands.length && status !== "done" ? null : (
+                <p className="px-2 py-6 text-center text-[13px] text-muted">
+                  {status === "done" ? "검색 결과가 없습니다." : "검색 중…"}
+                </p>
+              )
             ) : (
               groups.map((group) => (
                 <div key={group.type} role="group" aria-label={group.label} className="mb-1">
                   <div className="px-2 pt-2 pb-1 text-xs font-medium text-faint">{group.label}</div>
                   {group.hits.map((hit) => {
-                    const index = flat.indexOf(hit);
+                    const index = commands.length + flat.indexOf(hit);
                     return (
                       <HitRow
                         key={hitKey(hit)}
@@ -232,7 +279,7 @@ export function CommandPalette() {
                         hit={hit}
                         active={index === active}
                         onHover={() => setActive(index)}
-                        onChoose={() => go(hit)}
+                        onChoose={() => choose(index)}
                       />
                     );
                   })}

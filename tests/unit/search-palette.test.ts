@@ -117,3 +117,13 @@ describe("SearchButton", () => {
     expect(html).toContain('aria-label="단축키 Ctrl K"');
   });
 });
+
+describe("palette commands", () => {
+  it("lists 빠른 캡처 when empty or matching, not for other queries", async () => {
+    const { matchCommands } = await import("@/components/search/palette");
+    expect(matchCommands("").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands("캡처").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands(" Capt ").map((c) => c.id)).toEqual(["capture"]);
+    expect(matchCommands("논문")).toEqual([]);
+  });
+});
