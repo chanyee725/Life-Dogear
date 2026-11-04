@@ -43,12 +43,10 @@ function Section({
   title,
   count,
   children,
-  help,
 }: {
   title: string;
   count: number;
-  children: ReactNode;
-  help?: string;
+  children?: ReactNode;
 }) {
   return (
     <section className="flex flex-col gap-1">
@@ -57,7 +55,6 @@ function Section({
         <span className="text-xs text-muted tabular-nums">{count}</span>
       </div>
       {children}
-      {help ? <p className="text-xs text-muted">{help}</p> : null}
     </section>
   );
 }
@@ -124,9 +121,6 @@ export function CosmosPanel({
       </li>
     );
   };
-  const empty = (text: string) => (
-    <p className="flex h-8 items-center text-[13px] text-muted">{text}</p>
-  );
 
   const lonelyShown = data.lonely.slice(0, LONELY_SHOWN);
   const lonelyMore = data.lonely.length - lonelyShown.length;
@@ -180,16 +174,10 @@ export function CosmosPanel({
                   ),
                 )}
               </ul>
-            ) : (
-              empty("아직 점수를 매길 항목이 없습니다.")
-            )}
+            ) : null}
           </Section>
 
-          <Section
-            title="외톨이 별"
-            count={data.lonely.length}
-            help={data.lonely.length ? "다른 항목과 이어 주면 은하 안으로 들어갑니다." : undefined}
-          >
+          <Section title="외톨이 별" count={data.lonely.length}>
             {lonelyShown.length ? (
               <ul className="flex flex-col">
                 {lonelyShown.map((id) => {
@@ -197,9 +185,7 @@ export function CosmosPanel({
                   return row(id, null, node ? GRAPH_TYPE_LABEL[node.type] : "");
                 })}
               </ul>
-            ) : (
-              empty("외톨이 별이 없습니다. 모두 어딘가에 이어져 있어요.")
-            )}
+            ) : null}
             {lonelyMore > 0 ? (
               <button
                 type="button"
@@ -211,20 +197,14 @@ export function CosmosPanel({
             ) : null}
           </Section>
 
-          <Section
-            title="오래 손대지 않은 중요한 별"
-            count={data.neglected.length}
-            help={data.neglected.length ? "오래된 순. 열어서 다시 살펴보세요." : undefined}
-          >
+          <Section title="오래 손대지 않은 중요한 별" count={data.neglected.length}>
             {data.neglected.length ? (
               <ul className="flex flex-col">
                 {data.neglected.map((id) =>
                   row(id, null, daysAgoLabel(data.cosmos[id]?.lastActiveAt ?? null)),
                 )}
               </ul>
-            ) : (
-              empty("중요한 항목을 모두 최근에 살펴봤습니다.")
-            )}
+            ) : null}
           </Section>
         </>
       )}
