@@ -30,7 +30,6 @@ export default async function TagPage({ params }: Props) {
           </Link>
         }
         title={`#${data.name}`}
-        description={`이 주제가 달린 항목 ${data.total}개`}
       />
       <div className="flex flex-col gap-10">
         {data.groups.map((group) => (

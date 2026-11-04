@@ -254,12 +254,7 @@ export function CommandPalette() {
                 ))}
               </div>
             ) : null}
-            {!trimmed ? (
-              <p className="px-2 py-6 text-center text-[13px] text-muted">
-                프로젝트·영역·논문·노트·세미나·생각·목표·회고의 제목과 본문, 하이라이트를
-                검색합니다.
-              </p>
-            ) : status === "error" ? (
+            {!trimmed ? null : status === "error" ? (
               <p role="alert" className="px-2 py-6 text-center text-[13px] text-danger">
                 검색하지 못했습니다. 잠시 후 다시 시도해 주세요.
               </p>

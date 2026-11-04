@@ -39,11 +39,7 @@ export async function ConnectedItems({
         }
         action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
       >
-        {connected.length === 0 ? (
-          <p className="text-[13px] text-muted">
-            아직 연결된 항목이 없습니다. 관련 프로젝트·영역·논문·노트·세미나·생각을 연결해 보세요.
-          </p>
-        ) : (
+        {connected.length === 0 ? null : (
           <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
             {connected.map((c) => (
               <li key={refKey(c.ref)} className="group flex items-center gap-2.5 px-3 py-2">

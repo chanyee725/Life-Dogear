@@ -49,9 +49,11 @@ export function FocusPicker({
   return (
     <div className="flex flex-col gap-2">
       <input ref={inputRef} type="hidden" name={FOCUS_FIELD} defaultValue={selected.join(",")} />
-      <p className="text-xs text-muted tabular-nums" aria-live="polite">
-        {selected.length}/{max} 선택
-      </p>
+      {options.length ? (
+        <p className="text-xs text-muted tabular-nums" aria-live="polite">
+          {selected.length}/{max} 선택
+        </p>
+      ) : null}
       {options.length ? (
         <ul className="flex flex-col gap-1">
           {options.map((o) => {
@@ -83,9 +85,7 @@ export function FocusPicker({
             );
           })}
         </ul>
-      ) : (
-        <p className="text-[13px] text-muted">고를 수 있는 진행 중 프로젝트나 목표가 없습니다.</p>
-      )}
+      ) : null}
     </div>
   );
 }

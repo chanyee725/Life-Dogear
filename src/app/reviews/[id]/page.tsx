@@ -11,6 +11,8 @@ import { LocalGraph } from "@/components/graph/LocalGraph";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
 import { REVIEW_KIND } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { goals, projects, thoughts } from "@/lib/repo";
@@ -35,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: review?.title ?? "회고" };
 }
 
-function Step({ n, title, children }: { n?: number; title: string; children: ReactNode }) {
+function Step({ n, title, children }: { n?: number; title: string; children?: ReactNode }) {
   return (
     <section aria-label={title} className="flex flex-col gap-2">
       <h2 className="flex items-baseline gap-2 text-sm font-semibold">
@@ -109,14 +111,10 @@ export default async function ReviewDetailPage({ params }: Props) {
           })}
         </ul>
       ) : (
-        <p className="text-[13px] text-muted">
-          이 기간의 목표가 없습니다.{" "}
-          <Link href="/goals" className="underline hover:text-fg">
-            목표 보기
-          </Link>
-        </p>
+        <Link href="/goals" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+          목표 보기
+        </Link>
       )}
-      <p className="text-xs text-faint">진행률은 회고를 만들 때와 작성 완료할 때 저장됩니다.</p>
     </Step>
   );
 
@@ -160,15 +158,17 @@ export default async function ReviewDetailPage({ params }: Props) {
           {isWeek ? (
             <>
               <Step n={1} title="수집함 비우기">
-                <p className="text-sm">
-                  {inboxCount ? (
+                {inboxCount ? (
+                  <p className="text-sm">
                     <Link href="/inbox" className="hover:underline">
                       정리할 항목 <span className="font-medium tabular-nums">{inboxCount}</span>개 →
                     </Link>
-                  ) : (
-                    <span className="text-muted">수집함이 비어 있습니다.</span>
-                  )}
-                </p>
+                  </p>
+                ) : (
+                  <Link href="/inbox" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+                    수집함 보기
+                  </Link>
+                )}
               </Step>
               <Step n={2} title="프로젝트 점검">
                 {activeProjects.length ? (
@@ -191,7 +191,9 @@ export default async function ReviewDetailPage({ params }: Props) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[13px] text-muted">진행 중인 프로젝트가 없습니다.</p>
+                  <Link href="/projects" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+                    프로젝트 보기
+                  </Link>
                 )}
               </Step>
               {goalCheck}
@@ -223,7 +225,6 @@ export default async function ReviewDetailPage({ params }: Props) {
             targetLabel={`${periodLabel(target.horizon, target.period)} 목표`}
             parents={parents}
           />
-          <p className="text-xs text-faint">만든 목표는 이 회고와 연결됩니다.</p>
         </Step>
       ) : null}
       <ConnectedItems item={ref} />

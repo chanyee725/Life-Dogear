@@ -106,11 +106,6 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   const empty = (
     <EmptyState
       title={filtered ? "조건에 맞는 노트가 없습니다" : "아직 노트가 없습니다"}
-      description={
-        filtered
-          ? "필터를 바꾸거나 해제해 보세요."
-          : "책·강의·영상에서 공부한 내용을 정리해 두세요."
-      }
       action={
         filtered ? (
           <Link href={BASE} className={buttonClass("secondary", "sm")}>
@@ -130,7 +125,12 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       <PageHeader
         title="노트"
         actions={
-          <Link href="/notes/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/notes/new"
+            className={buttonClass("primary")}
+          >
             새 노트
           </Link>
         }

@@ -91,11 +91,6 @@ export default async function SeminarsPage({
   const empty = (
     <EmptyState
       title={filtered ? "조건에 맞는 세미나가 없습니다" : "아직 세미나 노트가 없습니다"}
-      description={
-        filtered
-          ? "필터를 바꾸거나 해제해 보세요."
-          : "들은 세미나나 내가 한 발표를 기록해 보세요."
-      }
       action={
         filtered ? (
           <Link href="/seminars" className={buttonClass("secondary", "sm")}>
@@ -115,7 +110,12 @@ export default async function SeminarsPage({
       <PageHeader
         title="세미나"
         actions={
-          <Link href="/seminars/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/seminars/new"
+            className={buttonClass("primary")}
+          >
             새 세미나
           </Link>
         }

@@ -24,7 +24,7 @@ export const NAV_SECTIONS = {
     { href: "/seminars", label: "세미나", icon: "seminar" },
     { href: "/thoughts", label: "생각", icon: "thought" },
     { href: "/tags", label: "주제", icon: "tag" },
-    { href: "/graph", label: "그래프", icon: "graph" },
+    { href: "/graph", label: "그래프", icon: "graph", shortcut: "G" },
   ],
   bottom: [{ href: "/archive", label: "보관함", icon: "archive" }],
 } as const;

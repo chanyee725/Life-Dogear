@@ -93,14 +93,7 @@ export default async function AreaDetailPage({ params }: Props) {
           </Link>
         }
       >
-        {areaGoals.length === 0 ? (
-          <p className="text-sm text-muted">
-            이 영역에 속한 목표가 없습니다. 새 목표를 만들거나 목표 화면에서 영역을 고르면 여기
-            보입니다.
-          </p>
-        ) : (
-          <GoalTree nodes={areaGoals} />
-        )}
+        {areaGoals.length === 0 ? null : <GoalTree nodes={areaGoals} />}
       </Section>
       <Section
         title={`프로젝트${countLabel(areaProjects.length)}`}
@@ -110,9 +103,7 @@ export default async function AreaDetailPage({ params }: Props) {
           </Link>
         }
       >
-        {areaProjects.length === 0 ? (
-          <p className="text-sm text-muted">이 영역에 속한 프로젝트가 없습니다.</p>
-        ) : (
+        {areaProjects.length === 0 ? null : (
           <div className="flex flex-col gap-4">
             {projectGroups.map((group) => (
               <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
@@ -136,13 +127,8 @@ export default async function AreaDetailPage({ params }: Props) {
           </div>
         )}
       </Section>
-      <Section title={`자료${countLabel(materials.length)}`}>
-        {materials.length === 0 ? (
-          <p className="text-sm text-muted">
-            이 영역에 속한 노트나, 영역·소속 프로젝트·목표에 연결된 논문·세미나·생각·노트가
-            없습니다.
-          </p>
-        ) : (
+      {materials.length === 0 ? null : (
+        <Section title={`자료 ${materials.length}`}>
           <ul
             aria-label="연결된 자료"
             className="flex flex-col divide-y divide-border rounded-lg border border-border"
@@ -162,8 +148,8 @@ export default async function AreaDetailPage({ params }: Props) {
               </li>
             ))}
           </ul>
-        )}
-      </Section>
+        </Section>
+      )}
       <TaskSection parent={ref} archived={Boolean(area.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>

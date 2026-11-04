@@ -126,9 +126,7 @@ export function TopicIndex({
           className="relative max-h-[60vh] min-h-0 overflow-y-auto overscroll-contain px-1.5 pt-1 pb-2 lg:max-h-none"
         >
           {visible.length === 0 ? (
-            <p className="px-2 py-6 text-center text-[13px] text-muted">
-              맞는 주제가 없습니다. 다른 낱말이나 초성(예: ㅌㄱ)으로 찾아 보세요.
-            </p>
+            <p className="px-2 py-6 text-center text-[13px] text-muted">맞는 주제가 없습니다.</p>
           ) : (
             groups.map((group) => (
               <div

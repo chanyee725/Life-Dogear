@@ -26,11 +26,6 @@ export default async function TagsPage({
     <Page>
       <PageHeader
         title="주제"
-        description={
-          list.length
-            ? `주제 ${list.length}개 — 프로젝트·영역·논문·노트·세미나·생각이 함께 씁니다.`
-            : "프로젝트·영역·논문·노트·세미나·생각이 함께 쓰는 주제입니다."
-        }
         actions={
           list.length ? (
             <nav aria-label="정렬" className="flex items-center gap-1">
@@ -49,10 +44,7 @@ export default async function TagsPage({
         }
       />
       {list.length === 0 ? (
-        <EmptyState
-          title="아직 주제가 없습니다"
-          description="상세 화면에서 주제를 달면 여기에 모입니다."
-        />
+        <EmptyState title="아직 주제가 없습니다" />
       ) : (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t) => (
