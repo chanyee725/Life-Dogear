@@ -24,7 +24,8 @@ test("빠른 캡처: C로 열고 ⌘/Ctrl+Enter로 수집함에 저장", async (
   const toast = page.getByRole("status").filter({ hasText: "수집함에 저장했습니다." });
   await expect(toast).toBeVisible();
   await toast.getByRole("link", { name: "보기" }).click();
-  await expect(page).toHaveURL(/\/inbox$/);
+  // /inbox may compile on first visit; same allowance as createItem.
+  await expect(page).toHaveURL(/\/inbox$/, { timeout: 20_000 });
   await expect(page.getByText(text).first()).toBeVisible();
 });
 

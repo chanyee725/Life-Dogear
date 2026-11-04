@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { createItem, deleteCurrentItem, uniqueTitle } from "./helpers";
 
+// Alone this file takes ~27s on a cold dev server (first compiles), near the 30s default.
+test.setTimeout(60_000);
+
 test("논문 보관: 목록·홈에서 빠지고, 보관 해제하면 돌아온다", async ({ page }) => {
   const title = uniqueTitle("E2E archive paper");
   await createItem(page, "papers", title);
