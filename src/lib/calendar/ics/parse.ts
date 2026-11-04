@@ -69,12 +69,20 @@ export function parseIcs(text: string, fallbackZone = CALENDAR_TZ): ParsedFeed {
 const pad = (n: number) => String(n).padStart(2, "0");
 const dayOf = (t: ICAL.Time) => `${t.year}-${pad(t.month)}-${pad(t.day)}`;
 
-/** Instant of a date-time: UTC and registered zones via ical.js, the rest via `Intl`. */
-function toMs(t: ICAL.Time, zone: string): number {
+/** TZID kept on a time whose zone has no VTIMEZONE (ical.js leaves it floating). */
+const namedZone = (t: ICAL.Time): string | undefined =>
+  (t as unknown as { timezone?: string }).timezone;
+
+/**
+ * Instant of a date-time: UTC and registered zones via ical.js, the rest via `Intl` in its
+ * own TZID, else `sourceZone` (the series' TZID: recurrence occurrences lose it), else `zone`.
+ */
+function toMs(t: ICAL.Time, zone: string, sourceZone?: string): number {
   const tzid = t.zone?.tzid;
   if (tzid && tzid !== "floating") return t.toUnixTime() * 1000;
-  const named = (t as unknown as { timezone?: string }).timezone;
-  return wallToMs(t, isKnownZone(named) ? named : zone);
+  const named = namedZone(t);
+  if (isKnownZone(named)) return wallToMs(t, named);
+  return wallToMs(t, isKnownZone(sourceZone) ? sourceZone : zone);
 }
 
 /** Google Calendar day view; ICS feeds carry no per-event link without the calendar id. */
@@ -92,7 +100,12 @@ function cleanTitle(value: unknown): string {
 const cancelled = (c: ICAL.Component) =>
   String(c.getFirstPropertyValue("status") ?? "").toUpperCase() === "CANCELLED";
 
-type Occurrence = { start: ICAL.Time; durationSec: number };
+type Occurrence = {
+  start: ICAL.Time;
+  durationSec: number;
+  /** TZID of the series start, for occurrences without their own. */
+  sourceZone?: string;
+};
 
 /** One item, or null when it falls outside the range. */
 function toItem(
@@ -117,7 +130,7 @@ function toItem(
       href: dayLink(start),
     };
   }
-  const startMs = toMs(occ.start, zone);
+  const startMs = toMs(occ.start, zone, occ.sourceZone);
   const endMs = startMs + Math.max(0, occ.durationSec) * 1000;
   const start = msToZonedIso(startMs, zone);
   // An event ending exactly at midnight does not occupy the next day.
@@ -239,6 +252,7 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): Expansion {
       continue;
     }
 
+    const sourceZone = namedZone(start);
     const skip = overrides.get(String(c.getFirstPropertyValue("uid") ?? ""));
     let it: ICAL.RecurExpansion;
     try {
@@ -266,10 +280,12 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): Expansion {
         continue;
       }
       if (skip) {
-        const key = occ.isDate ? Date.UTC(occ.year, occ.month - 1, occ.day) : toMs(occ, zone);
+        const key = occ.isDate
+          ? Date.UTC(occ.year, occ.month - 1, occ.day)
+          : toMs(occ, zone, sourceZone);
         if (skip.has(key)) continue;
       }
-      push(toItem(uid, title, { start: occ, durationSec }, range, zone));
+      push(toItem(uid, title, { start: occ, durationSec, sourceZone }, range, zone));
       if (out.length >= MAX_ITEMS_PER_FEED && !complete) break;
     }
     if (!finished) complete = false;

@@ -95,6 +95,27 @@ describe("expandIcs", () => {
     expect(byUid("outside@google.com")).toEqual([]);
   });
 
+  it("keeps the series TZID for occurrences when the feed has no VTIMEZONE", () => {
+    const feed = parseIcs(
+      ics(`
+BEGIN:VEVENT
+UID:paris
+DTSTART;TZID=Europe/Paris:20261005T090000
+DTEND;TZID=Europe/Paris:20261005T100000
+RRULE:FREQ=WEEKLY
+EXDATE;TZID=Europe/Paris:20261109T090000
+SUMMARY:파리 주간
+END:VEVENT`),
+    );
+    // Paris is UTC+1 in November: 09:00 there is 17:00 in Seoul. 11-09 is excluded.
+    expect(expandIcs(feed, NOV).items.map((i) => i.start)).toEqual([
+      "2026-11-02T17:00:00+09:00",
+      "2026-11-16T17:00:00+09:00",
+      "2026-11-23T17:00:00+09:00",
+      "2026-11-30T17:00:00+09:00",
+    ]);
+  });
+
   it("expands the sample completely", () => {
     expect(complete).toBe(true);
   });
