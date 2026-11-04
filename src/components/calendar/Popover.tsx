@@ -57,6 +57,13 @@ export function Popover({
     };
   }, [anchor]);
 
+  // Move focus inside unless a child already took it (autoFocus input, menu item).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || el.contains(document.activeElement)) return;
+    el.querySelector<HTMLElement>("a[href],button,input,[tabindex]")?.focus();
+  }, []);
+
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;

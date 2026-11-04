@@ -848,21 +848,24 @@ function DayNumber({
   today,
   muted,
   big = false,
+  plain = false,
 }: {
   day: string;
   today: string;
   muted: boolean;
   big?: boolean;
+  plain?: boolean;
 }) {
   const isToday = day === today;
   const n = Number(day.slice(8, 10));
-  const text = n === 1 && !big ? `${Number(day.slice(5, 7))}월 1일` : String(n);
+  // Month name on the 1st only where there is room (not in the narrow dot cells).
+  const text = n === 1 && !big && !plain ? `${Number(day.slice(5, 7))}월 1일` : String(n);
   return (
     <span
       aria-hidden="true"
       className={cn(
         "grid shrink-0 place-items-center rounded-full tabular-nums",
-        big ? "size-7 text-base" : "h-6 min-w-6 text-xs",
+        big ? "size-7 text-base" : "h-6 min-w-6 self-start text-xs",
         text.length > 2 && "w-auto px-1",
         isToday ? "bg-accent font-semibold text-accent-fg" : muted ? "text-muted" : "text-fg",
       )}
@@ -1227,7 +1230,7 @@ function NarrowMonthRow({
                 isSelected && d !== ctx.today && "ring-1 ring-border-strong",
               )}
             >
-              <DayNumber day={d} today={ctx.today} muted={outside} big={false} />
+              <DayNumber day={d} today={ctx.today} muted={outside} plain />
             </span>
             <span className="flex h-1 items-center gap-0.5" aria-hidden="true">
               {dayDots(singles).map((dot) => (
