@@ -70,7 +70,7 @@ npm run dev
 
 ### 공유 파일 저장소 (Cloudflare R2)
 
-Turso로 PC 두 대가 DB를 같이 쓰면, 로컬 모드에서는 다른 PC에서 올린 PDF·사진이 보이지 않습니다. R2 버킷을 설정하면 모든 PC가 같은 파일을 봅니다. 브라우저는 지금처럼 `/api/images/...`, `/api/papers/<id>/pdf`로 받고 서버가 버킷에서 가져와 전달하므로, 버킷을 공개할 필요가 없고 키도 브라우저에 노출되지 않습니다.
+Turso로 PC 두 대가 DB를 같이 쓰면, 로컬 모드에서는 다른 PC에서 올린 PDF·사진이 보이지 않습니다. R2 버킷을 설정하면 모든 PC가 같은 파일을 봅니다. 브라우저는 서버가 발급한 5분짜리 서명 URL로 버킷에 직접 올리고 받으므로(`/api/images/...`, `/api/papers/<id>/pdf`는 그 URL로 넘겨 줌), 버킷을 공개할 필요가 없고 키도 브라우저에 노출되지 않습니다. 대신 버킷에 **CORS 규칙**이 필요합니다(허용 출처에 `http://localhost:3000`·`http://127.0.0.1:3000`, 배포했다면 그 주소). 예시는 [docs/DEPLOY.md](docs/DEPLOY.md)의 "R2 (사진·PDF)" 절.
 
 1. Cloudflare 대시보드 → **R2** → **Create bucket** (예: `research-brain`). 공개 접근은 켜지 않습니다.
 2. **R2** → **Manage R2 API Tokens** → **Create API token**: 권한 **Object Read & Write**, 대상은 방금 만든 버킷만. 발급된 Access Key ID와 Secret Access Key를 복사합니다 (Secret은 한 번만 보입니다).
