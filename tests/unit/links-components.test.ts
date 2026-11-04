@@ -51,6 +51,7 @@ describe("ConnectedItems", () => {
     const paper = await papers.create({ title: "혼자인 논문" });
     const html = await render({ type: "paper", id: paper.id });
     expect(html).not.toContain("<ul");
+    expect(html).not.toContain("아직 연결된 항목");
     expect(html).toContain("연결 추가");
   });
 });

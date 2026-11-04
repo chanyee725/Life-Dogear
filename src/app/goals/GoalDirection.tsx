@@ -29,7 +29,7 @@ export function GoalDirection({ goals }: { goals: readonly ListGoal[] }) {
           href="/goals/new?horizon=life"
           className="rounded-sm pt-0.5 text-sm text-accent hover:underline"
         >
-          + 인생 목표
+          ＋ 인생 목표
         </Link>
       )}
     </section>

@@ -82,5 +82,5 @@ export function weekDigestMarkdown(digest: WeekDigest): string {
     group("새로 만든 항목", created),
   ].filter(Boolean);
   if (!groups.length) return "";
-  return `## 이번 주 모음\n\n_자동으로 모은 목록입니다. 고치거나 지워도 됩니다._\n\n${groups.join("\n\n")}\n\n`;
+  return `## 이번 주 모음\n\n${groups.join("\n\n")}\n\n`;
 }

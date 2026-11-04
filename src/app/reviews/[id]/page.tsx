@@ -164,7 +164,11 @@ export default async function ReviewDetailPage({ params }: Props) {
                       정리할 항목 <span className="font-medium tabular-nums">{inboxCount}</span>개 →
                     </Link>
                   </p>
-                ) : null}
+                ) : (
+                  <Link href="/inbox" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+                    수집함 보기
+                  </Link>
+                )}
               </Step>
               <Step n={2} title="프로젝트 점검">
                 {activeProjects.length ? (
