@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Do not turn on `logging.fetches`: it logs full fetch URLs, and the Google Calendar
+  // addresses (GOOGLE_CALENDAR_ICS_URLS) are secrets. tests/unit/next-config.test.ts checks.
   // `npm run serve` builds into its own folder so it can run next to `npm run dev` without clobbering .next.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Trace files from this project only (a parent folder with its own lockfile, e.g. a git

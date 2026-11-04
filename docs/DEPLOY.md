@@ -143,6 +143,7 @@ PC에 있던 노트를 옮기려면 로컬 DB 대신 Turso를 쓰도록 `.env`�
    | `DATABASE_URL` / `DATABASE_AUTH_TOKEN` | 3절 |
    | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | 2절 |
    | `ALLOWED_HOSTS` | `<프로젝트>.vercel.app` |
+   | `GOOGLE_CALENDAR_ICS_URLS` | (선택) 6절 |
 
    - `ALLOWED_HOSTS`가 없으면 Host 검사에서 403 "허용되지 않은 주소입니다"가 나옵니다. 미리보기(Preview) 배포 주소는 일부러 넣지 않습니다(그 주소로는 열리지 않음).
    - `DATA_DIR`·`BLOB_STORE`는 넣지 않습니다.
@@ -161,3 +162,23 @@ PC에 있던 노트를 옮기려면 로컬 DB 대신 Turso를 쓰도록 `.env`�
 - **redirect_uri_mismatch**: 1절 4번의 리디렉션 URI가 실제 주소와 정확히 같은지(https, 끝 경로) 확인.
 - **로그인 후 다시 로그인 화면**: `ALLOWED_EMAILS`에 그 계정이 있는지, 바꾼 뒤 Redeploy했는지 확인.
 - **403 허용되지 않은 주소**: `ALLOWED_HOSTS`에 `<프로젝트>.vercel.app`이 있는지 확인.
+
+## 6. Google 캘린더 (선택, 읽기 전용)
+
+할 일 달력에 Google 캘린더 일정을 함께 보여 줍니다. 앱은 일정을 읽기만 하고 Google 쪽을 바꾸지 않습니다. 비워 두면 Google 일정 없이 앱 날짜만 보입니다.
+
+1. PC 브라우저에서 [Google 캘린더](https://calendar.google.com/) → 오른쪽 위 톱니바퀴 → **설정**.
+2. 왼쪽 **내 캘린더의 설정**에서 보여 줄 캘린더를 누르고 **캘린더 통합**으로 내려갑니다.
+3. **iCal 형식의 비공개 주소**를 복사합니다("공개 주소"가 아님).
+4. 그 주소를 `GOOGLE_CALENDAR_ICS_URLS`에 넣습니다. 캘린더가 여럿이면 쉼표로 이어 붙입니다. 형식만 예로 들면 `https://calendar.google.com/calendar/ical/<캘린더 ID>/private-<비밀 값>/basic.ics,https://…/basic.ics`
+   - Vercel: **Settings → Environment Variables**에 붙여 넣고 **Redeploy**.
+   - PC: 프로젝트 폴더의 `.env.local`에 `GOOGLE_CALENDAR_ICS_URLS=` 다음에 붙여 넣고 개발 서버를 다시 시작.
+5. 달력을 열어 Google 일정(회색)이 보이는지 확인합니다.
+
+주의:
+
+- **비공개 주소는 비밀번호와 같습니다.** 이 주소만 있으면 누구나 그 캘린더의 모든 일정을 볼 수 있습니다. 이 문서·저장소·채팅·스크린샷 어디에도 남기지 말고 Vercel 환경변수와 `.env.local`에만 넣으세요. 새어 나갔다면 2번 화면의 **재설정**으로 주소를 바꾸고 환경변수도 새 주소로 바꿉니다.
+- 앱은 서버에서만 주소를 씁니다. 화면·응답·로그에는 주소가 나오지 않고, 일정의 제목·시간·종일 여부·Google 캘린더 날짜 링크만 보냅니다(설명·장소·참석자는 보내지 않음).
+- 서버가 주소별로 10분 동안 기억합니다. Google에서 바꾼 일정은 최대 10분(Google 쪽 갱신이 늦으면 그보다 더) 뒤에 보입니다.
+- 불러오지 못하면 달력에 "캘린더를 불러오지 못했습니다" 한 줄이 나옵니다. 서버 로그에는 몇 번째 주소인지와 오류 종류만 남습니다(예: `Google calendar #2 failed: IcsFetchError(http_404)`). `http_404`면 주소가 재설정됐거나 잘못 복사된 것이니 다시 복사합니다. `https://`(또는 `webcal://`)로 시작하지 않는 주소는 쓰지 않습니다.
+- 반복 일정은 보고 있는 달·주 안에서만 펼치고, 시간대는 일정의 시간대를 따르되 한국 시간으로 보여 줍니다. 아주 촘촘한 반복(예: 매분)이나 일정이 지나치게 많은 캘린더는 상한에서 멈추고 일부만 보입니다(로그: `Google calendar #1 truncated`).
