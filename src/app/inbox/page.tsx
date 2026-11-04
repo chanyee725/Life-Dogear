@@ -36,7 +36,6 @@ export default async function InboxPage() {
     <Page>
       <PageHeader
         title="수집함"
-        description="태그도 연결도 없는 생각들. 태그를 달거나 연결하면 정리된 것으로 보고 여기서 빠집니다."
         actions={
           <Link href="/thoughts/new" className={buttonClass("secondary")}>
             새 생각
@@ -44,10 +43,7 @@ export default async function InboxPage() {
         }
       />
       {items.length === 0 ? (
-        <EmptyState
-          title="수집함이 비었습니다"
-          description="홈의 빠른 입력으로 떠오른 생각을 바로 적어 보세요."
-        />
+        <EmptyState title="수집함이 비었습니다" />
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
           {items.map((t) => (

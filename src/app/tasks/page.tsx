@@ -141,9 +141,7 @@ export default async function TasksPage({ searchParams }: Props) {
             ) : null}
             {dueToday.length || !overdue.length ? (
               <Group title="오늘" count={dueToday.length}>
-                {dueToday.length ? null : (
-                  <EmptyState title="오늘 할 일이 없습니다" />
-                )}
+                {dueToday.length ? null : <EmptyState title="오늘 할 일이 없습니다" />}
                 <TaskList
                   tasks={dueToday}
                   today={today}
@@ -239,9 +237,7 @@ async function ByParent({ open, today }: { open: Task[]; today: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      {open.length === 0 ? (
-        <EmptyState title="아직 할 일이 없습니다" />
-      ) : null}
+      {open.length === 0 ? <EmptyState title="아직 할 일이 없습니다" /> : null}
       {(["project", "goal", "area"] as const).map((type) => {
         const ids = order[type].filter((id) => byParent.has(`${type}:${id}`));
         if (!ids.length) return null;

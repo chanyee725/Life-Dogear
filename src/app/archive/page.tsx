@@ -32,15 +32,9 @@ export default async function ArchivePage() {
 
   return (
     <Page>
-      <PageHeader
-        title="보관함"
-        description="보관한 항목은 목록과 홈에서 빠집니다. 여기서 다시 꺼낼 수 있습니다."
-      />
+      <PageHeader title="보관함" />
       {groups.length === 0 ? (
-        <EmptyState
-          title="보관한 항목이 없습니다"
-          description="상세 화면의 '보관'으로 끝난 일을 치워 둘 수 있습니다."
-        />
+        <EmptyState title="보관한 항목이 없습니다" />
       ) : (
         <div className="flex flex-col gap-8">
           {groups.map((group) => (
