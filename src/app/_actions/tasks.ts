@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { ITEM_ROUTE } from "@/lib/enums";
 import { RepoError, tasks } from "@/lib/repo";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
+import { resolveAnchor } from "@/components/tasks/reorder";
 import { parseId } from "./parse";
 import { runAction, type ActionResult } from "./result";
 
 const NOT_FOUND = "할 일을 찾을 수 없습니다.";
+const LIST_CHANGED = "할 일 목록이 바뀌었습니다. 다시 불러왔으니 한 번 더 옮겨 주세요.";
 const PARENT_TYPES = new Set(["project", "goal", "area"]);
 
 function parseParent(value: unknown): TaskParent {
@@ -100,14 +102,38 @@ export async function moveTask(id: unknown, direction: unknown): Promise<ActionR
   });
 }
 
-/** Drag and drop: right after `afterId` (null = first) among same-state siblings. */
-export async function moveTaskAfter(id: unknown, afterId: unknown): Promise<ActionResult<boolean>> {
+/**
+ * Drag and drop: right after `afterId` (null = first) among same-state siblings. The order
+ * may have changed on another device since the client loaded it, so the place is worked out
+ * against the current order from the drop's neighbours (`beforeId` = the task it was dropped
+ * above); when neither is left, it fails and the client reloads the list.
+ */
+export async function moveTaskAfter(
+  id: unknown,
+  afterId: unknown,
+  beforeId: unknown = null,
+): Promise<ActionResult<boolean>> {
   return runAction(async () => {
     const taskId = parseId(id);
-    const anchor = afterId === null ? null : parseId(afterId);
-    const moved = await tasks.moveAfter(taskId, anchor);
+    const after = afterId === null ? null : parseId(afterId);
+    const before = beforeId === null ? null : parseId(beforeId);
     const task = await tasks.get(taskId);
     if (!task) throw new RepoError("not_found", NOT_FOUND);
+    const parent: TaskParent =
+      task.parentType && task.parentId ? { type: task.parentType, id: task.parentId } : null;
+    const current = await tasks.list({
+      parent,
+      done: task.doneAt !== null,
+      includeArchivedParents: true,
+    });
+    const anchor = resolveAnchor(
+      current.map((t) => t.id),
+      taskId,
+      after,
+      before,
+    );
+    if (anchor === undefined) throw new RepoError("invalid", LIST_CHANGED);
+    const moved = await tasks.moveAfter(taskId, anchor);
     revalidateFor(task);
     return moved;
   });
