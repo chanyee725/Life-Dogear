@@ -1,7 +1,9 @@
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { describeError } from "@/app/_actions/result";
+import { currentAuthMode } from "@/lib/auth/server";
 import { areas, thoughts } from "@/lib/repo";
+import { SignOutButton } from "./SignOutButton";
 import { SidebarNav } from "./SidebarNav";
 
 type SidebarData = {
@@ -35,16 +37,19 @@ async function loadSidebarData(): Promise<SidebarData> {
  * queries the database (prerendering, e.g. /_not-found, would otherwise need a migrated DB).
  *
  * `searchSlot`: reserved for the 2팀 "검색 ⌘K" button (rendered under the app name).
+ * In login mode the footer gets a "로그아웃" button.
  */
 export async function Sidebar({ searchSlot }: { searchSlot?: ReactNode } = {}) {
   // Outside the try: it signals dynamic rendering to Next and must not be swallowed.
   await connection();
-  const data = await loadSidebarData();
+  const [data, mode] = await Promise.all([loadSidebarData(), currentAuthMode()]);
   return (
     <SidebarNav
       hasAreas={data.hasAreas}
       inboxCount={data.inboxCount}
       searchSlot={searchSlot}
+      // Only with Google sign-in on; the local, no-sign-in mode has nothing to sign out of.
+      footerSlot={mode.kind === "login" ? <SignOutButton /> : undefined}
     />
   );
 }
