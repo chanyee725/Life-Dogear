@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { baselineFromRendered } from "@/components/fields/form-patch";
-import { createSaveQueue } from "@/components/fields/save-queue";
+import { createHeldBaseline, createSaveQueue } from "@/components/fields/save-queue";
 
 describe("baselineFromRendered", () => {
   it("keeps the read form as the baseline when nothing was typed before hydration", () => {
@@ -56,7 +56,10 @@ describe("baselineFromRendered", () => {
       { name: "title", value: title, defaultValue: "옛 제목", singleLine: true },
       { name: "why", value: "", defaultValue: "" },
     ];
-    const queue = createSaveQueue<Record<string, unknown>>(async () => ({ ok: true }), () => {});
+    const queue = createSaveQueue<Record<string, unknown>>(
+      async () => ({ ok: true }),
+      () => {},
+    );
     // Mount: the editor hasn't loaded yet, so the hidden body still holds the raw server text.
     const onMount = { title: "새 제목", why: "", body: "server *body*" };
     queue.resetBaseline(baselineFromRendered(onMount, fields("새 제목")).baseline);
@@ -68,5 +71,75 @@ describe("baselineFromRendered", () => {
     // Debounced autosave read.
     queue.add(onReady);
     expect(queue.pending()).toEqual({ title: "새 제목" });
+  });
+
+  it("holds the editor body from a ready that arrives mid-save out of the next save", async () => {
+    let finish = () => {};
+    const save = vi.fn<(patch: Record<string, unknown>) => Promise<{ ok: true }>>(
+      () => new Promise((resolve) => (finish = () => resolve({ ok: true }))),
+    );
+    const queue = createSaveQueue<Record<string, unknown>>(save, () => {});
+    const ready = createHeldBaseline(queue, "body");
+    queue.resetBaseline({ title: "옛 제목", body: "server *body*" });
+
+    // A title save is in flight when the editor reports ready with a re-serialised body.
+    queue.add({ title: "새 제목", body: "server *body*" });
+    const flushing = queue.flush();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    ready.offer({ title: "새 제목", body: "server _body_" });
+    finish();
+    await flushing;
+    ready.settle();
+
+    queue.add({ title: "새 제목 2", body: "server _body_" });
+    const next = queue.flush();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    finish();
+    await next;
+    expect(save.mock.calls.map(([patch]) => patch)).toEqual([
+      { title: "새 제목" },
+      { title: "새 제목 2" },
+    ]);
+  });
+
+  it("drops the held ready body once the user's own body is queued", async () => {
+    const finishers: (() => void)[] = [];
+    const save = vi.fn<(patch: Record<string, unknown>) => Promise<{ ok: true }>>(
+      () => new Promise((resolve) => finishers.push(() => resolve({ ok: true }))),
+    );
+    const queue = createSaveQueue<Record<string, unknown>>(save, () => {});
+    const ready = createHeldBaseline(queue, "body");
+    // Mirrors ItemForm's readIntoQueue: queue the read, then drop a stale held body.
+    const readIntoQueue = (patch: Record<string, unknown>) => {
+      queue.add(patch);
+      if ("body" in queue.pending()) ready.drop();
+      const flushed = queue.flush();
+      return flushed.then(() => ready.settle());
+    };
+    queue.resetBaseline({ title: "옛 제목", body: "orig" });
+
+    // 1) Title save A is in flight when the editor reports ready: the body is held.
+    const a = readIntoQueue({ title: "새 제목", body: "orig" });
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    ready.offer({ title: "새 제목", body: "orig-norm" });
+    // 2) The user edits the body; flush B waits behind A.
+    const b = readIntoQueue({ title: "새 제목", body: "USER EDIT" });
+    // 3) A ends (settle refused: B is pending). 4) B saves the user's body. 5) settle again.
+    finishers[0]();
+    await a;
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    finishers[1]();
+    await b;
+
+    // 6) Undo back to the editor's original body: that is a change and must be saved.
+    const c = readIntoQueue({ title: "새 제목", body: "orig-norm" });
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(3));
+    finishers[2]();
+    await c;
+    expect(save.mock.calls.map(([patch]) => patch)).toEqual([
+      { title: "새 제목" },
+      { body: "USER EDIT" },
+      { body: "orig-norm" },
+    ]);
   });
 });

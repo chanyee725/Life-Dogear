@@ -16,7 +16,7 @@ import {
   type FormPatch,
 } from "./form-patch";
 import { SaveStatus } from "./ItemDetail";
-import { createSaveQueue, type SaveState } from "./save-queue";
+import { createHeldBaseline, createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
 
 export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: string }>>;
@@ -214,6 +214,9 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     ),
   );
 
+  /** The editor's normalised body, held while a save refuses the ready re-read. */
+  const [readyBaseline] = useState(() => createHeldBaseline(queue, "body"));
+
   function readIntoQueue(autosave: boolean, form: HTMLFormElement | null = formRef.current) {
     if (!form) return;
     const patch = readForm(form, autosave);
@@ -224,8 +227,18 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     unreadRef.current = false;
     preHydrationOnlyRef.current = false;
     setUnread(false);
+    // Order matters. 1) The DOM body equal to the held editor-ready body isn't an edit:
+    // leave it out. 2) Queue the read. 3) Only a body that is still queued is the
+    // user's own, newer than the held one: drop that.
+    if (readyBaseline.isHeld(patch.body)) delete patch.body;
     queue.add(patch);
-    void queue.flush();
+    if ("body" in queue.pending()) readyBaseline.drop();
+    void flushQueue();
+  }
+
+  async function flushQueue() {
+    await queue.flush();
+    readyBaseline.settle();
   }
 
   // Not flushed by the debounce hook on unmount: React clears `formRef` before that
@@ -247,20 +260,25 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       autosave();
     }
     // The editor mounts a bit later and may normalise the body; re-read the baseline
-    // then (only while nothing is unsaved — resetBaseline refuses otherwise). Text typed
-    // before hydration is still unread but not yet in the queue: re-read around it, so
-    // the re-serialised body doesn't go out with the title and overwrite a newer one.
+    // then (only while nothing is unsaved; while a save runs, the body is held until it
+    // ends). Text typed before hydration is still unread but not yet in the queue: re-read
+    // around it, so the re-serialised body doesn't go out with the title and overwrite a
+    // newer one.
     const onEditorReady = () => {
+      let baseline: FormPatch;
       if (preHydrationOnlyRef.current) {
-        queue.resetBaseline(baselineFromRendered(readForm(form, true), renderedFields(form)).baseline);
+        baseline = baselineFromRendered(readForm(form, true), renderedFields(form)).baseline;
       } else if (!unreadRef.current) {
-        queue.resetBaseline(readForm(form, true));
+        baseline = readForm(form, true);
+      } else {
+        return;
       }
+      readyBaseline.offer(baseline);
     };
     form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
     return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
-    // `queue` and `autosave` are stable: this runs once per form.
-  }, [queue, autosave]);
+    // `queue`, `readyBaseline` and `autosave` are stable: this runs once per form.
+  }, [queue, readyBaseline, autosave]);
 
   // Leaving the page (link, back button) within the debounce window must not lose the
   // last edits: read the still-existing form element and send what changed.
@@ -278,7 +296,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   async function saveNow() {
     autosave.cancel();
     readIntoQueue(false);
-    await queue.flush();
+    await flushQueue();
     // Nothing left to send and no failure: answer the click, even if autosave had
     // already stored everything (then there was nothing new to send).
     if (queue.dirty() || failedRef.current || unreadRef.current) return;

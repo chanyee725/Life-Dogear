@@ -20,6 +20,13 @@ export type SaveQueue<P extends object> = {
    * Returns false, leaving the baseline alone, while edits are pending or saving.
    */
   resetBaseline: (baseline: P) => boolean;
+  /**
+   * Overwrites some baseline fields, keeping the rest, under the same rule as
+   * `resetBaseline`: returns false and changes nothing while edits are pending or saving.
+   * The caller must make sure the values are still current: a value read before a later
+   * save of the same field would wind the baseline back past it.
+   */
+  rebase: (fields: Partial<P>) => boolean;
   pending: () => P;
 };
 
@@ -94,7 +101,40 @@ export function createSaveQueue<P extends object>(
       saved = { ...(baseline as Record<string, unknown>) };
       return true;
     },
+    rebase(fields) {
+      if (busy || !isEmpty(pending)) return false;
+      saved = { ...saved, ...(fields as Record<string, unknown>) };
+      return true;
+    },
     pending: () => pending,
+  };
+}
+
+/**
+ * Offers a re-read baseline to `queue` (e.g. once an editor has normalised its content).
+ * The queue refuses it while a save is running; then only `field` is held and put into
+ * the baseline by `settle()` once the queue is idle, so the normalised value doesn't
+ * go out with the next save. Call `settle()` after every flush. Before adding a read,
+ * leave `field` out while `isHeld()` says it is the held value; after adding, `drop()`
+ * once the queue carries a newer value for `field`: the held one is stale from then on.
+ */
+export function createHeldBaseline<P extends object>(queue: SaveQueue<P>, field: keyof P) {
+  let held: Partial<P> | null = null;
+  return {
+    offer(baseline: P) {
+      if (queue.resetBaseline(baseline)) held = null;
+      else if (field in baseline) held = { [field]: baseline[field] } as Partial<P>;
+    },
+    settle() {
+      if (held && queue.rebase(held)) held = null;
+    },
+    drop() {
+      held = null;
+    },
+    /** True while `value` is the held (editor-ready) value of `field`. */
+    isHeld(value: unknown) {
+      return held !== null && sameValue(held[field], value);
+    },
   };
 }
 
