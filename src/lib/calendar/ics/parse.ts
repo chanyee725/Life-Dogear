@@ -10,6 +10,7 @@
  */
 import ICAL from "ical.js";
 import { addDays, CALENDAR_TZ, overlaps } from "../dates";
+import { cleanUid } from "../uid";
 import type { CalendarItem, CalendarRange } from "../types";
 import { isKnownZone, msToZonedIso, wallToMs } from "./zone";
 
@@ -291,10 +292,4 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): Expansion {
     if (!finished) complete = false;
   }
   return { items: out, complete };
-}
-
-/** UIDs only label ids; keep them short and plain. */
-function cleanUid(uid: unknown): string {
-  const s = typeof uid === "string" ? uid.replace(/[^\w.@-]/g, "") : "";
-  return s.slice(0, 200) || "event";
 }

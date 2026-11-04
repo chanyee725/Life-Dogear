@@ -7,6 +7,7 @@ import "server-only";
 import { addDays, CALENDAR_TZ, parseDay } from "./dates";
 import { msToZonedIso, wallToMs } from "./ics/zone";
 import type { CalendarItem } from "./types";
+import { cleanUid } from "./uid";
 
 export const TOKEN_URL = "https://oauth2.googleapis.com/token";
 export const EVENTS_URL = (calendarId: string) =>
@@ -200,11 +201,12 @@ const zoned = (iso: string | undefined): string | null => {
  * The created event as a `CalendarItem`, shaped like the ICS reader's (same id rule, so
  * the client can drop the duplicate once the feed catches up). Falls back to what was sent.
  */
-export function toCalendarItem(created: ApiEvent, sent: NewEvent): CalendarItem {
+export function toCalendarItem(created: ApiEvent, sent: NewEvent, eventId: string): CalendarItem {
   const sentBody = eventBody(sent) as { start: ApiTime; end: ApiTime };
   const startT = created.start?.date || created.start?.dateTime ? created.start! : sentBody.start;
   const endT = created.end?.date || created.end?.dateTime ? created.end! : sentBody.end;
-  const uid = created.iCalUID || (created.id ? `${created.id}@google.com` : `new-${Date.now()}`);
+  // Google's iCalUID is `<event id>@google.com`; the ICS feed carries the same, cleaned alike.
+  const uid = cleanUid(created.iCalUID || `${created.id || eventId}@google.com`);
   const title = created.summary?.trim() || sent.title;
   const href = created.htmlLink?.startsWith("https://") ? created.htmlLink : undefined;
 
@@ -276,7 +278,7 @@ export async function insertEvent(
       const existing = (await res.json().catch(() => ({}))) as ApiEvent;
       // A deleted event keeps its id; the client must start over with a new one.
       if (existing.status === "cancelled") throw new GoogleWriteError("invalid");
-      return toCalendarItem(existing, event);
+      return toCalendarItem(existing, event, eventId);
     }
   }
   if (res.status === 401 || res.status === 403) throw new GoogleWriteError("auth");
@@ -285,5 +287,5 @@ export async function insertEvent(
   if (res.status === 400 || res.status === 409) throw new GoogleWriteError("invalid");
   if (!res.ok) throw new GoogleWriteError("network");
   const created = (await res.json().catch(() => ({}))) as ApiEvent;
-  return toCalendarItem(created, event);
+  return toCalendarItem(created, event, eventId);
 }

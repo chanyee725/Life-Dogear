@@ -167,6 +167,18 @@ describe("insertEvent", () => {
     });
   });
 
+  it("builds the uid from the event id when Google sends no iCalUID", async () => {
+    const { impl } = mockFetch({
+      token: [tokenOk()],
+      events: [created({ iCalUID: undefined, id: undefined })],
+    });
+    const item = await insertEvent(
+      { title: "x", date: "2026-11-05", start: "14:00", clientId: "again0001" },
+      { env: ENV, fetchImpl: impl },
+    );
+    expect(item.id).toBe("google:again0001@google.com:2026-11-05T14:00:00+09:00");
+  });
+
   it("caches the access token until it nears expiry", async () => {
     let t = 1_000_000;
     const now = () => t;
