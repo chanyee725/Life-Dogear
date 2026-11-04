@@ -166,6 +166,41 @@ export function labelPriority(type: GraphNodeType): number {
           : 3;
 }
 
+export type LabelBox = { x0: number; y0: number; x1: number; y1: number };
+
+/**
+ * Overlap avoidance for one label: the index of the first candidate box (long text first,
+ * then shorter) that, grown by `margin`, overlaps no label already drawn; -1 = hide it.
+ */
+export function fitLabel(
+  candidates: readonly LabelBox[],
+  placed: readonly LabelBox[],
+  margin = 0,
+): number {
+  return candidates.findIndex(
+    (c) =>
+      !placed.some(
+        (b) =>
+          c.x0 - margin < b.x1 &&
+          b.x0 < c.x1 + margin &&
+          c.y0 - margin < b.y1 &&
+          b.y0 < c.y1 + margin,
+      ),
+  );
+}
+
+/** Neighbour labels in priority order (goal > area > project > rest > task, bigger first). */
+export function byLabelPriority<T extends { id: string; type: GraphNodeType; size: number }>(
+  nodes: Iterable<T>,
+): T[] {
+  return [...nodes].sort(
+    (a, b) =>
+      labelPriority(a.type) - labelPriority(b.type) ||
+      b.size - a.size ||
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  );
+}
+
 // ---------- Edges and neighbours ----------
 
 const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);

@@ -47,7 +47,9 @@ import type { GraphTheme } from "./graph-theme";
 import {
   baseRadius,
   buildNeighbors,
+  byLabelPriority,
   DENSE_GRAPH,
+  fitLabel,
   goalRowY,
   labelPriority,
   labelText,
@@ -529,18 +531,24 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const isStrong = strong.has(n.id as string);
         const emphasised = isStrong || (emph.lit?.has(n.id as GraphNodeId) ?? false);
         if (emph.lit && !emphasised && !force) return; // R: hidden while something is lit
-        const text = labelText(n, isStrong || emphasised);
         const weight = isStrong || n.type === "goal" || n.type === "area" ? 500 : 400;
         const top =
           y +
           shapeBottom(n.type, n.r) +
           (n.type === "goal" && n.horizon === "life" ? 2 : 0) +
           3 / k;
-        if (dense && !isStrong) {
-          const box = measureLabel(ctx, text, x, top, k, weight, L.theme);
-          if (boxes.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1))
-            return;
-          boxes.push(box);
+        let text = labelText(n, isStrong || emphasised);
+        // Skip (or shorten) labels that would overlap one already drawn: in dense graphs, and
+        // for the neighbours lit by a selection or hover. Strong labels are always drawn.
+        if ((dense || emph.lit) && !isStrong) {
+          const texts = emphasised ? [text, labelText(n, false)] : [text];
+          const pick = fitLabel(
+            texts.map((t) => measureLabel(ctx, t, x, top, k, weight, L.theme)),
+            boxes,
+            2 / k,
+          );
+          if (pick < 0) return;
+          text = texts[pick]!;
         }
         ctx.globalAlpha = emph.lit && emphasised ? Math.min(1, 0.4 + fadeT) : L.nodeAlpha(n);
         const box = drawLabel(
@@ -553,7 +561,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
           weight,
           L.theme,
         );
-        if (!dense || isStrong) boxes.push(box);
+        boxes.push(box);
         drawn.add(n.id as string);
       };
 
@@ -563,11 +571,14 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const n = id ? byId.get(id) : undefined;
         if (n) tryDraw(n, true);
       }
-      if (emph.lit)
+      if (emph.lit) {
+        const lit: SimNode[] = [];
         for (const id of emph.lit) {
           const n = byId.get(id);
-          if (n) tryDraw(n, true);
+          if (n) lit.push(n);
         }
+        for (const n of byLabelPriority(lit)) tryDraw(n, true);
+      }
       let budget = 400;
       for (const n of labelOrderRef.current) {
         if (budget <= 0) break;
