@@ -7,7 +7,7 @@ import { SegmentedLinks } from "@/components/calendar/Segmented";
 import { LinkTabs } from "@/components/list/Tabs";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { dayLabel, isoWeekRange } from "@/components/tasks/dates";
-import { localDate, parentHref } from "@/components/tasks/format";
+import { parentHref } from "@/components/tasks/format";
 import { TaskList } from "@/components/tasks/TaskList";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCalendar, type CalendarResult } from "@/lib/calendar";
@@ -90,7 +90,8 @@ export default async function TasksPage({ searchParams }: Props) {
   if (parseCalendarQuery(params, "").view === "calendar") return <CalendarPage params={params} />;
   const raw = params.tab;
   const tab: Tab = isTab(raw) ? raw : "today";
-  const today = localDate();
+  // Seoul day, as in the calendar and home (servers may run in UTC).
+  const today = seoulDate();
   const week = isoWeekRange(today);
 
   // Every open task in one query; the tabs are slices of it.

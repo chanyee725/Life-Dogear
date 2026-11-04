@@ -4,8 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/app/_actions/tasks", () => ({ createTask: vi.fn(), updateTask: vi.fn() }));
+const getCalendar = vi.fn();
+vi.mock("@/lib/calendar", () => ({ getCalendar: (...a: unknown[]) => getCalendar(...a) }));
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { WeekStrip } from "@/components/dashboard/WeekStrip";
+import { WeekStripSection } from "@/components/dashboard/WeekStripSection";
 import type { CalendarItem } from "@/lib/calendar/types";
 
 const items: CalendarItem[] = [
@@ -172,5 +175,31 @@ describe("WeekStrip", () => {
     // 11/5: task, project, google + goal + review (papers off)
     expect(html).toContain('aria-label="11월 5일 목요일, 항목 5개"');
     expect(html.match(/<li>/g)).toHaveLength(7);
+  });
+});
+
+describe("WeekStripSection", () => {
+  it("waits behind Suspense with a quiet seven-day placeholder", () => {
+    const el = WeekStripSection({ today: "2026-11-04" });
+    const fallback = renderToStaticMarkup((el.props as { fallback: React.ReactElement }).fallback);
+    expect(fallback).toContain('aria-hidden="true"');
+    expect(fallback.match(/<li/g)).toHaveLength(7);
+    expect(fallback).not.toContain("href=");
+    expect(fallback).toContain("bg-accent-soft");
+    expect(getCalendar).not.toHaveBeenCalled();
+  });
+
+  it("loads this Seoul week and falls back to an empty strip on failure", async () => {
+    getCalendar.mockRejectedValueOnce(new Error("boom"));
+    const el = WeekStripSection({ today: "2026-11-04" });
+    const child = (el.props as { children: React.ReactElement }).children;
+    const Data = child.type as (p: unknown) => Promise<React.ReactElement>;
+    const html = renderToStaticMarkup(await Data(child.props));
+    expect(getCalendar).toHaveBeenCalledWith(
+      { from: "2026-11-02", to: "2026-11-08" },
+      { papers: true },
+    );
+    expect(html).toContain('<nav aria-label="이번 주">');
+    expect(html).toContain('aria-label="11월 4일 수요일, 항목 없음"');
   });
 });

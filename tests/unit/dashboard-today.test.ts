@@ -14,6 +14,7 @@ import {
   quarterGoalNodes,
   restOfWeek,
   revisitStars,
+  seoulToday,
   todayHeading,
 } from "@/components/dashboard/today";
 import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
@@ -37,7 +38,16 @@ describe("today helpers", () => {
   });
 
   it("writes the date line", () => {
-    expect(todayHeading(NOW)).toBe("11월 3일 화요일");
+    expect(todayHeading("2026-11-03")).toBe("11월 3일 화요일");
+  });
+
+  it("takes today in Seoul, not the server zone", () => {
+    // 2026-11-03 16:30 UTC = 11-04 01:30 KST: a UTC server would still say the 3rd.
+    const { today, day } = seoulToday(new Date("2026-11-03T16:30:00Z"));
+    expect(today).toBe("2026-11-04");
+    expect([day.getFullYear(), day.getMonth(), day.getDate()]).toEqual([2026, 10, 4]);
+    expect(seoulToday(new Date("2026-11-04T14:59:00Z")).today).toBe("2026-11-04");
+    expect(seoulToday(new Date("2026-11-04T15:00:00Z")).today).toBe("2026-11-05");
   });
 
   const node = (
