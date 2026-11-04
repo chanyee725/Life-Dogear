@@ -11,6 +11,8 @@ function apply(access: Access, request: NextRequest): NextResponse {
   if (access.type === "json") {
     return NextResponse.json({ error: access.error }, { status: access.status, headers: NO_STORE });
   }
+  // Next normalizes 127.0.0.1 to `localhost` in middleware redirects (NextURL); sign-in on
+  // this machine is therefore documented with http://localhost:3000 (docs/DEPLOY.md).
   const response = NextResponse.redirect(new URL(access.to, request.nextUrl), 307);
   response.headers.set("cache-control", "no-store");
   return response;
