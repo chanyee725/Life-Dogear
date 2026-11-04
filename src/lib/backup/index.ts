@@ -1,6 +1,6 @@
 import { cp, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createClient } from "@libsql/client";
 import { resolveDbConfig } from "@/db/config";
 import { dataDir, type Env } from "@/lib/data-dir";
@@ -125,7 +125,11 @@ const exists = async (path: string) => {
   }
 };
 
-/** Backup folders (real directories with the dated name), oldest first. */
+/**
+ * Finished backups, oldest first: real directories with the dated name and a `backup.json`
+ * (written last). A dated folder without one was not made here and is never counted or
+ * deleted.
+ */
 export async function listBackups(backupRoot: string): Promise<string[]> {
   let names: string[];
   try {
@@ -137,9 +141,11 @@ export async function listBackups(backupRoot: string): Promise<string[]> {
   for (const name of names) {
     if (!BACKUP_NAME_RE.test(name)) continue;
     try {
-      if ((await lstat(join(backupRoot, name))).isDirectory()) out.push(name);
+      const dir = join(backupRoot, name);
+      if (!(await lstat(dir)).isDirectory()) continue;
+      if ((await lstat(join(dir, MANIFEST))).isFile()) out.push(name);
     } catch {
-      // vanished meanwhile
+      // no manifest, or vanished meanwhile
     }
   }
   return out.sort();
@@ -189,11 +195,21 @@ export async function pruneBackups(backupRoot: string, keep = KEEP_BACKUPS): Pro
 
 const inProcess = globalThis as unknown as { __researchBrainBackupRunning?: boolean };
 
-/** Cross-process lock (a file made with `wx`), so `npm run backup` and the server never overlap. */
-async function takeLock(backupRoot: string, now: Date): Promise<(() => Promise<void>) | null> {
+/**
+ * Cross-process lock (a file made with `wx`), so `npm run backup` and the server never overlap.
+ * The file carries a random token; release removes it only while it still holds that token,
+ * so a run whose lock was taken over as stale cannot delete the new owner's lock.
+ */
+export async function takeLock(
+  backupRoot: string,
+  now: Date,
+): Promise<(() => Promise<void>) | null> {
   const path = join(backupRoot, LOCK);
+  const token = crypto.randomUUID();
   const write = () =>
-    writeFile(path, JSON.stringify({ pid: process.pid, at: now.toISOString() }), { flag: "wx" });
+    writeFile(path, JSON.stringify({ token, pid: process.pid, at: now.toISOString() }), {
+      flag: "wx",
+    });
   try {
     await write();
   } catch (error) {
@@ -207,7 +223,34 @@ async function takeLock(backupRoot: string, now: Date): Promise<(() => Promise<v
       return null;
     }
   }
-  return () => rm(path, { force: true });
+  return async () => {
+    try {
+      const held = JSON.parse(await readFile(path, "utf8")) as { token?: unknown };
+      if (held.token === token) await rm(path, { force: true });
+    } catch {
+      // already gone or not ours
+    }
+  };
+}
+
+const PARTIAL_RE = /^\.partial-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Removes temp folders left by a crashed run (older than {@link STALE_LOCK_MS}); call under the lock. */
+export async function removeStalePartials(backupRoot: string, now: Date): Promise<number> {
+  let removed = 0;
+  for (const name of await readdir(backupRoot)) {
+    if (!PARTIAL_RE.test(name)) continue;
+    const dir = join(backupRoot, name);
+    try {
+      const info = await lstat(dir);
+      if (!info.isDirectory() || now.getTime() - info.mtime.getTime() < STALE_LOCK_MS) continue;
+      await rm(dir, { recursive: true, force: true });
+      removed += 1;
+    } catch {
+      // vanished meanwhile
+    }
+  }
+  return removed;
 }
 
 // --- run ------------------------------------------------------------------------------------
@@ -222,14 +265,15 @@ async function countFiles(dir: string): Promise<number> {
 }
 
 async function vacuumInto(source: string, target: string): Promise<void> {
-  const client = createClient({ url: `file:${source}` });
+  // File URLs, so `#`, `%` or `?` in a folder name stay part of the path.
+  const client = createClient({ url: pathToFileURL(source).href });
   try {
     await client.execute("PRAGMA busy_timeout = 10000");
     await client.execute({ sql: "VACUUM INTO ?", args: [target] });
   } finally {
     client.close();
   }
-  const copy = createClient({ url: `file:${target}` });
+  const copy = createClient({ url: pathToFileURL(target).href });
   try {
     const check = await copy.execute("PRAGMA quick_check");
     if (check.rows[0]?.[0] !== "ok") throw new Error("backup check failed");
@@ -272,6 +316,7 @@ export async function runBackup(options: RunBackupOptions = {}): Promise<BackupR
     }
 
     step = "prepare";
+    await removeStalePartials(plan.backupRoot, now);
     const [day, minute] = backupNames(now);
     let name = day;
     if (await exists(join(plan.backupRoot, name))) name = minute;

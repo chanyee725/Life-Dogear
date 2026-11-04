@@ -1,4 +1,13 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createClient } from "@libsql/client";
@@ -10,8 +19,10 @@ import {
   lastBackupAt,
   listBackups,
   pruneBackups,
+  removeStalePartials,
   resolveBackupPlan,
   runBackup,
+  takeLock,
   type BackupLogger,
 } from "@/lib/backup";
 import { startBackupSchedule, stopBackupSchedule } from "@/lib/backup/schedule";
@@ -31,6 +42,12 @@ async function seedDb(rows: string[]) {
   for (const title of rows)
     await db.execute({ sql: "INSERT INTO notes (title) VALUES (?)", args: [title] });
   db.close();
+}
+
+/** A finished backup folder as runBackup leaves it (dated name + manifest). */
+async function fakeBackup(dir: string, name: string, createdAt = "2026-10-01T00:00:00Z") {
+  await mkdir(join(dir, name), { recursive: true });
+  await writeFile(join(dir, name, "backup.json"), JSON.stringify({ createdAt }));
 }
 
 beforeEach(async () => {
@@ -195,7 +212,7 @@ describe("retention", () => {
     await mkdir(dir, { recursive: true });
     const names = Array.from({ length: 16 }, (_, i) => `2026-10-${String(i + 1).padStart(2, "0")}`);
     names.push("2026-10-16-0930");
-    for (const n of names) await mkdir(join(dir, n));
+    for (const n of names) await fakeBackup(dir, n);
     await mkdir(join(dir, "keep-me"));
     await mkdir(join(dir, "2026-01-01-old"));
     await writeFile(join(dir, "2026-01-02"), "a file with a dated name");
@@ -215,7 +232,7 @@ describe("retention", () => {
     await seedDb(["x"]);
     const dir = join(root, "data/backups");
     await mkdir(dir, { recursive: true });
-    for (let i = 1; i <= 14; i++) await mkdir(join(dir, `2026-10-${String(i).padStart(2, "0")}`));
+    for (let i = 1; i <= 14; i++) await fakeBackup(dir, `2026-10-${String(i).padStart(2, "0")}`);
     const result = await runBackup({ env: LOCAL, root, now: NOW, log });
     expect(result).toMatchObject({ status: "done", pruned: 1 });
     expect((await listBackups(dir))[0]).toBe("2026-10-02");
@@ -237,5 +254,88 @@ describe("startBackupSchedule", () => {
     expect(startBackupSchedule({ env: { VERCEL: "1" }, root })).toBe(false);
     expect(startBackupSchedule({ env: LOCAL, root, log })).toBe(true);
     expect(startBackupSchedule({ env: LOCAL, root, log })).toBe(false);
+  });
+});
+
+describe("review fixes", () => {
+  it("backs up a DB whose folders contain # and %", async () => {
+    const odd = join(root, "a#b%20c");
+    await mkdir(join(odd, "data"), { recursive: true });
+    const { pathToFileURL } = await import("node:url");
+    const src = createClient({ url: pathToFileURL(join(odd, "data/local.db")).href });
+    await src.execute("CREATE TABLE notes (id INTEGER PRIMARY KEY, title TEXT)");
+    await src.execute("INSERT INTO notes (title) VALUES ('가'), ('나')");
+    src.close();
+
+    const env = { DATA_DIR: "data", BACKUP_DIR: "bk#1%41?x" };
+    const result = await runBackup({ env, root: odd, now: NOW, log });
+    expect(result).toMatchObject({ status: "done", db: "copied" });
+    const copy = createClient({
+      url: pathToFileURL(join(odd, "bk#1%41?x/2026-11-04/local.db")).href,
+    });
+    const rows = await copy.execute("SELECT title FROM notes ORDER BY id");
+    copy.close();
+    expect(rows.rows.map((r) => r.title)).toEqual(["가", "나"]);
+  });
+
+  it("removes temp folders older than the stale-lock age and keeps fresh ones", async () => {
+    const dir = join(root, "bk");
+    const oldOne = ".partial-00000000-0000-4000-8000-000000000001";
+    const newOne = ".partial-00000000-0000-4000-8000-000000000002";
+    await mkdir(join(dir, oldOne), { recursive: true });
+    await mkdir(join(dir, newOne));
+    await mkdir(join(dir, ".partial-not-a-uuid"));
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await utimes(join(dir, oldOne), threeHoursAgo, threeHoursAgo);
+    await utimes(join(dir, ".partial-not-a-uuid"), threeHoursAgo, threeHoursAgo);
+
+    expect(await removeStalePartials(dir, new Date())).toBe(1);
+    expect((await readdir(dir)).sort()).toEqual([".partial-not-a-uuid", newOne].sort());
+  });
+
+  it("runBackup clears a stale temp folder once it holds the lock", async () => {
+    await seedDb(["x"]);
+    const dir = join(root, "data/backups");
+    const stale = ".partial-00000000-0000-4000-8000-000000000003";
+    await mkdir(join(dir, stale), { recursive: true });
+    const old = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await utimes(join(dir, stale), old, old);
+    expect(await runBackup({ env: LOCAL, root, log })).toMatchObject({ status: "done" });
+    expect(await readdir(dir)).not.toContain(stale);
+  });
+
+  it("ignores dated folders without a manifest for pruning and the 24-hour check", async () => {
+    const dir = join(root, "bk");
+    await mkdir(join(dir, "2026-01-01"), { recursive: true }); // someone else's folder
+    await mkdir(join(dir, "2026-11-04"));
+    for (let i = 1; i <= 15; i++) {
+      await fakeBackup(dir, `2026-10-${String(i).padStart(2, "0")}`);
+    }
+    expect(await listBackups(dir)).not.toContain("2026-01-01");
+    expect(await pruneBackups(dir, 14)).toBe(1);
+    expect(await readdir(dir)).toEqual(expect.arrayContaining(["2026-01-01", "2026-11-04"]));
+    // The bare 2026-11-04 folder (fresh mtime) does not count as a recent backup.
+    expect(await lastBackupAt(dir)).toEqual(new Date("2026-10-01T00:00:00Z"));
+  });
+
+  it("releases only its own lock", async () => {
+    await seedDb(["x"]);
+    const dir = join(root, "data/backups");
+    await mkdir(dir, { recursive: true });
+    const lock = join(dir, ".backup.lock");
+    // A stale lock is taken over; the old owner must not remove the new one afterwards.
+    await writeFile(lock, JSON.stringify({ token: "other" }));
+    const old = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await utimes(lock, old, old);
+    const run = runBackup({ env: LOCAL, root, log });
+    expect(await run).toMatchObject({ status: "done" });
+    await expect(readFile(lock, "utf8")).rejects.toThrow(); // ours, released
+
+    // Release after the lock changed hands leaves the new owner's file alone.
+    const release = await takeLock(dir, new Date());
+    expect(release).not.toBeNull();
+    await writeFile(lock, JSON.stringify({ token: "someone-else" }));
+    await release!();
+    expect(JSON.parse(await readFile(lock, "utf8"))).toEqual({ token: "someone-else" });
   });
 });
