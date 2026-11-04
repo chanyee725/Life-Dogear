@@ -49,17 +49,11 @@ export default async function ResourcesPage({
 
   return (
     <Page>
-      <PageHeader
-        title="자료"
-        description="주제를 고르면 그 주제의 논문·노트·세미나·생각을 함께 봅니다."
-      />
+      <PageHeader title="자료" />
 
       {topics.length === 0 ? (
         <div className="@container flex flex-col gap-8">
-          <EmptyState
-            title="아직 주제가 없습니다"
-            description="논문·노트·세미나·생각에 주제를 달면 여기서 주제별로 모아 볼 수 있습니다. 프로젝트·영역·목표에만 쓴 주제는 '주제' 화면에서 봅니다."
-          />
+          <EmptyState title="아직 주제가 없습니다" />
           {recentSection}
         </div>
       ) : (
@@ -81,7 +75,6 @@ export default async function ResourcesPage({
             {data.unknownTopic ? (
               <EmptyState
                 title="이 주제를 찾을 수 없습니다"
-                description="논문·노트·세미나·생각에 쓰인 주제가 아니거나, 보관한 항목에만 쓰였을 수 있습니다. 왼쪽 목록에서 주제를 골라 주세요."
                 action={
                   <Link
                     href={resourcesHref(null, { sort })}
@@ -92,12 +85,7 @@ export default async function ResourcesPage({
                 }
               />
             ) : !topic ? (
-              (recentSection ?? (
-                <EmptyState
-                  title="아직 자료가 없습니다"
-                  description="논문·노트·세미나·생각을 추가하면 여기에 최근 것부터 보입니다."
-                />
-              ))
+              (recentSection ?? <EmptyState title="아직 자료가 없습니다" />)
             ) : (
               <TopicItems topic={topic} items={items} type={type} sort={sort} />
             )}
@@ -169,11 +157,6 @@ function TopicItems({
             type
               ? `이 주제의 ${withSubject(ITEM_TYPE.label(type))} 아직 없습니다`
               : "이 주제의 자료가 없습니다"
-          }
-          description={
-            type
-              ? `${ITEM_TYPE.label(type)}에 #${topic} 주제를 달면 여기에 함께 보입니다.`
-              : undefined
           }
           action={
             type ? (
