@@ -34,10 +34,15 @@ import {
   withAlpha,
 } from "./draw";
 import {
+  armRefit,
+  DISARMED,
   EARLY_FIT_TICKS,
   fitTransform,
   grewBeyond,
+  noteTransform,
   overflowsArea,
+  refitOnStop,
+  type RefitGuard,
   seedNear,
   type Box,
   type FitItem,
@@ -655,6 +660,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   const loadedOnce = useRef(false);
   const earlyFit = useRef<{ data: unknown; ticks: number } | null>(null);
   const earlyBox = useRef<Box | null>(null);
+  /** May the next stop refit a drawing that drifted off screen (see `RefitGuard`)? */
+  const refitGuard = useRef<RefitGuard>(DISARMED);
   const graphDataRef = useRef(graphData);
   graphDataRef.current = graphData;
   useEffect(() => {
@@ -677,6 +684,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     if (!fg) return;
     fitView(fitDuration);
     earlyBox.current = fg.getGraphBbox();
+    refitGuard.current = armRefit(performance.now(), fitDuration);
     pendingFit.current = false;
     onTransform?.();
   };
@@ -761,7 +769,13 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       d3VelocityDecay={0.4}
       onRenderFramePre={onRenderFramePre}
       onRenderFramePost={onRenderFramePost}
-      onZoom={() => onTransform?.()}
+      onZoom={() => {
+        refitGuard.current = noteTransform(refitGuard.current, performance.now());
+        onTransform?.();
+      }}
+      onNodeDrag={() => {
+        refitGuard.current = DISARMED;
+      }}
       onNodeHover={(node) => {
         const id = (node?.id as GraphNodeId | undefined) ?? null;
         setHoverId(id);
@@ -779,13 +793,11 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       onEngineStop={() => {
         loadedOnce.current = true;
         const box = earlyBox.current;
+        const stop = refitOnStop(refitGuard.current, offScreen);
+        refitGuard.current = stop.next;
         earlyBox.current = null;
         // Refit when the layout grew noticeably or drifted partly off screen since the fit.
-        if (
-          box &&
-          fgRef.current &&
-          (grewBeyond(box, fgRef.current.getGraphBbox()) || offScreen())
-        ) {
+        if (box && fgRef.current && (grewBeyond(box, fgRef.current.getGraphBbox()) || stop.refit)) {
           fitView(fitDuration);
           onTransform?.();
           return;

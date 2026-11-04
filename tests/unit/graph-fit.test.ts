@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { fitTransform, grewBeyond, overflowsArea, seedNear } from "@/components/graph/fit";
+import {
+  armRefit,
+  DISARMED,
+  fitTransform,
+  grewBeyond,
+  noteTransform,
+  overflowsArea,
+  refitOnStop,
+  seedNear,
+} from "@/components/graph/fit";
 
 describe("graph fit after a filter change", () => {
   it("refits only when the graph grew by more than 15%", () => {
@@ -72,5 +81,37 @@ describe("fitTransform: nodes and their labels", () => {
     const t = fitTransform(items, area)!;
     const drifted = items.map((n) => ({ ...n, y: n.y + 60 }));
     expect(overflowsArea(drifted, t, area)).toBe(true);
+  });
+});
+
+describe("refit on settle only right after an automatic fit", () => {
+  const off = () => true;
+  const on = () => false;
+
+  it("refits on the first stop after the fit when the drawing drifted off screen", () => {
+    const g = armRefit(1000, 400);
+    expect(refitOnStop(g, off).refit).toBe(true);
+    expect(refitOnStop(g, on).refit).toBe(false);
+  });
+
+  it("does not refit on later stops (e.g. after dragging a node while zoomed in)", () => {
+    const first = refitOnStop(armRefit(1000, 0), on);
+    expect(refitOnStop(first.next, off).refit).toBe(false);
+    expect(refitOnStop(DISARMED, off).refit).toBe(false);
+  });
+
+  it("does not refit after the user zoomed or panned", () => {
+    const g = armRefit(1000, 400);
+    // Zoom events from the fit's own animation keep it armed…
+    expect(noteTransform(g, 1300).armed).toBe(true);
+    // …the user's afterwards disarm it.
+    const moved = noteTransform(g, 2000);
+    expect(refitOnStop(moved, off).refit).toBe(false);
+  });
+
+  it("checks the screen only when armed", () => {
+    let checked = 0;
+    refitOnStop(DISARMED, () => (checked++, true));
+    expect(checked).toBe(0);
   });
 });

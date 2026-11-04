@@ -43,7 +43,16 @@ import {
   traceShape,
   withAlpha,
 } from "./draw";
-import { fitTransform, overflowsArea, type FitItem } from "./fit";
+import {
+  armRefit,
+  DISARMED,
+  fitTransform,
+  noteTransform,
+  overflowsArea,
+  refitOnStop,
+  type FitItem,
+  type RefitGuard,
+} from "./fit";
 import { forceAxis, forceCollideGrid, forceRadial } from "./forces";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { COSMOS_THEME as C } from "./graph-theme";
@@ -920,6 +929,8 @@ export default function CosmosCanvas({
   const fittedKey = useRef<string | null>(null);
   const fitKeyRef = useRef(fitKey);
   fitKeyRef.current = fitKey;
+  /** May the next stop refit a drawing that drifted off screen (see `RefitGuard`)? */
+  const refitGuard = useRef<RefitGuard>(DISARMED);
   const fitIfNew = useCallback(() => {
     if (fittedKey.current === fitKeyRef.current) return;
     // Until the simulation has taken the new nodes, only the pinned suns have positions.
@@ -928,6 +939,7 @@ export default function CosmosCanvas({
     if (!size) return;
     fittedKey.current = fitKeyRef.current;
     lastFit.current = size;
+    refitGuard.current = armRefit(performance.now(), 0);
     onTransform?.();
   }, [fitView, onTransform]);
 
@@ -1005,7 +1017,13 @@ export default function CosmosCanvas({
       d3VelocityDecay={0.4}
       onRenderFramePre={onRenderFramePre}
       onRenderFramePost={onRenderFramePost}
-      onZoom={(t) => onTransform?.(t)}
+      onZoom={(t) => {
+        refitGuard.current = noteTransform(refitGuard.current, performance.now());
+        onTransform?.(t);
+      }}
+      onNodeDrag={() => {
+        refitGuard.current = DISARMED;
+      }}
       onNodeHover={(node) => {
         const id = (node?.id as GraphNodeId | undefined) ?? null;
         setHoverId(id);
@@ -1026,12 +1044,15 @@ export default function CosmosCanvas({
         fitIfNew();
         recomputeNebulae();
         kick();
-        // Re-fit only if the layout spread out noticeably since the last fit.
+        // Re-fit only if the layout spread out noticeably since the last fit, or — on the
+        // first stop after an automatic fit the user has not moved since — drifted partly
+        // out of the free area (the bottom row below the screen).
+        const stop = refitOnStop(refitGuard.current, drawingOffScreen);
+        refitGuard.current = stop.next;
         const b = boundsOf();
         if (!b || !lastFit.current) return;
         const size = { w: b.x1 - b.x0, h: b.y1 - b.y0 };
-        // …or drifted partly out of the free area (the bottom row below the screen).
-        if (grewBeyond(lastFit.current, size) || drawingOffScreen()) {
+        if (grewBeyond(lastFit.current, size) || stop.refit) {
           lastFit.current = fitView(dur(400)) ?? size;
           onTransform?.();
         }

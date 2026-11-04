@@ -148,3 +148,33 @@ export function overflowsArea(
     e.y1 + oy > area.height + 0.5
   );
 }
+
+// ---------- When to refit on settle ----------
+
+/**
+ * Whether the next engine stop may refit because the drawing drifted off screen. Armed by
+ * an automatic fit (first entry, filter change); disarmed by the first stop after it and by
+ * the user zooming, panning or dragging — so a later stop never snaps their view back.
+ * Zoom events before `programmaticUntil` (ms) come from the fit's own animation.
+ */
+export type RefitGuard = { armed: boolean; programmaticUntil: number };
+
+export const DISARMED: RefitGuard = { armed: false, programmaticUntil: 0 };
+
+/** After an automatic fit at `now` animating for `duration` ms. */
+export function armRefit(now: number, duration: number): RefitGuard {
+  return { armed: true, programmaticUntil: now + duration + 50 };
+}
+
+/** A zoom/pan event at `now`: the user's own once the fit's animation is over. */
+export function noteTransform(g: RefitGuard, now: number): RefitGuard {
+  return g.armed && now > g.programmaticUntil ? DISARMED : g;
+}
+
+/** At an engine stop: refit only when armed and off screen; either way, disarm. */
+export function refitOnStop(
+  g: RefitGuard,
+  offScreen: () => boolean,
+): { refit: boolean; next: RefitGuard } {
+  return { refit: g.armed && offScreen(), next: DISARMED };
+}
