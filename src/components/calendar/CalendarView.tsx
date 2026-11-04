@@ -80,6 +80,8 @@ export type CalendarViewProps = {
   day?: string;
   /** Server time (ISO), so "그날 남은 것" agrees between server and client render. */
   now: string;
+  /** Use the narrow (< 640px) layout regardless of the viewport — for server-rendered tests. */
+  forceNarrow?: boolean;
 };
 
 type Pop =
@@ -123,10 +125,11 @@ export function CalendarView({
   failed = false,
   day,
   now,
+  forceNarrow = false,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
-  const narrow = useNarrow();
+  const narrow = useNarrow() || forceNarrow;
   const [choice, setChoice] = useSources();
   const [navPending, startNav] = useTransition();
   const [, startSave] = useTransition();
@@ -687,7 +690,7 @@ export function CalendarView({
             )}
           </div>
 
-          {narrow && range === "month" ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+          {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
         </div>
         <TodayPanel
           className="order-first min-w-0 lg:sticky lg:top-6 lg:order-none"

@@ -93,7 +93,9 @@ describe("CalendarView (month)", () => {
     expect(html).toContain('role="grid" aria-label="2026년 11월"');
     expect(html).toContain("2026년 11월");
     expect(html.match(/role="gridcell"/g)).toHaveLength(42);
-    expect(html).toMatch(/data-cal-cell="2026-11-04" tabindex="0" aria-selected="true" aria-current="date"/);
+    expect(html).toMatch(
+      /data-cal-cell="2026-11-04" tabindex="0" aria-selected="true" aria-current="date"/,
+    );
     expect(html.match(/data-cal-cell="[^"]+" tabindex="0"/g)).toHaveLength(1);
     expect(html).toContain('aria-label="오늘, 11월 4일 수요일, 항목 ');
   });
@@ -184,6 +186,18 @@ describe("CalendarView (2 weeks)", () => {
     expect(render({ range: "2w", day: "2027-01-01" })).toMatch(
       /data-cal-cell="2026-11-04" tabindex="0" aria-selected="true"/,
     );
+  });
+});
+
+describe("CalendarView (narrow)", () => {
+  it("lists the selected day under the 2-week dot grid", () => {
+    const html = render({ range: "2w", day: "2026-11-05", forceNarrow: true });
+    const list = html.slice(
+      html.indexOf('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"'),
+    );
+    expect(list.length).toBeLessThan(html.length);
+    expect(list).toContain('data-cal-item="task:1"');
+    expect(list).toContain('aria-label="11월 5일 마감 할 일 추가"');
   });
 });
 
