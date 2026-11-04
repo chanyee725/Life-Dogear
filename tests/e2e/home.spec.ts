@@ -239,3 +239,28 @@ test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번
   await page.getByRole("menuitem", { name: "삭제" }).click();
   await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
 });
+
+test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/tasks");
+  await context.addCookies([
+    { name: "e2e-calendar-delay", value: "3000", url: "http://127.0.0.1:3000" },
+  ]);
+  await page.keyboard.press("/");
+  const input = page.getByRole("textbox", { name: /생각 추가/ });
+  await expect(input).toBeFocused();
+  // Still loading: the block is busy and says so; the input works meanwhile.
+  const calendar = page.getByRole("region", { name: "달력" });
+  await expect(calendar).toHaveAttribute("aria-busy", "true");
+  await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
+  await page.keyboard.type("느린 달력");
+  await expect(calendar).not.toHaveAttribute("aria-busy", "true", { timeout: 10_000 });
+  await expect(calendar.getByText("일정 불러오는 중…")).toHaveCount(0);
+  await expect(input).toHaveValue("느린 달력");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("!");
+  await expect(input).toHaveValue("느린 달력!");
+  await context.clearCookies({ name: "e2e-calendar-delay" });
+});
