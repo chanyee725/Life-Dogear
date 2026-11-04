@@ -127,6 +127,13 @@ describe("period filter param", () => {
   it("lists other years with goals", () => {
     expect(otherYears(forest(), NOW)).toEqual(["2027"]);
   });
+
+  it("keeps the other year being viewed even without goals", () => {
+    expect(otherYears(forest(), NOW, "2030")).toEqual(["2027", "2030"]);
+    expect(otherYears([], NOW, "2030")).toEqual(["2030"]);
+    expect(otherYears([], NOW, "2026")).toEqual([]);
+    expect(otherYears([], NOW, null)).toEqual([]);
+  });
 });
 
 describe("buildGoalList", () => {
@@ -274,5 +281,20 @@ describe("due labels count from the Seoul date", () => {
     const today = seoulDate(at);
     expect(today).toBe("2026-11-05");
     expect(dueLabel("2026-Q4", today)).toBe("D-56");
+  });
+});
+
+describe("this quarter by the Seoul date", () => {
+  const tz = process.env.TZ;
+  afterEach(() => {
+    process.env.TZ = tz;
+  });
+
+  it("is already Q2 in Seoul early morning on a UTC server", () => {
+    process.env.TZ = "UTC";
+    // 2026-04-01 01:30 in Seoul; still 03-31 (Q1) on the server clock.
+    const at = new Date("2026-03-31T16:30:00Z");
+    expect(at.getMonth()).toBe(2);
+    expect(parsePeriodFilter(undefined, at)).toEqual({ kind: "quarter", period: "2026-Q2" });
   });
 });

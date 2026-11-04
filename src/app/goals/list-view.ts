@@ -1,3 +1,4 @@
+import { seoulDate } from "@/components/calendar/model";
 import type { GoalHorizon, GoalStatus } from "@/lib/enums";
 
 /**
@@ -51,10 +52,13 @@ export type PeriodFilter =
 export const NO_AREA = "none";
 export const NO_AREA_TITLE = "영역 없음";
 
-/** Current quarter/year as `2026-Q4` / `2026` (same rule as `goals.currentPeriod`). */
+/**
+ * Current quarter/year as `2026-Q4` / `2026`, by the Seoul date (as the days-left labels),
+ * not the server's time zone.
+ */
 function nowPeriods(now: Date) {
-  const year = String(now.getFullYear());
-  return { year, quarter: `${year}-Q${Math.floor(now.getMonth() / 3) + 1}` };
+  const [year = "", month = "1"] = seoulDate(now).split("-");
+  return { year, quarter: `${year}-Q${Math.floor((Number(month) - 1) / 3) + 1}` };
 }
 
 /**
@@ -83,10 +87,17 @@ export function periodLabel(filter: PeriodFilter): string {
   return filter.current ? `올해(${filter.year})` : `${filter.year}년`;
 }
 
-/** Years with goals other than the current one, ascending (extra period chips). */
-export function otherYears(forest: readonly GoalTreeInput[], now = new Date()): string[] {
+/**
+ * Years with goals other than the current one, ascending (the "다른 연도" select).
+ * `shown`: the other year being viewed, kept even without goals (e.g. `?period=2030`).
+ */
+export function otherYears(
+  forest: readonly GoalTreeInput[],
+  now = new Date(),
+  shown?: string | null,
+): string[] {
   const current = nowPeriods(now).year;
-  const years = new Set<string>();
+  const years = new Set<string>(shown && shown !== current ? [shown] : []);
   const walk = (nodes: readonly GoalTreeInput[]) => {
     for (const n of nodes) {
       const y = n.goal.period?.slice(0, 4);

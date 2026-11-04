@@ -110,7 +110,7 @@ async function GoalListView({
   // Another year (`?period=2027`) checks none of the three; the year select shows it.
   const otherYear = period.kind === "year" && !period.current ? period.year : null;
   const periodValue: PeriodKey | null = otherYear ? null : period.kind;
-  const yearChoices: YearChoice[] = otherYears(tree, now).map((year) => ({
+  const yearChoices: YearChoice[] = otherYears(tree, now, otherYear).map((year) => ({
     value: year,
     href: periodHref({ kind: "year", year, current: false }),
   }));
