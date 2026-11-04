@@ -19,6 +19,8 @@ export type CalendarItem = {
   done?: boolean;
   /** 끌어 놓기용 */
   taskId?: string;
+  /** 할 일의 소속(프로젝트·목표·영역) 이름 — 오늘 패널 출처 열 */
+  parent?: string;
 };
 
 export type CalendarRange = { from: string; to: string };

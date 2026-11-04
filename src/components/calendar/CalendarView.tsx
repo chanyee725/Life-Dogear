@@ -26,6 +26,7 @@ import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { CalendarItemRow, itemLabel, type ItemHandlers } from "./CalendarItemRow";
 import {
   MONTH_LINES,
+  TWO_WEEK_LINES,
   WEEKDAYS,
   calendarHref,
   dayDots,
@@ -33,6 +34,7 @@ import {
   gridWeeks,
   isMovable,
   isOneDay,
+  lastDay,
   itemsOn,
   layoutWeek,
   moveItemTo,
@@ -49,6 +51,7 @@ import {
   type WeekBar,
 } from "./model";
 import { Popover } from "./Popover";
+import { TodayPanel } from "./TodayPanel";
 import { SourceDot, SourceIcon, sourceColor } from "./SourceIcon";
 import { SOURCES, SOURCE_LABEL, noneChosen, visibleItems } from "./sources";
 import { useSources } from "./useSources";
@@ -73,6 +76,12 @@ export type CalendarViewProps = {
   google: GoogleStatus;
   /** App data could not be loaded (10절). */
   failed?: boolean;
+  /** Day the today panel starts on (`?day=`); ignored unless it is on the grid. */
+  day?: string;
+  /** Server time (ISO), so "그날 남은 것" agrees between server and client render. */
+  now: string;
+  /** Use the narrow (< 640px) layout regardless of the viewport — for server-rendered tests. */
+  forceNarrow?: boolean;
 };
 
 type Pop =
@@ -114,10 +123,13 @@ export function CalendarView({
   items: serverItems,
   google,
   failed = false,
+  day,
+  now,
+  forceNarrow = false,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
-  const narrow = useNarrow();
+  const narrow = useNarrow() || forceNarrow;
   const [choice, setChoice] = useSources();
   const [navPending, startNav] = useTransition();
   const [, startSave] = useTransition();
@@ -133,18 +145,28 @@ export function CalendarView({
   const weeks = useMemo(() => gridWeeks(range, date), [range, date]);
   const gridDays = useMemo(() => weeks.flat(), [weeks]);
   const span = visibleSpan(range, date);
-  const defaultDay = today >= gridDays[0]! && today <= gridDays.at(-1)! ? today : span.from;
+  const defaultDay =
+    day && gridDays.includes(day)
+      ? day
+      : today >= gridDays[0]! && today <= gridDays.at(-1)!
+        ? today
+        : span.from;
 
-  // Roving focus day (one tab stop for the grid) and the narrow view's chosen day.
+  // Roving focus day (one tab stop for the grid) = the selected day the panel shows (13.2).
   const [focusDay, setFocusDay] = useState(defaultDay);
-  const [selected, setSelected] = useState(defaultDay);
+  const selected = focusDay;
   const [prevKey, setPrevKey] = useState(`${range}:${date}`);
   if (prevKey !== `${range}:${date}`) {
     setPrevKey(`${range}:${date}`);
     if (!gridDays.includes(focusDay)) setFocusDay(defaultDay);
-    if (!gridDays.includes(selected))
-      setSelected(gridDays.includes(focusDay) ? focusDay : defaultDay);
   }
+
+  // Keep `?day=` in step with the selection (no server round trip) so reload/back keep it.
+  useEffect(() => {
+    const href = calendarHref({ range, date, day: selected }, today);
+    if (`${window.location.pathname}${window.location.search}` !== href)
+      window.history.replaceState(window.history.state, "", href);
+  }, [range, date, selected, today]);
 
   const [pop, setPop] = useState<Pop | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -202,7 +224,6 @@ export function CalendarView({
 
   /** `flip`: always open the target's own month (PageUp/PageDown), even onto a filler day. */
   const goDay = (day: string, flip = false) => {
-    if (narrow && range === "month") setSelected(day);
     const otherMonth = range === "month" && day.slice(0, 7) !== date.slice(0, 7);
     if (gridDays.includes(day) && !(flip && otherMonth)) focusCell(day);
     else {
@@ -425,10 +446,7 @@ export function CalendarView({
       }
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (narrow && range === "month") {
-          setSelected(cellDay);
-          return;
-        }
+        if (narrow) return;
         const list = navList(cellDay).filter((el) => !el.hasAttribute("data-cal-add"));
         if (list.length) list[0]!.focus();
         else setPop({ kind: "add", day: cellDay, anchor: target });
@@ -468,18 +486,27 @@ export function CalendarView({
     overDay: drag?.over ?? null,
     handlers,
     onFocusCell: setFocusDay,
-    onSelect: (day) => {
-      setSelected(day);
-      setFocusDay(day);
-    },
+    onSelect: setFocusDay,
     openAdd,
     openDay,
   };
 
-  const empty = !failed && !noneChosen(choice, google) && shown.length === 0;
-  const scope = range === "week" ? "이번 주에" : "이번 달에";
-  const prevLabel = range === "week" ? "이전 주" : "이전 달";
-  const nextLabel = range === "week" ? "다음 주" : "다음 달";
+  // Data reaches past the grid (for the panel); the empty line is about the grid only.
+  const gridFrom = gridDays[0]!;
+  const gridTo = gridDays.at(-1)!;
+  const empty =
+    !failed &&
+    !noneChosen(choice, google) &&
+    !shown.some((it) => dayOf(it.start) <= gridTo && lastDay(it) >= gridFrom);
+  const scope = range === "2w" ? "이 2주에" : "이번 달에";
+  const prevLabel = range === "2w" ? "이전 2주" : "이전 달";
+  const nextLabel = range === "2w" ? "다음 2주" : "다음 달";
+  const goToday = () => {
+    setFocusDay(today);
+    pendingFocus.current = { day: today };
+    if (gridDays.includes(today)) focusCell(today);
+    else navigate({ date: today });
+  };
   const goals = line.filter((i) => i.source === "goal");
   const others = line.filter((i) => i.source !== "goal");
 
@@ -516,7 +543,10 @@ export function CalendarView({
             variant="ghost"
             size="sm"
             className="sm:order-3"
-            onClick={() => navigate({ date: today })}
+            onClick={() => {
+              setFocusDay(today);
+              navigate({ date: today });
+            }}
           >
             오늘
           </Button>
@@ -543,104 +573,103 @@ export function CalendarView({
         </div>
       </div>
 
-      {/* Messages (10절) and the period line (3.3) */}
-      <div className="mt-3 mb-2 flex flex-col gap-1 empty:hidden">
-        {failed ? (
-          <p role="status" className="text-[13px] text-muted">
-            달력을 불러오지 못했습니다.{" "}
-            <button
-              type="button"
-              className="underline hover:text-fg"
-              onClick={() => startNav(() => router.refresh())}
-            >
-              다시 시도
-            </button>
-          </p>
-        ) : null}
-        {(google === "error" || google === "partial") && choice.google ? (
-          <p className="text-[13px] text-muted">
-            {google === "partial"
-              ? "캘린더 일정 일부를 불러오지 못했습니다."
-              : "캘린더를 불러오지 못했습니다."}{" "}
-            <button
-              type="button"
-              className="underline hover:text-fg"
-              onClick={() => startNav(() => router.refresh())}
-            >
-              다시 시도
-            </button>
-          </p>
-        ) : null}
-        {noneChosen(choice, google) ? (
-          <p className="text-[13px] text-muted">
-            표시할 항목을 고르지 않았습니다.{" "}
-            <button
-              type="button"
-              className="underline hover:text-fg"
-              onClick={(e) => setPop({ kind: "sources", anchor: e.currentTarget })}
-            >
-              표시
-            </button>
-            에서 켤 수 있습니다.
-          </p>
-        ) : null}
-        {empty ? (
-          <p className="text-[13px] text-muted">
-            {scope} 표시할 날짜가 없습니다. 날짜를 눌러 할 일을 추가할 수 있습니다.
-          </p>
-        ) : null}
-        {error ? <p className="text-[13px] text-danger">{error}</p> : null}
-        {line.length ? (
-          <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] max-sm:flex-col max-sm:items-start">
-            {[...goals.slice(0, goals.length > 4 ? GOALS_SHOWN : 4), ...others].map((it) => (
-              <li key={it.id} className="flex min-w-0 items-center gap-1.5">
-                <SourceIcon source={it.source} theme={theme} />
-                {it.href ? (
-                  <Link
-                    href={it.href}
-                    aria-label={itemLabel(it, today)}
-                    className="max-w-60 truncate text-fg hover:underline"
-                  >
-                    {it.title}
-                  </Link>
-                ) : (
-                  <span className="max-w-60 truncate text-fg">{it.title}</span>
-                )}
-              </li>
-            ))}
-            {goals.length > 4 ? (
-              <li>
-                <Link
-                  href="/goals"
-                  className="text-muted tabular-nums hover:text-fg"
-                  aria-label={`분기 목표 ${goals.length - GOALS_SHOWN}개 더 보기`}
+      {/* 13.1: two columns from lg (calendar | panel); below lg the panel goes first. */}
+      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <div className="flex min-w-0 flex-col">
+          {/* Messages (10절) and the period line (3.3) */}
+          <div className="mb-2 flex flex-col gap-1 empty:hidden">
+            {failed ? (
+              <p role="status" className="text-[13px] text-muted">
+                달력을 불러오지 못했습니다.{" "}
+                <button
+                  type="button"
+                  className="underline hover:text-fg"
+                  onClick={() => startNav(() => router.refresh())}
                 >
-                  +{goals.length - GOALS_SHOWN}
-                </Link>
-              </li>
+                  다시 시도
+                </button>
+              </p>
             ) : null}
-          </ul>
-        ) : null}
-      </div>
-      <p aria-live="polite" className="sr-only">
-        {announce}
-      </p>
-      <p id={helpId} className="sr-only">
-        화살표로 날짜 이동, Enter로 항목 보기, 할 일은 [ ] 로 하루씩 옮깁니다.
-      </p>
+            {(google === "error" || google === "partial") && choice.google ? (
+              <p className="text-[13px] text-muted">
+                {google === "partial"
+                  ? "캘린더 일정 일부를 불러오지 못했습니다."
+                  : "캘린더를 불러오지 못했습니다."}{" "}
+                <button
+                  type="button"
+                  className="underline hover:text-fg"
+                  onClick={() => startNav(() => router.refresh())}
+                >
+                  다시 시도
+                </button>
+              </p>
+            ) : null}
+            {noneChosen(choice, google) ? (
+              <p className="text-[13px] text-muted">
+                표시할 항목을 고르지 않았습니다.{" "}
+                <button
+                  type="button"
+                  className="underline hover:text-fg"
+                  onClick={(e) => setPop({ kind: "sources", anchor: e.currentTarget })}
+                >
+                  표시
+                </button>
+                에서 켤 수 있습니다.
+              </p>
+            ) : null}
+            {empty ? (
+              <p className="text-[13px] text-muted">
+                {scope} 표시할 날짜가 없습니다. 날짜를 눌러 할 일을 추가할 수 있습니다.
+              </p>
+            ) : null}
+            {error ? <p className="text-[13px] text-danger">{error}</p> : null}
+            {line.length ? (
+              <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] max-sm:flex-col max-sm:items-start">
+                {[...goals.slice(0, goals.length > 4 ? GOALS_SHOWN : 4), ...others].map((it) => (
+                  <li key={it.id} className="flex min-w-0 items-center gap-1.5">
+                    <SourceIcon source={it.source} theme={theme} />
+                    {it.href ? (
+                      <Link
+                        href={it.href}
+                        aria-label={itemLabel(it, today)}
+                        className="max-w-60 truncate text-fg hover:underline"
+                      >
+                        {it.title}
+                      </Link>
+                    ) : (
+                      <span className="max-w-60 truncate text-fg">{it.title}</span>
+                    )}
+                  </li>
+                ))}
+                {goals.length > 4 ? (
+                  <li>
+                    <Link
+                      href="/goals"
+                      className="text-muted tabular-nums hover:text-fg"
+                      aria-label={`분기 목표 ${goals.length - GOALS_SHOWN}개 더 보기`}
+                    >
+                      +{goals.length - GOALS_SHOWN}
+                    </Link>
+                  </li>
+                ) : null}
+              </ul>
+            ) : null}
+          </div>
+          <p aria-live="polite" className="sr-only">
+            {announce}
+          </p>
+          <p id={helpId} className="sr-only">
+            화살표로 날짜 이동, Enter로 항목 보기, 할 일은 [ ] 로 하루씩 옮깁니다.
+          </p>
 
-      {narrow && range === "week" ? (
-        <NarrowWeek days={weeks[0]!} items={rest} ctx={ctx} />
-      ) : (
-        <div
-          role="grid"
-          aria-label={rangeTitle(range, date)}
-          aria-describedby={helpId}
-          aria-readonly="true"
-          onKeyDown={onGridKeyDown}
-          className="overflow-hidden rounded-lg border-t border-l border-border"
-        >
-          {range === "month" ? (
+          <div
+            role="grid"
+            aria-label={rangeTitle(range, date)}
+            aria-describedby={helpId}
+            aria-readonly="true"
+            onKeyDown={onGridKeyDown}
+            className="overflow-hidden rounded-lg border-t border-l border-border"
+          >
             <div role="row" className="grid grid-cols-7">
               {WEEKDAYS.map((w) => (
                 <div
@@ -652,18 +681,28 @@ export function CalendarView({
                 </div>
               ))}
             </div>
-          ) : null}
-          {weeks.map((days) =>
-            narrow ? (
-              <NarrowMonthRow key={days[0]} days={days} items={rest} ctx={ctx} />
-            ) : (
-              <WeekRow key={days[0]} days={days} items={rest} ctx={ctx} />
-            ),
-          )}
-        </div>
-      )}
+            {weeks.map((days) =>
+              narrow ? (
+                <NarrowMonthRow key={days[0]} days={days} items={rest} ctx={ctx} />
+              ) : (
+                <WeekRow key={days[0]} days={days} items={rest} ctx={ctx} />
+              ),
+            )}
+          </div>
 
-      {narrow && range === "month" ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+          {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+        </div>
+        <TodayPanel
+          className="order-first min-w-0 lg:sticky lg:top-6 lg:order-none"
+          day={selected}
+          today={today}
+          now={now}
+          items={shown}
+          theme={theme}
+          onToday={goToday}
+          onAdd={(anchor) => openAdd(selected, anchor)}
+        />
+      </div>
 
       {drag ? (
         <div
@@ -789,8 +828,8 @@ function RangeSwitch({
   onPick: (r: CalendarRangeKind) => void;
 }) {
   const options: { value: CalendarRangeKind; label: string }[] = [
+    { value: "2w", label: "2주" },
     { value: "month", label: "월" },
-    { value: "week", label: "주" },
   ];
   return (
     <div
@@ -811,7 +850,7 @@ function RangeSwitch({
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
                 e.preventDefault();
-                onPick(range === "month" ? "week" : "month");
+                onPick(range === "month" ? "2w" : "month");
               }
             }}
             className={cn(
@@ -852,27 +891,33 @@ function DayNumber({
   day,
   today,
   muted,
-  big = false,
+  selected = false,
   plain = false,
+  onClick,
 }: {
   day: string;
   today: string;
   muted: boolean;
-  big?: boolean;
+  /** 13.2: ring around the number (outside the accent circle on today). */
+  selected?: boolean;
   plain?: boolean;
+  onClick?: () => void;
 }) {
   const isToday = day === today;
   const n = Number(day.slice(8, 10));
   // Month name on the 1st only where there is room (not in the narrow dot cells).
-  const text = n === 1 && !big && !plain ? `${Number(day.slice(5, 7))}월 1일` : String(n);
+  const text = n === 1 && !plain ? `${Number(day.slice(5, 7))}월 1일` : String(n);
   return (
     <span
       aria-hidden="true"
+      onClick={onClick}
       className={cn(
-        "grid shrink-0 place-items-center rounded-full tabular-nums",
-        big ? "size-7 text-base" : "h-6 min-w-6 self-start text-xs",
+        "grid h-6 min-w-6 shrink-0 place-items-center self-start rounded-full text-xs tabular-nums",
+        plain && "self-auto",
         text.length > 2 && "w-auto px-1",
         isToday ? "bg-accent font-semibold text-accent-fg" : muted ? "text-muted" : "text-fg",
+        selected && "ring-1 ring-border-strong",
+        selected && isToday && "ring-offset-1 ring-offset-bg",
       )}
     >
       {text}
@@ -880,17 +925,17 @@ function DayNumber({
   );
 }
 
-/** One week row (month view, or the whole week view on wide screens). */
+/** One week row of the month or 2-week grid (wide screens). */
 function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; ctx: GridCtx }) {
   const month = ctx.range === "month";
-  const layout = layoutWeek(items, days, month ? MONTH_LINES : null);
+  const layout = layoutWeek(items, days, month ? MONTH_LINES : TWO_WEEK_LINES);
   const monthKey = ctx.date.slice(0, 7);
-  // Bars sit under the day number: month p-1 + h-6 + gap; week header h-12.
-  const barTop = month ? 4 + 24 + 2 : 48 + 2;
+  // Bars sit under the day number: p-1 + h-6 + gap.
+  const barTop = 4 + 24 + 2;
 
   return (
     <div role="row" data-cal-week={days.join(",")} className="relative grid grid-cols-7">
-      {layout.cells.map((cell, i) => {
+      {layout.cells.map((cell) => {
         const d = cell.day;
         const outside = month && d.slice(0, 7) !== monthKey;
         const isEmpty = cell.all.length === 0;
@@ -900,30 +945,29 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
             role="gridcell"
             data-cal-cell={d}
             tabIndex={d === ctx.focusDay ? 0 : -1}
+            aria-selected={d === ctx.selected}
             aria-current={d === ctx.today ? "date" : undefined}
             aria-label={cellLabel(d, ctx.today, cell.all.length)}
             onFocus={(e) => e.target === e.currentTarget && ctx.onFocusCell(d)}
             onClick={(e) => {
-              if (isEmpty && e.target === e.currentTarget) ctx.openAdd(d, e.currentTarget);
+              if (e.target !== e.currentTarget) return;
+              ctx.onSelect(d);
+              if (isEmpty) ctx.openAdd(d, e.currentTarget);
             }}
             className={cn(
-              "group relative flex min-w-0 flex-col gap-0.5 border-r border-b border-border focus-visible:outline-offset-[-2px]",
-              month ? "h-28 p-1" : "min-h-80 p-1",
+              "group relative flex min-w-0 flex-col gap-0.5 border-r border-b border-border p-1 focus-visible:outline-offset-[-2px]",
+              month ? "h-28" : "h-36",
               outside && "bg-surface",
               ctx.overDay === d && "bg-accent-soft outline-2 -outline-offset-2 outline-accent",
             )}
           >
-            {month ? (
-              <DayNumber day={d} today={ctx.today} muted={outside} />
-            ) : (
-              <div
-                className="pointer-events-none flex h-12 shrink-0 flex-col items-center justify-center gap-0.5"
-                aria-hidden="true"
-              >
-                <span className="text-xs text-muted">{WEEKDAYS[i]}</span>
-                <DayNumber day={d} today={ctx.today} muted={false} big />
-              </div>
-            )}
+            <DayNumber
+              day={d}
+              today={ctx.today}
+              muted={outside}
+              selected={d === ctx.selected}
+              onClick={() => ctx.onSelect(d)}
+            />
             {layout.lanes ? (
               <div
                 aria-hidden="true"
@@ -937,7 +981,8 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
                 item={item}
                 today={ctx.today}
                 theme={ctx.theme}
-                size={month ? "month" : "week"}
+                size="month"
+                hideTime={!month}
                 dragging={ctx.draggingId === item.id}
                 handlers={ctx.handlers}
               />
@@ -954,31 +999,17 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
                 +{cell.hidden}
               </button>
             ) : null}
-            {month ? (
-              <button
-                type="button"
-                data-cal-nav=""
-                data-cal-add=""
-                tabIndex={-1}
-                onClick={(e) => ctx.openAdd(d, e.currentTarget)}
-                aria-label={`${shortDay(d)} 마감 할 일 추가`}
-                className="absolute top-1 right-1 grid size-5 place-items-center rounded text-muted opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-hover hover:text-fg focus-visible:outline-offset-[-2px]"
-              >
-                <span aria-hidden="true">＋</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                data-cal-nav=""
-                data-cal-add=""
-                tabIndex={-1}
-                onClick={(e) => ctx.openAdd(d, e.currentTarget)}
-                aria-label={`${shortDay(d)} 마감 할 일 추가`}
-                className="mt-auto flex h-6 shrink-0 items-center px-1 text-left text-xs text-muted opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-fg focus-visible:outline-offset-[-2px]"
-              >
-                ＋ 할 일 추가
-              </button>
-            )}
+            <button
+              type="button"
+              data-cal-nav=""
+              data-cal-add=""
+              tabIndex={-1}
+              onClick={(e) => ctx.openAdd(d, e.currentTarget)}
+              aria-label={`${shortDay(d)} 마감 할 일 추가`}
+              className="absolute top-1 right-1 grid size-5 place-items-center rounded text-muted opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-hover hover:text-fg focus-visible:outline-offset-[-2px]"
+            >
+              <span aria-hidden="true">＋</span>
+            </button>
           </div>
         );
       })}
@@ -1207,12 +1238,12 @@ function NarrowMonthRow({
 }) {
   const monthKey = ctx.date.slice(0, 7);
   return (
-    <div role="row" className="grid grid-cols-7">
+    <div role="row" data-cal-week={days.join(",")} className="grid grid-cols-7">
       {days.map((d) => {
         const on = itemsOn(items, d);
         const singles = on.filter(isOneDay);
         const bar = on.find((i) => i.end && i.end !== i.start);
-        const outside = d.slice(0, 7) !== monthKey;
+        const outside = ctx.range === "month" && d.slice(0, 7) !== monthKey;
         const isSelected = d === ctx.selected;
         return (
           <div
@@ -1229,14 +1260,7 @@ function NarrowMonthRow({
               outside && "bg-surface",
             )}
           >
-            <span
-              className={cn(
-                "rounded-full",
-                isSelected && d !== ctx.today && "ring-1 ring-border-strong",
-              )}
-            >
-              <DayNumber day={d} today={ctx.today} muted={outside} plain />
-            </span>
+            <DayNumber day={d} today={ctx.today} muted={outside} selected={isSelected} plain />
             <span className="flex h-1 items-center gap-0.5" aria-hidden="true">
               {dayDots(singles).map((dot) => (
                 <SourceDot
@@ -1292,41 +1316,5 @@ function AddButton({ day, ctx }: { day: string; ctx: GridCtx }): ReactNode {
     >
       ＋ 할 일 추가
     </button>
-  );
-}
-
-function NarrowWeek({ days, items, ctx }: { days: string[]; items: CalendarItem[]; ctx: GridCtx }) {
-  return (
-    <div className="flex flex-col gap-4">
-      {days.map((d, i) => {
-        const list = itemsOn(items, d);
-        return (
-          <section key={d} aria-label={spokenDay(d)} className="flex flex-col">
-            <h3 className="flex items-baseline gap-2 text-[13px] font-semibold">
-              {shortDay(d)} {WEEKDAYS[i]}
-              {d === ctx.today ? (
-                <span className="text-xs font-normal text-accent">오늘</span>
-              ) : null}
-            </h3>
-            {list.length ? (
-              list.map((item) => (
-                <CalendarItemRow
-                  key={item.id}
-                  item={item}
-                  today={ctx.today}
-                  theme={ctx.theme}
-                  size="list"
-                  tabbable
-                  handlers={ctx.handlers}
-                />
-              ))
-            ) : (
-              <p className="text-xs text-muted">없음</p>
-            )}
-            <AddButton day={d} ctx={ctx} />
-          </section>
-        );
-      })}
-    </div>
   );
 }

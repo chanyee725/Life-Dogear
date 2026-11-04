@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { WEEKDAYS, gridWeeks } from "@/components/calendar/model";
+import { WEEKDAYS, weekDays } from "@/components/calendar/model";
 import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { WeekStrip } from "./WeekStrip";
 
@@ -8,7 +8,7 @@ import { WeekStrip } from "./WeekStrip";
  * first and a quiet placeholder (the seven days, no dots, no links) holds the place.
  */
 export function WeekStripSection({ today }: { today: string }) {
-  const days = gridWeeks("week", today)[0]!;
+  const days = weekDays(today);
   return (
     <Suspense fallback={<WeekStripPlaceholder days={days} today={today} />}>
       <WeekStripData days={days} today={today} />

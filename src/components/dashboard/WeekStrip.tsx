@@ -18,7 +18,7 @@ import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 
 /**
  * Home "이번 주" strip (calendar.md 9절): seven days Mon–Sun, today highlighted, up to three
- * source dots per day; each day opens the calendar week view. Follows the "표시" choice.
+ * source dots per day; each day opens the 2-week calendar with that day selected. Follows the "표시" choice.
  */
 export function WeekStrip({
   days,
@@ -44,7 +44,7 @@ export function WeekStrip({
           return (
             <li key={d}>
               <Link
-                href={calendarHref({ range: "week", date: d })}
+                href={calendarHref({ date: d, day: d })}
                 aria-current={isToday ? "date" : undefined}
                 aria-label={`${spokenDay(d)}, ${on.length ? `항목 ${on.length}개` : "항목 없음"}`}
                 className={cn(

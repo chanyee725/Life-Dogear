@@ -32,6 +32,9 @@ export async function collectAppItems(
         doneAt: tasks.doneAt,
         parentType: tasks.parentType,
         parentId: tasks.parentId,
+        parentTitle: sql<
+          string | null
+        >`coalesce(${projects.title}, ${goals.title}, ${areas.title})`,
       })
       .from(tasks)
       .leftJoin(
@@ -111,6 +114,7 @@ export async function collectAppItems(
       href: t.parentType && t.parentId ? `${ITEM_ROUTE[t.parentType]}/${t.parentId}` : TASKS_ROUTE,
       done: t.doneAt !== null,
       taskId: t.id,
+      ...(t.parentTitle ? { parent: t.parentTitle } : {}),
     });
   }
   for (const p of projectRows) {

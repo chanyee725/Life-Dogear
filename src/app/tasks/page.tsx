@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CalendarView } from "@/components/calendar/CalendarView";
-import { gridRange, parseCalendarQuery, seoulDate } from "@/components/calendar/model";
+import { fetchRange, parseCalendarQuery, seoulDate } from "@/components/calendar/model";
 import { SegmentedLinks } from "@/components/calendar/Segmented";
 import { LinkTabs } from "@/components/list/Tabs";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
@@ -12,6 +12,7 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { areas, goals, projects, tasks } from "@/lib/repo";
+import { describeError } from "@/lib/storage/describe-error";
 import type { Task, TaskParentType } from "@/lib/repo/tasks";
 
 export const metadata: Metadata = { title: "할 일" };
@@ -58,20 +59,23 @@ function ViewSwitch({ view }: { view: "list" | "calendar" }) {
   );
 }
 
-/** Calendar view: one `getCalendar` call for the visible grid (papers always fetched; "표시" filters). */
+/**
+ * Calendar view: one `getCalendar` call from the grid's first day up to the 93-day limit, so the
+ * today panel's "다음 일정" can look past the grid (papers always fetched; "표시" filters).
+ */
 async function CalendarPage({ params }: { params: Record<string, string | string[] | undefined> }) {
   const today = seoulDate();
   const q = parseCalendarQuery(params, today);
   let data: CalendarResult = { items: [], google: "off" };
   let failed = false;
   try {
-    data = await getCalendar(gridRange(q.range, q.date), { papers: true });
+    data = await getCalendar(fetchRange(q.range, q.date), { papers: true });
   } catch (error) {
-    console.error("calendar: app data failed", error instanceof Error ? error.name : "unknown");
+    console.error("calendar: app data failed", describeError(error));
     failed = true;
   }
   return (
-    <Page>
+    <Page className="max-w-7xl">
       <PageHeader title="할 일" className="mb-0" actions={<ViewSwitch view="calendar" />} />
       <CalendarView
         range={q.range}
@@ -80,6 +84,8 @@ async function CalendarPage({ params }: { params: Record<string, string | string
         items={data.items}
         google={data.google}
         failed={failed}
+        day={q.day}
+        now={new Date().toISOString()}
       />
     </Page>
   );

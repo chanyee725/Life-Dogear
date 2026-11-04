@@ -62,13 +62,17 @@ export function addMonths(date: string, n: number): string {
   return first.toISOString().slice(0, 10);
 }
 
-export type CalendarRangeKind = "month" | "week";
+/** `2w`: two weeks from the anchor's Monday (default view); `month`: whole weeks of the month. */
+export type CalendarRangeKind = "2w" | "month";
 
-/** The days a view shows: whole weeks covering the month, or one week. */
+/** Days a 2-week page shows. */
+export const TWO_WEEKS = 14;
+
+/** The days a view shows: whole weeks covering the month, or two weeks from Monday. */
 export function gridWeeks(kind: CalendarRangeKind, date: string): string[][] {
-  if (kind === "week") {
+  if (kind === "2w") {
     const from = startOfWeek(date);
-    return [Array.from({ length: 7 }, (_, i) => addDays(from, i))];
+    return [0, 7].map((o) => Array.from({ length: 7 }, (_, i) => addDays(from, o + i)));
   }
   const first = `${date.slice(0, 7)}-01`;
   const last = addDays(addMonths(first, 1), -1);
@@ -79,6 +83,20 @@ export function gridWeeks(kind: CalendarRangeKind, date: string): string[][] {
   return weeks;
 }
 
+/** Monday..Sunday of the week holding `date` (home strip). */
+export const weekDays = (date: string) =>
+  Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
+
+/**
+ * Range the calendar page loads: from the grid's first day as far as one request may go
+ * (`MAX_RANGE_DAYS` = 93), so the today panel can look ahead past the grid without a second call.
+ */
+export function fetchRange(kind: CalendarRangeKind, date: string): { from: string; to: string } {
+  const from = gridRange(kind, date).from;
+  return { from, to: addDays(from, FETCH_DAYS - 1) };
+}
+export const FETCH_DAYS = 93;
+
 export function gridRange(kind: CalendarRangeKind, date: string): { from: string; to: string } {
   const weeks = gridWeeks(kind, date);
   return { from: weeks[0]![0]!, to: weeks.at(-1)![6]! };
@@ -86,13 +104,13 @@ export function gridRange(kind: CalendarRangeKind, date: string): { from: string
 
 /** Date of the previous/next page (`dir` = -1 or 1). */
 export const stepDate = (kind: CalendarRangeKind, date: string, dir: -1 | 1) =>
-  kind === "week" ? addDays(date, 7 * dir) : addMonths(date, dir);
+  kind === "2w" ? addDays(date, TWO_WEEKS * dir) : addMonths(date, dir);
 
-/** Heading: `2026년 11월`, or for a week `11월 2일 – 8일` / `10월 26일 – 11월 1일`. */
+/** Heading: `2026년 11월`, or for two weeks `11월 2일 – 15일` / `10월 26일 – 11월 8일`. */
 export function rangeTitle(kind: CalendarRangeKind, date: string): string {
   const [y, m] = date.split("-").map(Number);
   if (kind === "month") return `${y}년 ${m}월`;
-  const { from, to } = gridRange("week", date);
+  const { from, to } = gridRange(kind, date);
   const [, fm, fd] = from.split("-").map(Number);
   const [, tm, td] = to.split("-").map(Number);
   return fm === tm ? `${fm}월 ${fd}일 – ${td}일` : `${fm}월 ${fd}일 – ${tm}월 ${td}일`;
@@ -100,7 +118,7 @@ export function rangeTitle(kind: CalendarRangeKind, date: string): string {
 
 /** Days the page is "about": the month (1st..last) or the week; period-line test uses it. */
 export function visibleSpan(kind: CalendarRangeKind, date: string): { from: string; to: string } {
-  if (kind === "week") return gridRange("week", date);
+  if (kind === "2w") return gridRange("2w", date);
   const from = `${date.slice(0, 7)}-01`;
   return { from, to: addDays(addMonths(from, 1), -1) };
 }
@@ -124,27 +142,36 @@ export type CalendarQuery = {
   range: CalendarRangeKind;
   /** Anchor date (defaults to today). */
   date: string;
+  /** Day the today panel is about (defaults to today). */
+  day: string;
 };
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
+/** Old `range=week` links (and anything unknown) open the 2-week view. */
 export function parseCalendarQuery(
   params: Record<string, string | string[] | undefined>,
   today: string,
 ): CalendarQuery {
   const date = one(params.date);
+  const day = one(params.day);
   return {
     view: one(params.view) === "calendar" ? "calendar" : "list",
-    range: one(params.range) === "week" ? "week" : "month",
+    range: one(params.range) === "month" ? "month" : "2w",
     date: isDate(date) ? date : today,
+    day: isDate(day) ? day : today,
   };
 }
 
-/** URL of a calendar page; defaults are left out (`range=month`, today). */
-export function calendarHref(q: { range?: CalendarRangeKind; date?: string }, today?: string) {
+/** URL of a calendar page; defaults are left out (`range=2w`, today). */
+export function calendarHref(
+  q: { range?: CalendarRangeKind; date?: string; day?: string },
+  today?: string,
+) {
   const sp = new URLSearchParams({ view: "calendar" });
-  if (q.range === "week") sp.set("range", "week");
+  if (q.range === "month") sp.set("range", "month");
   if (q.date && q.date !== today) sp.set("date", q.date);
+  if (q.day && q.day !== today) sp.set("day", q.day);
   return `/tasks?${sp}`;
 }
 
@@ -224,6 +251,8 @@ export function splitPeriodLine(
 export const MAX_LANES = 2;
 /** Month cell line budget (bars + items) before "+n" (3.2). */
 export const MONTH_LINES = 3;
+/** 2-week cell line budget (13.2: five lines, else four + "+n"). */
+export const TWO_WEEK_LINES = 5;
 
 export type WeekBar = {
   item: CalendarItem;
@@ -350,9 +379,9 @@ export function navDay(kind: CalendarRangeKind, day: string, key: string): strin
     case "ArrowRight":
       return addDays(day, 1);
     case "ArrowUp":
-      return kind === "week" ? day : addDays(day, -7);
+      return addDays(day, -7);
     case "ArrowDown":
-      return kind === "week" ? day : addDays(day, 7);
+      return addDays(day, 7);
     case "Home":
       return startOfWeek(day);
     case "End":
