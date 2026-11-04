@@ -44,6 +44,7 @@ describe("GET /api/calendar", () => {
     expect(await res.json()).toEqual({
       items: [expect.objectContaining({ id: "google:e1:2026-11-05", source: "google" })],
       google: "ok",
+      googleWrite: false,
     });
   });
 

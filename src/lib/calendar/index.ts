@@ -2,6 +2,7 @@ import "server-only";
 import { RepoError } from "@/lib/repo/shared";
 import { collectAppItems } from "./collect";
 import { MAX_RANGE_DAYS, parseRange } from "./dates";
+import { googleWriteEnabled } from "./google-write";
 import { loadGoogleItems } from "./ics";
 import { describeError } from "@/lib/storage/describe-error";
 import type { CalendarItem, CalendarOptions, CalendarRange, CalendarResult } from "./types";
@@ -36,5 +37,9 @@ export async function getCalendar(
       return { items: [], status: "error" as const };
     }),
   ]);
-  return { items: [...app, ...google.items].sort(compare), google: google.status };
+  return {
+    items: [...app, ...google.items].sort(compare),
+    google: google.status,
+    googleWrite: googleWriteEnabled(),
+  };
 }
