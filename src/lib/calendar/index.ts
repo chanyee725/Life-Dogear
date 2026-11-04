@@ -3,6 +3,7 @@ import { RepoError } from "@/lib/repo/shared";
 import { collectAppItems } from "./collect";
 import { MAX_RANGE_DAYS, parseRange } from "./dates";
 import { loadGoogleItems } from "./ics";
+import { describeError } from "@/lib/storage/describe-error";
 import type { CalendarItem, CalendarOptions, CalendarRange, CalendarResult } from "./types";
 
 export type * from "./types";
@@ -28,6 +29,12 @@ export async function getCalendar(
   if (!valid) {
     throw new RepoError("invalid", `날짜 범위가 올바르지 않습니다(최대 ${MAX_RANGE_DAYS}일).`);
   }
-  const [app, google] = await Promise.all([collectAppItems(valid, opts), loadGoogleItems(valid)]);
+  const [app, google] = await Promise.all([
+    collectAppItems(valid, opts),
+    loadGoogleItems(valid).catch((error: unknown) => {
+      console.warn("[calendar] Google calendar failed:", describeError(error));
+      return { items: [], status: "error" as const };
+    }),
+  ]);
   return { items: [...app, ...google.items].sort(compare), google: google.status };
 }
