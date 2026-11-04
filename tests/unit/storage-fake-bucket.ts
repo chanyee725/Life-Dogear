@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { vi } from "vitest";
 import { S3BlobStore, type S3Config } from "@/lib/storage/blob";
 
@@ -26,6 +27,8 @@ export function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
     ]),
   );
   const types = new Map<string, string>();
+  /** ETag of an object: its bytes, so any change gives a new tag. */
+  const etagOf = (data: Uint8Array) => `"${createHash("md5").update(data).digest("hex")}"`;
   const requests: Request[] = [];
   let ignoreRange = false;
   const fetchImpl = vi.fn(async (request: Request) => {
@@ -56,6 +59,8 @@ export function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
         if (source) {
           const from = objects.get(source.slice(prefix.length));
           if (!from) return new Response("<Error><Code>NoSuchKey</Code></Error>", { status: 404 });
+          const ifMatch = request.headers.get("x-amz-copy-source-if-match");
+          if (ifMatch && ifMatch !== etagOf(from)) return new Response(null, { status: 412 });
           objects.set(key, from);
           types.set(key, request.headers.get("content-type") ?? "");
           return new Response("<CopyObjectResult><ETag>x</ETag></CopyObjectResult>");
@@ -74,10 +79,13 @@ export function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
           headers: {
             "content-length": String(data.length),
             "last-modified": "Sun, 01 Nov 2026 00:00:00 GMT",
+            etag: etagOf(data),
           },
         });
       case "GET": {
         if (!data) return new Response("<Error><Code>NoSuchKey</Code></Error>", { status: 404 });
+        const ifMatch = request.headers.get("if-match");
+        if (ifMatch && ifMatch !== etagOf(data)) return new Response(null, { status: 412 });
         const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
         if (range && !ignoreRange) {
           const n = data.length;

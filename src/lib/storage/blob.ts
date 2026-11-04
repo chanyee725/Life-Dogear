@@ -18,7 +18,12 @@ import { rangeHeader, resolveRange, type ByteRange, type RangeSpec } from "./ran
  * through short-lived presigned URLs ({@link S3BlobStore.presign}); credentials stay on the
  * server.
  */
-export type BlobInfo = { size: number; lastModified: Date | null };
+export type BlobInfo = {
+  size: number;
+  lastModified: Date | null;
+  /** Bucket entity tag (s3 HEAD only), to pin later reads and copies to this version. */
+  etag?: string;
+};
 export type BlobEntry = BlobInfo & { key: string };
 export type BlobRead = {
   /** Whole file size; null when the bucket did not say. */
@@ -105,6 +110,8 @@ export class LocalBlobStore implements BlobStore {
   }
   path(key: string): string {
     assertKey(key);
+    // Temporary upload objects exist only in the bucket.
+    if (isPendingKey(key)) throw new BlobStoreError("invalid_key");
     return join(this.dir(), key);
   }
 
@@ -152,6 +159,7 @@ export class LocalBlobStore implements BlobStore {
 
   async list(prefix: string): Promise<BlobEntry[]> {
     assertPrefix(prefix);
+    if (prefix === "pending/") return [];
     const dir = join(this.dir(), prefix);
     let names: string[];
     try {
@@ -297,17 +305,24 @@ export class S3BlobStore implements BlobStore {
     return signed.url;
   }
 
-  /** Server-side copy inside the bucket (no bytes pass through this server). */
-  async copy(from: string, to: string, contentType: string): Promise<void> {
+  /**
+   * Server-side copy inside the bucket (no bytes pass through this server). `ifMatch` makes
+   * the bucket refuse (412) when the source changed since it was checked.
+   */
+  async copy(
+    from: string,
+    to: string,
+    contentType: string,
+    options: { ifMatch?: string } = {},
+  ): Promise<void> {
     assertKey(from);
-    const response = await this.send(this.url(to), {
-      method: "PUT",
-      headers: {
-        "x-amz-copy-source": `/${this.bucket}/${from}`,
-        "x-amz-metadata-directive": "REPLACE",
-        "Content-Type": contentType,
-      },
-    });
+    const headers: Record<string, string> = {
+      "x-amz-copy-source": `/${this.bucket}/${from}`,
+      "x-amz-metadata-directive": "REPLACE",
+      "Content-Type": contentType,
+    };
+    if (options.ifMatch) headers["x-amz-copy-source-if-match"] = options.ifMatch;
+    const response = await this.send(this.url(to), { method: "PUT", headers });
     if (!response.ok) this.fail(response, "copy");
     // CopyObject can answer 200 with an error document.
     if ((await response.text()).includes("<Error>")) throw new BlobStoreError("s3_copy_error");
@@ -339,12 +354,19 @@ export class S3BlobStore implements BlobStore {
     return {
       size: Number(response.headers.get("content-length") ?? 0),
       lastModified: parseDate(response.headers.get("last-modified")),
+      ...(response.headers.get("etag") ? { etag: response.headers.get("etag")! } : {}),
     };
   }
 
-  async get(key: string, spec?: RangeSpec): Promise<BlobRead | BlobUnsatisfiable | null> {
+  /** `ifMatch`: the bucket answers 412 (thrown) when the object is no longer that version. */
+  async get(
+    key: string,
+    spec?: RangeSpec,
+    options: { ifMatch?: string } = {},
+  ): Promise<BlobRead | BlobUnsatisfiable | null> {
     const headers: Record<string, string> = {};
     if (spec) headers.Range = rangeHeader(spec);
+    if (options.ifMatch) headers["If-Match"] = options.ifMatch;
     const response = await this.send(this.url(key), { method: "GET", headers });
     if (response.status === 404) {
       void response.body?.cancel();
@@ -462,9 +484,11 @@ export class FallbackBlobStore implements BlobStore {
     return this.remote.put(key, bytes, contentType);
   }
   head(key: string) {
+    if (isPendingKey(key)) return this.remote.head(key);
     return this.read((store) => store.head(key));
   }
   get(key: string, range?: RangeSpec) {
+    if (isPendingKey(key)) return this.remote.get(key, range);
     return this.read((store) => store.get(key, range));
   }
 
@@ -482,6 +506,7 @@ export class FallbackBlobStore implements BlobStore {
     return remote ?? (await op(this.local));
   }
   async delete(key: string) {
+    if (isPendingKey(key)) return this.remote.delete(key);
     const [remote, local] = await Promise.all([this.remote.delete(key), this.local.delete(key)]);
     return remote || local;
   }

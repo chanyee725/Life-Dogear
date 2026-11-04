@@ -190,7 +190,7 @@ describe("FallbackBlobStore", () => {
   });
 });
 
-describe("routes proxy the bucket", () => {
+describe("routes redirect to the bucket", () => {
   const cwd = process.cwd();
   const saved = { ...process.env };
   let root = "";
@@ -216,13 +216,34 @@ describe("routes proxy the bucket", () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it("serves a photo from the bucket, then from the local fallback", async () => {
+  it("redirects to a presigned photo URL, then serves the local fallback", async () => {
     bucket.objects.set(`images/${IMG}`, PNG);
     const get = (name: string) =>
       imageRoute.GET(new Request(`http://localhost:3000/api/images/${name}`), {
         params: Promise.resolve({ name }),
       });
+    const redirect = await get(IMG);
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("cache-control")).toBe("private, max-age=240");
+    const location = new URL(redirect.headers.get("location")!);
+    expect(`${location.origin}${location.pathname}`).toBe(
+      `${CONFIG.endpoint}/${CONFIG.bucket}/images/${IMG}`,
+    );
+    expect(location.searchParams.get("X-Amz-Expires")).toBe("300");
+    expect(location.searchParams.get("response-content-type")).toBe("image/png");
+    expect(location.searchParams.get("response-cache-control")).toBe(
+      "private, max-age=31536000, immutable",
+    );
+    expect(redirect.headers.get("location")).not.toContain(CONFIG.secretAccessKey);
+
+    // When the bucket check fails, the route serves the bytes itself.
+    vi.stubGlobal("fetch", (request: Request) =>
+      request.method === "HEAD"
+        ? Promise.resolve(new Response(null, { status: 500 }))
+        : bucket.fetchImpl(request),
+    );
     const response = await get(IMG);
+    vi.stubGlobal("fetch", bucket.fetchImpl);
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
     expect(response.headers.get("content-length")).toBe(String(PNG.length));
@@ -256,6 +277,25 @@ describe("routes proxy the bucket", () => {
     await expect(readFile(join(root, "data/pdfs", `${id}.pdf`))).rejects.toThrow();
 
     bucket.requests.length = 0;
+    const redirect = await pdfRoute.GET(
+      new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=0-4" } }),
+      ctx,
+    );
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("cache-control")).toBe("private, no-store");
+    const location = new URL(redirect.headers.get("location")!);
+    expect(location.pathname).toBe(`/${CONFIG.bucket}/pdfs/${id}.pdf`);
+    expect(location.searchParams.get("response-content-type")).toBe("application/pdf");
+    expect(location.searchParams.get("response-content-disposition")).toBe("inline");
+    expect(bucket.requests.map((r) => r.method)).toEqual(["HEAD"]);
+
+    // Without a usable bucket check (e.g. HEAD fails) the route proxies ranges as before.
+    vi.stubGlobal("fetch", (request: Request) =>
+      request.method === "HEAD"
+        ? Promise.resolve(new Response(null, { status: 500 }))
+        : bucket.fetchImpl(request),
+    );
+    bucket.requests.length = 0;
     const part = await pdfRoute.GET(
       new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=0-4" } }),
       ctx,
@@ -263,7 +303,7 @@ describe("routes proxy the bucket", () => {
     expect(part.status).toBe(206);
     expect(part.headers.get("content-range")).toBe("bytes 0-4/15");
     expect(await part.text()).toBe("%PDF-");
-    // One ranged GET, no HEAD.
+    // One ranged GET (the failing HEAD never reached the fake bucket).
     expect(bucket.requests.map((r) => [r.method, r.headers.get("range")])).toEqual([
       ["GET", "bytes=0-4"],
     ]);
@@ -288,6 +328,7 @@ describe("routes proxy the bucket", () => {
     );
     expect(full.headers.get("content-length")).toBe("15");
     expect(await full.text()).toBe("%PDF-1.7 abcdef");
+    vi.stubGlobal("fetch", bucket.fetchImpl);
 
     const removed = await pdfRoute.DELETE(new NextRequest(url, { method: "DELETE", headers }), ctx);
     expect(removed.status).toBe(204);
