@@ -2,7 +2,6 @@ import { ActiveGeneralProjects, ActiveResearch } from "@/components/dashboard/Ac
 import { ContinueReading } from "@/components/dashboard/ContinueReading";
 import { InboxLine } from "@/components/dashboard/InboxLine";
 import { QuarterGoals } from "@/components/dashboard/QuarterGoals";
-import { QuickInput } from "@/components/dashboard/QuickInput";
 import { RecentSeminars, RecentThoughts } from "@/components/dashboard/RecentLists";
 import { RevisitStars } from "@/components/dashboard/RevisitStars";
 import {
@@ -11,7 +10,6 @@ import {
   restOfWeek,
   revisitStars,
   seoulToday,
-  todayHeading,
 } from "@/components/dashboard/today";
 import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
 import { HomeCalendarSection } from "@/components/dashboard/HomeCalendarSection";
@@ -70,13 +68,12 @@ export default async function HomePage() {
 
   return (
     <Page className="flex max-w-6xl flex-col gap-10">
-      <h1 className="text-base font-semibold tracking-tight">{todayHeading(today)}</h1>
-      <div className="flex flex-col gap-1">
-        <QuickInput />
+      {/* No date heading: the today panel already shows the day large. */}
+      <h1 className="sr-only">홈</h1>
+      <HomeCalendarSection today={today}>
         <InboxLine count={inboxCount} />
         <WeeklyReviewLine period={reviewDue} today={day} />
-      </div>
-      <HomeCalendarSection today={today} />
+      </HomeCalendarSection>
       <TodayTasks overdue={todayTasks.overdue} dueToday={todayTasks.today} today={today} />
       <WeekTasks tasks={weekTasks} today={today} />
       {quarter.length || stars.length ? (

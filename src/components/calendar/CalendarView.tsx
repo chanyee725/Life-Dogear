@@ -85,6 +85,8 @@ export type CalendarViewProps = {
   forceNarrow?: boolean;
   /** Mirror range/date/day into the address bar (the 할 일 page). Off when embedded (home). */
   syncUrl?: boolean;
+  /** Told the selected day whenever it changes (home: the 할 일 추가 input's due date). */
+  onSelectDay?: (day: string) => void;
 };
 
 type Pop =
@@ -130,6 +132,7 @@ export function CalendarView({
   now,
   forceNarrow = false,
   syncUrl = true,
+  onSelectDay,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
@@ -172,6 +175,10 @@ export function CalendarView({
     if (`${window.location.pathname}${window.location.search}` !== href)
       window.history.replaceState(window.history.state, "", href);
   }, [range, date, selected, today, syncUrl]);
+
+  useEffect(() => {
+    onSelectDay?.(selected);
+  }, [selected, onSelectDay]);
 
   const [pop, setPop] = useState<Pop | null>(null);
   const [error, setError] = useState<string | null>(null);
