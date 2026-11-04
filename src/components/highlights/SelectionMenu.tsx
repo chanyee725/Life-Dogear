@@ -101,11 +101,10 @@ export function SelectionMenu({
             rows={3}
             value={note}
             maxLength={MAX_HIGHLIGHT_NOTE}
-            placeholder="메모를 적고 색을 눌러 저장하세요."
+            placeholder="메모"
             onChange={(e) => setNote(e.target.value)}
             autoFocus
           />
-          <p className="text-xs text-faint">색을 누르면 메모와 함께 저장됩니다.</p>
         </>
       ) : null}
       {saving ? <p className="text-xs text-faint">저장 중…</p> : null}

@@ -39,15 +39,7 @@ export function HighlightPanel({
   if (!highlights.length) {
     return (
       <div className={className}>
-        <EmptyState
-          title="하이라이트가 없습니다"
-          description={
-            // Keep Korean words whole in the narrow side panel.
-            <span className="break-keep">
-              PDF에서 텍스트를 드래그하면 색을 골라 하이라이트와 메모를 남길 수 있어요.
-            </span>
-          }
-        />
+        <EmptyState title="하이라이트가 없습니다" />
       </div>
     );
   }
