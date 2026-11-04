@@ -10,6 +10,7 @@ import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
 import { formatDue, localDate } from "@/components/tasks/format";
 import { fetchPreview } from "./api";
 import type { GraphTheme } from "./graph-theme";
+import type { IconPaint } from "./ShapeIcon";
 import { goalLabel, GRAPH_TYPE_LABEL, nodeHref } from "./model";
 import type { NodePreview } from "./preview-types";
 import { ShapeIcon } from "./ShapeIcon";
@@ -71,6 +72,7 @@ export function GraphPreview({
   node,
   neighbors,
   theme,
+  iconPaint,
   mock,
   onClose,
   onSelect,
@@ -79,6 +81,8 @@ export function GraphPreview({
   node: GraphNode;
   neighbors: readonly GraphNode[];
   theme: GraphTheme;
+  /** Basic graph: shape icons in the current node colors (1.4). Absent → legacy colors. */
+  iconPaint?: IconPaint;
   mock: boolean;
   onClose: () => void;
   onSelect: (id: GraphNodeId) => void;
@@ -226,7 +230,14 @@ export function GraphPreview({
                   onClick={() => onSelect(n.id)}
                   className="flex h-8 w-full items-center gap-2 rounded-md px-1.5 text-left text-[13px] text-fg hover:bg-hover"
                 >
-                  <ShapeIcon type={n.type} horizon={n.horizon} theme={theme} className="shrink-0" />
+                  <ShapeIcon
+                    type={n.type}
+                    horizon={n.horizon}
+                    theme={theme}
+                    color={iconPaint?.color(n)}
+                    quarterFill={iconPaint?.quarterFill}
+                    className="shrink-0"
+                  />
                   <span className="min-w-0 flex-1 truncate">{n.title}</span>
                 </button>
               </li>

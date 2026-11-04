@@ -20,16 +20,26 @@ import { Spinner } from "@/components/ui/Spinner";
 import { constellationPath } from "@/lib/cosmos/path";
 import { withStar } from "@/lib/cosmos/star-patch";
 import type { CosmosResponse } from "@/lib/cosmos/types";
+import {
+  assignAreaSlots,
+  DEFAULT_GRAPH_COLOR_BY,
+  GRAPH_COLOR_BY_STORAGE_KEY,
+  type GraphColorBy,
+  isGraphColorBy,
+} from "@/lib/graph/color";
 import type { GraphFilter, GraphNode, GraphNodeId, GraphPosition } from "@/lib/graph/types";
 import { fetchCosmos, fetchGraph, type GraphLoad, resetLayout, saveLayout, setStar } from "./api";
+import { AreaLegend } from "./AreaLegend";
 import { CosmosPanel, useCosmosPanelCollapsed } from "./CosmosPanel";
 import { freeArea } from "./cosmos-model";
+import { nodeColor, quarterGoalFill } from "./draw";
 import { createLayoutSaver } from "./layout-saver";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { CosmosCanvasLazy, GraphCanvasLazy } from "./GraphCanvasLazy";
 import { type FilterOptions, GraphFilterControls } from "./GraphFilterBar";
 import { GraphPreview } from "./GraphPreview";
 import { GraphSearch } from "./GraphSearch";
+import type { IconPaint } from "./ShapeIcon";
 import { COSMOS_THEME, useGraphTheme, useReducedMotion } from "./graph-theme";
 import {
   activeFilterCount,
@@ -96,6 +106,13 @@ export default function GraphView({ options }: { options: FilterOptions }) {
         : "basic"),
   );
   const cosmosMode = graphMode === "cosmos";
+  // Basic graph color basis (design 1.3): URL, else the last choice.
+  const [colorBy, setColorBy] = useState<GraphColorBy>(() => {
+    if (initial.color) return initial.color;
+    const saved =
+      typeof window === "undefined" ? null : localStorage.getItem(GRAPH_COLOR_BY_STORAGE_KEY);
+    return isGraphColorBy(saved) ? saved : DEFAULT_GRAPH_COLOR_BY;
+  });
   const [externalHover, setExternalHover] = useState<GraphNodeId | null>(null);
   const [starBusy, setStarBusy] = useState(false);
   const panRef = useRef({ x: 0, y: 0 });
@@ -160,7 +177,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   // URL mirrors filter/view/selection (refresh and share keep the view).
   useEffect(() => {
     const params = new URLSearchParams(
-      pageQuery({ filter, view, focus: selectedId, mode: graphMode }),
+      pageQuery({ filter, view, focus: selectedId, mode: graphMode, color: colorBy }),
     );
     // Keep the performance-check mock (`?mock=<n>`) across filter changes.
     const mock = new URLSearchParams(window.location.search).get("mock");
@@ -171,7 +188,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       "",
       `${window.location.pathname}${q ? `?${q}` : ""}`,
     );
-  }, [filter, view, selectedId, graphMode]);
+  }, [filter, view, selectedId, graphMode, colorBy]);
 
   const data = load.status === "ready" ? load.data : null;
   // The canvas switches only once data of the matching kind has arrived.
@@ -182,6 +199,36 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const columns = useMemo(() => paraColumns(shownTypes(filter)), [filter]);
   const large = nodes.length > LARGE_GRAPH;
   const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
+
+  // ----- Node colors (design 1.2–1.4; basic graph only — the cosmos view has its own) -----
+  const areaColoring = !cosmosMode && colorBy === "area";
+  const areaSlots = useMemo(
+    () => (areaColoring && data ? assignAreaSlots(data.nodes, data.edges, data.areaOrder) : null),
+    [areaColoring, data],
+  );
+  const iconPaint = useMemo<IconPaint | undefined>(
+    () =>
+      cosmosMode
+        ? undefined
+        : {
+            color: (n) =>
+              nodeColor(n.type, colorBy, areaSlots?.slot.get(n.id as GraphNodeId), theme),
+            quarterFill: quarterGoalFill(colorBy, theme),
+          },
+    [cosmosMode, colorBy, areaSlots, theme],
+  );
+  const legendAreas = useMemo(() => {
+    if (!areaSlots) return [];
+    const titles = new Map(options.areas.map((a) => [a.id, a.title]));
+    return areaSlots.areas.map((id) => ({
+      id,
+      title: byId.get(`area:${id}`)?.title ?? titles.get(id) ?? "보관된 영역",
+    }));
+  }, [areaSlots, options.areas, byId]);
+  const legendNeutral = useMemo(
+    () => !!areaSlots && [...areaSlots.slot.values()].some((v) => v === null),
+    [areaSlots],
+  );
 
   // Drop a selection that the new data no longer has.
   useEffect(() => {
@@ -230,6 +277,13 @@ export default function GraphView({ options }: { options: FilterOptions }) {
     setGraphMode(next);
     localStorage.setItem(GRAPH_MODE_STORAGE_KEY, next);
     setAnnounce(next === "cosmos" ? "우주 보기" : "기본 보기");
+  }
+
+  function changeColorBy(next: GraphColorBy) {
+    if (next === colorBy) return;
+    setColorBy(next);
+    localStorage.setItem(GRAPH_COLOR_BY_STORAGE_KEY, next);
+    setAnnounce(next === "area" ? "색: 영역" : "색: 종류");
   }
 
   async function confirmReset() {
@@ -676,6 +730,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
               onChange={setFilter}
               options={options}
               theme={theme}
+              colorBy={cosmosMode ? undefined : colorBy}
+              onColorByChange={changeColorBy}
               stacked
             />
           </div>
@@ -693,6 +749,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
             onChange={setFilter}
             options={options}
             theme={theme}
+            colorBy={cosmosMode ? undefined : colorBy}
+            onColorByChange={changeColorBy}
             compact={compactFilters}
           />
         </div>
@@ -767,6 +825,8 @@ export default function GraphView({ options }: { options: FilterOptions }) {
             <GraphCanvasLazy
               data={data}
               theme={theme}
+              colorBy={colorBy}
+              areaSlots={areaSlots?.slot}
               reducedMotion={reducedMotion}
               width={canvasSize.width}
               height={canvasSize.height}
@@ -821,6 +881,15 @@ export default function GraphView({ options }: { options: FilterOptions }) {
 
         {nodes.length > 0 ? (
           <>
+            {areaSlots ? (
+              <AreaLegend
+                areas={legendAreas}
+                hasNeutral={legendNeutral}
+                activeArea={filter.area}
+                theme={theme}
+                onPick={(area) => setFilter((f) => ({ ...f, area }))}
+              />
+            ) : null}
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -897,6 +966,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
             node={selected}
             neighbors={neighborNodes}
             theme={theme}
+            iconPaint={iconPaint}
             mock={!!data?.mock}
             onClose={() => setSelectedId(null)}
             onSelect={(id) => {
@@ -932,6 +1002,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           <GraphSearch
             nodes={nodes}
             theme={theme}
+            iconPaint={iconPaint}
             onClose={() => setSearchOpen(false)}
             onPick={(node) => {
               setSearchOpen(false);
