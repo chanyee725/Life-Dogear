@@ -141,7 +141,7 @@ PC에 있던 노트를 옮기려면 로컬 DB 대신 Turso를 쓰도록 `.env`�
    | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | 1절 5번 |
    | `ALLOWED_EMAILS` | 1절 7번 |
    | `DATABASE_URL` / `DATABASE_AUTH_TOKEN` | 3절 |
-   | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | R2 절 |
+   | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | 2절 |
    | `ALLOWED_HOSTS` | `<프로젝트>.vercel.app` |
 
    - `ALLOWED_HOSTS`가 없으면 Host 검사에서 403 "허용되지 않은 주소입니다"가 나옵니다. 미리보기(Preview) 배포 주소는 일부러 넣지 않습니다(그 주소로는 열리지 않음).
