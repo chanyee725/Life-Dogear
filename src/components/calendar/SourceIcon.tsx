@@ -4,9 +4,14 @@ import { ShapeIcon } from "@/components/graph/ShapeIcon";
 import type { GraphTheme } from "@/components/graph/graph-theme";
 import type { CalendarSource } from "@/lib/calendar/types";
 
-/** Source color (calendar.md 2절): graph kind colors, Google = `neutral`. */
+/** Source color: graph kind colors; Google events in Google blue. */
+export const GOOGLE_BLUE = { light: "#1a73e8", dark: "#8ab4f8" };
 export const sourceColor = (theme: GraphTheme, source: CalendarSource) =>
-  source === "google" ? theme.neutral : theme.kind[source];
+  source === "google" ? (theme.dark ? GOOGLE_BLUE.dark : GOOGLE_BLUE.light) : theme.kind[source];
+
+/** Soft tint of a source color for chip and row backgrounds. */
+export const sourceTint = (theme: GraphTheme, source: CalendarSource, pct = 14) =>
+  `color-mix(in oklch, ${sourceColor(theme, source)} ${pct}%, transparent)`;
 
 /**
  * 10×10 source icon (aria-hidden; labels carry the meaning): the graph shapes, a filled
