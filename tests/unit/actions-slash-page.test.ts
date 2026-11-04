@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { createSlashPage } from "@/app/_actions/slash-page";
-import { areas, links, notes, projects } from "@/lib/repo";
+import { areas, links, notes, papers, projects } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 beforeEach(async () => {
@@ -26,13 +26,28 @@ describe("createSlashPage", () => {
     expect(child.ok).toBe(true);
   });
 
-  it("files the note under an area instead of linking", async () => {
+  it("files the note under an area and links it", async () => {
     const area = await areas.create({ title: "건강" });
     const A = { type: "area" as const, id: area.id };
     const res = await createSlashPage("운동 기록", A);
-    const id = res.ok ? res.data.ref.id : "";
-    expect((await notes.get(id))?.areaId).toBe(area.id);
-    expect(await links.listConnected(A)).toEqual([]);
+    const ref = res.ok ? res.data.ref : null;
+    expect((await notes.get(ref!.id))?.areaId).toBe(area.id);
+    expect((await links.listConnected(A)).map((s) => s.ref)).toEqual([ref]);
+  });
+
+  it("links an item that already has the title instead of creating one", async () => {
+    const project = await projects.create({ title: "프로젝트" });
+    const P = { type: "project" as const, id: project.id };
+    const paper = await papers.create({ title: "Attention Is All You Need" });
+    const res = await createSlashPage("attention  is all you need", P);
+    expect(res).toMatchObject({
+      ok: true,
+      data: { ref: { type: "paper", id: paper.id }, title: "Attention Is All You Need" },
+    });
+    expect((await links.listConnected(P)).map((s) => s.ref)).toEqual([
+      { type: "paper", id: paper.id },
+    ]);
+    expect((await notes.list()).length).toBe(0);
   });
 
   it("rejects an empty title or an unknown document", async () => {
