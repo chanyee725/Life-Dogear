@@ -22,9 +22,9 @@ test("빠른 입력: 빈 값 Enter는 아무것도 만들지 않는다", async (
 
 test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 바로 보인다", async ({ page }) => {
   const title = uniqueTitle("E2E home task");
-  const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(
-    Date.now() + 86_400_000,
-  );
+  const seoul = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
+  const today = seoul.format(Date.now());
+  const tomorrow = seoul.format(Date.now() + 86_400_000);
   await page.goto("/");
   const calendar = page.getByRole("region", { name: "달력" });
   await calendar.locator(`[data-cal-cell="${tomorrow}"]`).first().click();
@@ -38,6 +38,12 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
   await expect(page.getByText("마감으로 추가했습니다.")).toBeVisible();
   await expect(input).toHaveValue("");
   await expect(calendar.locator(`[data-cal-cell="${tomorrow}"]`).getByText(title)).toBeVisible();
+  // The saved line keeps the day it was saved for, even after picking another day.
+  const [, m, d] = tomorrow.split("-").map(Number);
+  await calendar.locator(`[data-cal-cell="${today}"]`).first().click();
+  await expect(input).toHaveAccessibleName(/할 일 추가.*마감/);
+  await expect(page.getByText(`${m}월 ${d}일 마감으로 추가했습니다.`)).toBeVisible();
+  await expect(page.getByText("오늘 마감으로 추가했습니다.")).toHaveCount(0);
   await page.reload();
   await expect(
     page
@@ -45,6 +51,17 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
       .locator(`[data-cal-cell="${tomorrow}"]`)
       .getByText(title),
   ).toBeVisible();
+});
+
+test("할 일 추가: 300자를 넘으면 자르지 않고 안내하며 저장하지 않는다", async ({ page }) => {
+  await page.goto("/");
+  const input = page.getByRole("textbox", { name: /^할 일 추가/ });
+  const long = "가".repeat(301);
+  await input.fill(long);
+  await expect(page.getByText("300자까지 쓸 수 있습니다.")).toBeVisible();
+  await input.press("Enter");
+  await expect(input).toHaveValue(long);
+  await expect(page.getByText("마감으로 추가했습니다.")).toHaveCount(0);
 });
 
 test("이어 읽기: 읽는 중 논문 2편과 진행률 표시", async ({ page }) => {

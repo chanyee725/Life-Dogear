@@ -8,7 +8,8 @@ import { safeAction } from "@/components/links/safe-action";
 import { QUICK_INPUT_ID } from "@/components/shell/shortcuts";
 import { cn, controlClass, Kbd } from "@/components/ui";
 
-type Saved = { ok: true } | { ok: false; error: string };
+/** `message`: what the status line says, fixed at save time (the due day may change later). */
+type Saved = { ok: true; message: string } | { ok: false; error: string };
 
 /**
  * One-line input that saves on Enter (empty → nothing, IME composing → ignored) and keeps
@@ -19,15 +20,17 @@ function EnterInput({
   label,
   placeholder,
   maxLength,
-  savedText,
+  overLimit,
   adornment,
   save,
 }: {
   id?: string;
   label: string;
   placeholder: string;
+  /** Hard cap on the input (`overLimit` unset) or the soft one past which it says so. */
   maxLength: number;
-  savedText: string;
+  /** Shown instead of cutting the text off silently, e.g. "300자까지 쓸 수 있습니다." */
+  overLimit?: string;
   /** Quiet hint at the right edge (the `/` key, the due day). */
   adornment?: ReactNode;
   save: (text: string) => Promise<Saved>;
@@ -35,18 +38,19 @@ function EnterInput({
   const statusId = useId();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const tooLong = overLimit !== undefined && value.trim().length > maxLength;
 
   function submit() {
     const text = value.trim();
-    if (!text || pending) return;
+    if (!text || pending || tooLong) return;
     setError(null);
     startTransition(async () => {
       const result = await save(text);
       if (result.ok) {
         setValue("");
-        setSaved(true);
+        setSaved(result.message);
       } else {
         setError(result.error);
       }
@@ -61,7 +65,7 @@ function EnterInput({
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
-            setSaved(false);
+            setSaved(null);
           }}
           onKeyDown={(e) => {
             // keyCode 229: Safari reports the IME-confirming Enter this way.
@@ -76,7 +80,8 @@ function EnterInput({
           aria-label={label}
           aria-describedby={statusId}
           placeholder={placeholder}
-          maxLength={maxLength}
+          maxLength={overLimit ? undefined : maxLength}
+          aria-invalid={tooLong || undefined}
           // readOnly (not disabled) keeps focus after Enter so the next entry can follow.
           readOnly={pending}
           aria-busy={pending || undefined}
@@ -91,9 +96,9 @@ function EnterInput({
       <p
         id={statusId}
         aria-live="polite"
-        className={cn("min-h-4 text-xs", error ? "text-danger" : "text-muted")}
+        className={cn("min-h-4 text-xs", error || tooLong ? "text-danger" : "text-muted")}
       >
-        {error ?? (pending ? "저장 중…" : saved ? savedText : "")}
+        {error ?? (tooLong ? overLimit : pending ? "저장 중…" : (saved ?? ""))}
       </p>
     </div>
   );
@@ -107,15 +112,17 @@ export function QuickInput() {
       label="생각 추가 (Enter로 수집함에 저장)"
       placeholder="생각 추가"
       maxLength={10_000}
-      savedText="생각으로 저장했습니다."
       adornment={<Kbd>/</Kbd>}
       save={async (text) => {
         const result = await safeAction(() => createQuickThought(text));
-        return result.ok ? { ok: true } : result;
+        return result.ok ? { ok: true, message: "생각으로 저장했습니다." } : result;
       }}
     />
   );
 }
+
+/** Same cap as the repo's task title (`TITLE_MAX`); not imported to keep it client-side. */
+const TASK_TITLE_MAX = 300;
 
 /** Day hint shown in the 할 일 추가 input: "오늘" or "11월 6일". */
 export function dueHint(day: string, today: string): string {
@@ -133,12 +140,12 @@ export function TaskQuickInput({ day, today }: { day: string; today: string }) {
       // Label avoids "생각" so it never reads as the thought input.
       label={`할 일 추가 (Enter로 ${shortDay(day)} 마감)`}
       placeholder="할 일 추가"
-      maxLength={300}
-      savedText={`${hint} 마감으로 추가했습니다.`}
+      maxLength={TASK_TITLE_MAX}
+      overLimit={`${TASK_TITLE_MAX}자까지 쓸 수 있습니다.`}
       adornment={<span className="text-xs text-muted tabular-nums">{hint}</span>}
       save={async (title) => {
         const result = await safeAction(() => createTask({ title, parent: null, dueDate: day }));
-        return result.ok ? { ok: true } : result;
+        return result.ok ? { ok: true, message: `${hint} 마감으로 추가했습니다.` } : result;
       }}
     />
   );
