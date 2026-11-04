@@ -25,3 +25,11 @@ export async function deleteCurrentItem(page: Page) {
 /** Shown when the delay cookie had no effect: the web server lacks `E2E_HOOKS=1`. */
 export const HOOKS_HINT =
   "달력 지연 쿠키가 먹지 않았다: 웹 서버가 E2E_HOOKS=1로 떴는지 확인 (playwright.config.ts의 webServer, 포트는 E2E_PORT로)";
+
+/** Opens the home 빠른 추가 popover (할 일 추가 over 생각 추가) and returns it. */
+export async function openQuickAdd(page: Page) {
+  await page.getByRole("button", { name: "빠른 추가" }).click();
+  const popover = page.getByRole("dialog", { name: "빠른 추가" });
+  await expect(popover).toBeVisible();
+  return popover;
+}
