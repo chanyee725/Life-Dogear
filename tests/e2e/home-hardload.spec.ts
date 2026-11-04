@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { HOOKS_HINT } from "./helpers";
 
 // Hard load of `/` while the home calendar is still loading (e2e-calendar-delay cookie, needs E2E_HOOKS).
 async function hardLoadSlow(page: Page, context: BrowserContext, baseURL: string) {
@@ -18,7 +19,7 @@ async function hardLoadSlow(page: Page, context: BrowserContext, baseURL: string
   }).toPass({ timeout: 4_000 });
   // Still loading: the calendar region is busy and says so.
   const loading = page.getByText("일정 불러오는 중…");
-  await expect(loading).toBeVisible();
+  await expect(loading, HOOKS_HINT).toBeVisible();
   return { thought, loading };
 }
 

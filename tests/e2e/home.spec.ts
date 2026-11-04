@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { uniqueTitle } from "./helpers";
+import { HOOKS_HINT, uniqueTitle } from "./helpers";
 
 test("빠른 입력: Enter → 최근 생각에 표시", async ({ page }) => {
   const text = uniqueTitle("E2E quick");
@@ -217,17 +217,16 @@ test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번
 test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
   page,
   context,
+  baseURL,
 }) => {
   await page.goto("/tasks");
-  await context.addCookies([
-    { name: "e2e-calendar-delay", value: "3000", url: "http://127.0.0.1:3000" },
-  ]);
+  await context.addCookies([{ name: "e2e-calendar-delay", value: "3000", url: baseURL! }]);
   await page.keyboard.press("/");
   const input = page.getByRole("textbox", { name: /생각 추가/ });
   await expect(input).toBeFocused();
   // Still loading: the block is busy and says so; the input works meanwhile.
   const calendar = page.getByRole("region", { name: "달력" });
-  await expect(calendar).toHaveAttribute("aria-busy", "true");
+  await expect(calendar, HOOKS_HINT).toHaveAttribute("aria-busy", "true");
   await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
   await page.keyboard.type("느린 달력");
   await expect(calendar).not.toHaveAttribute("aria-busy", "true", { timeout: 10_000 });
