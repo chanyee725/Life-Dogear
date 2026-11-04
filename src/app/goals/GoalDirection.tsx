@@ -1,36 +1,37 @@
 import Link from "next/link";
+import { Badge, Card, EmptyAdd } from "@/components/ui";
+import { GOAL_HORIZON } from "@/lib/enums";
 import type { ListGoal } from "./list-view";
 
 /**
- * "방향": the active life goals, one per line and a step larger than the rows below —
- * the one thing that stands out on the page. No progress (life goals have none).
+ * The active life goals as one card at the top of the list (no progress — life goals
+ * have none). With none, the card's place holds the add action.
  */
 export function GoalDirection({ goals }: { goals: readonly ListGoal[] }) {
   return (
-    <section aria-labelledby="goal-direction" className="mb-6 flex gap-4">
-      <h2 id="goal-direction" className="w-10 shrink-0 pt-1 text-[13px] text-muted">
-        방향
-      </h2>
+    <section aria-label="인생 목표" className="mb-5">
       {goals.length ? (
-        <ul className="flex min-w-0 flex-col gap-1">
-          {goals.map((g) => (
-            <li key={g.id} className="min-w-0">
-              <Link
-                href={`/goals/${g.id}`}
-                className="rounded-sm text-base font-semibold break-words hover:underline sm:text-lg"
-              >
-                {g.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <Card className="flex items-start gap-3 bg-surface px-4 py-3">
+          <Badge tone={GOAL_HORIZON.tone("life")} className="mt-0.5 shrink-0">
+            {GOAL_HORIZON.label("life")}
+          </Badge>
+          <ul className="flex min-w-0 flex-col gap-1">
+            {goals.map((g) => (
+              <li key={g.id} className="min-w-0">
+                <Link
+                  href={`/goals/${g.id}`}
+                  className="rounded-sm text-[15px] font-semibold break-words hover:underline"
+                >
+                  {g.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
       ) : (
-        <Link
-          href="/goals/new?horizon=life"
-          className="rounded-sm pt-0.5 text-sm text-accent hover:underline"
-        >
+        <EmptyAdd href="/goals/new?horizon=life" className="py-3">
           ＋ 인생 목표
-        </Link>
+        </EmptyAdd>
       )}
     </section>
   );

@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import { EmptyState, LinkTabs, NewItemButton } from "@/components/ui";
+import { seoulDate } from "@/components/calendar/model";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { areas, goals } from "@/lib/repo";
 import { GoalDirection } from "./GoalDirection";
-import { GoalList, type AreaChoice, type PeriodChip } from "./GoalList";
+import {
+  GoalList,
+  type AreaChoice,
+  type PeriodChoice,
+  type PeriodKey,
+  type YearChoice,
+} from "./GoalList";
 import { GoalMap } from "./GoalMap";
 import {
   areasWithGoals,
@@ -44,7 +51,7 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
       <LinkTabs
         ariaLabel="목표 보기"
         active={view}
-        className="mb-6"
+        className="mb-5"
         tabs={[
           { value: "tree", label: "목표", href: "/goals" },
           { value: "map", label: "목표 지도", href: "/goals?view=map" },
@@ -95,40 +102,22 @@ async function GoalListView({
   const listParams = { period: periodParam(period), area: areaId };
   const periodHref = (p: PeriodFilter) =>
     buildHref("/goals", listParams, { period: periodParam(p) });
-  const current = parsePeriodFilter("year", now);
-  const quarter = parsePeriodFilter(undefined, now);
-  const periodChips: PeriodChip[] = [
-    {
-      key: "quarter",
-      label: "이번 분기",
-      sub: quarter.kind === "quarter" ? quarter.period : undefined,
-      href: periodHref(quarter),
-      active: period.kind === "quarter",
-    },
-    {
-      key: "year",
-      label: "올해",
-      sub: current.kind === "year" ? current.year : undefined,
-      href: periodHref(current),
-      active: period.kind === "year" && period.current,
-    },
-    ...otherYears(tree, now).map((year) => ({
-      key: year,
-      label: year,
-      href: periodHref({ kind: "year", year, current: false }),
-      active: period.kind === "year" && !period.current && period.year === year,
-    })),
-    {
-      key: "all",
-      label: "전체",
-      href: periodHref({ kind: "all" }),
-      active: period.kind === "all",
-    },
+  const periodChoices: PeriodChoice[] = [
+    { value: "quarter", label: "이번 분기", href: periodHref(parsePeriodFilter(undefined, now)) },
+    { value: "year", label: "올해", href: periodHref(parsePeriodFilter("year", now)) },
+    { value: "all", label: "전체", href: periodHref({ kind: "all" }) },
   ];
+  // Another year (`?period=2027`) checks none of the three; the year select shows it.
+  const otherYear = period.kind === "year" && !period.current ? period.year : null;
+  const periodValue: PeriodKey | null = otherYear ? null : period.kind;
+  const yearChoices: YearChoice[] = otherYears(tree, now, otherYear).map((year) => ({
+    value: year,
+    href: periodHref({ kind: "year", year, current: false }),
+  }));
 
   const areaHref = (value: string | undefined) => buildHref("/goals", listParams, { area: value });
   const areaChoices: AreaChoice[] = [
-    { value: "", label: "전체", href: areaHref(undefined) },
+    { value: "", label: "모든 영역", href: areaHref(undefined) },
     ...choosable.map((a) => ({ value: a.id, label: a.title, href: areaHref(a.id) })),
     ...(hasGoalsWithoutArea(everything)
       ? [{ value: NO_AREA, label: NO_AREA_TITLE, href: areaHref(NO_AREA) }]
@@ -141,9 +130,14 @@ async function GoalListView({
       <GoalList
         groups={groups}
         ended={ended}
-        periodChips={periodChips}
+        periodChoices={periodChoices}
+        periodValue={periodValue}
+        yearChoices={yearChoices}
+        selectedYear={otherYear ?? ""}
         areaChoices={areaChoices}
         selectedArea={areaId ?? ""}
+        areaTitles={Object.fromEntries(areaList.map((a) => [a.id, a.title]))}
+        today={seoulDate(now)}
         period={period}
         areaTitle={areaTitle}
         resetHref="/goals?period=all"
