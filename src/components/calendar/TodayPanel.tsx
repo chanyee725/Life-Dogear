@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { itemLabel, titleClass } from "./CalendarItemRow";
-import { spokenDay, timeOf } from "./model";
+import { dayOf, spokenDay, timeOf } from "./model";
 import { sourceColor } from "./SourceIcon";
 import { groupHeading, originLabel, relativeDay, upcoming } from "./upcoming";
 
@@ -42,7 +42,11 @@ export function TodayPanel({
   children?: ReactNode;
 }) {
   const titleId = useId();
-  const list = upcoming(items, day, today, now);
+  // Home lists today's tasks above (children); don't repeat them under "다음 일정 › 오늘".
+  const ahead = children
+    ? items.filter((it) => !(it.source === "task" && dayOf(it.start) === today))
+    : items;
+  const list = upcoming(ahead, day, today, now);
   const rel = relativeDay(day, today);
   return (
     <section aria-labelledby={titleId} className={cn("flex flex-col", className)}>
