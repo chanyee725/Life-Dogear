@@ -18,8 +18,8 @@ import { DateField } from "@/components/fields/DateField";
 import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
-import { Button, buttonClass } from "@/components/ui/Button";
-import { controlClass } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
@@ -606,13 +606,13 @@ export function CalendarView({
             {noneChosen(choice, google) ? (
               <p className="flex items-center gap-2 text-[13px] text-muted">
                 표시할 항목을 고르지 않았습니다.
-                <button
-                  type="button"
-                  className={buttonClass("ghost", "sm")}
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={(e) => setPop({ kind: "sources", anchor: e.currentTarget })}
                 >
                   표시 설정
-                </button>
+                </Button>
               </p>
             ) : null}
             {error ? <p className="text-[13px] text-danger">{error}</p> : null}
@@ -1081,7 +1081,7 @@ function AddPanel({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[13px] text-muted">{spokenDay(day)} 마감</p>
-      <input
+      <Input
         autoFocus
         value={value}
         readOnly={pending}
@@ -1097,7 +1097,6 @@ function AddPanel({
             submit();
           }
         }}
-        className={cn(controlClass, "h-9")}
       />
       {tooLong || error ? (
         <p id={errorId} className="text-xs text-danger">

@@ -7,7 +7,6 @@
  *
  * Usage: `<LocalGraph node="paper:<id>" />` next to the "연결된 항목" section.
  */
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -19,7 +18,6 @@ import {
   type KeyboardEvent,
 } from "react";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { GraphNodeId, LocalGraphData } from "@/lib/graph/types";
 import { fetchLocalGraph } from "./api";
@@ -35,6 +33,7 @@ import {
   nodeInDirection,
 } from "./model";
 import { useElementSize } from "./use-element-size";
+import { LinkButton } from "@/components/ui";
 
 export const LOCAL_GRAPH_STORAGE_KEY = "rb-local-graph";
 
@@ -190,12 +189,9 @@ export function LocalGraph({ node, className }: { node: GraphNodeId; className?:
                 </button>
               ))}
             </div>
-            <Link
-              href={`/graph?focus=${encodeURIComponent(node)}`}
-              className={buttonClass("ghost", "sm")}
-            >
+            <LinkButton href={`/graph?focus=${encodeURIComponent(node)}`} variant="ghost" size="sm">
               전체 그래프
-            </Link>
+            </LinkButton>
           </div>
         ) : null}
       </div>

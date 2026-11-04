@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { ITEM_TYPE } from "@/lib/enums";
 import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
 import { seoulDate } from "@/components/calendar/model";
@@ -15,6 +14,7 @@ import type { IconPaint } from "./ShapeIcon";
 import { goalLabel, GRAPH_TYPE_LABEL, nodeHref } from "./model";
 import type { NodePreview } from "./preview-types";
 import { ShapeIcon } from "./ShapeIcon";
+import { LinkButton } from "@/components/ui";
 
 const MAX_NEIGHBORS = 6;
 
@@ -252,9 +252,9 @@ export function GraphPreview({
 
       {href ? (
         <div>
-          <Link href={href} className={buttonClass("primary", "sm")}>
+          <LinkButton href={href} variant="primary" size="sm">
             {node.type === "task" ? "소속 열기" : "열기"}
-          </Link>
+          </LinkButton>
         </div>
       ) : null}
     </section>

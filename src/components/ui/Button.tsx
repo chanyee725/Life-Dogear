@@ -32,7 +32,7 @@ export function buttonClass(
   return cn(base, variants[variant], sizes[size], className);
 }
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
 };

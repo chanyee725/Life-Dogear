@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import type { GraphColorBy } from "@/lib/graph/color";
@@ -288,16 +288,15 @@ function FilterPopover({ label, children }: { label: string; children: ReactNode
         }
       }}
     >
-      <button
+      <Button
+        size="sm"
         ref={buttonRef}
-        type="button"
-        className={buttonClass("secondary", "sm")}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
         {label}
-      </button>
+      </Button>
       <div
         id={panelId}
         hidden={!open}

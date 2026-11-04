@@ -16,7 +16,7 @@ import { createNote } from "@/app/notes/actions";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { safeAction } from "@/components/links/safe-action";
 import { useModKey } from "@/components/shell/mod-key";
-import { Button, cn, controlClass, Kbd, Spinner } from "@/components/ui";
+import { Button, cn, controlClass, Input, Kbd, Spinner } from "@/components/ui";
 import {
   autosizeHeight,
   draftToSave,
@@ -270,7 +270,7 @@ export function QuickCapture() {
               />
             ) : draft.kind === "note" ? (
               <div className="flex flex-col gap-2">
-                <input
+                <Input
                   ref={firstRef}
                   type="text"
                   aria-label="노트 제목"
@@ -280,7 +280,6 @@ export function QuickCapture() {
                   readOnly={pending}
                   onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                   onKeyDown={onKeyDown("title")}
-                  className={cn(controlClass, "h-9")}
                 />
                 <textarea
                   ref={bodyRef}
@@ -296,7 +295,7 @@ export function QuickCapture() {
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <input
+                <Input
                   ref={firstRef}
                   type="url"
                   aria-label="링크"
@@ -306,9 +305,8 @@ export function QuickCapture() {
                   readOnly={pending}
                   onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))}
                   onKeyDown={onKeyDown("url")}
-                  className={cn(controlClass, "h-9")}
                 />
-                <input
+                <Input
                   type="text"
                   aria-label="메모"
                   placeholder="왜 저장하나요? (선택)"
@@ -316,7 +314,6 @@ export function QuickCapture() {
                   readOnly={pending}
                   onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
                   onKeyDown={onKeyDown("note")}
-                  className={cn(controlClass, "h-9")}
                 />
               </div>
             )}
