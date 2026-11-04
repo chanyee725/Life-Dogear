@@ -227,8 +227,11 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     unreadRef.current = false;
     preHydrationOnlyRef.current = false;
     setUnread(false);
+    // Order matters. 1) The DOM body equal to the held editor-ready body isn't an edit:
+    // leave it out. 2) Queue the read. 3) Only a body that is still queued is the
+    // user's own, newer than the held one: drop that.
+    if (readyBaseline.isHeld(patch.body)) delete patch.body;
     queue.add(patch);
-    // The user's own body is queued: a held editor-ready body is older than it.
     if ("body" in queue.pending()) readyBaseline.drop();
     void flushQueue();
   }

@@ -114,8 +114,9 @@ export function createSaveQueue<P extends object>(
  * Offers a re-read baseline to `queue` (e.g. once an editor has normalised its content).
  * The queue refuses it while a save is running; then only `field` is held and put into
  * the baseline by `settle()` once the queue is idle, so the normalised value doesn't
- * go out with the next save. Call `settle()` after every flush, and `drop()` once the
- * queue carries a newer value for `field`: the held one is stale from then on.
+ * go out with the next save. Call `settle()` after every flush. Before adding a read,
+ * leave `field` out while `isHeld()` says it is the held value; after adding, `drop()`
+ * once the queue carries a newer value for `field`: the held one is stale from then on.
  */
 export function createHeldBaseline<P extends object>(queue: SaveQueue<P>, field: keyof P) {
   let held: Partial<P> | null = null;
@@ -129,6 +130,10 @@ export function createHeldBaseline<P extends object>(queue: SaveQueue<P>, field:
     },
     drop() {
       held = null;
+    },
+    /** True while `value` is the held (editor-ready) value of `field`. */
+    isHeld(value: unknown) {
+      return held !== null && sameValue(held[field], value);
     },
   };
 }
