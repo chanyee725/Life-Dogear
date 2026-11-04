@@ -8,6 +8,7 @@ import { Button, cn, DetailHeader, QuietButton } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
+  baselineFromRendered,
   EDITOR_READY_EVENT,
   formToPatch,
   patchToFormData,
@@ -151,6 +152,31 @@ function readForm(form: HTMLFormElement, autosave: boolean): FormPatch {
   }
 }
 
+/** Visible text inputs and textareas with their rendered (`defaultValue`) and current value. */
+function renderedFields(form: HTMLFormElement) {
+  return Array.from(form.elements).flatMap((el) =>
+    (el instanceof HTMLInputElement && TEXT_INPUT_TYPES.has(el.type)) ||
+    el instanceof HTMLTextAreaElement
+      ? [{ name: el.name, value: el.value, defaultValue: el.defaultValue }]
+      : [],
+  );
+}
+
+/** Input types whose `defaultValue` is the rendered value (not hidden, checkbox, file…). */
+const TEXT_INPUT_TYPES = new Set([
+  "text",
+  "search",
+  "url",
+  "email",
+  "tel",
+  "number",
+  "date",
+  "datetime-local",
+  "month",
+  "week",
+  "time",
+]);
+
 function AutosaveForm({ action, basePath, backLabel, actions, children, className }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<SaveState>("idle");
@@ -190,21 +216,6 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     ),
   );
 
-  // Baseline = what the form shows on load (the server values), read once after mount,
-  // so opening the page never saves.
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-    queue.resetBaseline(readForm(form, true));
-    // The editor mounts a bit later and may normalise the body; re-read the baseline
-    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
-    const onEditorReady = () => {
-      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
-    };
-    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
-    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
-  }, [queue]);
-
   function readIntoQueue(autosave: boolean, form: HTMLFormElement | null = formRef.current) {
     if (!form) return;
     const patch = readForm(form, autosave);
@@ -221,6 +232,29 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   // Not flushed by the debounce hook on unmount: React clears `formRef` before that
   // cleanup runs. The effect below keeps its own reference to the form instead.
   const autosave = useDebouncedCallback(() => readIntoQueue(true), AUTOSAVE_DELAY);
+
+  // Baseline = what the form shows on load (the server values), read once after mount,
+  // so opening the page never saves. Text typed before hydration is already in the DOM
+  // by now: those fields keep their rendered value in the baseline and get saved.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const { baseline, edited } = baselineFromRendered(readForm(form, true), renderedFields(form));
+    queue.resetBaseline(baseline);
+    if (edited) {
+      unreadRef.current = true;
+      setUnread(true);
+      autosave();
+    }
+    // The editor mounts a bit later and may normalise the body; re-read the baseline
+    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
+    const onEditorReady = () => {
+      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
+    };
+    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
+    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
+    // `queue` and `autosave` are stable: this runs once per form.
+  }, [queue, autosave]);
 
   // Leaving the page (link, back button) within the debounce window must not lose the
   // last edits: read the still-existing form element and send what changed.

@@ -55,3 +55,26 @@ export const AUTOSAVE_READ_ATTR = "data-autosave-read";
 
 /** Bubbling event the editor's hidden input fires once it holds the loaded content. */
 export const EDITOR_READY_EVENT = "rb-editor-ready";
+
+/** A text field as the page rendered it (`defaultValue`) and as it is now (`value`). */
+export type RenderedField = { name: string; value: string; defaultValue: string };
+
+/**
+ * The server baseline from a form read on mount. Text typed before hydration is already
+ * in the DOM then, so a plain read would take it for the server value and never save it:
+ * fields whose value differs from the rendered `defaultValue` keep the rendered value in
+ * the baseline and are reported as `edited`.
+ */
+export function baselineFromRendered(
+  patch: FormPatch,
+  fields: readonly RenderedField[],
+): { baseline: FormPatch; edited: boolean } {
+  const baseline: FormPatch = { ...patch };
+  let edited = false;
+  for (const f of fields) {
+    if (!f.name || f.value === f.defaultValue || typeof baseline[f.name] !== "string") continue;
+    baseline[f.name] = f.defaultValue;
+    edited = true;
+  }
+  return { baseline, edited };
+}
