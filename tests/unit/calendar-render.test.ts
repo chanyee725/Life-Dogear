@@ -199,6 +199,16 @@ describe("CalendarView (narrow)", () => {
     expect(list).toContain('data-cal-item="task:1"');
     expect(list).toContain('aria-label="11월 5일 마감 할 일 추가"');
   });
+
+  it("drops the day list under the grid on home (panelSlot)", () => {
+    const html = render({
+      range: "3w",
+      day: "2026-11-05",
+      forceNarrow: true,
+      panelSlot: createElement("p", null, "slot"),
+    });
+    expect(html).not.toContain('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"');
+  });
 });
 
 describe("TodayPanel (13.3)", () => {
@@ -217,6 +227,56 @@ describe("TodayPanel (13.3)", () => {
     expect(panel).not.toContain("주간 회고");
     expect(panel).not.toContain("논문 2장");
     expect(panel).not.toContain("지난 일");
+  });
+
+  it("on home (panelSlot) leaves today's tasks out of 다음 일정 but keeps events", () => {
+    const today = [
+      { ...items[0], id: "task:9", title: "오늘 마감 일", start: "2026-11-04" },
+      { ...items[6], id: "google:a:9", title: "오늘 세미나", start: "2026-11-04T15:00:00+09:00" },
+    ];
+    const all = [...items, ...today];
+    const home = render({ range: "3w", items: all, panelSlot: createElement("p", null, "slot") });
+    const panel = home.slice(home.indexOf("다음 일정"));
+    expect(panel).not.toContain("오늘 마감 일");
+    expect(panel).toContain("오늘 세미나");
+    expect(panel).toContain("2장 초안"); // tomorrow's task stays
+    // Without a slot (/calendar) the task is still listed.
+    const page = render({ range: "3w", items: all });
+    expect(page.slice(page.indexOf("다음 일정"))).toContain("오늘 마감 일");
+  });
+
+  it("on home drops the 오늘 group when it held only tasks", () => {
+    const all = [
+      ...items,
+      { ...items[0], id: "task:9", title: "오늘 마감 일", start: "2026-11-04" },
+    ];
+    const home = render({ range: "3w", items: all, panelSlot: createElement("p", null, "slot") });
+    const panel = home.slice(home.indexOf("다음 일정"));
+    expect(panel).not.toContain('aria-label="11월 4일 수요일"');
+    expect(panel).toContain(">내일<");
+  });
+
+  it("while loading: grid busy, count shows … (never 0), no empty line; after: no aria-busy", () => {
+    const loading = render({
+      range: "3w",
+      items: [],
+      loading: true,
+      gridTestId: "home-calendar-grid",
+      panelSlot: createElement("p", null, "slot"),
+    });
+    expect(loading).toMatch(
+      /role="grid"[^>]*aria-busy="true"[^>]*data-testid="home-calendar-grid"/,
+    );
+    expect(loading).toMatch(/data-testid="next-count"[^>]*>…<\/span>/);
+    expect(loading).not.toContain(">없음<");
+    const done = render({
+      range: "3w",
+      items: [],
+      gridTestId: "home-calendar-grid",
+      panelSlot: createElement("p", null, "slot"),
+    });
+    expect(done).not.toContain("aria-busy");
+    expect(done).toMatch(/data-testid="next-count"[^>]*>0<\/span>/);
   });
 
   it("offers only a quick add when nothing is ahead", () => {

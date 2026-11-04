@@ -10,7 +10,7 @@ export function QuarterGoals({ goals }: { goals: QuarterGoal[] }) {
       id="quarter-goals"
       title="분기 목표"
       action={
-        <Link href="/goals" className="text-[13px] text-muted hover:text-fg">
+        <Link href="/goals" className="text-xs text-muted hover:text-fg">
           목표 →
         </Link>
       }

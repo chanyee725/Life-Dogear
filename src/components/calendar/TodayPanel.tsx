@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import type { GraphTheme } from "@/components/graph/graph-theme";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { itemLabel, titleClass } from "./CalendarItemRow";
-import { spokenDay, timeOf } from "./model";
+import { dayOf, spokenDay, timeOf } from "./model";
 import { sourceColor } from "./SourceIcon";
 import { groupHeading, originLabel, relativeDay, upcoming } from "./upcoming";
 
@@ -23,7 +23,10 @@ export function TodayPanel({
   theme,
   onToday,
   onAdd,
+  fit = false,
+  loading = false,
   className,
+  children,
 }: {
   day: string;
   today: string;
@@ -33,10 +36,20 @@ export function TodayPanel({
   theme: GraphTheme;
   onToday: () => void;
   onAdd: (anchor: HTMLElement) => void;
+  /** Fill the parent's height; "다음 일정" scrolls in what is left. */
+  fit?: boolean;
+  /** Items not here yet: "…" stands in for the count (never 0), no empty line. */
+  loading?: boolean;
   className?: string;
+  /** Between the day and "다음 일정" (home: today's tasks and the add input). */
+  children?: ReactNode;
 }) {
   const titleId = useId();
-  const list = upcoming(items, day, today, now);
+  // Home lists today's tasks above (children); don't repeat them under "다음 일정 › 오늘".
+  const ahead = children
+    ? items.filter((it) => !(it.source === "task" && dayOf(it.start) === today))
+    : items;
+  const list = upcoming(ahead, day, today, now);
   const rel = relativeDay(day, today);
   return (
     <section aria-labelledby={titleId} className={cn("flex flex-col", className)}>
@@ -58,19 +71,33 @@ export function TodayPanel({
         ) : null}
       </div>
 
-      <h3 className="mt-6 flex h-8 items-center gap-2 text-[13px] font-semibold text-muted">
+      {children ? <div className="mt-4 flex flex-col gap-2">{children}</div> : null}
+
+      <h3
+        className={cn(
+          "flex h-8 shrink-0 items-center gap-2 text-[13px] font-semibold text-muted",
+          children ? "mt-2" : "mt-6",
+        )}
+      >
         다음 일정
-        <span className="text-xs font-normal tabular-nums">{list.shown + list.more}</span>
+        <span data-testid="next-count" className="text-xs font-normal tabular-nums">
+          {loading ? "…" : list.shown + list.more}
+        </span>
       </h3>
 
-      {list.shown === 0 ? (
-        <div className="flex flex-col items-start">
-          <Button variant="ghost" size="sm" onClick={(e) => onAdd(e.currentTarget)}>
-            ＋ 할 일 추가
-          </Button>
-        </div>
+      {loading ? null : list.shown === 0 ? (
+        children ? (
+          // The add input sits right above; no second add button.
+          <p className="text-xs text-muted">없음</p>
+        ) : (
+          <div className="flex flex-col items-start">
+            <Button variant="ghost" size="sm" onClick={(e) => onAdd(e.currentTarget)}>
+              ＋ 할 일 추가
+            </Button>
+          </div>
+        )
       ) : (
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col", fit && "lg:min-h-32 lg:flex-1 lg:overflow-y-auto")}>
           {list.groups.map((g) => (
             <section key={g.day} aria-label={spokenDay(g.day)} className="mt-4 first:mt-0">
               <h4

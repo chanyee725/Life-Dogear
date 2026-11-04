@@ -21,3 +21,7 @@ export async function deleteCurrentItem(page: Page) {
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "삭제" }).click();
 }
+
+/** Shown when the delay cookie had no effect: the web server lacks `E2E_HOOKS=1`. */
+export const HOOKS_HINT =
+  "달력 지연 쿠키가 먹지 않았다: 웹 서버가 E2E_HOOKS=1로 떴는지 확인 (playwright.config.ts의 webServer, 포트는 E2E_PORT로)";

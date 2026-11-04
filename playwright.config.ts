@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const BASE_URL = "http://127.0.0.1:3000";
+// Another dev server often holds 3000: pick a free port with `E2E_PORT=3464 npx playwright test`
+// instead of copying this file (a copy easily loses the web server env below, e.g. E2E_HOOKS).
+const PORT = process.env.E2E_PORT ?? "3000";
+const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -18,8 +21,10 @@ export default defineConfig({
   webServer: {
     // Dedicated data dir (DB + PDFs) so the run never touches data/local.db or data/pdfs.
     // Wipe and recreate the e2e data folder so every run starts from a fresh DB + PDFs.
+    // `-p`: if the port is taken, fail instead of Next quietly moving to the next port.
     command:
-      "node -e \"require('fs').rmSync('data/e2e',{recursive:true,force:true});require('fs').mkdirSync('data/e2e',{recursive:true})\" && npm run db:migrate && npm run db:seed && npm run dev",
+      "node -e \"require('fs').rmSync('data/e2e',{recursive:true,force:true});require('fs').mkdirSync('data/e2e',{recursive:true})\" && npm run db:migrate && npm run db:seed && npm run dev -- -p " +
+      PORT,
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 180_000,
@@ -29,6 +34,8 @@ export default defineConfig({
       DATABASE_AUTH_TOKEN: "",
       // Never write test photos and PDFs to the shared bucket.
       BLOB_STORE: "local",
+      // Test-only server hooks (e.g. the home calendar delay cookie).
+      E2E_HOOKS: "1",
     },
   },
 });

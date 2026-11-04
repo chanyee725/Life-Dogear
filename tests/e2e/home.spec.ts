@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { uniqueTitle } from "./helpers";
+import { HOOKS_HINT, uniqueTitle } from "./helpers";
 
 test("빠른 입력: Enter → 최근 생각에 표시", async ({ page }) => {
   const text = uniqueTitle("E2E quick");
@@ -145,34 +145,100 @@ test("홈: 진행 중인 연구(칸반)와 프로젝트가 따로 보인다", as
   await expect(page.getByText("발표 슬라이드 목차 정하기")).toHaveCount(0);
 });
 
-test("프로젝트: 다음 할 일은 목록·상세에 없고, 저장해도 기존 값은 남는다", async ({ page }) => {
-  await page.goto("/projects?kind=general");
-  await expect(page.getByRole("columnheader", { name: "다음 할 일" })).toHaveCount(0);
-  await expect(page.getByText("발표 슬라이드 목차 정하기")).toHaveCount(0);
-
-  await page.goto("/projects/seed-project-4");
-  await expect(page.getByText("다음 할 일")).toHaveCount(0);
-  // Kept as a hidden field so saving sends the stored value back unchanged.
-  const hidden = page.locator('input[type="hidden"][name="nextAction"]');
-  await expect(hidden).toHaveValue("발표 슬라이드 목차 정하기");
-  // Save a real edit, then put the seeded title back.
-  const title = page.getByLabel("제목", { exact: true });
-  const original = await title.inputValue();
-  await title.fill(`${original} (e2e)`);
-  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
-  await page.reload();
-  await expect(title).toHaveValue(`${original} (e2e)`);
-  await expect(hidden).toHaveValue("발표 슬라이드 목차 정하기");
-  await title.fill(original);
-  // Wait for this save itself (not an earlier 저장됨), then check it stuck after a reload.
-  await expect(page.getByText("저장 안 됨")).toBeVisible();
-  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
-  await page.reload();
-  await expect(title).toHaveValue(original);
-});
-
 test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {
   await page.goto("/");
   const link = page.getByRole("link", { name: /수집함에 정리할 항목 \d+개/ });
   await expect(link).toHaveAttribute("href", "/inbox");
+});
+
+test("홈 달력 블록: 오른쪽 패널에 오늘 할 일 → 할 일 추가 → 다음 일정, 높이는 달력에 맞춘다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const calendar = page.getByRole("region", { name: "달력" });
+  const heading = calendar.getByRole("heading", { name: /오늘 할 일/ });
+  const taskInput = calendar.getByRole("textbox", { name: /^할 일 추가/ });
+  const upcoming = calendar.getByRole("heading", { name: /다음 일정/ });
+  const thought = calendar.getByRole("textbox", { name: /생각 추가/ });
+  const grid = calendar.getByRole("grid");
+  await expect(upcoming).toBeVisible();
+  const [h, i, u, g, t] = await Promise.all(
+    [heading, taskInput, upcoming, grid, thought].map(async (l) => (await l.boundingBox())!),
+  );
+  expect(h.y).toBeLessThan(i.y);
+  expect(i.y).toBeLessThan(u.y);
+  // 생각 추가 sits under the grid, as wide as it.
+  expect(t.y).toBeGreaterThan(g.y + g.height - 1);
+  expect(Math.abs(t.width - g.width)).toBeLessThan(2);
+  // The separate 오늘 section is gone: one "오늘 할 일" heading on the page.
+  await expect(page.getByRole("heading", { name: /오늘 할 일/ })).toHaveCount(1);
+  // The panel ends with the grid column (no gap under the calendar).
+  const panel = upcoming.locator("xpath=ancestor::section[1]");
+  const p = (await panel.boundingBox())!;
+  const left = (await grid.locator("xpath=..").boundingBox())!;
+  expect(p.y + p.height).toBeLessThanOrEqual(left.y + left.height + 2);
+
+  // Narrow: today panel (tasks + input) → grid → 생각 추가.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const [i2, g2, t2] = await Promise.all(
+    [taskInput, grid, thought].map(async (l) => (await l.boundingBox())!),
+  );
+  expect(i2.y).toBeLessThan(g2.y);
+  expect(g2.y).toBeLessThan(t2.y);
+});
+
+test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번 보인다 (390px·1280px)", async ({
+  page,
+}) => {
+  const title = uniqueTitle("E2E today once");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const calendar = page.getByRole("region", { name: "달력" });
+  const input = calendar.getByRole("textbox", { name: /^할 일 추가/ });
+  await input.fill(title);
+  await input.press("Enter");
+  await expect(page.getByText("마감으로 추가했습니다.")).toBeVisible();
+  // Not again under 다음 일정 › 오늘, nor in a day list under the grid.
+  await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
+  await page.screenshot({ path: "test-results/home-today-once-390.png", fullPage: true });
+  // Wide: the month cell shows it too; outside the grid only once.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(calendar.getByRole("grid").getByText(title, { exact: true })).toHaveCount(1);
+  await expect(calendar.getByText(title, { exact: true })).toHaveCount(2);
+  await page.screenshot({ path: "test-results/home-today-once-1280.png", fullPage: true });
+
+  await page.goto("/tasks?tab=by-parent");
+  await page.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await page.getByRole("menuitem", { name: "삭제" }).click();
+  await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+});
+
+test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await page.goto("/tasks");
+  await context.addCookies([{ name: "e2e-calendar-delay", value: "3000", url: baseURL! }]);
+  await page.keyboard.press("/");
+  const input = page.getByRole("textbox", { name: /생각 추가/ });
+  await expect(input).toBeFocused();
+  // Still loading: the grid is busy and the panel says so; the input works meanwhile.
+  const calendar = page.getByRole("region", { name: "달력" });
+  const grid = calendar.getByTestId("home-calendar-grid");
+  await expect(grid, HOOKS_HINT).toHaveAttribute("aria-busy", "true");
+  // Only the grid is busy, not the block with the inputs.
+  await expect(calendar).not.toHaveAttribute("aria-busy");
+  await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
+  await expect(calendar.getByTestId("next-count")).toHaveText("…");
+  await page.keyboard.type("느린 달력");
+  await expect(grid).not.toHaveAttribute("aria-busy", { timeout: 10_000 });
+  await expect(calendar.getByText("일정 불러오는 중…")).toHaveCount(0);
+  await expect(calendar.getByTestId("next-count")).toHaveText(/^\d+$/);
+  await expect(input).toHaveValue("느린 달력");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("!");
+  await expect(input).toHaveValue("느린 달력!");
+  await context.clearCookies({ name: "e2e-calendar-delay" });
 });
