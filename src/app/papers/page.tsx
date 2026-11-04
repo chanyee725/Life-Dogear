@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { formatAuthors, formatRelative, paperByline } from "@/components/dashboard/format";
 import {
   countTags,
@@ -21,7 +20,7 @@ import {
 } from "@/components/list";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
 import { Page, PageHeader } from "@/components/shell";
-import { Badge, buttonClass, EmptyState, Kbd, TagChip } from "@/components/ui";
+import { Badge, EmptyState, LinkButton, NewItemButton, TagChip } from "@/components/ui";
 import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
 import { papers } from "@/lib/repo";
 import type { Paper, PaperSort } from "@/lib/repo/papers";
@@ -156,33 +155,32 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const groups = groupPapers(list, group);
   const filtered = Boolean(status || importance || tag);
 
-  const newButton = (
-    <Link
-      aria-keyshortcuts="N"
-      title="단축키 N"
-      href="/papers/new"
-      className={buttonClass("primary")}
-    >
-      새 논문 <Kbd>N</Kbd>
-    </Link>
-  );
-
   const empty = filtered ? (
     <EmptyState
       title="조건에 맞는 논문이 없습니다"
       action={
-        <Link href={BASE} className={buttonClass("secondary", "sm")}>
+        <LinkButton href={BASE} size="sm">
           필터 지우기
-        </Link>
+        </LinkButton>
       }
     />
   ) : (
-    <EmptyState title="아직 논문이 없습니다" action={newButton} />
+    <EmptyState
+      title="아직 논문이 없습니다"
+      action={
+        <NewItemButton href="/papers/new" size="sm">
+          새 논문
+        </NewItemButton>
+      }
+    />
   );
 
   return (
     <Page>
-      <PageHeader title="논문" actions={newButton} />
+      <PageHeader
+        title="논문"
+        actions={<NewItemButton href="/papers/new">새 논문</NewItemButton>}
+      />
       <ListView
         storageKey="papers"
         toolbar={

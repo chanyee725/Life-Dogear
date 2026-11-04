@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { tagHref } from "@/app/tags/tag-data";
-import { filterChipClass } from "@/components/list/TagFilter";
 import { Page, PageHeader } from "@/components/shell";
-import { Badge, cn, EmptyState, Section } from "@/components/ui";
-import { buttonClass } from "@/components/ui/Button";
+import {
+  Badge,
+  ChipCount,
+  ChipLink,
+  EmptyState,
+  LinkButton,
+  ListRow,
+  RowList,
+  Section,
+} from "@/components/ui";
 import { formatDate } from "@/components/ui/format";
 import { ITEM_TYPE } from "@/lib/enums";
 import {
@@ -76,12 +83,9 @@ export default async function ResourcesPage({
               <EmptyState
                 title="이 주제를 찾을 수 없습니다"
                 action={
-                  <Link
-                    href={resourcesHref(null, { sort })}
-                    className={buttonClass("secondary", "sm")}
-                  >
+                  <LinkButton href={resourcesHref(null, { sort })} size="sm">
                     최근 자료 보기
-                  </Link>
+                  </LinkButton>
                 }
               />
             ) : !topic ? (
@@ -125,28 +129,29 @@ function TopicItems({
         </>
       }
       action={
-        <Link
+        <LinkButton
           href={tagHref(topic)}
-          className={cn(buttonClass("ghost", "sm"), "hidden @[18rem]:inline-flex")}
+          variant="ghost"
+          size="sm"
+          className="hidden @[18rem]:inline-flex"
         >
           주제의 모든 항목
-        </Link>
+        </LinkButton>
       }
     >
       <nav aria-label="유형" className="flex flex-wrap items-center gap-1">
         {tabs.map((tab) => {
           const active = tab.value === type;
           return (
-            <Link
+            <ChipLink
               key={tab.value ?? "all"}
               href={resourcesHref(topic, { type: tab.value, sort })}
               scroll={false}
-              aria-current={active ? "true" : undefined}
-              className={filterChipClass(active)}
+              active={active}
             >
               {tab.label}
-              <span className="text-xs font-normal text-muted tabular-nums">{tab.count}</span>
-            </Link>
+              <ChipCount>{tab.count}</ChipCount>
+            </ChipLink>
           );
         })}
       </nav>
@@ -160,12 +165,9 @@ function TopicItems({
           }
           action={
             type ? (
-              <Link
-                href={resourcesHref(topic, { sort })}
-                className={buttonClass("secondary", "sm")}
-              >
+              <LinkButton href={resourcesHref(topic, { sort })} size="sm">
                 전체 보기
-              </Link>
+              </LinkButton>
             ) : undefined
           }
         />
@@ -185,9 +187,9 @@ function withSubject(noun: string): string {
 /** One dense row per resource: kind, title (+ meta on wider screens), status, date. */
 function ResourceRows({ items }: { items: readonly ResourceItem[] }) {
   return (
-    <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+    <RowList>
       {items.map((item) => (
-        <li key={`${item.type}:${item.id}`} className="flex items-center gap-2.5 px-3 py-2">
+        <ListRow key={`${item.type}:${item.id}`}>
           <Badge tone={ITEM_TYPE.tone(item.type)} className="w-11 shrink-0 justify-center">
             {ITEM_TYPE.label(item.type)}
           </Badge>
@@ -209,8 +211,8 @@ function ResourceRows({ items }: { items: readonly ResourceItem[] }) {
           <span className="hidden shrink-0 text-xs text-muted tabular-nums @[24rem]:inline">
             {formatDate(item.updatedAt)}
           </span>
-        </li>
+        </ListRow>
       ))}
-    </ul>
+    </RowList>
   );
 }
