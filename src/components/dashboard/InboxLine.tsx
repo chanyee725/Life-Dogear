@@ -2,9 +2,7 @@ import Link from "next/link";
 
 /** One line under the quick input: how many captured thoughts wait in the inbox. */
 export function InboxLine({ count }: { count: number }) {
-  if (count === 0) {
-    return <p className="text-[13px] text-muted">수집함이 비어 있습니다.</p>;
-  }
+  if (count === 0) return null;
   return (
     <p className="text-[13px] text-muted">
       <Link href="/inbox" className="hover:text-fg">

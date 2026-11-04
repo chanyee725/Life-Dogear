@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { itemLabel, titleClass } from "./CalendarItemRow";
-import { shortDay, spokenDay, timeOf } from "./model";
+import { spokenDay, timeOf } from "./model";
 import { sourceColor } from "./SourceIcon";
 import { groupHeading, originLabel, relativeDay, upcoming } from "./upcoming";
 
@@ -64,10 +64,7 @@ export function TodayPanel({
       </h3>
 
       {list.shown === 0 ? (
-        <div className="flex flex-col items-start gap-2">
-          <p role="status" className="text-[13px] text-muted">
-            {shortDay(day)} 이후 예정된 일정이 없습니다.
-          </p>
+        <div className="flex flex-col items-start">
           <Button variant="ghost" size="sm" onClick={(e) => onAdd(e.currentTarget)}>
             ＋ 할 일 추가
           </Button>

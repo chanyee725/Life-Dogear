@@ -157,7 +157,12 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const filtered = Boolean(status || importance || tag);
 
   const newButton = (
-    <Link href="/papers/new" className={buttonClass("primary")}>
+    <Link
+      aria-keyshortcuts="N"
+      title="단축키 N"
+      href="/papers/new"
+      className={buttonClass("primary")}
+    >
       새 논문 <Kbd>N</Kbd>
     </Link>
   );
@@ -172,11 +177,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       }
     />
   ) : (
-    <EmptyState
-      title="아직 논문이 없습니다"
-      description="읽을 논문을 추가하고 PDF를 올려 두면 읽던 곳부터 이어 읽을 수 있어요."
-      action={newButton}
-    />
+    <EmptyState title="아직 논문이 없습니다" action={newButton} />
   );
 
   return (

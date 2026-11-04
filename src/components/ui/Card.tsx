@@ -42,7 +42,7 @@ export function Section({
   title: ReactNode;
   action?: ReactNode;
   className?: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <section className={cn("flex flex-col gap-3", className)}>

@@ -18,7 +18,7 @@ import { DateField } from "@/components/fields/DateField";
 import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { controlClass } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/components/ui/cn";
@@ -34,7 +34,6 @@ import {
   gridWeeks,
   isMovable,
   isOneDay,
-  lastDay,
   itemsOn,
   layoutWeek,
   moveItemTo,
@@ -504,15 +503,7 @@ export function CalendarView({
     openDay,
   };
 
-  // Data reaches past the grid (for the panel); the empty line is about the grid only.
-  const gridFrom = gridDays[0]!;
-  const gridTo = gridDays.at(-1)!;
-  const empty =
-    !failed &&
-    !noneChosen(choice, google) &&
-    !shown.some((it) => dayOf(it.start) <= gridTo && lastDay(it) >= gridFrom);
   const weeksLabel = range === "month" ? null : `${WEEKS[range]}주`;
-  const scope = weeksLabel ? `이 ${weeksLabel}에` : "이번 달에";
   const prevLabel = weeksLabel ? `이전 ${weeksLabel}` : "이전 달";
   const nextLabel = weeksLabel ? `다음 ${weeksLabel}` : "다음 달";
   const goToday = () => {
@@ -613,21 +604,15 @@ export function CalendarView({
               </p>
             ) : null}
             {noneChosen(choice, google) ? (
-              <p className="text-[13px] text-muted">
-                표시할 항목을 고르지 않았습니다.{" "}
+              <p className="flex items-center gap-2 text-[13px] text-muted">
+                표시할 항목을 고르지 않았습니다.
                 <button
                   type="button"
-                  className="underline hover:text-fg"
+                  className={buttonClass("ghost", "sm")}
                   onClick={(e) => setPop({ kind: "sources", anchor: e.currentTarget })}
                 >
-                  표시
+                  표시 설정
                 </button>
-                에서 켤 수 있습니다.
-              </p>
-            ) : null}
-            {empty ? (
-              <p className="text-[13px] text-muted">
-                {scope} 표시할 날짜가 없습니다. 날짜를 눌러 할 일을 추가할 수 있습니다.
               </p>
             ) : null}
             {error ? <p className="text-[13px] text-danger">{error}</p> : null}

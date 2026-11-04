@@ -37,7 +37,7 @@ export function RecommendedAreas() {
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-2 text-[13px]">
-      <p className="text-xs text-muted">추천 영역을 골라 만들 수 있어요.</p>
+      <p className="text-xs text-muted">추천 영역</p>
       {RECOMMENDED_AREAS.map((area) => (
         <label
           key={area.title}

@@ -178,7 +178,7 @@ function NothingShown({
   if (!reasons.length) {
     return (
       <div className="mt-5 border-y border-border py-6 text-sm text-muted">
-        <p>진행 중인 연·분기 목표가 없습니다. 인생 목표 아래에 올해 목표를 세워 보세요.</p>
+        <p>진행 중인 연·분기 목표가 없습니다.</p>
         <Link href="/goals/new?horizon=year" className={cn(buttonClass("secondary", "sm"), "mt-3")}>
           연 목표 만들기
         </Link>
@@ -191,7 +191,6 @@ function NothingShown({
         <span className="text-fg">{reasons.join(" · ")}</span>
         <span className="text-muted">에 해당하는 진행 중인 목표가 없습니다.</span>
       </p>
-      <p className="mt-1 text-muted">조건을 풀면 다른 기간·영역의 목표도 볼 수 있습니다.</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href={resetHref} onClick={onClearQuery} className={buttonClass("secondary", "sm")}>
           전체 보기

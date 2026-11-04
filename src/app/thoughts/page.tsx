@@ -108,9 +108,6 @@ export default async function ThoughtsPage({
   const empty = (
     <EmptyState
       title={filtered ? "조건에 맞는 생각이 없습니다" : "아직 생각이 없습니다"}
-      description={
-        filtered ? "필터를 바꾸거나 해제해 보세요." : "아이디어, 질문, 반론을 가볍게 적어 두세요."
-      }
       action={
         filtered ? (
           <Link href="/thoughts" className={buttonClass("secondary", "sm")}>
@@ -130,7 +127,12 @@ export default async function ThoughtsPage({
       <PageHeader
         title="생각"
         actions={
-          <Link href="/thoughts/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/thoughts/new"
+            className={buttonClass("primary")}
+          >
             새 생각
           </Link>
         }

@@ -38,7 +38,6 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
     <Page>
       <PageHeader
         title="목표"
-        description="인생 목표 아래에 연·분기 목표를 두고, 프로젝트가 목표를 향하게 합니다."
         actions={
           <Link href="/goals/new" className={buttonClass("primary")}>
             새 목표
@@ -57,7 +56,6 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
       {tree.length === 0 ? (
         <EmptyState
           title="아직 목표가 없습니다"
-          description="방향이 되는 인생 목표부터 하나 세워 보세요."
           action={
             <Link href="/goals/new?horizon=life" className={buttonClass("primary", "sm")}>
               인생 목표 만들기

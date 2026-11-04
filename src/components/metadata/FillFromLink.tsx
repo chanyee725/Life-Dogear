@@ -84,11 +84,7 @@ export function FillFromLink({
           </span>
         ) : done ? (
           <span className="text-faint">{done}</span>
-        ) : (
-          <span className="text-faint">
-            제목·저자·연도·학술지를 Crossref 또는 arXiv에서 가져옵니다.
-          </span>
-        )}
+        ) : null}
       </p>
     </div>
   );

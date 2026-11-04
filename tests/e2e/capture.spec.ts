@@ -68,7 +68,7 @@ test("빠른 캡처: ⇧⌘/Ctrl+Enter는 저장 후 창을 비우고 바로 이
   const { dialog, input } = await openCapture(page);
   await input.fill(first);
   await input.press("ControlOrMeta+Shift+Enter");
-  await expect(dialog.getByText("저장했습니다. 이어서 적으세요.")).toBeVisible();
+  await expect(dialog.getByText("저장했습니다.", { exact: true })).toBeVisible();
   await expect(input).toHaveValue("");
   await expect(input).toBeEditable();
   await input.pressSequentially(second);

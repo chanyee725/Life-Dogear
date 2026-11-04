@@ -61,8 +61,6 @@ export function TodayTasks({
           showParent
           dueMode="overdue"
           addTo={{ parent: null, dueDate: today }}
-          emptyText="오늘 마감인 할 일이 없습니다."
-          allDoneText="오늘 할 일을 모두 끝냈습니다."
           showCompleted={false}
         />
         <More count={all.length - TODAY_MAX} href={href} />

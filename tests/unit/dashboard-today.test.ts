@@ -164,7 +164,8 @@ describe("today task sections", () => {
     const empty = renderToStaticMarkup(
       createElement(TodayTasks, { overdue: [], dueToday: [], today: "2026-11-03" }),
     );
-    expect(empty).toContain("오늘 마감인 할 일이 없습니다.");
+    expect(empty).not.toContain("할 일이 없습니다");
+    expect(empty).toContain("＋ 할 일 추가");
   });
 
   it("hides this week when empty and caps it at 5", () => {

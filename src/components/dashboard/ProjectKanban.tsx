@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { buttonClass, cn, TagChip } from "@/components/ui";
+import { cn, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { StageColumn } from "@/lib/repo/projects";
-import { DashboardEmpty } from "./DashboardSection";
+import { DashboardAdd } from "./DashboardSection";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 
@@ -19,14 +19,7 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
   const filled = columns.filter((c) => c.items.length > 0);
 
   if (total === 0) {
-    return (
-      <DashboardEmpty>
-        진행 중인 연구가 없습니다.{" "}
-        <Link href="/projects/new" className={buttonClass("ghost", "sm", "align-baseline")}>
-          새 연구 만들기
-        </Link>
-      </DashboardEmpty>
-    );
+    return <DashboardAdd href="/projects/new">＋ 새 연구</DashboardAdd>;
   }
 
   return (
@@ -73,14 +66,15 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
 /** Every stage in order with its count; empty stages are faint so the pipeline stays readable. */
 function StageStrip({ columns }: { columns: StageColumn[] }) {
   return (
-    <ol aria-label="연구 단계별 개수" className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs">
+    <ol
+      aria-label="연구 단계별 개수"
+      className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs"
+    >
       {columns.map((column, i) => {
         const count = column.items.length;
         return (
           <li key={column.stage} className="flex items-center gap-1">
-            {i > 0 ? (
-              <span aria-hidden className="h-px w-3 bg-border-strong" />
-            ) : null}
+            {i > 0 ? <span aria-hidden className="h-px w-3 bg-border-strong" /> : null}
             <span className={cn(count ? "text-fg" : "text-faint")}>
               {PROJECT_STAGE.label(column.stage)}
               <span className={cn("ml-1 tabular-nums", count ? "font-medium" : "")}>{count}</span>

@@ -93,10 +93,7 @@ export default async function ReviewsPage({
           ))}
         </ol>
       ) : (
-        <EmptyState
-          title={`아직 ${KIND_TAB_LABEL[kind]} 회고가 없습니다`}
-          description="기간마다 한 편씩 쌓입니다. 지난 기간을 돌아보고 다음 기간의 집중을 정해 보세요."
-        />
+        <EmptyState title={`아직 ${KIND_TAB_LABEL[kind]} 회고가 없습니다`} />
       )}
     </Page>
   );
