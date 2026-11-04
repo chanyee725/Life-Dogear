@@ -1,10 +1,22 @@
 import type { Editor } from "@tiptap/core";
+import { directUpload } from "@/lib/storage/direct-upload";
 
 /** Browser-side check before uploading; the server checks the bytes again. */
 export const isImageFile = (file: File): boolean => file.type.startsWith("image/");
 
-/** Uploads one photo; resolves to its URL or rejects with a message for the user. */
+/**
+ * Uploads one photo; resolves to its URL or rejects with a message for the user.
+ * s3 mode: straight to the bucket (sign → PUT → confirm); local mode: through `/api/images`.
+ */
 export async function uploadImage(file: File): Promise<string> {
+  const direct = await directUpload(
+    { kind: "image", file, contentType: file.type },
+    "사진을 올리지 못했습니다.",
+  );
+  if (direct.mode === "s3") {
+    if (!direct.data.url) throw new Error("사진을 올리지 못했습니다.");
+    return direct.data.url;
+  }
   const form = new FormData();
   form.append("file", file);
   let response: Response;

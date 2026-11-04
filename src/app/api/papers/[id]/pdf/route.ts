@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidItemId } from "@/lib/ids";
 import { papers } from "@/lib/repo";
-import { deletePdf, MAX_PDF_BYTES, openPdf, writePdf } from "@/lib/storage/pdf";
+import { deletePdf, MAX_PDF_BYTES, openPdf, pdfKey, writePdf } from "@/lib/storage/pdf";
+import { presignedReadUrl, redirectTo } from "@/lib/storage/read-url";
 import { parseRangeHeader } from "@/lib/storage/range";
 import { isSameOriginRequest } from "../../_lib/origin";
 import {
@@ -30,13 +31,23 @@ const BASE_HEADERS = {
   "Content-Security-Policy": "sandbox",
 };
 
-/** Streams the paper's PDF, honouring single `Range` requests. */
+/**
+ * Streams the paper's PDF, honouring single `Range` requests. s3 mode: redirects (uncached,
+ * the file can be replaced) to a 5-minute presigned GET whose response headers are fixed;
+ * the bucket then answers pdf.js's Range requests itself (needs the bucket CORS rule).
+ */
 export async function GET(request: NextRequest, { params }: IdParams) {
   const { id } = await params;
   if (!isValidItemId(id)) return invalidId();
   try {
     const paper = await papers.get(id);
     if (!paper?.pdfPath) return notFound();
+    const url = await presignedReadUrl(pdfKey(id), {
+      contentType: "application/pdf",
+      contentDisposition: "inline",
+      cacheControl: "private, no-cache",
+    });
+    if (url) return redirectTo(url, 0);
     // One GET, ranged when asked (the bucket resolves suffix and open ranges itself);
     // headers come from what storage returned, so a replaced file cannot mismatch them.
     const file = await openPdf(id, parseRangeHeader(request.headers.get("range")) ?? undefined);

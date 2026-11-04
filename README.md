@@ -34,7 +34,7 @@ cp .env.example .env
 - **Turso 모드:** `DATABASE_URL`에 Turso 데이터베이스 주소, `DATABASE_AUTH_TOKEN`에 토큰을 넣으면 Turso를 사용합니다. 두 값을 모두 채워야 합니다.
 - **`DATA_DIR`(기본 `data`):** 로컬 `local.db`와 `pdfs/`·`images/` 폴더가 놓일 위치를 바꿉니다.
 - **공유 파일 저장소 (`S3_*`, 선택):** 사진과 PDF를 Cloudflare R2(또는 S3 호환 버킷)에 둡니다. 아래 [공유 파일 저장소](#공유-파일-저장소-cloudflare-r2) 참고.
-- **`ALLOWED_HOSTS`:** 서버가 받아들일 접속 주소입니다. 쉼표로 구분하며, `name`은 모든 포트를, `name:port`는 그 포트만 허용합니다. 기본 허용은 `127.0.0.1`, `localhost`, `[::1]`입니다. 허용되지 않은 주소로 접속하면 403 안내가 나옵니다. 값을 바꾸면 서버를 재시작해야 반영됩니다.
+- **`ALLOWED_HOSTS`:** 서버가 받아들일 접속 주소입니다. 쉼표로 구분하며, `name`은 모든 포트를, `name:port`는 그 포트만 허용합니다. 기본 허용은 `127.0.0.1`, `localhost`, `[::1]`입니다. 허용되지 않은 주소로 접속하면 403 안내가 나옵니다. 값을 바꾸면 서버를 재시작해야 반영됩니다. 운영 모드(`npm run serve` 등)에서 `ALLOWED_HOSTS`에 값을 넣으면 원격 공개로 보고 Google 로그인 설정(`AUTH_*`, `ALLOWED_EMAILS`)이 있어야 열립니다. 없으면 설정 안내 화면이 나옵니다(`docs/DEPLOY.md`).
 
 ## 데이터베이스 준비
 
@@ -70,7 +70,7 @@ npm run dev
 
 ### 공유 파일 저장소 (Cloudflare R2)
 
-Turso로 PC 두 대가 DB를 같이 쓰면, 로컬 모드에서는 다른 PC에서 올린 PDF·사진이 보이지 않습니다. R2 버킷을 설정하면 모든 PC가 같은 파일을 봅니다. 브라우저는 지금처럼 `/api/images/...`, `/api/papers/<id>/pdf`로 받고 서버가 버킷에서 가져와 전달하므로, 버킷을 공개할 필요가 없고 키도 브라우저에 노출되지 않습니다.
+Turso로 PC 두 대가 DB를 같이 쓰면, 로컬 모드에서는 다른 PC에서 올린 PDF·사진이 보이지 않습니다. R2 버킷을 설정하면 모든 PC가 같은 파일을 봅니다. 브라우저는 서버가 발급한 5분짜리 서명 URL로 버킷에 직접 올리고 받으므로(`/api/images/...`, `/api/papers/<id>/pdf`는 그 URL로 넘겨 줌), 버킷을 공개할 필요가 없고 키도 브라우저에 노출되지 않습니다. 대신 버킷에 **CORS 규칙**이 필요합니다(허용 출처에 `http://localhost:3000`·`http://127.0.0.1:3000`, 배포했다면 그 주소). 예시는 [docs/DEPLOY.md](docs/DEPLOY.md)의 "R2 (사진·PDF)" 절.
 
 1. Cloudflare 대시보드 → **R2** → **Create bucket** (예: `research-brain`). 공개 접근은 켜지 않습니다.
 2. **R2** → **Manage R2 API Tokens** → **Create API token**: 권한 **Object Read & Write**, 대상은 방금 만든 버킷만. 발급된 Access Key ID와 Secret Access Key를 복사합니다 (Secret은 한 번만 보입니다).

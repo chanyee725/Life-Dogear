@@ -15,118 +15,17 @@ import {
   LocalBlobStore,
   S3BlobStore,
   s3ConfigFromEnv,
-  type S3Config,
 } from "@/lib/storage/blob";
 import { openImage, writeImage } from "@/lib/storage/images";
 import { gcGuard, gcImages, pushLocalFiles, referencedImages } from "@/lib/storage/maintenance";
 import { useFreshDb } from "./repo-helpers";
 
-const CONFIG: S3Config = {
-  endpoint: "https://acct.r2.example.com",
-  bucket: "rb-files",
-  accessKeyId: "AKIDTEST",
-  secretAccessKey: "secret-test-key",
-  region: "auto",
-};
-const ENV = {
-  S3_ENDPOINT: CONFIG.endpoint,
-  S3_BUCKET: CONFIG.bucket,
-  S3_ACCESS_KEY_ID: CONFIG.accessKeyId,
-  S3_SECRET_ACCESS_KEY: CONFIG.secretAccessKey,
-};
-const IMG = "3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b.png";
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+import { CONFIG, ENV, fakeBucket, IMG, PNG } from "./storage-fake-bucket";
 
 const text = async (read: unknown) => {
   if (!read || typeof read !== "object" || !("body" in read)) throw new Error("no body");
   return new Response(read.body as ReadableStream).text();
 };
-
-/** In-memory bucket answering the requests the store sends. */
-function fakeBucket(initial: Record<string, string | Uint8Array> = {}) {
-  const objects = new Map<string, Uint8Array>(
-    Object.entries(initial).map(([k, v]) => [
-      k,
-      typeof v === "string" ? new TextEncoder().encode(v) : v,
-    ]),
-  );
-  const requests: Request[] = [];
-  let ignoreRange = false;
-  const fetchImpl = vi.fn(async (request: Request) => {
-    requests.push(request.clone());
-    const url = new URL(request.url);
-    const prefix = `/${CONFIG.bucket}/`;
-    if (url.pathname === `/${CONFIG.bucket}` && request.method === "GET") {
-      const p = url.searchParams.get("prefix") ?? "";
-      const keys = [...objects.keys()].filter((k) => k.startsWith(p)).sort();
-      const token = Number(url.searchParams.get("continuation-token") ?? 0);
-      const page = keys.slice(token, token + 1);
-      const more = token + 1 < keys.length;
-      const xml = `<?xml version="1.0"?><ListBucketResult><IsTruncated>${more}</IsTruncated>${
-        more ? `<NextContinuationToken>${token + 1}</NextContinuationToken>` : ""
-      }${page
-        .map(
-          (k) =>
-            `<Contents><Key>${k}</Key><LastModified>2026-11-01T00:00:00.000Z</LastModified><Size>${objects.get(k)!.length}</Size></Contents>`,
-        )
-        .join("")}</ListBucketResult>`;
-      return new Response(xml, { status: 200 });
-    }
-    const key = url.pathname.slice(prefix.length);
-    const data = objects.get(key);
-    switch (request.method) {
-      case "PUT":
-        objects.set(key, new Uint8Array(await request.arrayBuffer()));
-        return new Response(null, { status: 200 });
-      case "DELETE":
-        objects.delete(key);
-        return new Response(null, { status: 204 });
-      case "HEAD":
-        if (!data) return new Response(null, { status: 404 });
-        return new Response(null, {
-          status: 200,
-          headers: {
-            "content-length": String(data.length),
-            "last-modified": "Sun, 01 Nov 2026 00:00:00 GMT",
-          },
-        });
-      case "GET": {
-        if (!data) return new Response("<Error><Code>NoSuchKey</Code></Error>", { status: 404 });
-        const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
-        if (range && !ignoreRange) {
-          const n = data.length;
-          const [start, end] = range[1]
-            ? [Number(range[1]), range[2] ? Math.min(Number(range[2]), n - 1) : n - 1]
-            : [Math.max(0, n - Number(range[2])), n - 1];
-          if (start >= n) {
-            return new Response(null, {
-              status: 416,
-              headers: { "content-range": `bytes */${n}` },
-            });
-          }
-          return new Response(data.slice(start, end + 1), {
-            status: 206,
-            headers: { "content-range": `bytes ${start}-${end}/${data.length}` },
-          });
-        }
-        return new Response(data as Uint8Array<ArrayBuffer>, {
-          status: 200,
-          headers: { "content-length": String(data.length) },
-        });
-      }
-    }
-    return new Response(null, { status: 405 });
-  });
-  return {
-    objects,
-    requests,
-    fetchImpl,
-    store: new S3BlobStore(CONFIG, fetchImpl),
-    ignoreRanges: () => {
-      ignoreRange = true;
-    },
-  };
-}
 
 describe("s3ConfigFromEnv", () => {
   it("needs all four settings; region defaults to auto", () => {
@@ -291,7 +190,7 @@ describe("FallbackBlobStore", () => {
   });
 });
 
-describe("routes proxy the bucket", () => {
+describe("routes redirect to the bucket", () => {
   const cwd = process.cwd();
   const saved = { ...process.env };
   let root = "";
@@ -317,13 +216,34 @@ describe("routes proxy the bucket", () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it("serves a photo from the bucket, then from the local fallback", async () => {
+  it("redirects to a presigned photo URL, then serves the local fallback", async () => {
     bucket.objects.set(`images/${IMG}`, PNG);
     const get = (name: string) =>
       imageRoute.GET(new Request(`http://localhost:3000/api/images/${name}`), {
         params: Promise.resolve({ name }),
       });
+    const redirect = await get(IMG);
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("cache-control")).toBe("private, max-age=240");
+    const location = new URL(redirect.headers.get("location")!);
+    expect(`${location.origin}${location.pathname}`).toBe(
+      `${CONFIG.endpoint}/${CONFIG.bucket}/images/${IMG}`,
+    );
+    expect(location.searchParams.get("X-Amz-Expires")).toBe("300");
+    expect(location.searchParams.get("response-content-type")).toBe("image/png");
+    expect(location.searchParams.get("response-cache-control")).toBe(
+      "private, max-age=31536000, immutable",
+    );
+    expect(redirect.headers.get("location")).not.toContain(CONFIG.secretAccessKey);
+
+    // When the bucket check fails, the route serves the bytes itself.
+    vi.stubGlobal("fetch", (request: Request) =>
+      request.method === "HEAD"
+        ? Promise.resolve(new Response(null, { status: 500 }))
+        : bucket.fetchImpl(request),
+    );
     const response = await get(IMG);
+    vi.stubGlobal("fetch", bucket.fetchImpl);
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
     expect(response.headers.get("content-length")).toBe(String(PNG.length));
@@ -357,6 +277,25 @@ describe("routes proxy the bucket", () => {
     await expect(readFile(join(root, "data/pdfs", `${id}.pdf`))).rejects.toThrow();
 
     bucket.requests.length = 0;
+    const redirect = await pdfRoute.GET(
+      new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=0-4" } }),
+      ctx,
+    );
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("cache-control")).toBe("private, no-store");
+    const location = new URL(redirect.headers.get("location")!);
+    expect(location.pathname).toBe(`/${CONFIG.bucket}/pdfs/${id}.pdf`);
+    expect(location.searchParams.get("response-content-type")).toBe("application/pdf");
+    expect(location.searchParams.get("response-content-disposition")).toBe("inline");
+    expect(bucket.requests.map((r) => r.method)).toEqual(["HEAD"]);
+
+    // Without a usable bucket check (e.g. HEAD fails) the route proxies ranges as before.
+    vi.stubGlobal("fetch", (request: Request) =>
+      request.method === "HEAD"
+        ? Promise.resolve(new Response(null, { status: 500 }))
+        : bucket.fetchImpl(request),
+    );
+    bucket.requests.length = 0;
     const part = await pdfRoute.GET(
       new NextRequest(url, { headers: { host: "localhost:3000", range: "bytes=0-4" } }),
       ctx,
@@ -364,7 +303,7 @@ describe("routes proxy the bucket", () => {
     expect(part.status).toBe(206);
     expect(part.headers.get("content-range")).toBe("bytes 0-4/15");
     expect(await part.text()).toBe("%PDF-");
-    // One ranged GET, no HEAD.
+    // One ranged GET (the failing HEAD never reached the fake bucket).
     expect(bucket.requests.map((r) => [r.method, r.headers.get("range")])).toEqual([
       ["GET", "bytes=0-4"],
     ]);
@@ -389,6 +328,7 @@ describe("routes proxy the bucket", () => {
     );
     expect(full.headers.get("content-length")).toBe("15");
     expect(await full.text()).toBe("%PDF-1.7 abcdef");
+    vi.stubGlobal("fetch", bucket.fetchImpl);
 
     const removed = await pdfRoute.DELETE(new NextRequest(url, { method: "DELETE", headers }), ctx);
     expect(removed.status).toBe(204);
