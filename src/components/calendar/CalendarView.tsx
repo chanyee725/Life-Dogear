@@ -700,7 +700,8 @@ export function CalendarView({
             )}
           </div>
 
-          {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+          {/* Home (panelSlot): the panel above already lists the day; no second list. */}
+          {narrow && !panelSlot ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
           {belowGrid}
         </div>
         {/* fitPanel: the wrapper adds no height (absolute child), so the row = the grid column. */}

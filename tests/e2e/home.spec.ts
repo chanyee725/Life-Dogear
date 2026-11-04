@@ -214,6 +214,32 @@ test("홈 달력 블록: 오른쪽 패널에 오늘 할 일 → 할 일 추가 �
   expect(g2.y).toBeLessThan(t2.y);
 });
 
+test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번 보인다 (390px·1280px)", async ({
+  page,
+}) => {
+  const title = uniqueTitle("E2E today once");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const calendar = page.getByRole("region", { name: "달력" });
+  const input = calendar.getByRole("textbox", { name: /^할 일 추가/ });
+  await input.fill(title);
+  await input.press("Enter");
+  await expect(page.getByText("마감으로 추가했습니다.")).toBeVisible();
+  // Not again under 다음 일정 › 오늘, nor in a day list under the grid.
+  await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
+  await page.screenshot({ path: "test-results/home-today-once-390.png", fullPage: true });
+  // Wide: the month cell shows it too; outside the grid only once.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(calendar.getByRole("grid").getByText(title, { exact: true })).toHaveCount(1);
+  await expect(calendar.getByText(title, { exact: true })).toHaveCount(2);
+  await page.screenshot({ path: "test-results/home-today-once-1280.png", fullPage: true });
+
+  await page.goto("/tasks?tab=by-parent");
+  await page.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await page.getByRole("menuitem", { name: "삭제" }).click();
+  await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+});
+
 test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
   page,
   context,
@@ -225,12 +251,13 @@ test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스
   await page.keyboard.press("/");
   const input = page.getByRole("textbox", { name: /생각 추가/ });
   await expect(input).toBeFocused();
-  // Still loading: the grid is not there yet.
-  await expect(page.getByRole("region", { name: "달력" }).getByRole("grid")).toHaveCount(0);
+  // Still loading: the block is busy and says so; the input works meanwhile.
+  const calendar = page.getByRole("region", { name: "달력" });
+  await expect(calendar).toHaveAttribute("aria-busy", "true");
+  await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
   await page.keyboard.type("느린 달력");
-  await expect(page.getByRole("region", { name: "달력" }).getByRole("grid")).toBeVisible({
-    timeout: 10_000,
-  });
+  await expect(calendar).not.toHaveAttribute("aria-busy", "true", { timeout: 10_000 });
+  await expect(calendar.getByText("일정 불러오는 중…")).toHaveCount(0);
   await expect(input).toHaveValue("느린 달력");
   await expect(input).toBeFocused();
   await page.keyboard.type("!");

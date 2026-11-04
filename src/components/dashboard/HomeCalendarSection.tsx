@@ -1,20 +1,24 @@
 import { cookies } from "next/headers";
-import { Suspense, type ReactNode } from "react";
-import { fetchRange, weekDays } from "@/components/calendar/model";
-import { getCalendar, type CalendarResult } from "@/lib/calendar";
+import type { ReactNode } from "react";
+import { fetchRange } from "@/components/calendar/model";
+import { getCalendar } from "@/lib/calendar";
 import { describeError } from "@/lib/storage/describe-error";
-import { HomeCalendarView, HomeDayProvider, HomeTaskInput } from "./HomeCalendarDay";
+import {
+  HomeCalendarView,
+  HomeDayProvider,
+  HomeTaskInput,
+  type HomeCalendarData,
+} from "./HomeCalendarDay";
 import { QuickInput } from "./QuickInput";
-import { WeekStripPlaceholder } from "./WeekStripSection";
 
 /**
  * Home calendar block, 7:3 like 할 일 → 달력: left the three-week grid with 생각 추가 under it
  * (then `children`: the inbox / weekly review lines); right the today panel — the day, `tasks`
  * (오늘 할 일), 할 일 추가 (due on the selected day), 다음 일정. From `lg` the panel is held to
  * the left column's height and scrolls inside. Below `lg`: panel, grid, 생각 추가.
- * Streamed so a slow Google feed never holds up the rest of the home; the fallback keeps the
- * tasks and both inputs on screen meanwhile, and their drafts (text, focus, caret) carry over
- * to the loaded copies, so `/` and capture work while the calendar still loads.
+ * The calendar data is not awaited: its promise streams to the client, which draws the grid
+ * empty at once and fills it on arrival. So a slow Google feed never holds up the home, and
+ * the inputs mount (and hydrate) once — `/`, typing and Enter work while it still loads.
  */
 export function HomeCalendarSection({
   today,
@@ -25,72 +29,43 @@ export function HomeCalendarSection({
   tasks?: ReactNode;
   children?: ReactNode;
 }) {
-  const panel = (
-    <>
-      {tasks}
-      <HomeTaskInput today={today} />
-    </>
-  );
-  const below = (
-    <div className="mt-4 flex flex-col gap-1">
-      <QuickInput />
-      {children}
-    </div>
-  );
   return (
     <HomeDayProvider today={today}>
-      <section aria-label="달력">
-        <Suspense
-          fallback={
-            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:items-start lg:gap-8">
-              <div className="flex min-w-0 flex-col">
-                <WeekStripPlaceholder days={weekDays(today)} today={today} />
-                {below}
-              </div>
-              <div className="order-first flex min-w-0 flex-col gap-2 lg:order-none">{panel}</div>
-            </div>
-          }
-        >
-          <HomeCalendarData today={today} panel={panel} below={below} />
-        </Suspense>
-      </section>
+      <HomeCalendarView
+        range="3w"
+        syncUrl={false}
+        date={today}
+        today={today}
+        data={loadCalendar(today)}
+        now={new Date().toISOString()}
+        panelSlot={
+          <>
+            {tasks}
+            <HomeTaskInput today={today} />
+          </>
+        }
+        belowGrid={
+          <div className="mt-4 flex flex-col gap-1">
+            <QuickInput />
+            {children}
+          </div>
+        }
+        fitPanel
+      />
     </HomeDayProvider>
   );
 }
 
-async function HomeCalendarData({
-  today,
-  panel,
-  below,
-}: {
-  today: string;
-  panel: ReactNode;
-  below: ReactNode;
-}) {
-  await e2eDelay();
-  let data: CalendarResult = { items: [], google: "off" };
-  let failed = false;
+/** Never rejects: an app-data failure comes back as `failed` (the grid says so). */
+async function loadCalendar(today: string): Promise<HomeCalendarData> {
   try {
-    data = await getCalendar(fetchRange("3w", today), { papers: true });
+    await e2eDelay();
+    const data = await getCalendar(fetchRange("3w", today), { papers: true });
+    return { ...data, failed: false };
   } catch (error) {
     console.error("home calendar: app data failed", describeError(error));
-    failed = true;
+    return { items: [], google: "off", failed: true };
   }
-  return (
-    <HomeCalendarView
-      range="3w"
-      syncUrl={false}
-      date={today}
-      today={today}
-      items={data.items}
-      google={data.google}
-      failed={failed}
-      now={new Date().toISOString()}
-      panelSlot={panel}
-      belowGrid={below}
-      fitPanel
-    />
-  );
 }
 
 /**

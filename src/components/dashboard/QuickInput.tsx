@@ -1,13 +1,12 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useId, useState, useTransition, type ReactNode } from "react";
 import { createQuickThought } from "@/app/_actions/quick-thought";
 import { createTask } from "@/app/_actions/tasks";
 import { shortDay } from "@/components/calendar/model";
 import { safeAction } from "@/components/links/safe-action";
 import { QUICK_INPUT_ID } from "@/components/shell/shortcuts";
 import { cn, controlClass, Kbd } from "@/components/ui";
-import { useDraft, type Draft } from "./drafts";
 
 /** `message`: what the status line says, fixed at save time (the due day may change later). */
 type Saved = { ok: true; message: string } | { ok: false; error: string };
@@ -23,7 +22,6 @@ function EnterInput({
   maxLength,
   overLimit,
   adornment,
-  draft,
   save,
 }: {
   id?: string;
@@ -35,32 +33,10 @@ function EnterInput({
   overLimit?: string;
   /** Quiet hint at the right edge (the `/` key, the due day). */
   adornment?: ReactNode;
-  /** Keeps text, focus and caret when this input is replaced by a new copy (home). */
-  draft?: Draft;
   save: (text: string) => Promise<Saved>;
 }) {
   const statusId = useId();
-  const ref = useRef<HTMLInputElement>(null);
-  const [value, setValue] = useState(() => draft?.value ?? "");
-  // Layout effects: the old copy's cleanup runs before it leaves the DOM, the new copy's
-  // setup before paint, so focus and caret carry over without a flicker.
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!draft || !el) return;
-    if (draft.focused) {
-      el.focus();
-      el.setSelectionRange(draft.start, draft.end);
-    }
-    return () => {
-      draft.focused = document.activeElement === el;
-      draft.start = el.selectionStart;
-      draft.end = el.selectionEnd;
-    };
-  }, [draft]);
-  const update = (next: string) => {
-    setValue(next);
-    if (draft) draft.value = next;
-  };
+  const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -73,7 +49,7 @@ function EnterInput({
     startTransition(async () => {
       const result = await save(text);
       if (result.ok) {
-        update("");
+        setValue("");
         setSaved(result.message);
       } else {
         setError(result.error);
@@ -85,11 +61,10 @@ function EnterInput({
     <div className="flex min-w-0 flex-col gap-1.5">
       <div className="relative">
         <input
-          ref={ref}
           id={id}
           value={value}
           onChange={(e) => {
-            update(e.target.value);
+            setValue(e.target.value);
             setSaved(null);
           }}
           onKeyDown={(e) => {
@@ -131,10 +106,8 @@ function EnterInput({
 
 /** 생각 추가: Enter saves the text as a thought (메모 · 씨앗) in the inbox. `/` focuses it. */
 export function QuickInput() {
-  const draft = useDraft("thought");
   return (
     <EnterInput
-      draft={draft}
       id={QUICK_INPUT_ID}
       label="생각 추가 (Enter로 수집함에 저장)"
       placeholder="생각 추가"
@@ -162,10 +135,8 @@ export function dueHint(day: string, today: string): string {
  */
 export function TaskQuickInput({ day, today }: { day: string; today: string }) {
   const hint = dueHint(day, today);
-  const draft = useDraft("task");
   return (
     <EnterInput
-      draft={draft}
       // Label avoids "생각" so it never reads as the thought input.
       label={`할 일 추가 (Enter로 ${shortDay(day)} 마감)`}
       placeholder="할 일 추가"
