@@ -7,7 +7,8 @@ import { cn } from "@/components/ui/cn";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { ITEM_TYPE } from "@/lib/enums";
 import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
-import { formatDue, localDate } from "@/components/tasks/format";
+import { seoulDate } from "@/components/calendar/model";
+import { formatDue } from "@/components/tasks/format";
 import { fetchPreview } from "./api";
 import type { GraphTheme } from "./graph-theme";
 import type { IconPaint } from "./ShapeIcon";
@@ -25,7 +26,7 @@ function badgeOf(node: GraphNode): { text: string; tone: string } {
 
 /** Task fields (today.md 7절 6.4): due date (shared `formatDue`) and parent. */
 function TaskProps({ node, neighbors }: { node: GraphNode; neighbors: readonly GraphNode[] }) {
-  const due = formatDue(node.dueDate, localDate(), node.done);
+  const due = formatDue(node.dueDate, seoulDate(), node.done);
   const parent = node.parent ? neighbors.find((n) => n.id === node.parent) : undefined;
   return (
     <dl className="flex flex-col gap-1 text-[13px]">

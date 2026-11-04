@@ -1,7 +1,7 @@
 import { Section } from "@/components/ui/Card";
 import { tasks } from "@/lib/repo";
 import type { TaskParent } from "@/lib/repo/tasks";
-import { localDate } from "./format";
+import { seoulDate } from "@/components/calendar/model";
 import { TaskList } from "./TaskList";
 
 const EMPTY_TEXT: Record<NonNullable<TaskParent>["type"], string> = {
@@ -39,7 +39,7 @@ export async function TaskSection({
     >
       <TaskList
         tasks={list}
-        today={localDate()}
+        today={seoulDate()}
         addTo={archived ? undefined : { parent }}
         reorderable={!archived}
         emptyText={EMPTY_TEXT[parent.type]}
