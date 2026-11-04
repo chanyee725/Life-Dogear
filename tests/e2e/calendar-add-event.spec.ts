@@ -44,11 +44,7 @@ async function mockPost(page: Page, status: number, body: unknown) {
 }
 
 const addButton = (page: Page) => page.getByRole("button", { name: "일정 추가", exact: true });
-// By its heading: ui/Dialog does not name the <dialog> (no aria-labelledby) yet.
-const dialog = (page: Page) =>
-  page
-    .getByRole("dialog")
-    .filter({ has: page.getByRole("heading", { name: "Google 캘린더에 일정 추가" }) });
+const dialog = (page: Page) => page.getByRole("dialog", { name: "Google 캘린더에 일정 추가" });
 const toast = (page: Page, text: string) => page.getByRole("status").filter({ hasText: text });
 /** Grid entries named after `title` (Google: "Google 캘린더: 10시, <title>, …"). */
 const entries = (page: Page, title: string) =>
