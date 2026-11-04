@@ -5,8 +5,10 @@ import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { ItemNotes } from "@/components/notes/ItemNotes";
+import { seoulDate } from "@/components/calendar/model";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
+import { formatDate } from "@/components/ui";
 import { isValidItemId } from "@/lib/ids";
 import { areas, goals, projects, tags } from "@/lib/repo";
 import { goalOptionsFor } from "../../goals/options";
@@ -59,6 +61,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         >
           <ProjectFields
             editorKey={project.id}
+            created={formatDate(seoulDate(project.createdAt))}
             tagSuggestions={allTags.map((t) => t.name)}
             areaOptions={areaOptionsFor(areaList, project.areaId)}
             goalOptions={goalOptionsFor(goalList, project.goalId)}

@@ -13,6 +13,7 @@ import { EmptyState, formatDate, LinkButton, LinkTabs, NewItemButton } from "@/c
 import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";
+import { seoulDate } from "@/components/calendar/model";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { PROJECT_KIND, PROJECT_STAGE, PROJECT_STATUS, type ProjectKind } from "@/lib/enums";
 import { areas, projects } from "@/lib/repo";
@@ -77,6 +78,13 @@ export default async function ProjectsPage({
       header: "마감일",
       className: "text-muted tabular-nums",
       render: (p) => formatDate(p.dueDate),
+    },
+    {
+      key: "created",
+      header: "생성일",
+      hideBelow: "lg",
+      className: "text-muted tabular-nums whitespace-nowrap",
+      render: (p) => formatDate(seoulDate(p.createdAt)),
     },
     { key: "tags", header: "태그", render: (p) => <TagList tags={p.tags} /> },
   ];

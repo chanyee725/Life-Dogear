@@ -23,7 +23,10 @@ export type ProjectFormValues = {
   tags: string[];
 };
 
-/** Fields shared by the new and detail pages. `editorKey` remounts the editor per item. */
+/**
+ * Fields shared by the new and detail pages. `editorKey` remounts the editor per item.
+ * `created` (detail only) is the stored creation date, shown read-only.
+ */
 export function ProjectFields({
   values,
   tagSuggestions,
@@ -31,6 +34,7 @@ export function ProjectFields({
   goalOptions,
   editorKey,
   onKindChange,
+  created,
 }: {
   values: ProjectFormValues;
   tagSuggestions: string[];
@@ -41,6 +45,8 @@ export function ProjectFields({
   editorKey: string;
   /** Makes 종류 controlled by the parent (`values.kind` is then the current value). */
   onKindChange?: (kind: ProjectKind) => void;
+  /** `YYYY.MM.DD` (Seoul) of `createdAt`. */
+  created?: string;
 }) {
   return (
     <>
@@ -115,6 +121,11 @@ export function ProjectFields({
             suggestions={tagSuggestions}
           />
         </Property>
+        {created ? (
+          <Property label="생성일">
+            <span className="text-sm tabular-nums">{created}</span>
+          </Property>
+        ) : null}
       </Properties>
       <DetailBody>
         <MarkdownEditor key={editorKey} name="body" value={values.body} />
