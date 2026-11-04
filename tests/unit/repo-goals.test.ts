@@ -21,6 +21,19 @@ describe("goal periods", () => {
     expect(currentPeriod("quarter", nov)).toBe("2026-Q4");
     expect(currentPeriod("life", nov)).toBeNull();
   });
+
+  it("takes the current period from the Seoul date, not the server's zone", () => {
+    const tz = process.env.TZ;
+    process.env.TZ = "UTC";
+    try {
+      // 2026-04-01 01:30 in Seoul; still 03-31 (Q1) on the server clock.
+      const at = new Date("2026-03-31T16:30:00Z");
+      expect(at.getMonth()).toBe(2);
+      expect(currentPeriod("quarter", at)).toBe("2026-Q2");
+    } finally {
+      process.env.TZ = tz;
+    }
+  });
 });
 
 describe("goals repo", () => {
