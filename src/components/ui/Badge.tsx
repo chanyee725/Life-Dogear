@@ -10,6 +10,7 @@ export const BADGE_TONES = [
   "violet",
   "teal",
   "rose",
+  "orange",
 ] as const;
 export type BadgeTone = (typeof BADGE_TONES)[number];
 
@@ -22,6 +23,7 @@ const toneClass: Record<BadgeTone, string> = {
   violet: "bg-tone-violet-bg text-tone-violet-fg",
   teal: "bg-tone-teal-bg text-tone-teal-fg",
   rose: "bg-tone-rose-bg text-tone-rose-fg",
+  orange: "bg-tone-orange-bg text-tone-orange-fg",
 };
 
 function isTone(value: string): value is BadgeTone {

@@ -97,6 +97,9 @@ export function directValue(input: ScoreInput, now: Date): number {
       return 0.4;
     case "thought":
       return input.maturity === "refined" ? 0.6 : input.maturity === "growing" ? 0.45 : 0.3;
+    case "note":
+      // Study notes: kept knowledge, a little above a seminar, below a refined thought.
+      return 0.45;
     case "review":
       return 0.2;
     case "tag":
