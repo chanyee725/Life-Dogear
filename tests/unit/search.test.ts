@@ -308,9 +308,9 @@ describe("areas and archived items (phase 1.5)", () => {
     expect(hits[2]).toMatchObject({ field: "body", snippet: { before: "메모 ", match: "건강" } });
   });
 
-  it("finds a project by its next action", async () => {
-    const p = await projects.create({ title: "학회 준비", nextAction: "포스터 초안 보내기" });
-    expect((await searchAll("포스터"))[0]).toMatchObject({ id: p.id, field: "meta" });
+  it("does not search a project's hidden next action", async () => {
+    await projects.create({ title: "학회 준비", nextAction: "포스터 초안 보내기" });
+    expect(await searchAll("포스터")).toEqual([]);
   });
 
   it("keeps archived items in the results, flagged, without hiding them", async () => {

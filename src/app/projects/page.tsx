@@ -13,6 +13,7 @@ import { EmptyState, formatDate, LinkButton, LinkTabs, NewItemButton } from "@/c
 import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";
+import { seoulDate } from "@/components/calendar/model";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { PROJECT_KIND, PROJECT_STAGE, PROJECT_STATUS, type ProjectKind } from "@/lib/enums";
 import { areas, projects } from "@/lib/repo";
@@ -67,12 +68,6 @@ export default async function ProjectsPage({
       render: (p) => <ProgressBadge project={p} />,
     },
     {
-      key: "next",
-      header: "다음 할 일",
-      className: "max-w-64 truncate text-muted",
-      render: (p) => p.nextAction,
-    },
-    {
       key: "area",
       header: "영역",
       className: "text-muted whitespace-nowrap",
@@ -83,6 +78,13 @@ export default async function ProjectsPage({
       header: "마감일",
       className: "text-muted tabular-nums",
       render: (p) => formatDate(p.dueDate),
+    },
+    {
+      key: "created",
+      header: "생성일",
+      hideBelow: "lg",
+      className: "text-muted tabular-nums whitespace-nowrap",
+      render: (p) => formatDate(seoulDate(p.createdAt)),
     },
     { key: "tags", header: "태그", render: (p) => <TagList tags={p.tags} /> },
   ];
@@ -176,9 +178,7 @@ export default async function ProjectsPage({
                   <span className="font-medium">{p.title}</span>
                   <ProgressBadge project={p} />
                 </div>
-                {p.nextAction ? (
-                  <p className="line-clamp-2 text-[13px] text-muted">다음: {p.nextAction}</p>
-                ) : p.researchQuestion ? (
+                {p.researchQuestion ? (
                   <p className="line-clamp-2 text-[13px] text-muted">{p.researchQuestion}</p>
                 ) : null}
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-muted">

@@ -3,7 +3,6 @@ import { Badge, EmptyAdd } from "@/components/ui";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
 import { formatDate } from "./format";
-import { NextAction } from "./NextAction";
 
 /** Active general (non-research) projects for the home "프로젝트" section, soonest due first. */
 export function GeneralProjects({ projects }: { projects: Project[] }) {
@@ -29,7 +28,6 @@ export function GeneralProjects({ projects }: { projects: Project[] }) {
                 </span>
               ) : null}
             </span>
-            <NextAction value={p.nextAction} />
           </Link>
         </li>
       ))}

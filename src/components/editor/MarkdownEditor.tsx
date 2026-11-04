@@ -6,8 +6,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EDITOR_READY_EVENT } from "@/components/fields/form-patch";
 import { cn } from "@/components/ui/cn";
+import type { ItemRef } from "@/lib/repo/shared";
 import { createExtensions } from "./extensions";
 import { insertImages, isImageFile } from "./image-upload";
+import { SlashMenu } from "./SlashMenu";
 import { itemFromPath } from "./wiki-resolver";
 import { WikiRenamePrompt } from "./WikiRenamePrompt";
 import { WikiSuggest, type SuggestKeyHandler } from "./WikiSuggest";
@@ -30,12 +32,17 @@ export type MarkdownEditorProps = {
   toolbar?: boolean;
   className?: string;
   autoFocus?: boolean;
+  /**
+   * The saved document this body belongs to; the `/` menu's 페이지 links new notes to it.
+   * Defaults to the detail page in the URL; `null` (or a new-item page) hides 페이지.
+   */
+  doc?: ItemRef | null;
 };
 
 /**
  * Block editor that reads and writes Markdown (Tiptap + tiptap-markdown).
  * Supports headings, lists, checklists, tables, quotes, code, links and `[[title]]`
- * wiki links (`[[` opens a title search).
+ * wiki links (`[[` opens a title search), and a `/` block menu.
  */
 export function MarkdownEditor({
   value,
@@ -46,10 +53,14 @@ export function MarkdownEditor({
   toolbar = true,
   className,
   autoFocus = false,
+  doc,
 }: MarkdownEditorProps) {
+  const pathname = usePathname();
+  const docRef = doc === undefined ? itemFromPath(pathname) : doc;
   // Last markdown we emitted or loaded; lets us ignore our own value echoing back.
   const lastMarkdown = useRef(value);
   const suggestKeys = useRef<SuggestKeyHandler | null>(null);
+  const slashKeys = useRef<SuggestKeyHandler | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const [uploading, setUploading] = useState(0);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -80,7 +91,8 @@ export function MarkdownEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: { class: "rb-prose", "aria-label": "본문", spellcheck: "false" },
-      handleKeyDown: (_view, event) => suggestKeys.current?.(event) ?? false,
+      handleKeyDown: (_view, event) =>
+        suggestKeys.current?.(event) || slashKeys.current?.(event) || false,
       // Pasted or dropped photos are uploaded and inserted as images.
       handlePaste: (_view, event) => {
         const files = [...(event.clipboardData?.files ?? [])].filter(isImageFile);
@@ -140,6 +152,14 @@ export function MarkdownEditor({
         </p>
       ) : null}
       {editor && editable ? <WikiSuggest editor={editor} keyHandler={suggestKeys} /> : null}
+      {editor && editable ? (
+        <SlashMenu
+          editor={editor}
+          keyHandler={slashKeys}
+          doc={docRef}
+          onPickImages={(files) => void addImages(files)}
+        />
+      ) : null}
       {name ? <HiddenValue name={name} editor={editor} initial={value} /> : null}
       {name && editable ? <FormTitleRename /> : null}
     </div>

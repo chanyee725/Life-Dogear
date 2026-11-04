@@ -172,19 +172,10 @@ export default async function ReviewDetailPage({ params }: Props) {
                 {activeProjects.length ? (
                   <ul className="flex flex-col gap-1 text-sm">
                     {activeProjects.map((p) => (
-                      <li key={p.id} className="flex items-baseline gap-2">
-                        <Link href={`/projects/${p.id}`} className="shrink-0 hover:underline">
+                      <li key={p.id}>
+                        <Link href={`/projects/${p.id}`} className="hover:underline">
                           {p.title}
                         </Link>
-                        <span
-                          className={
-                            p.nextAction
-                              ? "min-w-0 truncate text-[13px] text-muted"
-                              : "text-[13px] text-tone-amber-fg"
-                          }
-                        >
-                          {p.nextAction || "다음 할 일 없음"}
-                        </span>
                       </li>
                     ))}
                   </ul>
