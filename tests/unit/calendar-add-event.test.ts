@@ -10,7 +10,9 @@ import {
   eventPayload,
   mergeAdded,
   postEvent,
+  revealAdded,
 } from "@/components/calendar/add-event";
+import { DEFAULT_SOURCES, visibleItems } from "@/components/calendar/sources";
 import type { CalendarItem } from "@/lib/calendar/types";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -74,6 +76,7 @@ describe("add-event helpers", () => {
     expect(await postEvent(base, { fetchImpl: auth as unknown as typeof fetch })).toEqual({
       ok: false,
       message: addEventError("auth"),
+      code: "auth",
     });
     const down = vi.fn(async () => {
       throw new TypeError("down");
@@ -204,6 +207,25 @@ describe("AddEventButton", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("drops the event id after an invalid answer, so the retry uses a new one", async () => {
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+      json(400, { error: "invalid" }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await mount({ enabled: true, defaultDate: "2026-11-05" });
+    await act(async () => button().click());
+    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    await act(async () => type(title, "회의"));
+    for (let i = 0; i < 2; i++) {
+      await act(async () => {
+        document.querySelector("form")!.requestSubmit();
+      });
+    }
+    const ids = fetchMock.mock.calls.map((c) => JSON.parse(String(c[1]?.body)).clientId);
+    expect(ids).toHaveLength(2);
+    expect(ids[1]).not.toBe(ids[0]);
+  });
+
   it("a retry of the same form sends the same clientId; an edit gets a new one", async () => {
     const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
       json(502, { error: "network" }),
@@ -224,5 +246,30 @@ describe("AddEventButton", () => {
     const ids = fetchMock.mock.calls.map((c) => JSON.parse(String(c[1]?.body)).clientId);
     expect(ids[0]).toBe(ids[1]);
     expect(ids[2]).not.toBe(ids[0]);
+  });
+});
+
+describe("revealAdded", () => {
+  const item: CalendarItem = { ...ITEM, start: "2026-11-05T14:00:00+09:00" };
+  const hidden = { ...DEFAULT_SOURCES, google: false };
+
+  it("an added Google event stays visible when Google is hidden or has no feed", () => {
+    for (const [choice, google] of [
+      [hidden, "ok"],
+      [DEFAULT_SOURCES, "off"],
+      [hidden, "off"],
+    ] as const) {
+      expect(visibleItems([item], choice, google)).toEqual([]);
+      const next = revealAdded(choice, google);
+      expect(next.choice.google).toBe(true);
+      expect(visibleItems(mergeAdded([], [item]), next.choice, next.google)).toEqual([item]);
+    }
+  });
+
+  it("returns the same objects when nothing changes", () => {
+    const shown = { ...DEFAULT_SOURCES, google: true };
+    const next = revealAdded(shown, "error");
+    expect(next.choice).toBe(shown);
+    expect(next.google).toBe("error");
   });
 });

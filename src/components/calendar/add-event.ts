@@ -1,5 +1,6 @@
 // '일정 추가' (Google Calendar write) — client helpers. Pure, no secrets: the server holds them.
-import type { CalendarItem } from "@/lib/calendar/types";
+import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
+import type { SourceChoice } from "./sources";
 
 export const ADD_EVENT_URL = "/api/calendar/events";
 export const EVENT_TITLE_MAX = 200;
@@ -44,7 +45,8 @@ export function timeProblem(input: AddEventInput): string | null {
   return p.end && p.start && p.end <= p.start ? "끝은 시작보다 늦게(자정 전까지)." : null;
 }
 
-export type AddEventResult = { ok: true; item: CalendarItem } | { ok: false; message: string };
+export type AddEventResult =
+  { ok: true; item: CalendarItem } | { ok: false; message: string; code?: string };
 
 /** Posts the event; never throws. */
 /**
@@ -69,11 +71,27 @@ export async function postEvent(
       body: JSON.stringify({ ...eventPayload(input), ...(clientId ? { clientId } : {}) }),
     });
   } catch {
-    return { ok: false, message: addEventError("network") };
+    return { ok: false, message: addEventError("network"), code: "network" };
   }
   const body = (await res.json().catch(() => null)) as { item?: CalendarItem; error?: unknown };
   if (res.ok && body?.item) return { ok: true, item: body.item };
-  return { ok: false, message: addEventError(body?.error) };
+  const code = typeof body?.error === "string" ? body.error : undefined;
+  return { ok: false, message: addEventError(code), ...(code ? { code } : {}) };
 }
 
 export { mergeAdded } from "@/lib/calendar/dedupe";
+
+/**
+ * Display state after an add, so the new event does not vanish at once: Google is switched
+ * back on in "표시", and a calendar with no read feed (`off`) shows Google items anyway.
+ * Returns the same objects when nothing changes.
+ */
+export function revealAdded(
+  choice: SourceChoice,
+  google: GoogleStatus,
+): { choice: SourceChoice; google: GoogleStatus } {
+  return {
+    choice: choice.google ? choice : { ...choice, google: true },
+    google: google === "off" ? "ok" : google,
+  };
+}

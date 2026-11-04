@@ -70,7 +70,8 @@ export function AddEventButton({
     const payload = JSON.stringify(eventPayload(form));
     if (attempt.current?.payload !== payload) attempt.current = { payload, id: newClientId() };
     const result = await postEvent(form, { clientId: attempt.current.id });
-    if (result.ok) attempt.current = null;
+    // Done, or the id itself was refused (e.g. a deleted event's): the next try needs a new one.
+    if (result.ok || result.code === "invalid") attempt.current = null;
     setPending(false);
     if (result.ok) {
       onAdded?.(result.item);
