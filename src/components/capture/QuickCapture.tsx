@@ -35,7 +35,6 @@ import {
   type CaptureKind,
 } from "./capture";
 
-const DEFAULT_STATUS = "";
 const KINDS: { value: CaptureKind; label: string }[] = [
   { value: "thought", label: "생각" },
   { value: "link", label: "링크" },
@@ -65,7 +64,7 @@ export function QuickCapture() {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<CaptureDraft>(EMPTY_DRAFT);
   const [status, setStatus] = useState<{ text: string; error?: boolean }>({
-    text: DEFAULT_STATUS,
+    text: "",
   });
   /** Bumped per save so a new toast restarts its timer; 0 = none. */
   const [toast, setToast] = useState<Saved>({ n: 0 });
@@ -101,7 +100,7 @@ export function QuickCapture() {
     const onOpen = () => {
       if (document.querySelector("dialog[open]")) return;
       setDraft(EMPTY_DRAFT); // always opens as 생각
-      setStatus({ text: DEFAULT_STATUS });
+      setStatus({ text: "" });
       escAt.current = 0;
       setOpen(true);
     };
@@ -134,7 +133,7 @@ export function QuickCapture() {
 
   function setKind(kind: CaptureKind) {
     setDraft((d) => ({ ...d, kind }));
-    setStatus({ text: DEFAULT_STATUS });
+    setStatus({ text: "" });
   }
 
   async function save(mode: "close" | "continue") {
