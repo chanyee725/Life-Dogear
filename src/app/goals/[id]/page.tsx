@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { seoulDate } from "@/components/calendar/model";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
@@ -8,7 +9,7 @@ import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { ItemNotes } from "@/components/notes/ItemNotes";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
-import { LinkButton, RowList, Section } from "@/components/ui";
+import { EmptyAdd, formatDate, LinkButton, RowList, Section } from "@/components/ui";
 import { isValidItemId } from "@/lib/ids";
 import { areas, goals, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
@@ -44,6 +45,8 @@ export default async function GoalDetailPage({ params }: Props) {
   const { goal } = node;
   const ref = { type: "goal" as const, id: goal.id };
   const childHorizon = CHILD_HORIZON[goal.horizon];
+  const childHref = `/goals/new?horizon=${childHorizon}&parent=${goal.id}`;
+  const projectHref = `/projects/new?goal=${goal.id}`;
 
   return (
     <Page className="flex flex-col gap-12">
@@ -73,6 +76,7 @@ export default async function GoalDetailPage({ params }: Props) {
           </p>
           <GoalFields
             editorKey={goal.id}
+            created={formatDate(seoulDate(goal.createdAt))}
             hasChildren={goalList.some((g) => g.parentId === goal.id)}
             tagSuggestions={allTags.map((t) => t.name)}
             parentOptions={parentOptionsFor(goalList, goal.id, goal.parentId)}
@@ -95,30 +99,38 @@ export default async function GoalDetailPage({ params }: Props) {
       </div>
       {childHorizon ? (
         <Section
+          id="goal-children"
           title={`하위 목표${node.children.length ? ` ${node.children.length}` : ""}`}
           action={
-            <LinkButton
-              href={`/goals/new?horizon=${childHorizon}&parent=${goal.id}`}
-              variant="ghost"
-              size="sm"
-            >
-              {childHorizon === "year" ? "새 연 목표" : "새 분기 목표"}
-            </LinkButton>
+            node.children.length ? (
+              <LinkButton href={childHref} variant="ghost" size="sm">
+                {childHorizon === "year" ? "새 연 목표" : "새 분기 목표"}
+              </LinkButton>
+            ) : null
           }
         >
-          {node.children.length ? <GoalTree nodes={node.children} /> : null}
+          {node.children.length ? (
+            <GoalTree nodes={node.children} />
+          ) : (
+            <EmptyAdd href={childHref}>＋ 하위 목표</EmptyAdd>
+          )}
         </Section>
       ) : null}
       {goal.horizon === "life" ? null : (
         <Section
+          id="goal-projects"
           title={`프로젝트${node.projects.length ? ` ${node.projects.length}` : ""}`}
           action={
-            <LinkButton href={`/projects/new?goal=${goal.id}`} variant="ghost" size="sm">
-              새 프로젝트
-            </LinkButton>
+            node.projects.length ? (
+              <LinkButton href={projectHref} variant="ghost" size="sm">
+                새 프로젝트
+              </LinkButton>
+            ) : null
           }
         >
-          {node.projects.length === 0 ? null : (
+          {node.projects.length === 0 ? (
+            <EmptyAdd href={projectHref}>＋ 프로젝트</EmptyAdd>
+          ) : (
             <RowList>
               {node.projects.map((p) => (
                 <li key={p.id}>

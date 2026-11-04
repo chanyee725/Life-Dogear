@@ -59,6 +59,7 @@ export function GoalFields({
   areaOptions,
   editorKey,
   hasChildren = false,
+  created,
 }: {
   values: GoalFormValues;
   tagSuggestions: string[];
@@ -67,6 +68,8 @@ export function GoalFields({
   editorKey: string;
   /** Child goals pin the horizon (and a year goal's year) — the repo refuses changes. */
   hasChildren?: boolean;
+  /** `YYYY.MM.DD` (Seoul) of `createdAt` — detail page only, read-only. */
+  created?: string;
 }) {
   const [horizon, setHorizon] = useState<GoalHorizon>(values.horizon);
   const initial = splitPeriod(values.period);
@@ -83,62 +86,63 @@ export function GoalFields({
     <>
       <TitleInput defaultValue={values.title} placeholder="목표" />
       <Properties>
-        <Property label="기간 단위" htmlFor="goal-horizon">
-          <EnumSelect
-            id="goal-horizon"
-            name="horizon"
-            options={GOAL_HORIZON.options.map((o) => ({
-              value: o.value,
-              label: `${o.label} 목표`,
-            }))}
-            defaultValue={values.horizon}
-            disabled={hasChildren}
-            aria-describedby={hasChildren ? "goal-horizon-why" : undefined}
-            onChange={(value) => {
-              if (!value) return;
-              setHorizon(value);
-              // A parent from another level no longer fits.
-              const fits = parentOptions.some(
-                (p) => p.value === parentId && p.horizon === PARENT_OF[value],
-              );
-              if (!fits) setParentId("");
-            }}
-            className="w-auto"
-          />
-          {hasChildren ? (
-            <span id="goal-horizon-why" className="ml-2 text-xs text-muted">
-              하위 목표가 있어 바꿀 수 없습니다.
-            </span>
-          ) : null}
-        </Property>
-        <Property label="기간" htmlFor={horizon === "life" ? undefined : "goal-year"}>
+        <Property label="기간 단위 · 기간" htmlFor="goal-horizon">
           <input type="hidden" name="period" value={period} />
-          {horizon === "life" ? (
-            <span className="text-sm text-muted">기간 없음 (방향)</span>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Input
-                id="goal-year"
-                aria-label="연도"
-                disabled={hasChildren && horizon === "year"}
-                inputMode="numeric"
-                maxLength={4}
-                value={year}
-                onChange={(e) => setYear(e.target.value.replace(/\D/g, ""))}
-                placeholder={PERIOD_HINT.year}
-                className="w-24"
-              />
-              {horizon === "quarter" ? (
-                <EnumSelect
-                  aria-label="분기"
-                  options={QUARTERS}
-                  value={quarter}
-                  onChange={(value) => setQuarter(value || "Q1")}
-                  className="w-auto"
+          <div className="flex flex-wrap items-center gap-2">
+            <EnumSelect
+              id="goal-horizon"
+              name="horizon"
+              aria-label="기간 단위"
+              options={GOAL_HORIZON.options.map((o) => ({
+                value: o.value,
+                label: `${o.label} 목표`,
+              }))}
+              defaultValue={values.horizon}
+              disabled={hasChildren}
+              aria-describedby={hasChildren ? "goal-horizon-why" : undefined}
+              onChange={(value) => {
+                if (!value) return;
+                setHorizon(value);
+                // A parent from another level no longer fits.
+                const fits = parentOptions.some(
+                  (p) => p.value === parentId && p.horizon === PARENT_OF[value],
+                );
+                if (!fits) setParentId("");
+              }}
+              className="w-auto"
+            />
+            {horizon === "life" ? (
+              <span className="text-sm text-muted">기간 없음 (방향)</span>
+            ) : (
+              <>
+                <Input
+                  id="goal-year"
+                  aria-label="연도"
+                  disabled={hasChildren && horizon === "year"}
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={year}
+                  onChange={(e) => setYear(e.target.value.replace(/\D/g, ""))}
+                  placeholder={PERIOD_HINT.year}
+                  className="w-24"
                 />
-              ) : null}
-            </div>
-          )}
+                {horizon === "quarter" ? (
+                  <EnumSelect
+                    aria-label="분기"
+                    options={QUARTERS}
+                    value={quarter}
+                    onChange={(value) => setQuarter(value || "Q1")}
+                    className="w-auto"
+                  />
+                ) : null}
+              </>
+            )}
+            {hasChildren ? (
+              <span id="goal-horizon-why" className="text-xs text-muted">
+                하위 목표가 있어 바꿀 수 없습니다.
+              </span>
+            ) : null}
+          </div>
         </Property>
         {parentHorizon ? (
           <Property label="상위 목표" htmlFor="goal-parent">
@@ -168,18 +172,30 @@ export function GoalFields({
             placeholder="이 목표가 중요한 이유"
           />
         </Property>
-        <Property label="상태" htmlFor="goal-status">
-          <EnumSelect
-            id="goal-status"
-            name="status"
-            options={GOAL_STATUS.options}
-            defaultValue={values.status}
-            className="w-auto"
-          />
+        <Property label="상태 · 영역" htmlFor="goal-status">
+          <div className="flex flex-wrap items-center gap-2">
+            <EnumSelect
+              id="goal-status"
+              name="status"
+              aria-label="상태"
+              options={GOAL_STATUS.options}
+              defaultValue={values.status}
+              className="w-auto"
+            />
+            <EnumSelect
+              id="goal-area"
+              name="areaId"
+              aria-label="영역"
+              options={areaOptions}
+              emptyLabel="영역 없음"
+              defaultValue={values.areaId ?? ""}
+              className="w-auto max-w-full"
+            />
+          </div>
         </Property>
         {horizon === "life" ? null : (
           <Property label="진행률" htmlFor="goal-progress-mode">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <EnumSelect
                 id="goal-progress-mode"
                 name="progressMode"
@@ -204,16 +220,6 @@ export function GoalFields({
             </div>
           </Property>
         )}
-        <Property label="영역" htmlFor="goal-area">
-          <EnumSelect
-            id="goal-area"
-            name="areaId"
-            options={areaOptions}
-            emptyLabel="없음"
-            defaultValue={values.areaId ?? ""}
-            className="w-auto"
-          />
-        </Property>
         <Property label="태그" htmlFor="goal-tags">
           <TagInput
             id="goal-tags"
@@ -222,6 +228,11 @@ export function GoalFields({
             suggestions={tagSuggestions}
           />
         </Property>
+        {created ? (
+          <Property label="생성일">
+            <span className="text-sm tabular-nums">{created}</span>
+          </Property>
+        ) : null}
       </Properties>
       <DetailBody>
         <MarkdownEditor
