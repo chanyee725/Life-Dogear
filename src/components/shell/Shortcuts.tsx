@@ -47,7 +47,9 @@ export function Shortcuts() {
       } else if (action.kind === "focus-graph-search") {
         window.dispatchEvent(new Event(GRAPH_SEARCH_EVENT));
       } else if (!focusQuickInput()) {
-        if (!confirmLeave()) return;
+        // Already home (e.g. a hard load not hydrated yet): no push to the same path, which
+        // would leave pendingFocus set and pop the popover open on the next visit home.
+        if (pathname === "/" || !confirmLeave()) return;
         pendingFocus.current = true;
         router.push("/");
       }

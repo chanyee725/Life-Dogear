@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { isTypingTarget, resolveShortcut } from "@/components/shell/shortcuts";
+// @vitest-environment jsdom
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { describe, expect, it, vi } from "vitest";
+import { Shortcuts } from "@/components/shell/Shortcuts";
+import { isTypingTarget, QUICK_ADD_EVENT, resolveShortcut } from "@/components/shell/shortcuts";
+
+const nav = vi.hoisted(() => ({ pathname: "/", push: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: nav.push }),
+  usePathname: () => nav.pathname,
+}));
 
 const key = (
   k: string,
@@ -184,5 +194,31 @@ describe("C — quick capture", () => {
     expect(resolveShortcut(key("c", { ctrlKey: true }), "/", { typing: false })).toBeNull();
     expect(resolveShortcut(key("c", { metaKey: true }), "/", { typing: false })).toBeNull();
     expect(resolveShortcut(key("c", { altKey: true }), "/", { typing: false })).toBeNull();
+  });
+});
+
+describe("Shortcuts `/` on the home", () => {
+  it("sends QUICK_ADD_EVENT and never pushes `/` again when nothing handles it yet", () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    nav.pathname = "/";
+    nav.push.mockClear();
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => root.render(createElement(Shortcuts)));
+    const sent = vi.fn();
+    window.addEventListener(QUICK_ADD_EVENT, sent);
+    try {
+      // No 빠른 추가 listener yet (hard load still hydrating): the event goes unhandled.
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "/", code: "Slash" }));
+      });
+      expect(sent).toHaveBeenCalledTimes(1);
+      expect(nav.push).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener(QUICK_ADD_EVENT, sent);
+      act(() => root.unmount());
+      host.remove();
+    }
   });
 });
