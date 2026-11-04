@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { Button, ChipCount, ChipLink, LinkButton, SearchInput, Select } from "@/components/ui";
+import {
+  Button,
+  FilterBar,
+  LinkButton,
+  RowList,
+  SearchInput,
+  Segmented,
+  Select,
+} from "@/components/ui";
 import { GoalListRow } from "./GoalListRow";
 import {
   endedCounts,
@@ -16,89 +24,123 @@ import {
   type PeriodFilter,
 } from "./list-view";
 
-export type PeriodChip = {
-  key: string;
-  label: string;
-  sub?: string;
-  href: string;
-  active: boolean;
-};
+export type PeriodKey = "quarter" | "year" | "all";
+export type PeriodChoice = { value: PeriodKey; label: string; href: string };
+export type YearChoice = { value: string; href: string };
 export type AreaChoice = { value: string; label: string; href: string };
 
 /**
- * The 목표 list below the "방향" line: period chips and area select (URL), a text filter
- * (here, in the page), active goals grouped by area, and the folded "끝난 목표".
+ * The 목표 list below the 인생 목표 card: one filter bar (period and area in the URL, a
+ * text filter in the page), active goals grouped by area, and the folded "끝난 목표".
  */
 export function GoalList({
   groups,
   ended,
-  periodChips,
+  periodChoices,
+  periodValue,
+  yearChoices,
+  selectedYear,
   areaChoices,
   selectedArea,
+  areaTitles,
   period,
   areaTitle,
+  today,
   resetHref,
 }: {
   groups: GoalGroup[];
   ended: ListGoal[];
-  periodChips: PeriodChip[];
+  periodChoices: PeriodChoice[];
+  /** null: a period outside the choices (e.g. `?period=2027`). */
+  periodValue: PeriodKey | null;
+  /** Years with goals other than this one (empty: no year select). */
+  yearChoices: YearChoice[];
+  /** The other year shown, or "". */
+  selectedYear: string;
   areaChoices: AreaChoice[];
   selectedArea: string;
+  /** Area id → title, for the rows. */
+  areaTitles: Record<string, string>;
   period: PeriodFilter;
   areaTitle?: string;
+  /** `YYYY-MM-DD`, for the days-left labels. */
+  today: string;
   resetHref: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const areaSelectId = useId();
   const shownGroups = filterGroupsByText(groups, query);
   const shownEnded = ended.filter((g) => titleMatches(g.title, query));
   const reasons = filterLabels({ period, areaTitle, query });
+  const titleOf = (areaId: string | null) => (areaId ? areaTitles[areaId] : undefined);
 
   return (
     <>
-      <div className="mb-2 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <nav aria-label="기간" className="flex flex-wrap items-center gap-1">
-          <span className="mr-1 text-[13px] text-muted">기간</span>
-          {periodChips.map((c) => (
-            <ChipLink key={c.key} href={c.href} active={c.active}>
-              {c.label}
-              {c.sub ? <ChipCount>{c.sub}</ChipCount> : null}
-            </ChipLink>
-          ))}
-        </nav>
-        <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor={areaSelectId} className="text-[13px] text-muted">
-            영역
-          </label>
+      <FilterBar
+        className="mb-1"
+        end={
+          <SearchInput
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onClear={() => setQuery("")}
+            placeholder="목표 찾기…"
+            aria-label="목표 찾기"
+            className="w-full sm:w-52"
+          />
+        }
+      >
+        <Segmented
+          ariaLabel="기간"
+          options={periodChoices}
+          value={periodValue}
+          onChange={(value) => {
+            const choice = periodChoices.find((c) => c.value === value);
+            if (choice) router.push(choice.href);
+          }}
+        />
+        {yearChoices.length ? (
           <Select
-            id={areaSelectId}
-            value={selectedArea}
+            aria-label="다른 연도"
+            size="sm"
+            value={selectedYear}
             onChange={(e) => {
-              const choice = areaChoices.find((a) => a.value === e.target.value);
+              const choice = yearChoices.find((y) => y.value === e.target.value);
               if (choice) router.push(choice.href);
             }}
-            className="h-7 w-auto max-w-[12rem] min-w-0 text-[13px]"
+            className="w-auto min-w-0"
           >
-            {areaChoices.map((a) => (
-              <option key={a.value} value={a.value}>
-                {a.label}
+            <option value="" disabled>
+              다른 연도
+            </option>
+            {yearChoices.map((y) => (
+              <option key={y.value} value={y.value}>
+                {y.value}년
               </option>
             ))}
           </Select>
-        </div>
-        <SearchInput
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onClear={() => setQuery("")}
-          placeholder="목표 찾기…"
-          aria-label="목표 찾기"
-          className="w-full sm:ml-auto sm:w-48"
-        />
-      </div>
+        ) : null}
+        <Select
+          aria-label="영역"
+          size="sm"
+          value={selectedArea}
+          onChange={(e) => {
+            const choice = areaChoices.find((a) => a.value === e.target.value);
+            if (choice) router.push(choice.href);
+          }}
+          className="w-auto max-w-[12rem] min-w-0"
+        >
+          {areaChoices.map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.label}
+            </option>
+          ))}
+        </Select>
+      </FilterBar>
 
       {shownGroups.length ? (
-        shownGroups.map((group) => <Group key={group.areaId ?? "none"} group={group} />)
+        shownGroups.map((group) => (
+          <Group key={group.areaId ?? "none"} group={group} today={today} />
+        ))
       ) : (
         <NothingShown
           reasons={reasons}
@@ -107,51 +149,41 @@ export function GoalList({
         />
       )}
 
-      {shownEnded.length ? <Ended goals={shownEnded} /> : null}
+      {shownEnded.length ? <Ended goals={shownEnded} today={today} titleOf={titleOf} /> : null}
     </>
   );
 }
 
-function Group({ group }: { group: GoalGroup }) {
+/** A goal and its sub-goals (any depth) as rows with their depth. */
+function withDepth(goals: readonly ListGoal[], depth = 0): { goal: ListGoal; depth: number }[] {
+  return goals.flatMap((goal) => [{ goal, depth }, ...withDepth(goal.children, depth + 1)]);
+}
+
+/** One area's goals. The heading names the area, so the rows leave it out. */
+function Group({ group, today }: { group: GoalGroup; today: string }) {
   const headingId = useId();
   const { count, average } = groupStats(group.goals);
   return (
     <section aria-labelledby={headingId} className="pt-5">
-      <div className="flex items-center gap-3 pb-1">
-        <h2 id={headingId} className="min-w-0 truncate text-[13px] font-medium">
-          {group.areaId ? (
-            <Link href={`/areas/${group.areaId}`} className="rounded-sm hover:underline">
-              {group.title}
-            </Link>
-          ) : (
-            <span className="text-muted">{group.title}</span>
-          )}
-        </h2>
-        <span aria-hidden className="h-px min-w-4 flex-1 bg-border" />
-        <span className="shrink-0 text-xs text-muted tabular-nums">
-          목표 {count}
-          {average !== null ? ` · 평균 ${average}%` : ""}
-        </span>
-      </div>
-      <ul className="divide-y divide-border">
-        {group.goals.map((goal) => (
-          <li key={goal.id}>
-            <GoalListRow goal={goal} />
-            {goal.children.length ? (
-              <ul
-                aria-label={`${goal.title}의 분기 목표`}
-                className="mb-1.5 ml-2.5 divide-y divide-border border-l border-border pl-3"
-              >
-                {goal.children.map((child) => (
-                  <li key={child.id}>
-                    <GoalListRow goal={child} />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </li>
+      <h2 id={headingId} className="mb-1.5 truncate text-xs text-muted tabular-nums">
+        {group.areaId ? (
+          <Link
+            href={`/areas/${group.areaId}`}
+            className="rounded-sm font-medium text-fg hover:underline"
+          >
+            {group.title}
+          </Link>
+        ) : (
+          <span className="font-medium">{group.title}</span>
+        )}
+        {` · ${count}개`}
+        {average !== null ? ` · 평균 ${average}%` : ""}
+      </h2>
+      <RowList>
+        {withDepth(group.goals).map(({ goal, depth }) => (
+          <GoalListRow key={goal.id} goal={goal} depth={depth} today={today} />
         ))}
-      </ul>
+      </RowList>
     </section>
   );
 }
@@ -167,7 +199,7 @@ function NothingShown({
 }) {
   if (!reasons.length) {
     return (
-      <div className="mt-5 border-y border-border py-6 text-sm text-muted">
+      <div className="mt-5 rounded-lg border border-border px-4 py-6 text-sm text-muted">
         <p>진행 중인 연·분기 목표가 없습니다.</p>
         <LinkButton href="/goals/new?horizon=year" size="sm" className="mt-3">
           연 목표 만들기
@@ -176,7 +208,7 @@ function NothingShown({
     );
   }
   return (
-    <div role="status" className="mt-5 border-y border-border py-6 text-sm">
+    <div role="status" className="mt-5 rounded-lg border border-border px-4 py-6 text-sm">
       <p>
         <span className="text-fg">{reasons.join(" · ")}</span>
         <span className="text-muted">에 해당하는 진행 중인 목표가 없습니다.</span>
@@ -195,7 +227,15 @@ function NothingShown({
   );
 }
 
-function Ended({ goals }: { goals: ListGoal[] }) {
+function Ended({
+  goals,
+  today,
+  titleOf,
+}: {
+  goals: ListGoal[];
+  today: string;
+  titleOf: (areaId: string | null) => string | undefined;
+}) {
   const { achieved, dropped } = endedCounts(goals);
   const parts = [achieved ? `달성 ${achieved}` : "", dropped ? `내려놓음 ${dropped}` : ""].filter(
     Boolean,
@@ -216,13 +256,17 @@ function Ended({ goals }: { goals: ListGoal[] }) {
           <span className="text-xs text-faint tabular-nums">({parts.join(" · ")})</span>
         ) : null}
       </summary>
-      <ul className="mt-1 divide-y divide-border border-y border-border">
+      <RowList className="mt-1">
         {goals.map((goal) => (
-          <li key={goal.id}>
-            <GoalListRow goal={goal} showStatus />
-          </li>
+          <GoalListRow
+            key={goal.id}
+            goal={goal}
+            today={today}
+            areaTitle={titleOf(goal.areaId)}
+            showStatus
+          />
         ))}
-      </ul>
+      </RowList>
     </details>
   );
 }

@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
 import { goals, links, projects } from "@/db/schema";
+import { dayInZone } from "@/lib/calendar/dates";
 import {
   GOAL_HORIZON,
   GOAL_PROGRESS_MODE,
@@ -88,11 +89,14 @@ export function normalizePeriod(horizon: GoalHorizon, period: unknown): string |
   return value;
 }
 
-/** Period for "now", e.g. new goals: `2026` / `2026-Q4`. */
+/**
+ * Period for "now", e.g. new goals: `2026` / `2026-Q4`, by the Seoul date (as the 목표
+ * list's `seoulDate`), not the server's time zone.
+ */
 export function currentPeriod(horizon: GoalHorizon, now = new Date()): string | null {
   if (horizon === "life") return null;
-  const year = String(now.getFullYear());
-  return horizon === "year" ? year : `${year}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+  const [year = "", month = "1"] = (dayInZone(now.toISOString()) ?? "").split("-");
+  return horizon === "year" ? year : `${year}-Q${Math.floor((Number(month) - 1) / 3) + 1}`;
 }
 
 function requireProgress(value: unknown): number | null {
