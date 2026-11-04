@@ -112,3 +112,108 @@ export const TEMPLATES = {
   seminar: SEMINAR_TEMPLATE,
   thought: "",
 } as const;
+
+/** Note templates offered on /notes/new (docs/design/code.md 3). Order is the picker order. */
+export type NoteTemplateKey = "blank" | "worklog" | "concept" | "error" | "summary";
+
+export type NoteTemplate = {
+  key: NoteTemplateKey;
+  name: string;
+  description: string;
+  /** Markdown body; `today` is the Seoul date as `YYYY-MM-DD` (`seoulDate()`). */
+  body: (today: string) => string;
+};
+
+export const NOTE_TEMPLATES: readonly NoteTemplate[] = [
+  {
+    key: "blank",
+    name: "빈 노트",
+    description: "아무것도 없는 상태에서 시작해요.",
+    body: () => "",
+  },
+  {
+    key: "worklog",
+    name: "작업 로그",
+    description: "오늘 한 일과 다음에 할 일을 날짜별로 남겨요.",
+    body: (today) => `## ${today}
+
+### 한 일
+- 
+
+### 막힌 점
+- 
+
+### 다음에 할 일
+- 
+`,
+  },
+  {
+    key: "concept",
+    name: "개념 정리",
+    description: "개념을 내 말로 풀고 예시와 연결을 적어요.",
+    body: () => `## 한 줄 정의
+
+## 왜 필요한가
+
+## 핵심 내용
+- 
+
+## 예시
+
+## 헷갈리는 점
+
+## 관련 개념
+- 
+`,
+  },
+  {
+    key: "error",
+    name: "에러 해결",
+    description: "증상, 원인, 해결을 남겨 다음에 바로 찾아요.",
+    body: () => `## 증상
+
+\`\`\`text
+(에러 메시지)
+\`\`\`
+
+## 원인
+
+## 해결
+
+\`\`\`bash
+\`\`\`
+
+## 참고
+- 
+`,
+  },
+  {
+    key: "summary",
+    name: "강의·책 요약",
+    description: "강의나 책의 핵심과 내 생각을 정리해요.",
+    body: () => `## 출처
+- 제목: 
+- 저자·강사: 
+- 범위: 
+
+## 한 줄 요약
+
+## 핵심 내용
+- 
+
+## 인상 깊은 부분
+> 
+
+## 내 생각·적용
+
+## 더 볼 것
+- 
+`,
+  },
+];
+
+export const DEFAULT_NOTE_TEMPLATE: NoteTemplateKey = "blank";
+
+export function noteTemplate(key: NoteTemplateKey): NoteTemplate {
+  return NOTE_TEMPLATES.find((t) => t.key === key) ?? NOTE_TEMPLATES[0]!;
+}
