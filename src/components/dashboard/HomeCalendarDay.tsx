@@ -23,19 +23,21 @@ export function HomeDayProvider({ today, children }: { today: string; children: 
 export type HomeCalendarData = CalendarResult & { failed: boolean };
 
 /**
- * The home calendar, reporting its selected day to the provider. `data` is the server's
- * unawaited promise: the grid draws empty at once and fills when it settles (a refresh hands
- * a new promise; the old items stay until it settles). No Suspense, so nothing in the block —
- * the inputs above all — is ever swapped out.
+ * The home calendar block (`section` "달력"), reporting its selected day to the provider.
+ * `data` is the server's unawaited promise: the grid draws empty at once and fills when it
+ * settles (a refresh hands a new promise; the old items stay until it settles). Until the
+ * first one settles the block is `aria-busy` and the panel says so above "다음 일정". No
+ * Suspense, so nothing in the block — the inputs above all — is ever swapped out.
  */
 export function HomeCalendarView({
   data,
+  panelSlot,
   ...props
 }: Omit<CalendarViewProps, "onSelectDay" | "items" | "google" | "failed"> & {
   data: Promise<HomeCalendarData>;
 }) {
   const { setDay } = useDay();
-  const [loaded, setLoaded] = useState<HomeCalendarData>(EMPTY);
+  const [loaded, setLoaded] = useState<HomeCalendarData | null>(null);
   useEffect(() => {
     let live = true;
     void data.then((d) => {
@@ -45,14 +47,27 @@ export function HomeCalendarView({
       live = false;
     };
   }, [data]);
+  const current = loaded ?? EMPTY;
   return (
-    <CalendarView
-      {...props}
-      items={loaded.items}
-      google={loaded.google}
-      failed={loaded.failed}
-      onSelectDay={setDay}
-    />
+    <section aria-label="달력" aria-busy={loaded ? undefined : true}>
+      <CalendarView
+        {...props}
+        items={current.items}
+        google={current.google}
+        failed={current.failed}
+        onSelectDay={setDay}
+        panelSlot={
+          <>
+            {panelSlot}
+            {loaded ? null : (
+              <p role="status" className="text-xs text-muted">
+                일정 불러오는 중…
+              </p>
+            )}
+          </>
+        }
+      />
+    </section>
   );
 }
 

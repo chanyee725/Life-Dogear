@@ -196,11 +196,13 @@ test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스
   await page.keyboard.press("/");
   const input = page.getByRole("textbox", { name: /생각 추가/ });
   await expect(input).toBeFocused();
-  // Still loading: the grid is drawn empty ("다음 일정 0"); the seed has items in range.
-  const upcoming = page.getByRole("heading", { name: /다음 일정/ });
-  await expect(upcoming).toHaveText(/다음 일정\s*0$/);
+  // Still loading: the block is busy and says so; the input works meanwhile.
+  const calendar = page.getByRole("region", { name: "달력" });
+  await expect(calendar).toHaveAttribute("aria-busy", "true");
+  await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
   await page.keyboard.type("느린 달력");
-  await expect(upcoming).not.toHaveText(/다음 일정\s*0$/, { timeout: 10_000 });
+  await expect(calendar).not.toHaveAttribute("aria-busy", "true", { timeout: 10_000 });
+  await expect(calendar.getByText("일정 불러오는 중…")).toHaveCount(0);
   await expect(input).toHaveValue("느린 달력");
   await expect(input).toBeFocused();
   await page.keyboard.type("!");

@@ -31,29 +31,27 @@ export function HomeCalendarSection({
 }) {
   return (
     <HomeDayProvider today={today}>
-      <section aria-label="달력">
-        <HomeCalendarView
-          range="3w"
-          syncUrl={false}
-          date={today}
-          today={today}
-          data={loadCalendar(today)}
-          now={new Date().toISOString()}
-          panelSlot={
-            <>
-              {tasks}
-              <HomeTaskInput today={today} />
-            </>
-          }
-          belowGrid={
-            <div className="mt-4 flex flex-col gap-1">
-              <QuickInput />
-              {children}
-            </div>
-          }
-          fitPanel
-        />
-      </section>
+      <HomeCalendarView
+        range="3w"
+        syncUrl={false}
+        date={today}
+        today={today}
+        data={loadCalendar(today)}
+        now={new Date().toISOString()}
+        panelSlot={
+          <>
+            {tasks}
+            <HomeTaskInput today={today} />
+          </>
+        }
+        belowGrid={
+          <div className="mt-4 flex flex-col gap-1">
+            <QuickInput />
+            {children}
+          </div>
+        }
+        fitPanel
+      />
     </HomeDayProvider>
   );
 }
