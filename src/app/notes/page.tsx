@@ -125,7 +125,12 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       <PageHeader
         title="노트"
         actions={
-          <Link href="/notes/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/notes/new"
+            className={buttonClass("primary")}
+          >
             새 노트
           </Link>
         }

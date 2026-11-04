@@ -37,7 +37,12 @@ export default async function InboxPage() {
       <PageHeader
         title="수집함"
         actions={
-          <Link href="/thoughts/new" className={buttonClass("secondary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/thoughts/new"
+            className={buttonClass("secondary")}
+          >
             새 생각
           </Link>
         }

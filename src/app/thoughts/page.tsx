@@ -127,7 +127,12 @@ export default async function ThoughtsPage({
       <PageHeader
         title="생각"
         actions={
-          <Link href="/thoughts/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/thoughts/new"
+            className={buttonClass("primary")}
+          >
             새 생각
           </Link>
         }

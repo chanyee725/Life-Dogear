@@ -68,7 +68,12 @@ export function AreasView({
               {reordering ? "순서 바꾸기 끝내기" : "순서 바꾸기"}
             </Button>
             {reordering ? null : (
-              <Link href="/areas/new" className={buttonClass("primary")}>
+              <Link
+                aria-keyshortcuts="N"
+                title="단축키 N"
+                href="/areas/new"
+                className={buttonClass("primary")}
+              >
                 새 영역
               </Link>
             )}

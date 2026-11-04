@@ -157,7 +157,12 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const filtered = Boolean(status || importance || tag);
 
   const newButton = (
-    <Link href="/papers/new" className={buttonClass("primary")}>
+    <Link
+      aria-keyshortcuts="N"
+      title="단축키 N"
+      href="/papers/new"
+      className={buttonClass("primary")}
+    >
       새 논문 <Kbd>N</Kbd>
     </Link>
   );

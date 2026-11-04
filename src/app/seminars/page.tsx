@@ -110,7 +110,12 @@ export default async function SeminarsPage({
       <PageHeader
         title="세미나"
         actions={
-          <Link href="/seminars/new" className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href="/seminars/new"
+            className={buttonClass("primary")}
+          >
             새 세미나
           </Link>
         }

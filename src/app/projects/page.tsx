@@ -114,7 +114,12 @@ export default async function ProjectsPage({
       <PageHeader
         title="프로젝트"
         actions={
-          <Link href={newHref} className={buttonClass("primary")}>
+          <Link
+            aria-keyshortcuts="N"
+            title="단축키 N"
+            href={newHref}
+            className={buttonClass("primary")}
+          >
             새 프로젝트
           </Link>
         }

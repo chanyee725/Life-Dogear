@@ -4,7 +4,6 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
-import { Kbd } from "@/components/ui/Kbd";
 import {
   ArchiveIcon,
   AreaIcon,
@@ -60,16 +59,25 @@ function NavLink({
   icon,
   pathname,
   badge,
+  shortcut,
 }: {
   href: string;
   label: string;
   icon: ReactNode;
   pathname: string;
   badge?: ReactNode;
+  /** Single-key shortcut (see `shortcuts.ts`), exposed as `title` and `aria-keyshortcuts`. */
+  shortcut?: string;
 }) {
   const active = isActivePath(pathname, href);
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={linkClass(active)}>
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      aria-keyshortcuts={shortcut}
+      title={shortcut ? `${label} (${shortcut})` : undefined}
+      className={linkClass(active)}
+    >
       {icon}
       <span className="min-w-0 flex-1 truncate">{label}</span>
       <PendingDot />
@@ -121,7 +129,10 @@ export function SidebarNav({
     // Move focus into the drawer so keyboard users land in the menu they opened.
     if (drawerOpen) asideRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
   }, [drawerOpen]);
-  const item = (entry: { href: string; label: string; icon: NavIcon }, badge?: ReactNode) => {
+  const item = (
+    entry: { href: string; label: string; icon: NavIcon; shortcut?: string },
+    badge?: ReactNode,
+  ) => {
     const Icon = ICONS[entry.icon];
     return (
       <NavLink
@@ -131,6 +142,7 @@ export function SidebarNav({
         icon={<Icon />}
         pathname={pathname}
         badge={badge}
+        shortcut={entry.shortcut}
       />
     );
   };
@@ -218,21 +230,6 @@ export function SidebarNav({
           {NAV_SECTIONS.bottom.map((entry) => item(entry))}
         </nav>
         <div className="flex flex-col gap-3 px-4 pb-4">
-          {/* Short windows: the menu needs the room more than the shortcut hints. */}
-          <div className="flex flex-col gap-1 text-xs text-muted [@media(max-height:799px)]:hidden">
-            <span className="flex items-center gap-1.5">
-              <Kbd>N</Kbd> 새 항목
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Kbd>/</Kbd> 빠른 입력
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Kbd>C</Kbd> 빠른 캡처
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Kbd>G</Kbd> 그래프
-            </span>
-          </div>
           <ThemeToggle />
           {footerSlot}
         </div>
