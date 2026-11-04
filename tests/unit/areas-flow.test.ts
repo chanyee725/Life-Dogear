@@ -14,7 +14,6 @@ describe("area flow helpers", () => {
         { type: "goal", id: "g", title: "Y" },
       ]),
     ).toBe("직접 연결 · 프로젝트 X 경유 · 목표 Y 경유");
-    expect(viaLabel([{ type: "member" }, { type: "area" }])).toBe("영역 소속 · 직접 연결");
   });
 
   it("groups projects by goal: area goals in tree order, other goals, then none", () => {

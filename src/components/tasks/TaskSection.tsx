@@ -5,7 +5,7 @@ import { seoulDate } from "@/components/calendar/model";
 import { TaskList } from "./TaskList";
 
 /**
- * "할 일" section of a project, goal or area page (today.md 2). An archived parent still
+ * "할 일" section of a project or goal page (today.md 2). An archived parent still
  * shows its tasks, but takes no new ones.
  */
 export async function TaskSection({
