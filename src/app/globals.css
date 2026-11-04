@@ -49,6 +49,17 @@
   /* Note item type (docs/design/graph.md 1.2.1). */
   --rb-tone-orange-bg: #fbede6;
   --rb-tone-orange-fg: #8d481a;
+
+  /* Code block syntax colours (docs/design/code.md 1.2), all >= 4.5:1 on --rb-subtle. */
+  --rb-code-bg: var(--rb-subtle);
+  --rb-code-fg: #18181b;
+  --rb-code-comment: #666670;
+  --rb-code-keyword: #8a3a9e;
+  --rb-code-string: #1f6b3c;
+  --rb-code-number: #a34a00;
+  --rb-code-function: #2a52b0;
+  --rb-code-attr: #0e6b72;
+  --rb-code-variable: #9b3a32;
 }
 
 .dark {
@@ -91,6 +102,16 @@
   --rb-tone-rose-fg: #e69ab8;
   --rb-tone-orange-bg: #2d1f18;
   --rb-tone-orange-fg: #eca57d;
+
+  --rb-code-bg: var(--rb-subtle);
+  --rb-code-fg: #ececef;
+  --rb-code-comment: #9d9da6;
+  --rb-code-keyword: #c9a0f0;
+  --rb-code-string: #8fd0a0;
+  --rb-code-number: #f0a878;
+  --rb-code-function: #8db4f2;
+  --rb-code-attr: #7fd3d0;
+  --rb-code-variable: #f09a90;
 }
 
 /* ---------- Tailwind theme mapping ---------- */
@@ -348,7 +369,8 @@
   .rb-prose pre {
     font-family: var(--font-mono);
     font-size: 0.86em;
-    background: var(--rb-subtle);
+    color: var(--rb-code-fg);
+    background: var(--rb-code-bg);
     border: 1px solid var(--rb-border);
     border-radius: 8px;
     padding: 0.8em 1em;
@@ -357,6 +379,110 @@
   .rb-prose pre code {
     background: none;
     padding: 0;
+  }
+
+  /* Code block wrapper: language label + copy button above the scrolling <pre>
+     (docs/design/code.md 2). */
+  .rb-prose .rb-code {
+    position: relative;
+  }
+  .rb-prose .rb-code > pre {
+    padding-top: 2em;
+  }
+  .rb-code-bar {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .rb-code-lang {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--rb-muted);
+  }
+  .rb-code-copy {
+    position: relative;
+    height: 1.5rem;
+    min-width: 3.5rem;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    color: var(--rb-muted);
+    background: transparent;
+    opacity: 0;
+  }
+  /* Hit area grows to 32x32 without moving anything. */
+  .rb-code-copy::before {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: max(100%, 32px);
+    height: 32px;
+    transform: translate(-50%, -50%);
+  }
+  .rb-code-copy:hover {
+    background: var(--rb-hover);
+    color: var(--rb-fg);
+  }
+  .rb-code-copy:focus-visible {
+    outline-offset: 1px;
+  }
+  .rb-code:hover .rb-code-copy,
+  .rb-code:focus-within .rb-code-copy,
+  .rb-code-copy:focus-visible {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .rb-code-copy {
+      opacity: 1;
+    }
+  }
+
+  /* lowlight (highlight.js) token classes -> code colours (docs/design/code.md 1.3).
+     Emphasis/strong keep the surrounding weight and style. */
+  .rb-prose .hljs-comment,
+  .rb-prose .hljs-quote,
+  .rb-prose .hljs-meta {
+    color: var(--rb-code-comment);
+  }
+  .rb-prose .hljs-keyword,
+  .rb-prose .hljs-built_in,
+  .rb-prose .hljs-selector-tag,
+  .rb-prose .hljs-type {
+    color: var(--rb-code-keyword);
+  }
+  .rb-prose .hljs-string,
+  .rb-prose .hljs-regexp,
+  .rb-prose .hljs-symbol,
+  .rb-prose .hljs-addition {
+    color: var(--rb-code-string);
+  }
+  .rb-prose .hljs-number,
+  .rb-prose .hljs-literal,
+  .rb-prose .hljs-bullet {
+    color: var(--rb-code-number);
+  }
+  .rb-prose .hljs-title,
+  .rb-prose .hljs-section {
+    color: var(--rb-code-function);
+  }
+  .rb-prose .hljs-attr,
+  .rb-prose .hljs-attribute,
+  .rb-prose .hljs-name,
+  .rb-prose .hljs-tag,
+  .rb-prose .hljs-selector-class,
+  .rb-prose .hljs-selector-id {
+    color: var(--rb-code-attr);
+  }
+  .rb-prose .hljs-variable,
+  .rb-prose .hljs-params,
+  .rb-prose .hljs-template-variable,
+  .rb-prose .hljs-deletion {
+    color: var(--rb-code-variable);
   }
   .rb-prose hr {
     border: none;
