@@ -18,7 +18,7 @@ import { DateField } from "@/components/fields/DateField";
 import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { controlClass } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/components/ui/cn";
@@ -600,16 +600,15 @@ export function CalendarView({
               </p>
             ) : null}
             {noneChosen(choice, google) ? (
-              <p className="text-[13px] text-muted">
-                표시할 항목을 고르지 않았습니다.{" "}
+              <p className="flex items-center gap-2 text-[13px] text-muted">
+                표시할 항목을 고르지 않았습니다.
                 <button
                   type="button"
-                  className="underline hover:text-fg"
+                  className={buttonClass("ghost", "sm")}
                   onClick={(e) => setPop({ kind: "sources", anchor: e.currentTarget })}
                 >
-                  표시
+                  표시 설정
                 </button>
-                에서 켤 수 있습니다.
               </p>
             ) : null}
             {error ? <p className="text-[13px] text-danger">{error}</p> : null}
