@@ -3,14 +3,20 @@
  * expanded only through the range, with caps on how far one event may iterate and how
  * many items one feed may yield. Moved or cancelled occurrences (RECURRENCE-ID) replace
  * the master's occurrence. Times are shown in `zone` (default Asia/Seoul).
+ *
+ * Simple rules (one RRULE, no COUNT, SECONDLY…WEEKLY) start iterating just before the range
+ * instead of at DTSTART, by moving the start a whole number of intervals: the series is the
+ * same, so an hourly event from 2000 costs only the range's hours.
  */
 import ICAL from "ical.js";
 import { addDays, CALENDAR_TZ, overlaps } from "../dates";
 import type { CalendarItem, CalendarRange } from "../types";
 import { isKnownZone, msToZonedIso, wallToMs } from "./zone";
 
-/** Occurrences one recurring event may step through (daily for ~13 years). */
+/** Occurrences one recurring event may step through within one range. */
 export const MAX_ITERATIONS_PER_EVENT = 5000;
+/** Occurrences all events of one feed may step through for one range. */
+export const MAX_ITERATIONS_PER_FEED = 50_000;
 /** Items one feed may add to one response. */
 export const MAX_ITEMS_PER_FEED = 1500;
 /** Events one feed may hold; the rest are ignored. */
@@ -128,6 +134,42 @@ function toItem(
   };
 }
 
+const UNIT_SECONDS: Partial<Record<string, number>> = {
+  SECONDLY: 1,
+  MINUTELY: 60,
+  HOURLY: 3600,
+  DAILY: 86_400,
+  WEEKLY: 7 * 86_400,
+};
+
+/**
+ * A start at least a day before `targetDay` that yields the same occurrences from there on,
+ * or undefined to iterate from DTSTART. Only for one RRULE without COUNT (COUNT needs every
+ * earlier occurrence). The moved start itself is returned as an occurrence even if the rule
+ * would skip it; it lies before the range, so the range filter drops it.
+ */
+export function fastForwardStart(ev: ICAL.Event, targetDay: string): ICAL.Time | undefined {
+  const rules = ev.component.getAllProperties("rrule");
+  if (rules.length !== 1) return undefined;
+  const recur = rules[0]!.getFirstValue() as ICAL.Recur;
+  if (!recur || recur.count) return undefined;
+  const unit = UNIT_SECONDS[recur.freq];
+  if (!unit) return undefined;
+  const step = unit * Math.max(1, recur.interval || 1);
+  const start = ev.startDate;
+  const [y, m, d] = targetDay.split("-").map(Number) as [number, number, number];
+  const target = Date.UTC(y, m - 1, d) / 1000;
+  const from =
+    Date.UTC(start.year, start.month - 1, start.day, start.hour, start.minute, start.second) / 1000;
+  const k = Math.floor((target - from) / step);
+  if (k <= 0) return undefined;
+  const moved = start.clone();
+  const seconds = k * step;
+  // Whole days move the calendar date; the rest moves the clock (wall time, like ical.js).
+  moved.adjust(Math.floor(seconds / 86_400), 0, 0, seconds % 86_400);
+  return moved;
+}
+
 const durationOf = (ev: ICAL.Event): number => {
   try {
     return ev.duration ? ev.duration.toSeconds() : 0;
@@ -136,12 +178,22 @@ const durationOf = (ev: ICAL.Event): number => {
   }
 };
 
+export type Expansion = {
+  items: CalendarItem[];
+  /** false when a cap stopped expansion, so events in the range may be missing. */
+  complete: boolean;
+};
+
 /** Items of one parsed feed inside `range`, at most `MAX_ITEMS_PER_FEED`. */
-export function expandIcs(feed: ParsedFeed, range: CalendarRange): CalendarItem[] {
+export function expandIcs(feed: ParsedFeed, range: CalendarRange): Expansion {
   const { zone } = feed;
   const out: CalendarItem[] = [];
+  let complete = true;
+  let budget = MAX_ITERATIONS_PER_FEED;
   const push = (item: CalendarItem | null) => {
-    if (item && out.length < MAX_ITEMS_PER_FEED) out.push(item);
+    if (!item) return;
+    if (out.length < MAX_ITEMS_PER_FEED) out.push(item);
+    else complete = false;
   };
   // Stop iterating a little past the range: zone shifts move a time by at most a day.
   const stopAfter = addDays(range.to, 1);
@@ -165,7 +217,10 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): CalendarItem[
   }
 
   for (const c of masters) {
-    if (out.length >= MAX_ITEMS_PER_FEED) break;
+    if (out.length >= MAX_ITEMS_PER_FEED || budget <= 0) {
+      complete = false;
+      break;
+    }
     let ev: ICAL.Event;
     try {
       ev = new ICAL.Event(c);
@@ -187,20 +242,25 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): CalendarItem[
     const skip = overrides.get(String(c.getFirstPropertyValue("uid") ?? ""));
     let it: ICAL.RecurExpansion;
     try {
-      it = ev.iterator();
+      const durationDays = Math.ceil(durationSec / 86_400);
+      it = ev.iterator(fastForwardStart(ev, addDays(range.from, -(durationDays + 2))));
     } catch {
       continue;
     }
-    for (let i = 0; i < MAX_ITERATIONS_PER_EVENT && out.length < MAX_ITEMS_PER_FEED; i++) {
+    let finished = false;
+    for (let i = 0; i < MAX_ITERATIONS_PER_EVENT && budget > 0; i++, budget--) {
       let occ: ICAL.Time | undefined;
       try {
         occ = it.next();
       } catch {
+        finished = true;
         break;
       }
-      if (!occ) break;
-      const day = dayOf(occ);
-      if (day > stopAfter) break;
+      const day = occ ? dayOf(occ) : "";
+      if (!occ || day > stopAfter) {
+        finished = true;
+        break;
+      }
       // Long events can start before the range and reach into it; durations decide below.
       if (day < startFloor && addDays(day, Math.ceil(durationSec / 86_400) + 1) < range.from) {
         continue;
@@ -210,9 +270,11 @@ export function expandIcs(feed: ParsedFeed, range: CalendarRange): CalendarItem[
         if (skip.has(key)) continue;
       }
       push(toItem(uid, title, { start: occ, durationSec }, range, zone));
+      if (out.length >= MAX_ITEMS_PER_FEED && !complete) break;
     }
+    if (!finished) complete = false;
   }
-  return out;
+  return { items: out, complete };
 }
 
 /** UIDs only label ids; keep them short and plain. */

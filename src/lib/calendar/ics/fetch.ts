@@ -45,6 +45,8 @@ export async function fetchIcs(
       throw new IcsFetchError(controller.signal.aborted ? "timeout" : "network");
     }
     if (!res.ok) throw new IcsFetchError(`http_${res.status}`);
+    // A redirect must not downgrade to plain http (the body is private).
+    if (res.url && !res.url.startsWith("https:")) throw new IcsFetchError("insecure_redirect");
     const declared = Number(res.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > maxBytes) throw new IcsFetchError("too_large");
     if (!res.body) return "";

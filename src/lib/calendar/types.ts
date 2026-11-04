@@ -25,7 +25,8 @@ export type CalendarRange = { from: string; to: string };
 
 export type CalendarOptions = { papers?: boolean };
 
-export type GoogleStatus = "ok" | "off" | "error";
+/** `partial`: a feed hit an expansion cap, so some events in the range may be missing. */
+export type GoogleStatus = "ok" | "off" | "partial" | "error";
 
 export type CalendarResult = { items: CalendarItem[]; google: GoogleStatus };
 
