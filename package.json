@@ -37,6 +37,7 @@
     "@tiptap/starter-kit": "^3.32.2",
     "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.4",
+    "highlight.js": "^11",
     "ical.js": "^2.2.1",
     "lowlight": "^3.3.0",
     "next": "^15.5.28",
@@ -68,8 +69,5 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.0.5"
-  },
-  "overrides": {
-    "highlight.js": "~11.11.0"
   }
 }
