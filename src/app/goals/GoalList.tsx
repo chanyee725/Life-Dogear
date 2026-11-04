@@ -111,12 +111,7 @@ export function GoalList({
 
       {shownGroups.length ? (
         shownGroups.map((group) => (
-          <Group
-            key={group.areaId ?? "none"}
-            group={group}
-            today={today}
-            areaTitle={titleOf(group.areaId)}
-          />
+          <Group key={group.areaId ?? "none"} group={group} today={today} />
         ))
       ) : (
         <NothingShown
@@ -136,15 +131,8 @@ function withDepth(goals: readonly ListGoal[], depth = 0): { goal: ListGoal; dep
   return goals.flatMap((goal) => [{ goal, depth }, ...withDepth(goal.children, depth + 1)]);
 }
 
-function Group({
-  group,
-  today,
-  areaTitle,
-}: {
-  group: GoalGroup;
-  today: string;
-  areaTitle?: string;
-}) {
+/** One area's goals. The heading names the area, so the rows leave it out. */
+function Group({ group, today }: { group: GoalGroup; today: string }) {
   const headingId = useId();
   const { count, average } = groupStats(group.goals);
   return (
@@ -165,13 +153,7 @@ function Group({
       </h2>
       <RowList>
         {withDepth(group.goals).map(({ goal, depth }) => (
-          <GoalListRow
-            key={goal.id}
-            goal={goal}
-            depth={depth}
-            today={today}
-            areaTitle={areaTitle}
-          />
+          <GoalListRow key={goal.id} goal={goal} depth={depth} today={today} />
         ))}
       </RowList>
     </section>
