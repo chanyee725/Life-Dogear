@@ -31,12 +31,12 @@ test("목표: 속성이 짝지어 한 줄씩, 상세에 생성일과 빈 섹션 
   await expect(page.getByLabel("왜")).toHaveValue("이유 한 줄");
 
   const children = page.getByRole("region", { name: "하위 목표" });
-  await expect(children.getByRole("link", { name: "＋ 하위 목표" })).toHaveAttribute(
+  await expect(children.getByRole("link", { name: "＋ 새 하위 목표" })).toHaveAttribute(
     "href",
     `/goals/new?horizon=quarter&parent=${id}`,
   );
   const projects = page.getByRole("region", { name: "프로젝트" });
-  await expect(projects.getByRole("link", { name: "＋ 프로젝트" })).toHaveAttribute(
+  await expect(projects.getByRole("link", { name: "＋ 새 프로젝트" })).toHaveAttribute(
     "href",
     `/projects/new?goal=${id}`,
   );
@@ -46,5 +46,6 @@ test("목표: 속성이 짝지어 한 줄씩, 상세에 생성일과 빈 섹션 
 
   // Clean up what this test made.
   await deleteCurrentItem(page);
-  await expect(page).toHaveURL(/\/goals$/);
+  // The first visit compiles /goals on the dev server.
+  await expect(page).toHaveURL(/\/goals$/, { timeout: 20_000 });
 });

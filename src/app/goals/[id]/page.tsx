@@ -47,6 +47,7 @@ export default async function GoalDetailPage({ params }: Props) {
   const childHorizon = CHILD_HORIZON[goal.horizon];
   const childHref = `/goals/new?horizon=${childHorizon}&parent=${goal.id}`;
   const projectHref = `/projects/new?goal=${goal.id}`;
+  const archived = Boolean(goal.archivedAt);
 
   return (
     <Page className="flex flex-col gap-12">
@@ -102,7 +103,7 @@ export default async function GoalDetailPage({ params }: Props) {
           id="goal-children"
           title={`하위 목표${node.children.length ? ` ${node.children.length}` : ""}`}
           action={
-            node.children.length ? (
+            node.children.length && !archived ? (
               <LinkButton href={childHref} variant="ghost" size="sm">
                 {childHorizon === "year" ? "새 연 목표" : "새 분기 목표"}
               </LinkButton>
@@ -111,8 +112,8 @@ export default async function GoalDetailPage({ params }: Props) {
         >
           {node.children.length ? (
             <GoalTree nodes={node.children} />
-          ) : (
-            <EmptyAdd href={childHref}>＋ 하위 목표</EmptyAdd>
+          ) : archived ? null : (
+            <EmptyAdd href={childHref}>＋ 새 하위 목표</EmptyAdd>
           )}
         </Section>
       ) : null}
@@ -121,7 +122,7 @@ export default async function GoalDetailPage({ params }: Props) {
           id="goal-projects"
           title={`프로젝트${node.projects.length ? ` ${node.projects.length}` : ""}`}
           action={
-            node.projects.length ? (
+            node.projects.length && !archived ? (
               <LinkButton href={projectHref} variant="ghost" size="sm">
                 새 프로젝트
               </LinkButton>
@@ -129,7 +130,9 @@ export default async function GoalDetailPage({ params }: Props) {
           }
         >
           {node.projects.length === 0 ? (
-            <EmptyAdd href={projectHref}>＋ 프로젝트</EmptyAdd>
+            archived ? null : (
+              <EmptyAdd href={projectHref}>＋ 새 프로젝트</EmptyAdd>
+            )
           ) : (
             <RowList>
               {node.projects.map((p) => (
@@ -157,8 +160,8 @@ export default async function GoalDetailPage({ params }: Props) {
           )}
         </Section>
       )}
-      <ItemNotes owner={ref} archived={Boolean(goal.archivedAt)} />
-      <TaskSection parent={ref} archived={Boolean(goal.archivedAt)} />
+      <ItemNotes owner={ref} archived={archived} />
+      <TaskSection parent={ref} archived={archived} />
       <ConnectedWithGraph item={ref} />
     </Page>
   );
