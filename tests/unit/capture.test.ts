@@ -102,7 +102,10 @@ describe("quick capture 노트", () => {
   });
 
   it("keeps 생각 and 링크 saving as thoughts", () => {
-    expect(draftToSave({ ...EMPTY_DRAFT, text: "생각" })).toEqual({ kind: "thought", text: "생각" });
+    expect(draftToSave({ ...EMPTY_DRAFT, text: "생각" })).toEqual({
+      kind: "thought",
+      text: "생각",
+    });
     expect(draftToSave({ ...EMPTY_DRAFT, kind: "link", url: "https://a.com/x" })).toEqual({
       kind: "thought",
       text: "a.com/x\n\nhttps://a.com/x",

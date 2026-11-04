@@ -106,8 +106,7 @@ export function draftToText(d: CaptureDraft): { text: string } | { error: string
 }
 
 export type CaptureSave =
-  | { kind: "thought"; text: string }
-  | { kind: "note"; title: string; body: string };
+  { kind: "thought"; text: string } | { kind: "note"; title: string; body: string };
 
 /** What to save for the draft: a thought (생각, 링크) or a note, or an error message. */
 export function draftToSave(d: CaptureDraft): CaptureSave | { error: string } {
