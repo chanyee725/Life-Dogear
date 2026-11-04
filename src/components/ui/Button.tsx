@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ButtonHTMLAttributes, ComponentProps } from "react";
 import { cn } from "./cn";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -31,7 +32,7 @@ export function buttonClass(
   return cn(base, variants[variant], sizes[size], className);
 }
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
 };
@@ -44,4 +45,58 @@ export function Button({
   ...props
 }: ButtonProps) {
   return <button type={type} className={buttonClass(variant, size, className)} {...props} />;
+}
+
+export type LinkButtonProps = ComponentProps<typeof Link> & {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+};
+
+/** A Next `<Link>` that looks like a `Button`. */
+export function LinkButton({
+  variant = "secondary",
+  size = "md",
+  className,
+  ...props
+}: LinkButtonProps) {
+  return <Link className={buttonClass(variant, size, className)} {...props} />;
+}
+
+/**
+ * "새 …" link. In a page header (default) it is the primary md button bound to the N
+ * shortcut; `size="sm"` is the in-empty-state form (no shortcut, so N stays unique).
+ */
+export function NewItemButton({
+  size = "md",
+  shortcut = size === "md",
+  variant = "primary",
+  ...props
+}: LinkButtonProps & { shortcut?: boolean }) {
+  return (
+    <LinkButton
+      variant={variant}
+      size={size}
+      aria-keyshortcuts={shortcut ? "N" : undefined}
+      title={shortcut ? "단축키 N" : undefined}
+      {...props}
+    />
+  );
+}
+
+/** Low-emphasis text button for header actions (보관, 삭제, 저장). */
+export function QuietButton({
+  className,
+  type = "button",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type={type}
+      className={cn(
+        "h-7 shrink-0 rounded-md px-2 text-[13px] whitespace-nowrap text-muted transition-colors hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
 }

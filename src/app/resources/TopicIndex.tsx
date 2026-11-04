@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { cn } from "@/components/ui/cn";
-import { controlClass } from "@/components/ui/Input";
+import { cn, SearchInput } from "@/components/ui";
 import {
   densityRatio,
   groupTopicsByInitial,
@@ -93,20 +92,12 @@ export function TopicIndex({
             주제
             <span className="text-xs font-normal tabular-nums">{topics.length}</span>
           </h2>
-          <input
-            type="search"
+          <SearchInput
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && query) {
-                e.preventDefault();
-                setQuery("");
-              }
-            }}
+            onClear={() => setQuery("")}
             placeholder="주제 찾기"
             aria-label="주제 찾기"
-            autoComplete="off"
-            className={cn(controlClass, "h-8 text-[13px]")}
           />
           <nav aria-label="주제 정렬" className="flex items-center gap-1.5 text-xs">
             <SortLink href={sortHrefs.count} active={sort === "count"}>

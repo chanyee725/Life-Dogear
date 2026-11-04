@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
-import { Badge, Section } from "@/components/ui";
+import { Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
 import { links, type ItemRef } from "@/lib/repo";
 import { refKey } from "@/lib/repo/items";
@@ -40,9 +40,9 @@ export async function ConnectedItems({
         action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
       >
         {connected.length === 0 ? null : (
-          <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+          <RowList>
             {connected.map((c) => (
-              <li key={refKey(c.ref)} className="group flex items-center gap-2.5 px-3 py-2">
+              <ListRow key={refKey(c.ref)} className="group">
                 <Badge tone={ITEM_TYPE.tone(c.type)}>{ITEM_TYPE.label(c.type)}</Badge>
                 <Link
                   href={itemPath(c.ref)}
@@ -52,9 +52,9 @@ export async function ConnectedItems({
                 </Link>
                 {c.archived ? <Badge tone="gray">보관됨</Badge> : null}
                 <UnlinkButton item={item} other={c.ref} otherTitle={c.title} />
-              </li>
+              </ListRow>
             ))}
-          </ul>
+          </RowList>
         )}
       </Section>
     </div>

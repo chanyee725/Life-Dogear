@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { archiveItem, unarchiveItem } from "@/app/_actions/archive";
 import { safeAction } from "@/components/links/safe-action";
-import { QuietButton } from "@/components/fields/ItemDetail";
+import { QuietButton } from "@/components/ui/Button";
 
 /**
  * "보관" / "보관 해제" for a paper. Archived papers drop out of lists, home and the

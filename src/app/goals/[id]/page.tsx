@@ -7,8 +7,7 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
-import { buttonClass } from "@/components/ui/Button";
-import { Section } from "@/components/ui/Card";
+import { LinkButton, RowList, Section } from "@/components/ui";
 import { isValidItemId } from "@/lib/ids";
 import { areas, goals, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
@@ -97,12 +96,13 @@ export default async function GoalDetailPage({ params }: Props) {
         <Section
           title={`하위 목표${node.children.length ? ` ${node.children.length}` : ""}`}
           action={
-            <Link
+            <LinkButton
               href={`/goals/new?horizon=${childHorizon}&parent=${goal.id}`}
-              className={buttonClass("ghost", "sm")}
+              variant="ghost"
+              size="sm"
             >
               {childHorizon === "year" ? "새 연 목표" : "새 분기 목표"}
-            </Link>
+            </LinkButton>
           }
         >
           {node.children.length ? <GoalTree nodes={node.children} /> : null}
@@ -112,13 +112,13 @@ export default async function GoalDetailPage({ params }: Props) {
         <Section
           title={`프로젝트${node.projects.length ? ` ${node.projects.length}` : ""}`}
           action={
-            <Link href={`/projects/new?goal=${goal.id}`} className={buttonClass("ghost", "sm")}>
+            <LinkButton href={`/projects/new?goal=${goal.id}`} variant="ghost" size="sm">
               새 프로젝트
-            </Link>
+            </LinkButton>
           }
         >
           {node.projects.length === 0 ? null : (
-            <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+            <RowList>
               {node.projects.map((p) => (
                 <li key={p.id}>
                   <Link
@@ -140,7 +140,7 @@ export default async function GoalDetailPage({ params }: Props) {
                   </Link>
                 </li>
               ))}
-            </ul>
+            </RowList>
           )}
         </Section>
       )}

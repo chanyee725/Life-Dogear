@@ -3,7 +3,7 @@ export { DateField, type DateFieldProps } from "./DateField";
 export { EnumSelect, type EnumOption, type EnumSelectProps } from "./EnumSelect";
 export { addTags, normalizeTag } from "./tags";
 export { AUTOSAVE_DELAY, ItemForm, type ItemFormAction } from "./ItemForm";
-export { DetailBody, DetailHeader, QuietButton, SaveStatus, TitleInput } from "./ItemDetail";
+export { DetailBody, SaveStatus, TitleInput } from "./ItemDetail";
 export {
   createLatestSender,
   createSaveQueue,

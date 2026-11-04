@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
 import { groupByKey, parseGroup, type ItemGroup } from "@/components/list/groups";
@@ -17,10 +16,7 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { buttonClass } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatRelative } from "@/components/ui/format";
+import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import { thoughts } from "@/lib/repo";
 import type { Thought, ThoughtSort } from "@/lib/repo/thoughts";
@@ -110,13 +106,13 @@ export default async function ThoughtsPage({
       title={filtered ? "조건에 맞는 생각이 없습니다" : "아직 생각이 없습니다"}
       action={
         filtered ? (
-          <Link href="/thoughts" className={buttonClass("secondary", "sm")}>
+          <LinkButton href="/thoughts" size="sm">
             필터 해제
-          </Link>
+          </LinkButton>
         ) : (
-          <Link href="/thoughts/new" className={buttonClass("primary", "sm")}>
+          <NewItemButton href="/thoughts/new" size="sm">
             새 생각
-          </Link>
+          </NewItemButton>
         )
       }
     />
@@ -126,16 +122,7 @@ export default async function ThoughtsPage({
     <Page>
       <PageHeader
         title="생각"
-        actions={
-          <Link
-            aria-keyshortcuts="N"
-            title="단축키 N"
-            href="/thoughts/new"
-            className={buttonClass("primary")}
-          >
-            새 생각
-          </Link>
-        }
+        actions={<NewItemButton href="/thoughts/new">새 생각</NewItemButton>}
       />
       <ListView
         storageKey="thoughts"

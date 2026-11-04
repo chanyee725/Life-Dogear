@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { cn, TagChip } from "@/components/ui";
+import { cn, EmptyAdd, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { StageColumn } from "@/lib/repo/projects";
-import { DashboardAdd } from "./DashboardSection";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 
@@ -19,7 +18,7 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
   const filled = columns.filter((c) => c.items.length > 0);
 
   if (total === 0) {
-    return <DashboardAdd href="/projects/new">＋ 새 연구</DashboardAdd>;
+    return <EmptyAdd href="/projects/new">＋ 새 연구</EmptyAdd>;
   }
 
   return (

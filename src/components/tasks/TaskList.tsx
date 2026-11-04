@@ -22,8 +22,7 @@ import {
 import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
+import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";
@@ -671,7 +670,7 @@ function TitleEditor({
   );
 }
 
-/** `bare`: no task rows above, so the line lines up with other add buttons (`DashboardAdd`). */
+/** `bare`: no task rows above, so the empty list shows the shared dashed `EmptyAdd` look. */
 function AddLine({
   onAdd,
   bare,
@@ -690,22 +689,26 @@ function AddLine({
   const tooLong = value.trim().length > TITLE_MAX;
 
   if (!editing) {
+    // Same <button> whether or not the list is empty (only the wrapper's look changes), so
+    // focus moved here when the last open task is completed survives the switch to `bare`.
     return (
-      <button
-        type="button"
-        data-task-add
-        onClick={() => setEditing(true)}
-        className={cn(
-          bare
-            ? "flex w-full items-center justify-center rounded-lg border border-dashed border-border py-5 text-sm text-muted hover:bg-hover hover:text-fg"
-            : cn(
-                "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
-                indent,
-              ),
-        )}
-      >
-        ＋ 할 일 추가
-      </button>
+      <div className={bare ? emptyAddBoxClass : undefined}>
+        <button
+          type="button"
+          data-task-add
+          onClick={() => setEditing(true)}
+          className={
+            bare
+              ? buttonClass("ghost", "sm")
+              : cn(
+                  "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
+                  indent,
+                )
+          }
+        >
+          ＋ 할 일 추가
+        </button>
+      </div>
     );
   }
 

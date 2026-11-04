@@ -1,5 +1,4 @@
-import Link from "next/link";
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 import type { SaveState } from "./save-queue";
 
@@ -13,38 +12,8 @@ import type { SaveState } from "./save-queue";
  *   …then <ConnectedItems/> below the form.
  *
  * Archive/delete live in `actions` as quiet text buttons (`QuietButton`, `DeleteItemButton`).
+ * `DetailHeader` and `QuietButton` come from `@/components/ui`.
  */
-export function DetailHeader({
-  backHref,
-  backLabel,
-  status,
-  actions,
-  className,
-}: {
-  backHref: string;
-  backLabel: string;
-  /** Usually `<SaveStatus/>`. */
-  status?: ReactNode;
-  /** Quiet buttons (보관, 삭제, 저장). */
-  actions?: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-x-3 gap-y-1", className)}>
-      <Link
-        href={backHref}
-        className="shrink-0 text-[13px] whitespace-nowrap text-muted hover:text-fg"
-      >
-        ← {backLabel}
-      </Link>
-      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
-        {status ? <div className="mr-2 whitespace-nowrap">{status}</div> : null}
-        {actions}
-      </div>
-    </div>
-  );
-}
-
 const SAVE_LABEL: Record<SaveState, string> = {
   idle: "",
   pending: "저장 안 됨",
@@ -105,24 +74,6 @@ export function SaveStatus({
       ) : null}
       <span>{label}</span>
     </span>
-  );
-}
-
-/** Low-emphasis text button for header actions (보관, 삭제, 저장). */
-export function QuietButton({
-  className,
-  type = "button",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type={type}
-      className={cn(
-        "h-7 shrink-0 rounded-md px-2 text-[13px] whitespace-nowrap text-muted transition-colors hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    />
   );
 }
 

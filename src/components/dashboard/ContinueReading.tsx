@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Paper } from "@/lib/repo/papers";
-import { DashboardSection } from "./DashboardSection";
+import { Section } from "@/components/ui";
 import { paperByline } from "./format";
 import { LatestReading } from "./LatestReading";
 
@@ -9,7 +9,7 @@ export function ContinueReading({ papers }: { papers: Paper[] }) {
   // Nothing to resume: the block has no action of its own, so it is hidden.
   if (papers.length === 0) return null;
   return (
-    <DashboardSection
+    <Section
       id="continue-reading"
       title="이어 읽기"
       action={
@@ -41,6 +41,6 @@ export function ContinueReading({ papers }: { papers: Paper[] }) {
           );
         })}
       </ul>
-    </DashboardSection>
+    </Section>
   );
 }

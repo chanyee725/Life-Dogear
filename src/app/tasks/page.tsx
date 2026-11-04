@@ -3,13 +3,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { fetchRange, parseCalendarQuery, seoulDate } from "@/components/calendar/model";
-import { SegmentedLinks } from "@/components/calendar/Segmented";
-import { LinkTabs } from "@/components/list/Tabs";
+import { EmptyState, LinkTabs, SectionHeader, SegmentedLinks } from "@/components/ui";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { dayLabel, isoWeekRange } from "@/components/tasks/dates";
 import { parentHref } from "@/components/tasks/format";
 import { TaskList } from "@/components/tasks/TaskList";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { areas, goals, projects, tasks } from "@/lib/repo";
 import { describeError } from "@/lib/storage/describe-error";
@@ -243,7 +241,7 @@ async function ByParent({ open, today }: { open: Task[]; today: string }) {
         if (!ids.length) return null;
         return (
           <section key={type} className="flex flex-col gap-4">
-            <h2 className="text-[13px] font-semibold text-muted">{KIND_TITLE[type]}</h2>
+            <SectionHeader title={KIND_TITLE[type]} />
             {ids.map((id) => {
               const list = byParent.get(`${type}:${id}`)!;
               const count = counts[`${type}:${id}`];

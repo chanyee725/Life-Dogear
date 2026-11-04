@@ -6,12 +6,9 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
-import { DashboardAdd } from "@/components/dashboard/DashboardSection";
+import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
-import { buttonClass } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Section } from "@/components/ui/Card";
 import { isValidItemId } from "@/lib/ids";
 import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
 import { areas, goals, projects, tags } from "@/lib/repo";
@@ -90,14 +87,14 @@ export default async function AreaDetailPage({ params }: Props) {
         title={`목표${countLabel(goalOrder(areaGoals).length)}`}
         action={
           areaGoals.length === 0 ? undefined : (
-            <Link href={`/goals/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
+            <LinkButton href={`/goals/new?area=${area.id}`} variant="ghost" size="sm">
               새 목표
-            </Link>
+            </LinkButton>
           )
         }
       >
         {areaGoals.length === 0 ? (
-          <DashboardAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</DashboardAdd>
+          <EmptyAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
         ) : (
           <GoalTree nodes={areaGoals} />
         )}
@@ -106,14 +103,14 @@ export default async function AreaDetailPage({ params }: Props) {
         title={`프로젝트${countLabel(areaProjects.length)}`}
         action={
           areaProjects.length === 0 ? undefined : (
-            <Link href={`/projects/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
+            <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
               새 프로젝트
-            </Link>
+            </LinkButton>
           )
         }
       >
         {areaProjects.length === 0 ? (
-          <DashboardAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</DashboardAdd>
+          <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
         ) : (
           <div className="flex flex-col gap-4">
             {projectGroups.map((group) => (
@@ -140,10 +137,7 @@ export default async function AreaDetailPage({ params }: Props) {
       </Section>
       {materials.length === 0 ? null : (
         <Section title={`자료 ${materials.length}`}>
-          <ul
-            aria-label="연결된 자료"
-            className="flex flex-col divide-y divide-border rounded-lg border border-border"
-          >
+          <RowList aria-label="연결된 자료">
             {materials.map((m) => (
               <li key={`${m.ref.type}:${m.ref.id}`}>
                 <Link
@@ -158,7 +152,7 @@ export default async function AreaDetailPage({ params }: Props) {
                 </Link>
               </li>
             ))}
-          </ul>
+          </RowList>
         </Section>
       )}
       <TaskSection parent={ref} archived={Boolean(area.archivedAt)} />
@@ -171,7 +165,7 @@ const countLabel = (n: number) => (n ? ` ${n}` : "");
 
 function ProjectList({ list }: { list: AreaProject[] }) {
   return (
-    <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+    <RowList>
       {list.map((p) => (
         <li key={p.id}>
           <Link
@@ -194,6 +188,6 @@ function ProjectList({ list }: { list: AreaProject[] }) {
           </Link>
         </li>
       ))}
-    </ul>
+    </RowList>
   );
 }

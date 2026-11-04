@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/shell";
-import { EmptyState } from "@/components/ui";
-import { filterChipClass } from "@/components/list/TagFilter";
+import { ChipLink, EmptyState } from "@/components/ui";
 import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
 
@@ -30,14 +29,13 @@ export default async function TagsPage({
           list.length ? (
             <nav aria-label="정렬" className="flex items-center gap-1">
               {SORTS.map((s) => (
-                <Link
+                <ChipLink
                   key={s.value}
                   href={s.value === "count" ? "/tags" : `/tags?sort=${s.value}`}
-                  aria-current={sort === s.value ? "true" : undefined}
-                  className={filterChipClass(sort === s.value)}
+                  active={sort === s.value}
                 >
                   {s.label}
-                </Link>
+                </ChipLink>
               ))}
             </nav>
           ) : null

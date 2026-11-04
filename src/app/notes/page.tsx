@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
 import { groupByKey, parseGroup, type ItemGroup } from "@/components/list/groups";
@@ -17,10 +16,7 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { buttonClass } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatRelative } from "@/components/ui/format";
+import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes } from "@/lib/repo";
 import type { Note, NoteSort } from "@/lib/repo/notes";
@@ -108,13 +104,13 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       title={filtered ? "조건에 맞는 노트가 없습니다" : "아직 노트가 없습니다"}
       action={
         filtered ? (
-          <Link href={BASE} className={buttonClass("secondary", "sm")}>
+          <LinkButton href={BASE} size="sm">
             필터 해제
-          </Link>
+          </LinkButton>
         ) : (
-          <Link href="/notes/new" className={buttonClass("primary", "sm")}>
+          <NewItemButton href="/notes/new" size="sm">
             새 노트
-          </Link>
+          </NewItemButton>
         )
       }
     />
@@ -122,19 +118,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
 
   return (
     <Page>
-      <PageHeader
-        title="노트"
-        actions={
-          <Link
-            aria-keyshortcuts="N"
-            title="단축키 N"
-            href="/notes/new"
-            className={buttonClass("primary")}
-          >
-            새 노트
-          </Link>
-        }
-      />
+      <PageHeader title="노트" actions={<NewItemButton href="/notes/new">새 노트</NewItemButton>} />
       <ListView
         storageKey="notes"
         toolbar={

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Page, PageHeader } from "@/components/shell";
-import { Badge, Section } from "@/components/ui";
+import { BackLink, Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
 import { decodeTagParam, loadTagPage } from "../tag-data";
 
@@ -23,14 +23,7 @@ export default async function TagPage({ params }: Props) {
 
   return (
     <Page>
-      <PageHeader
-        eyebrow={
-          <Link href="/tags" className="hover:text-fg">
-            ← 모든 주제
-          </Link>
-        }
-        title={`#${data.name}`}
-      />
+      <PageHeader eyebrow={<BackLink href="/tags">모든 주제</BackLink>} title={`#${data.name}`} />
       <div className="flex flex-col gap-10">
         {data.groups.map((group) => (
           <Section
@@ -44,9 +37,9 @@ export default async function TagPage({ params }: Props) {
               </>
             }
           >
-            <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+            <RowList>
               {group.items.map((item) => (
-                <li key={item.id} className="flex items-center gap-2.5 px-3 py-2.5">
+                <ListRow key={item.id}>
                   <Badge tone={ITEM_TYPE.tone(group.type)}>{group.label}</Badge>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <Link href={item.href} className="truncate text-sm text-fg hover:underline">
@@ -63,9 +56,9 @@ export default async function TagPage({ params }: Props) {
                       </Badge>
                     ))}
                   </div>
-                </li>
+                </ListRow>
               ))}
-            </ul>
+            </RowList>
           </Section>
         ))}
       </div>

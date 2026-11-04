@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { archiveItem, unarchiveItem } from "@/app/_actions/archive";
 import { safeAction } from "@/components/links/safe-action";
 import type { ItemRef } from "@/lib/repo/shared";
-import { QuietButton } from "./ItemDetail";
+import { QuietButton } from "@/components/ui/Button";
 
 /**
  * 보관 / 보관 해제 as a quiet text button. After archiving it goes to `redirectTo`

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { cn } from "@/components/ui/cn";
+import { cn, FilterBar, Segmented, type SegmentedOption } from "@/components/ui";
 
 export type ViewMode = "table" | "cards";
 
@@ -38,7 +38,7 @@ export function useViewMode(
   return [mode, setMode];
 }
 
-const OPTIONS: { value: ViewMode; label: string; icon: ReactNode }[] = [
+const OPTIONS: SegmentedOption<ViewMode>[] = [
   {
     value: "table",
     label: "표 보기",
@@ -88,32 +88,14 @@ export function ViewToggle({
   className?: string;
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="보기 방식"
-      className={cn("flex gap-0.5 rounded-lg bg-subtle p-0.5", className)}
-    >
-      {OPTIONS.map((o) => {
-        const active = value === o.value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={o.label}
-            title={o.label}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "flex h-7 w-8 items-center justify-center rounded-md transition-colors",
-              active ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
-            )}
-          >
-            {o.icon}
-          </button>
-        );
-      })}
-    </div>
+    <Segmented
+      ariaLabel="보기 방식"
+      options={OPTIONS}
+      value={value}
+      onChange={onChange}
+      className={className}
+      size="md"
+    />
   );
 }
 
@@ -140,10 +122,7 @@ export function ListView({
   return (
     <div className={cn("flex flex-col gap-4", className)}>
       {/* items-start: the toggle lines up with the first toolbar row (sort select), not the block's middle. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
-        <ViewToggle value={mode} onChange={setMode} />
-      </div>
+      <FilterBar end={<ViewToggle value={mode} onChange={setMode} />}>{toolbar}</FilterBar>
       {mode === "table" ? table : cards}
     </div>
   );

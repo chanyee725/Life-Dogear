@@ -6,10 +6,7 @@ import { useId, useMemo, useState, useTransition } from "react";
 import { reorderAreas } from "@/app/_actions/areas";
 import { safeAction } from "@/components/links/safe-action";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Button, buttonClass } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
-import { formatDate } from "@/components/ui/format";
-import { Input } from "@/components/ui/Input";
+import { Button, cn, formatDate, NewItemButton, RowList, SearchInput } from "@/components/ui";
 import { AREA_SORTS, careSignal, filterAreas, sortAreas, type AreaSort } from "./list";
 
 export type AreaRow = {
@@ -67,16 +64,7 @@ export function AreasView({
             >
               {reordering ? "순서 바꾸기 끝내기" : "순서 바꾸기"}
             </Button>
-            {reordering ? null : (
-              <Link
-                aria-keyshortcuts="N"
-                title="단축키 N"
-                href="/areas/new"
-                className={buttonClass("primary")}
-              >
-                새 영역
-              </Link>
-            )}
+            {reordering ? null : <NewItemButton href="/areas/new">새 영역</NewItemButton>}
           </>
         }
       />
@@ -91,14 +79,11 @@ export function AreasView({
               ‘{query.trim()}’에 맞는 영역이 없습니다.
             </p>
           ) : (
-            <ul
-              aria-label="영역 목록"
-              className="flex flex-col divide-y divide-border rounded-lg border border-border"
-            >
+            <RowList aria-label="영역 목록">
               {visible.map((area) => (
                 <AreaListRow key={area.id} area={area} now={nowDate} />
               ))}
-            </ul>
+            </RowList>
           )}
           {query.trim() && visible.length > 0 ? (
             <p className="text-xs text-muted" aria-live="polite">
@@ -130,19 +115,13 @@ function Toolbar({
   };
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-      <Input
-        type="search"
+      <SearchInput
         value={query}
         onChange={(e) => onQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape" && query) {
-            e.preventDefault();
-            onQuery("");
-          }
-        }}
+        onClear={() => onQuery("")}
         placeholder="영역 찾기"
         aria-label="영역 찾기 (이름이나 유지 기준)"
-        className="h-8 text-[13px] sm:max-w-64"
+        className="sm:max-w-64"
       />
       <nav
         aria-labelledby={sortLabelId}
@@ -267,10 +246,7 @@ function ReorderList({ areas }: { areas: AreaRow[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <ul
-        aria-label="영역 순서"
-        className="flex flex-col divide-y divide-border rounded-lg border border-border"
-      >
+      <RowList aria-label="영역 순서">
         {rows.map((area, i) => (
           <li
             key={area.id}
@@ -297,7 +273,7 @@ function ReorderList({ areas }: { areas: AreaRow[] }) {
             </button>
           </li>
         ))}
-      </ul>
+      </RowList>
       {error ? (
         <p role="alert" className="text-xs text-danger">
           {error}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { Task } from "@/lib/repo/tasks";
-import { DashboardSection } from "./DashboardSection";
+import { Section } from "@/components/ui";
 import { TODAY_MAX, WEEK_MAX } from "./today";
 
 const actionClass = "text-[13px] text-muted hover:text-fg";
@@ -31,21 +31,23 @@ export function TodayTasks({
   const all = [...overdue, ...dueToday];
   const href = "/tasks?tab=today";
   return (
-    <DashboardSection
+    <Section
       id="today"
-      title="오늘"
-      titleExtra={
-        all.length ? (
-          <span className="ml-2 text-xs font-normal text-muted tabular-nums">
-            {dueToday.length}
-            {overdue.length ? (
-              <>
-                {" · 지남 "}
-                <span className="text-tone-red-fg">{overdue.length}</span>
-              </>
-            ) : null}
-          </span>
-        ) : undefined
+      title={
+        <>
+          오늘
+          {all.length ? (
+            <span className="ml-2 text-xs font-normal text-muted tabular-nums">
+              {dueToday.length}
+              {overdue.length ? (
+                <>
+                  {" · 지남 "}
+                  <span className="text-tone-red-fg">{overdue.length}</span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
+        </>
       }
       action={
         <Link href={href} className={actionClass}>
@@ -65,7 +67,7 @@ export function TodayTasks({
         />
         <More count={all.length - TODAY_MAX} href={href} />
       </div>
-    </DashboardSection>
+    </Section>
   );
 }
 
@@ -74,7 +76,7 @@ export function WeekTasks({ tasks, today }: { tasks: Task[]; today: string }) {
   if (!tasks.length) return null;
   const href = "/tasks?tab=week";
   return (
-    <DashboardSection
+    <Section
       id="this-week"
       title="이번 주"
       action={
@@ -93,6 +95,6 @@ export function WeekTasks({ tasks, today }: { tasks: Task[]; today: string }) {
         />
         <More count={tasks.length - WEEK_MAX} href={href} />
       </div>
-    </DashboardSection>
+    </Section>
   );
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
 import {
@@ -10,14 +9,11 @@ import {
   type QueryParams,
 } from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
-import { LinkTabs } from "@/components/list/Tabs";
+import { EmptyState, formatDate, LinkButton, LinkTabs, NewItemButton } from "@/components/ui";
 import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { buttonClass } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate } from "@/components/ui/format";
 import { PROJECT_KIND, PROJECT_STAGE, PROJECT_STATUS, type ProjectKind } from "@/lib/enums";
 import { areas, projects } from "@/lib/repo";
 import type { Project, ProjectSort } from "@/lib/repo/projects";
@@ -97,13 +93,13 @@ export default async function ProjectsPage({
       title={filtered ? "조건에 맞는 프로젝트가 없습니다" : `아직 ${kindLabel} 프로젝트가 없습니다`}
       action={
         filtered ? (
-          <Link href={buildHref(BASE, { kind }, {})} className={buttonClass("secondary", "sm")}>
+          <LinkButton href={buildHref(BASE, { kind }, {})} size="sm">
             필터 해제
-          </Link>
+          </LinkButton>
         ) : (
-          <Link href={newHref} className={buttonClass("primary", "sm")}>
+          <NewItemButton href={newHref} size="sm">
             새 프로젝트
-          </Link>
+          </NewItemButton>
         )
       }
     />
@@ -113,16 +109,7 @@ export default async function ProjectsPage({
     <Page>
       <PageHeader
         title="프로젝트"
-        actions={
-          <Link
-            aria-keyshortcuts="N"
-            title="단축키 N"
-            href={newHref}
-            className={buttonClass("primary")}
-          >
-            새 프로젝트
-          </Link>
-        }
+        actions={<NewItemButton href={newHref}>새 프로젝트</NewItemButton>}
       />
       <LinkTabs
         ariaLabel="프로젝트 종류"

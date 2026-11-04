@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button, cn, controlClass } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 
 type AuthorsFieldProps = {
   id?: string;
@@ -49,8 +49,7 @@ export function AuthorsField({ id, defaultValue = [], name, onCommit }: AuthorsF
     <div className="flex flex-col gap-1.5">
       {rows.map((row, index) => (
         <div key={row.key} className="flex items-center gap-1.5">
-          <input
-            className={cn(controlClass, "h-9")}
+          <Input
             id={index === 0 ? id : undefined}
             ref={(el) => {
               if (el) inputs.current.set(row.key, el);

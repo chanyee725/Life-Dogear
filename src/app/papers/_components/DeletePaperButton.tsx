@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { safeAction } from "@/components/links/safe-action";
-import { QuietButton } from "@/components/fields/ItemDetail";
-import { ConfirmDialog } from "@/components/ui";
+import { ConfirmDialog, QuietButton } from "@/components/ui";
 import { deletePaper } from "../actions";
 
 export function DeletePaperButton({ paperId, title }: { paperId: string; title: string }) {

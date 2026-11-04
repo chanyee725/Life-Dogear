@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui";
+import { Badge, EmptyAdd } from "@/components/ui";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
-import { DashboardAdd } from "./DashboardSection";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 
 /** Active general (non-research) projects for the home "프로젝트" section, soonest due first. */
 export function GeneralProjects({ projects }: { projects: Project[] }) {
   if (projects.length === 0) {
-    return <DashboardAdd href="/projects/new?kind=general">＋ 새 프로젝트</DashboardAdd>;
+    return <EmptyAdd href="/projects/new?kind=general">＋ 새 프로젝트</EmptyAdd>;
   }
   return (
     <ul className="-mx-3 flex flex-col">
