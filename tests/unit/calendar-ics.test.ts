@@ -7,6 +7,7 @@ import {
   expandIcs,
   fastForwardStart,
   MAX_ITEMS_PER_FEED,
+  MAX_ITERATIONS_PER_FEED,
   parseIcs,
 } from "@/lib/calendar/ics/parse";
 import { msToZonedIso, wallToMs } from "@/lib/calendar/ics/zone";
@@ -159,10 +160,16 @@ END:VEVENT`;
       event(`c${i}`, "FREQ=MINUTELY;COUNT=1000000"),
     ).join("\n");
     const feed = parseIcs(ics(body));
-    const t0 = performance.now();
-    const result = expandIcs(feed, NOV);
-    expect(performance.now() - t0).toBeLessThan(2000);
-    expect(result).toEqual({ items: [], complete: false });
+    // Count iterator steps instead of timing them: wall-clock limits flake under a full run.
+    const next = vi.spyOn(ICAL.RecurExpansion.prototype, "next");
+    try {
+      const result = expandIcs(feed, NOV);
+      expect(result).toEqual({ items: [], complete: false });
+      expect(next.mock.calls.length).toBeGreaterThan(0);
+      expect(next.mock.calls.length).toBeLessThanOrEqual(MAX_ITERATIONS_PER_FEED);
+    } finally {
+      next.mockRestore();
+    }
   });
 
   it("caps items per feed", () => {
