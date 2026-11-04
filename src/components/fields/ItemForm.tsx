@@ -14,7 +14,9 @@ import {
   patchToFormData,
   type FormPatch,
 } from "./form-patch";
-import { DetailHeader, QuietButton, SaveStatus } from "./ItemDetail";
+import { DetailHeader } from "@/components/ui/DetailHeader";
+import { QuietButton } from "@/components/ui/Button";
+import { SaveStatus } from "./ItemDetail";
 import { createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/shell";
 import { EmptyState } from "@/components/ui";
-import { filterChipClass } from "@/components/list/TagFilter";
+import { chipClass } from "@/components/ui/Chip";
 import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
 
@@ -34,7 +34,7 @@ export default async function TagsPage({
                   key={s.value}
                   href={s.value === "count" ? "/tags" : `/tags?sort=${s.value}`}
                   aria-current={sort === s.value ? "true" : undefined}
-                  className={filterChipClass(sort === s.value)}
+                  className={chipClass(sort === s.value)}
                 >
                   {s.label}
                 </Link>

@@ -12,7 +12,6 @@ export {
 } from "./query";
 export { SortSelect } from "./SortSelect";
 export { TagList } from "./TagList";
-export { LinkTabs } from "./Tabs";
 export { TopicPicker, type TopicOption } from "./TopicPicker";
 export {
   groupByKey,

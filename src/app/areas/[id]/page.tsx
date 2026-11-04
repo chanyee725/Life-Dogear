@@ -6,7 +6,7 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
-import { DashboardAdd } from "@/components/dashboard/DashboardSection";
+import { EmptyAdd } from "@/components/ui/EmptyAdd";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { buttonClass } from "@/components/ui/Button";
@@ -97,7 +97,7 @@ export default async function AreaDetailPage({ params }: Props) {
         }
       >
         {areaGoals.length === 0 ? (
-          <DashboardAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</DashboardAdd>
+          <EmptyAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
         ) : (
           <GoalTree nodes={areaGoals} />
         )}
@@ -113,7 +113,7 @@ export default async function AreaDetailPage({ params }: Props) {
         }
       >
         {areaProjects.length === 0 ? (
-          <DashboardAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</DashboardAdd>
+          <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
         ) : (
           <div className="flex flex-col gap-4">
             {projectGroups.map((group) => (

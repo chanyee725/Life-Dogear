@@ -1,15 +1,7 @@
 import Link from "next/link";
+import { chipClass } from "@/components/ui/Chip";
 import { cn } from "@/components/ui/cn";
 import { buildHref, type QueryParams } from "./query";
-
-/** Chip look for query-param filters and sort links; selected = accent text, thin border. */
-export const filterChipClass = (active: boolean): string =>
-  cn(
-    "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[13px] transition-colors",
-    active
-      ? "border-accent/30 bg-accent-soft font-medium text-accent"
-      : "border-transparent text-muted hover:bg-subtle hover:text-fg",
-  );
 
 export type FilterOption = { value: string; label: string; count?: number };
 
@@ -36,14 +28,12 @@ export function FilterChips({
   ariaLabel?: string;
   className?: string;
 }) {
-  const chip = filterChipClass;
-
   return (
     <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1", className)}>
       <Link
         href={buildHref(basePath, params, { [param]: undefined })}
         aria-current={!selected ? "true" : undefined}
-        className={chip(!selected)}
+        className={chipClass(!selected)}
       >
         {allLabel}
       </Link>
@@ -54,7 +44,7 @@ export function FilterChips({
             key={o.value}
             href={buildHref(basePath, params, { [param]: active ? undefined : o.value })}
             aria-current={active ? "true" : undefined}
-            className={chip(active)}
+            className={chipClass(active)}
           >
             {o.label}
             {o.count !== undefined ? (

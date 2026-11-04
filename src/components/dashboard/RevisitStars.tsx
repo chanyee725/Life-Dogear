@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
-import { DashboardSection } from "./DashboardSection";
+import { Section } from "@/components/ui";
 import type { RevisitStar } from "./today";
 
 const DAY_MS = 86_400_000;
@@ -10,7 +10,7 @@ const DAY_MS = 86_400_000;
 export function RevisitStars({ stars, now }: { stars: RevisitStar[]; now: Date }) {
   if (!stars.length) return null;
   return (
-    <DashboardSection id="revisit-stars" title="다시 볼 별">
+    <Section id="revisit-stars" title="다시 볼 별">
       <ul className="flex flex-col">
         {stars.map((s) => {
           const t = s.lastActiveAt ? Date.parse(s.lastActiveAt) : NaN;
@@ -31,6 +31,6 @@ export function RevisitStars({ stars, now }: { stars: RevisitStar[]; now: Date }
           );
         })}
       </ul>
-    </DashboardSection>
+    </Section>
   );
 }

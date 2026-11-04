@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { DashboardSection } from "./DashboardSection";
+import { Section } from "@/components/ui";
 import { GOALS_MAX, type QuarterGoal } from "./today";
 
 /** Home "분기 목표" (4.3): active quarter goals with a thin progress bar. Hidden when empty. */
 export function QuarterGoals({ goals }: { goals: QuarterGoal[] }) {
   if (!goals.length) return null;
   return (
-    <DashboardSection
+    <Section
       id="quarter-goals"
       title="분기 목표"
       action={
@@ -55,6 +55,6 @@ export function QuarterGoals({ goals }: { goals: QuarterGoal[] }) {
           </Link>
         ) : null}
       </div>
-    </DashboardSection>
+    </Section>
   );
 }

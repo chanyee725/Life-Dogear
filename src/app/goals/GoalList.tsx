@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { filterChipClass } from "@/components/list/TagFilter";
+import { chipClass } from "@/components/ui/Chip";
 import { buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Input, Select } from "@/components/ui/Input";
@@ -68,7 +68,7 @@ export function GoalList({
               key={c.key}
               href={c.href}
               aria-current={c.active ? "true" : undefined}
-              className={filterChipClass(c.active)}
+              className={chipClass(c.active)}
             >
               {c.label}
               {c.sub ? (

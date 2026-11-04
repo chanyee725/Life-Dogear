@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
+import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
@@ -30,9 +31,9 @@ export function hiddenFilterCount(filter: GraphFilter): number {
   return [filter.area, filter.tag, filter.archived, filter.orphans].filter(Boolean).length;
 }
 
-const COLOR_BY_OPTIONS: readonly (readonly [GraphColorBy, string])[] = [
-  ["kind", "종류"],
-  ["area", "영역"],
+const COLOR_BY_OPTIONS: readonly SegmentedOption<GraphColorBy>[] = [
+  { value: "kind", label: "종류" },
+  { value: "area", label: "영역" },
 ];
 
 /** "색 [종류 | 영역]" segmented control (design 1.3). ←/→ move and select. */
@@ -48,38 +49,13 @@ export function ColorByToggle({
       <span aria-hidden className="text-[13px] text-muted">
         색
       </span>
-      <div
-        role="radiogroup"
-        aria-label="색 기준"
-        className="inline-flex h-7 rounded-md border border-border bg-surface p-px"
-        onKeyDown={(e) => {
-          if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-          e.preventDefault();
-          const next = value === "kind" ? "area" : "kind";
-          onChange(next);
-          (
-            e.currentTarget.querySelector(`[data-color-by="${next}"]`) as HTMLElement | null
-          )?.focus();
-        }}
-      >
-        {COLOR_BY_OPTIONS.map(([v, label]) => (
-          <button
-            key={v}
-            type="button"
-            role="radio"
-            data-color-by={v}
-            aria-checked={value === v}
-            tabIndex={value === v ? 0 : -1}
-            onClick={() => onChange(v)}
-            className={cn(
-              "h-6 rounded-[5px] px-2.5 text-[13px] transition-colors",
-              value === v ? "bg-bg font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        ariaLabel="색 기준"
+        options={COLOR_BY_OPTIONS}
+        value={value}
+        onChange={onChange}
+        className="h-7"
+      />
     </span>
   );
 }

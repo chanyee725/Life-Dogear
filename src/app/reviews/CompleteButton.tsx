@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { safeAction } from "@/components/links/safe-action";
-import { QuietButton } from "@/components/fields/ItemDetail";
+import { QuietButton } from "@/components/ui/Button";
 import { setReviewCompleted } from "./actions";
 
 /** 작성 완료 ↔ 다시 쓰기. Completing saves a fresh goal progress snapshot. */

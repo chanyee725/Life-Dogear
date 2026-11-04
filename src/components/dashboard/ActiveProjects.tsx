@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Project, StageColumn } from "@/lib/repo/projects";
-import { DashboardSection } from "./DashboardSection";
+import { Section } from "@/components/ui";
 import { GeneralProjects } from "./GeneralProjects";
 import { ProjectKanbanBoard } from "./ProjectKanban";
 
@@ -13,21 +13,17 @@ const allLink = (href: string) => (
 /** Home "진행 중인 연구": research projects on the stage kanban. Archived ones never appear. */
 export function ActiveResearch({ stages }: { stages: StageColumn[] }) {
   return (
-    <DashboardSection id="active-research" title="진행 중인 연구" action={allLink("/projects")}>
+    <Section id="active-research" title="진행 중인 연구" action={allLink("/projects")}>
       <ProjectKanbanBoard columns={stages} />
-    </DashboardSection>
+    </Section>
   );
 }
 
 /** Home "프로젝트": active general (non-research) projects, soonest due first. */
 export function ActiveGeneralProjects({ projects }: { projects: Project[] }) {
   return (
-    <DashboardSection
-      id="active-projects"
-      title="프로젝트"
-      action={allLink("/projects?kind=general")}
-    >
+    <Section id="active-projects" title="프로젝트" action={allLink("/projects?kind=general")}>
       <GeneralProjects projects={projects} />
-    </DashboardSection>
+    </Section>
   );
 }

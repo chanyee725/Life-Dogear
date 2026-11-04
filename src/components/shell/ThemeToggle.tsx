@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cn } from "@/components/ui/cn";
+import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import { MonitorIcon, MoonIcon, SunIcon } from "./icons";
 import {
   applyTheme,
@@ -10,10 +10,10 @@ import {
   type ThemePreference,
 } from "./theme";
 
-const OPTIONS: { value: ThemePreference; label: string; icon: () => React.ReactElement }[] = [
-  { value: "system", label: "시스템 설정", icon: MonitorIcon },
-  { value: "light", label: "라이트", icon: SunIcon },
-  { value: "dark", label: "다크", icon: MoonIcon },
+const OPTIONS: SegmentedOption<ThemePreference>[] = [
+  { value: "system", label: "시스템 설정", icon: <MonitorIcon /> },
+  { value: "light", label: "라이트", icon: <SunIcon /> },
+  { value: "dark", label: "다크", icon: <MoonIcon /> },
 ];
 
 /** Three-way segmented control: system / light / dark. */
@@ -40,31 +40,13 @@ export function ThemeToggle({ className }: { className?: string }) {
   }
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="화면 테마"
-      className={cn("flex gap-0.5 rounded-lg bg-subtle p-0.5", className)}
-    >
-      {OPTIONS.map(({ value, label, icon: Icon }) => {
-        const active = pref === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            title={label}
-            aria-label={label}
-            onClick={() => choose(value)}
-            className={cn(
-              "flex h-6 flex-1 items-center justify-center rounded-md transition-colors",
-              active ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
-            )}
-          >
-            <Icon />
-          </button>
-        );
-      })}
-    </div>
+    <Segmented
+      ariaLabel="화면 테마"
+      options={OPTIONS}
+      value={pref}
+      onChange={choose}
+      className={className}
+      itemClassName="flex-1"
+    />
   );
 }

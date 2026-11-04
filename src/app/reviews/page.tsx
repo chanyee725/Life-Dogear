@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { firstParam, type QueryParams } from "@/components/list/query";
-import { LinkTabs } from "@/components/list/Tabs";
+import { LinkTabs } from "@/components/ui/Tabs";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClass } from "@/components/ui/Button";

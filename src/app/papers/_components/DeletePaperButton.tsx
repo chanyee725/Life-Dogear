@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { safeAction } from "@/components/links/safe-action";
-import { QuietButton } from "@/components/fields/ItemDetail";
+import { QuietButton } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui";
 import { deletePaper } from "../actions";
 

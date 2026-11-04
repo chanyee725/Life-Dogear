@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui";
 import { SEMINAR_KIND, THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import type { Seminar } from "@/lib/repo/seminars";
 import type { Thought } from "@/lib/repo/thoughts";
-import { DashboardAdd, DashboardSection } from "./DashboardSection";
+import { EmptyAdd, Section } from "@/components/ui";
 import { formatDate, formatRelative } from "./format";
 
 const rowClass =
@@ -17,9 +17,9 @@ const moreLink = (href: string) => (
 
 export function RecentThoughts({ thoughts }: { thoughts: Thought[] }) {
   return (
-    <DashboardSection id="recent-thoughts" title="최근 생각" action={moreLink("/thoughts")}>
+    <Section id="recent-thoughts" title="최근 생각" action={moreLink("/thoughts")}>
       {thoughts.length === 0 ? (
-        <DashboardAdd href="/thoughts/new">＋ 새 생각</DashboardAdd>
+        <EmptyAdd href="/thoughts/new">＋ 새 생각</EmptyAdd>
       ) : (
         <ul className="-mx-3 flex flex-col">
           {thoughts.map((t) => (
@@ -38,15 +38,15 @@ export function RecentThoughts({ thoughts }: { thoughts: Thought[] }) {
           ))}
         </ul>
       )}
-    </DashboardSection>
+    </Section>
   );
 }
 
 export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
   return (
-    <DashboardSection id="recent-seminars" title="최근 세미나" action={moreLink("/seminars")}>
+    <Section id="recent-seminars" title="최근 세미나" action={moreLink("/seminars")}>
       {seminars.length === 0 ? (
-        <DashboardAdd href="/seminars/new">＋ 새 세미나</DashboardAdd>
+        <EmptyAdd href="/seminars/new">＋ 새 세미나</EmptyAdd>
       ) : (
         <ul className="-mx-3 flex flex-col">
           {seminars.map((s) => (
@@ -65,6 +65,6 @@ export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
           ))}
         </ul>
       )}
-    </DashboardSection>
+    </Section>
   );
 }

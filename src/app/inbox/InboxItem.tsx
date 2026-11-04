@@ -7,7 +7,7 @@ import { setItemTags } from "@/app/_actions/tags";
 import { deleteThought } from "@/app/thoughts/actions";
 import { ArchiveButton } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
-import { QuietButton } from "@/components/fields/ItemDetail";
+import { QuietButton } from "@/components/ui/Button";
 import { TagInput } from "@/components/fields/TagInput";
 import { LinkPicker } from "@/components/links/LinkPicker";
 import { safeAction } from "@/components/links/safe-action";

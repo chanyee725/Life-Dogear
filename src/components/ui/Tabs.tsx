@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { cn } from "@/components/ui/cn";
+import { cn } from "./cn";
+import { segItem, segTrack } from "./segmented-style";
 
 /** Underlined link tabs (each tab is a URL, e.g. `?kind=general`). */
 export function LinkTabs({
@@ -42,6 +43,37 @@ export function LinkTabs({
                 {tab.count}
               </span>
             ) : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Segmented control whose options are URLs (`[목록 | 달력]`, `[월 | 주]`). */
+export function SegmentedLinks({
+  options,
+  active,
+  ariaLabel,
+  className,
+}: {
+  options: readonly { value: string; label: string; href: string }[];
+  active: string;
+  ariaLabel: string;
+  className?: string;
+}) {
+  return (
+    <nav aria-label={ariaLabel} className={cn(segTrack, "h-7", className)}>
+      {options.map((o) => {
+        const current = o.value === active;
+        return (
+          <Link
+            key={o.value}
+            href={o.href}
+            aria-current={current ? "page" : undefined}
+            className={segItem(current)}
+          >
+            {o.label}
           </Link>
         );
       })}

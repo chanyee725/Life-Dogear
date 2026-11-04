@@ -1,14 +1,15 @@
 "use client";
 
 import type { SelectHTMLAttributes } from "react";
-import { Select } from "@/components/ui/Input";
+import { Select, type ControlSize } from "@/components/ui/Input";
 
 export type EnumOption<V extends string = string> = { value: V; label: string };
 
 export type EnumSelectProps<V extends string> = Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
-  "value" | "defaultValue" | "onChange"
+  "value" | "defaultValue" | "onChange" | "size"
 > & {
+  size?: ControlSize;
   options: readonly EnumOption<V>[];
   value?: V | "";
   defaultValue?: V | "";

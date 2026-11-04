@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
-import { filterChipClass } from "./TagFilter";
+import { chipClass } from "@/components/ui/Chip";
 
 export type TopicOption = { name: string; count: number; href: string };
 
@@ -62,7 +62,7 @@ export function TopicPicker({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className={cn(filterChipClass(Boolean(current)), "border-border")}
+        className={cn(chipClass(Boolean(current)), "border-border")}
       >
         {current ? `#${current}` : "주제"}
         <span aria-hidden className="text-[10px] text-muted">

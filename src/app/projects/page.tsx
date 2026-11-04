@@ -10,7 +10,7 @@ import {
   type QueryParams,
 } from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
-import { LinkTabs } from "@/components/list/Tabs";
+import { LinkTabs } from "@/components/ui/Tabs";
 import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";

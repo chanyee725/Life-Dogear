@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LinkTabs } from "@/components/list/Tabs";
+import { LinkTabs } from "@/components/ui/Tabs";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { buttonClass } from "@/components/ui/Button";
