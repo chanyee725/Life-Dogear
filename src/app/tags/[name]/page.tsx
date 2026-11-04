@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Page, PageHeader } from "@/components/shell";
-import { Badge, Section } from "@/components/ui";
+import { BackLink, Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
 import { decodeTagParam, loadTagPage } from "../tag-data";
-import { BackLink, ListRow, RowList } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 

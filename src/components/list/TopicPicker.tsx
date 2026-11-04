@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { cn } from "@/components/ui/cn";
-import { chipClass } from "@/components/ui/Chip";
-import { SearchInput } from "@/components/ui/SearchInput";
+import { chipClass, cn, SearchInput } from "@/components/ui";
 
 export type TopicOption = { name: string; count: number; href: string };
 

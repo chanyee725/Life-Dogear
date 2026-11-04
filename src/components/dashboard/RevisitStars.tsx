@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui";
+import { Badge, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
-import { Section } from "@/components/ui";
 import type { RevisitStar } from "./today";
 
 const DAY_MS = 86_400_000;

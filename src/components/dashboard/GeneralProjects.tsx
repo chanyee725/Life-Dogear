@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui";
+import { Badge, EmptyAdd } from "@/components/ui";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
-import { EmptyAdd } from "@/components/ui";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 

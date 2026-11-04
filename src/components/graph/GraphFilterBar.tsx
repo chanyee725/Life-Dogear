@@ -1,9 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
-import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
+import { Button, cn, Segmented, type SegmentedOption } from "@/components/ui";
 import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";

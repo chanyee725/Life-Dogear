@@ -16,14 +16,11 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatRelative } from "@/components/ui/format";
+import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes } from "@/lib/repo";
 import type { Note, NoteSort } from "@/lib/repo/notes";
 import { bodyPreview } from "./source";
-import { LinkButton, NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "노트" };
 export const dynamic = "force-dynamic";

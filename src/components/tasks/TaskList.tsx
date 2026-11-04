@@ -22,9 +22,7 @@ import {
 import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
-import { Button, buttonClass } from "@/components/ui/Button";
-import { emptyAddBoxClass } from "@/components/ui/EmptyAdd";
-import { cn } from "@/components/ui/cn";
+import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";

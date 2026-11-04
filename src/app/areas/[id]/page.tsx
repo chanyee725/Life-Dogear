@@ -6,11 +6,9 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
-import { EmptyAdd } from "@/components/ui/EmptyAdd";
+import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { Section } from "@/components/ui/Card";
 import { isValidItemId } from "@/lib/ids";
 import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
 import { areas, goals, projects, tags } from "@/lib/repo";
@@ -20,7 +18,6 @@ import { ProgressBadge } from "../../projects/ProgressBadge";
 import { updateAreaPatch } from "../actions";
 import { AreaFields } from "../AreaFields";
 import { goalOrder, groupProjectsByGoal, viaLabel } from "../flow";
-import { LinkButton, RowList } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 

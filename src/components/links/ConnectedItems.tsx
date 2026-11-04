@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
-import { Badge, Section } from "@/components/ui";
+import { Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
 import { links, type ItemRef } from "@/lib/repo";
 import { refKey } from "@/lib/repo/items";
 import { LinkPicker } from "./LinkPicker";
 import { UnlinkButton } from "./UnlinkButton";
-import { ListRow, RowList } from "@/components/ui";
 
 /**
  * "연결된 항목" section for a detail page (server component).

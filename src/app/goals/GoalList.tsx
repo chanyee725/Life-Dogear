@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { Select } from "@/components/ui/Input";
+import { Button, ChipCount, ChipLink, LinkButton, SearchInput, Select } from "@/components/ui";
 import { GoalListRow } from "./GoalListRow";
 import {
   endedCounts,
@@ -15,8 +15,6 @@ import {
   type ListGoal,
   type PeriodFilter,
 } from "./list-view";
-import { Button, LinkButton } from "@/components/ui";
-import { ChipCount, ChipLink, SearchInput } from "@/components/ui";
 
 export type PeriodChip = {
   key: string;
@@ -92,6 +90,7 @@ export function GoalList({
         <SearchInput
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onClear={() => setQuery("")}
           placeholder="목표 찾기…"
           aria-label="목표 찾기"
           className="w-full sm:ml-auto sm:w-48"

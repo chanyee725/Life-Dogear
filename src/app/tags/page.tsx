@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/shell";
-import { EmptyState } from "@/components/ui";
+import { ChipLink, EmptyState } from "@/components/ui";
 import { tags } from "@/lib/repo";
 import { parseTagSort, sortTags, tagHref, type TagSort } from "./tag-data";
-import { ChipLink } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "주제" };

@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
+import { Button, cn, DetailHeader, QuietButton } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
@@ -14,8 +13,6 @@ import {
   patchToFormData,
   type FormPatch,
 } from "./form-patch";
-import { DetailHeader } from "@/components/ui/DetailHeader";
-import { QuietButton } from "@/components/ui/Button";
 import { SaveStatus } from "./ItemDetail";
 import { createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";

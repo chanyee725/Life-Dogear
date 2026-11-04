@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
 import { useLatestProgress } from "@/components/pdf/useLatestProgress";
-import { Button, ConfirmDialog, Section } from "@/components/ui";
+import { Button, ConfirmDialog, LinkButton, Section } from "@/components/ui";
 import { removePaperPdf } from "./pdf-client";
 import { PdfDropZone, ReplacePdfButton } from "./PdfUploader";
-import { LinkButton } from "@/components/ui";
 
 type PdfPanelProps = {
   paperId: string;

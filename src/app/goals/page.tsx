@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { LinkTabs } from "@/components/ui/Tabs";
+import { EmptyState, LinkTabs, NewItemButton } from "@/components/ui";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { areas, goals } from "@/lib/repo";
 import { GoalDirection } from "./GoalDirection";
 import { GoalList, type AreaChoice, type PeriodChip } from "./GoalList";
@@ -18,7 +17,6 @@ import {
   periodParam,
   type PeriodFilter,
 } from "./list-view";
-import { NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "목표" };
 export const dynamic = "force-dynamic";

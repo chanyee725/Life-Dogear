@@ -3,12 +3,9 @@ import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
 import { ArchiveButton } from "@/components/fields/ArchiveButton";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Section } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate } from "@/components/ui/format";
+import { EmptyState, formatDate, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { archive } from "@/lib/repo";
-import { ListRow, RowList } from "@/components/ui";
 
 export const metadata: Metadata = { title: "보관함" };
 export const dynamic = "force-dynamic";

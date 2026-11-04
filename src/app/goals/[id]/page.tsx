@@ -7,7 +7,7 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
-import { Section } from "@/components/ui/Card";
+import { LinkButton, RowList, Section } from "@/components/ui";
 import { isValidItemId } from "@/lib/ids";
 import { areas, goals, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
@@ -17,7 +17,6 @@ import { GoalProgress } from "../GoalProgress";
 import { GoalTree } from "../GoalTree";
 import { parentOptionsFor } from "../options";
 import { goalLevelLabel } from "../period";
-import { LinkButton, RowList } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 

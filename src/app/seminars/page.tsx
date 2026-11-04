@@ -16,14 +16,11 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge, EmptyState, formatDate, LinkButton, NewItemButton } from "@/components/ui";
 import { seoulDate } from "@/components/calendar/model";
-import { formatDate } from "@/components/ui/format";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
 import type { Seminar, SeminarSort } from "@/lib/repo/seminars";
-import { LinkButton, NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "세미나" };
 export const dynamic = "force-dynamic";

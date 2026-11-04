@@ -18,7 +18,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { cn } from "@/components/ui/cn";
+import { cn, LinkButton } from "@/components/ui";
 import type { GraphNodeId, LocalGraphData } from "@/lib/graph/types";
 import { fetchLocalGraph } from "./api";
 import type { GraphCanvasApi } from "./GraphCanvas";
@@ -33,7 +33,6 @@ import {
   nodeInDirection,
 } from "./model";
 import { useElementSize } from "./use-element-size";
-import { LinkButton } from "@/components/ui";
 
 export const LOCAL_GRAPH_STORAGE_KEY = "rb-local-graph";
 

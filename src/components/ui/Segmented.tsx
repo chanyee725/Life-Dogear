@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { cn } from "./cn";
-import { segItem, segTrack } from "./segmented-style";
+import { segItem, segmentedNextIndex, segTrack } from "./segmented-style";
 
 export type SegmentedOption<T extends string> = {
   value: T;
@@ -41,17 +41,13 @@ export function Segmented<T extends string>({
       aria-label={ariaLabel}
       className={cn(segTrack, className)}
       onKeyDown={(e) => {
-        const back = e.key === "ArrowLeft" || e.key === "ArrowUp";
-        if (!back && e.key !== "ArrowRight" && e.key !== "ArrowDown") return;
+        const nextIndex = segmentedNextIndex(
+          options.findIndex((o) => o.value === value),
+          options.length,
+          e.key,
+        );
+        if (nextIndex === null) return;
         e.preventDefault();
-        const i = options.findIndex((o) => o.value === value);
-        // Nothing checked: ← goes to the last option, → to the first.
-        const nextIndex =
-          i === -1
-            ? back
-              ? options.length - 1
-              : 0
-            : (i + (back ? -1 : 1) + options.length) % options.length;
         const next = options[nextIndex];
         if (!next) return;
         onChange(next.value);

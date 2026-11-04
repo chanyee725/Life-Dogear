@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EmptyState, NewItemButton } from "@/components/ui";
 import { areas } from "@/lib/repo";
 import { AreasView } from "./AreasView";
 import { parseAreaSort } from "./list";
-import { NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "영역" };
 export const dynamic = "force-dynamic";

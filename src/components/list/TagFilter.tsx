@@ -1,5 +1,4 @@
-import { ChipCount, ChipLink } from "@/components/ui/Chip";
-import { cn } from "@/components/ui/cn";
+import { ChipCount, ChipLink, cn } from "@/components/ui";
 import { buildHref, type QueryParams } from "./query";
 
 export type FilterOption = { value: string; label: string; count?: number };

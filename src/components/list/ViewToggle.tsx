@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { cn } from "@/components/ui/cn";
-import { FilterBar } from "@/components/ui/FilterBar";
-import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
+import { cn, FilterBar, Segmented, type SegmentedOption } from "@/components/ui";
 
 export type ViewMode = "table" | "cards";
 

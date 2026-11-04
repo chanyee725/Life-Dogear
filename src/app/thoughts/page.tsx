@@ -16,13 +16,10 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatRelative } from "@/components/ui/format";
+import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import { thoughts } from "@/lib/repo";
 import type { Thought, ThoughtSort } from "@/lib/repo/thoughts";
-import { LinkButton, NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "생각" };
 export const dynamic = "force-dynamic";

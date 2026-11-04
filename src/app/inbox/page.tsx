@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate } from "@/components/ui/format";
+import { EmptyState, formatDate, NewItemButton, RowList } from "@/components/ui";
 import { tags, thoughts } from "@/lib/repo";
 import { InboxItem } from "./InboxItem";
-import { NewItemButton, RowList } from "@/components/ui";
 
 export const metadata: Metadata = { title: "수집함" };
 export const dynamic = "force-dynamic";

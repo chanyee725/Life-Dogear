@@ -10,7 +10,7 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { LocalGraph } from "@/components/graph/LocalGraph";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, LinkButton } from "@/components/ui";
 import { REVIEW_KIND } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { goals, projects, thoughts } from "@/lib/repo";
@@ -24,7 +24,6 @@ import { FocusPicker, type FocusOption } from "../FocusPicker";
 import { staleFocusOptions } from "../focus-options";
 import { KIND_TAB_LABEL } from "../labels";
 import { progressChange } from "../progress";
-import { LinkButton } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 

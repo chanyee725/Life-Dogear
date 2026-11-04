@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { cn, TagChip } from "@/components/ui";
+import { cn, EmptyAdd, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { StageColumn } from "@/lib/repo/projects";
-import { EmptyAdd } from "@/components/ui";
 import { formatDate } from "./format";
 import { NextAction } from "./NextAction";
 

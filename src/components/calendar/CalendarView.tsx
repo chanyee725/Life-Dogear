@@ -18,10 +18,7 @@ import { DateField } from "@/components/fields/DateField";
 import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Spinner } from "@/components/ui/Spinner";
-import { cn } from "@/components/ui/cn";
+import { Button, cn, Input, Spinner } from "@/components/ui";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { CalendarItemRow, itemLabel, type ItemHandlers } from "./CalendarItemRow";
 import {

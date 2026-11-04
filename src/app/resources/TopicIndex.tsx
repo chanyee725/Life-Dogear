@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { cn } from "@/components/ui/cn";
-import { SearchInput } from "@/components/ui/SearchInput";
+import { cn, SearchInput } from "@/components/ui";
 import {
   densityRatio,
   groupTopicsByInitial,

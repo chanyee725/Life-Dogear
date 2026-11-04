@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui";
+import { Badge, EmptyAdd, Section } from "@/components/ui";
 import { SEMINAR_KIND, THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import type { Seminar } from "@/lib/repo/seminars";
 import type { Thought } from "@/lib/repo/thoughts";
-import { EmptyAdd, Section } from "@/components/ui";
 import { formatDate, formatRelative } from "./format";
 
 const rowClass =

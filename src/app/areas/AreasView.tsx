@@ -6,12 +6,8 @@ import { useId, useMemo, useState, useTransition } from "react";
 import { reorderAreas } from "@/app/_actions/areas";
 import { safeAction } from "@/components/links/safe-action";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
-import { formatDate } from "@/components/ui/format";
+import { Button, cn, formatDate, NewItemButton, RowList, SearchInput } from "@/components/ui";
 import { AREA_SORTS, careSignal, filterAreas, sortAreas, type AreaSort } from "./list";
-import { NewItemButton, RowList } from "@/components/ui";
-import { SearchInput } from "@/components/ui";
 
 export type AreaRow = {
   id: string;
