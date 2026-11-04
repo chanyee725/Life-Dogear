@@ -181,11 +181,6 @@ function ProjectList({ list }: { list: AreaProject[] }) {
                 {viaLabel([{ type: "goal", ...p.viaGoal }])}
               </span>
             ) : null}
-            {p.nextAction ? (
-              <span className="hidden max-w-64 truncate text-muted sm:inline">
-                다음: {p.nextAction}
-              </span>
-            ) : null}
             <ProgressBadge project={p} />
           </Link>
         </li>

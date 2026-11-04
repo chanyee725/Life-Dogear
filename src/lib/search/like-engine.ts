@@ -82,8 +82,8 @@ const SOURCES: Source[] = [
     type: "project",
     table: projects,
     title: projects.title,
-    // `nextAction` is the one-line "다음 할 일" shown on lists, home and detail.
-    meta: [projects.researchQuestion, projects.nextAction],
+    // Not `nextAction`: it is hidden, so it must not show up in snippets.
+    meta: [projects.researchQuestion],
     body: projects.body,
     updatedAt: projects.updatedAt,
     archivedAt: projects.archivedAt,

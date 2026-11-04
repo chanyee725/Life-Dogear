@@ -140,6 +140,35 @@ test("홈: 진행 중인 연구(칸반)와 프로젝트가 따로 보인다", as
     "href",
     "/projects?kind=general",
   );
+  // 다음 할 일 is no longer shown on home cards (seeded values stay in the DB).
+  await expect(page.getByText("선행 연구 5편 요약 정리")).toHaveCount(0);
+  await expect(page.getByText("발표 슬라이드 목차 정하기")).toHaveCount(0);
+});
+
+test("프로젝트: 다음 할 일은 목록·상세에 없고, 저장해도 기존 값은 남는다", async ({ page }) => {
+  await page.goto("/projects?kind=general");
+  await expect(page.getByRole("columnheader", { name: "다음 할 일" })).toHaveCount(0);
+  await expect(page.getByText("발표 슬라이드 목차 정하기")).toHaveCount(0);
+
+  await page.goto("/projects/seed-project-4");
+  await expect(page.getByText("다음 할 일")).toHaveCount(0);
+  // Kept as a hidden field so saving sends the stored value back unchanged.
+  const hidden = page.locator('input[type="hidden"][name="nextAction"]');
+  await expect(hidden).toHaveValue("발표 슬라이드 목차 정하기");
+  // Save a real edit, then put the seeded title back.
+  const title = page.getByLabel("제목", { exact: true });
+  const original = await title.inputValue();
+  await title.fill(`${original} (e2e)`);
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(title).toHaveValue(`${original} (e2e)`);
+  await expect(hidden).toHaveValue("발표 슬라이드 목차 정하기");
+  await title.fill(original);
+  // Wait for this save itself (not an earlier 저장됨), then check it stuck after a reload.
+  await expect(page.getByText("저장 안 됨")).toBeVisible();
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(title).toHaveValue(original);
 });
 
 test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {

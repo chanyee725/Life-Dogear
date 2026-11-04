@@ -3,7 +3,6 @@ import { cn, EmptyAdd, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { StageColumn } from "@/lib/repo/projects";
 import { formatDate } from "./format";
-import { NextAction } from "./NextAction";
 
 /**
  * Research projects by stage (submitted excluded); used inside the home
@@ -42,7 +41,6 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
                 className="flex flex-col gap-1.5 rounded-md border border-border bg-bg p-3 text-sm transition-colors hover:border-border-strong"
               >
                 <span className="line-clamp-2 font-medium text-fg">{project.title}</span>
-                <NextAction value={project.nextAction} />
                 {project.dueDate ? (
                   <span className="text-xs text-muted">마감 {formatDate(project.dueDate)}</span>
                 ) : null}
