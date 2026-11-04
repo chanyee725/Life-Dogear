@@ -62,13 +62,4 @@ export async function postEvent(
   return { ok: false, message: addEventError(body?.error) };
 }
 
-/**
- * Items with the just-added ones merged in (optimistic: the Google feed lags up to 10 min).
- * Same id → the server's copy wins, so nothing shows twice once the feed catches up.
- */
-export function mergeAdded(items: CalendarItem[], added: CalendarItem[]): CalendarItem[] {
-  if (added.length === 0) return items;
-  const ids = new Set(items.map((i) => i.id));
-  const extra = added.filter((a) => !ids.has(a.id));
-  return extra.length ? [...items, ...extra] : items;
-}
+export { mergeAdded } from "@/lib/calendar/dedupe";

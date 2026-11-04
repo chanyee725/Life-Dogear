@@ -127,7 +127,7 @@ describe("AddEventButton", () => {
   });
 
   it("posts the form and hands the item to onAdded", async () => {
-    const fetchMock = vi.fn(async () => json(201, { item: ITEM }));
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => json(201, { item: ITEM }));
     vi.stubGlobal("fetch", fetchMock);
     const onAdded = vi.fn();
     await mount({ enabled: true, defaultDate: "2026-11-05", onAdded });
