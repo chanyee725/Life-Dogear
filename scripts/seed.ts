@@ -19,6 +19,7 @@ import {
   highlights,
   itemTags,
   links,
+  notes,
   papers,
   projects,
   seminars,
@@ -268,6 +269,35 @@ const thoughtRows: (typeof thoughts.$inferInsert)[] = [
   },
 ];
 
+// Fictional sources (no real book or course).
+const noteRows: (typeof notes.$inferInsert)[] = [
+  {
+    id: "seed-note-1",
+    title: "『연결하는 노트』 3장 정리",
+    sourceKind: "book",
+    sourceTitle: "연결하는 노트 (가상의 책)",
+    areaId: "seed-area-1",
+    body:
+      "## 핵심\n\n- 노트는 주제별 폴더보다 연결로 찾을 때 더 오래 쓰인다.\n" +
+      "- 한 노트에는 한 가지 생각만 담는다.\n\n" +
+      "## 내 연구와의 연결\n\n[[세미나 1과 논문 1이 같은 이야기를 한다]]와 같은 맥락.\n",
+    ...stamps(20),
+  },
+  {
+    id: "seed-note-2",
+    title: "질적 연구 방법론 4주차 — 코딩",
+    sourceKind: "lecture",
+    sourceTitle: "질적 연구 방법론 (가상의 강의)",
+    sourceUrl: "https://example.com/lectures/qualitative-4",
+    areaId: "seed-area-2",
+    body:
+      "## 배운 것\n\n- 개방 코딩 → 축 코딩 → 선택 코딩 순서로 좁힌다.\n" +
+      "- 코드북은 처음부터 완성하지 않고 반복해서 고친다.\n\n" +
+      "## 다음에 해 볼 것\n\n- 인터뷰 2건으로 개방 코딩 연습\n",
+    ...stamps(40),
+  },
+];
+
 const tagAssignments: [ItemRef, string[]][] = [
   [{ type: "project", id: "seed-project-1" }, ["지식관리", "질적연구"]],
   [{ type: "project", id: "seed-project-2" }, ["NLP", "요약"]],
@@ -283,6 +313,8 @@ const tagAssignments: [ItemRef, string[]][] = [
   // seed-thought-1 and seed-thought-4 stay untagged and unlinked: they are the inbox.
   [{ type: "thought", id: "seed-thought-5" }, ["미팅"]],
   [{ type: "area", id: "seed-area-1" }, ["NLP"]],
+  [{ type: "note", id: "seed-note-1" }, ["지식관리"]],
+  [{ type: "note", id: "seed-note-2" }, ["질적연구"]],
 ];
 
 const linkPairs: [ItemRef, ItemRef][] = [
@@ -321,6 +353,10 @@ const linkPairs: [ItemRef, ItemRef][] = [
   [
     { type: "thought", id: "seed-thought-2" },
     { type: "paper", id: "seed-paper-3" },
+  ],
+  [
+    { type: "note", id: "seed-note-2" },
+    { type: "project", id: "seed-project-1" },
   ],
 ];
 
@@ -362,11 +398,12 @@ async function main() {
     await tx.delete(links).where(or(like(links.sourceId, seeded), like(links.targetId, seeded)));
     await tx.delete(itemTags).where(like(itemTags.itemId, seeded));
     await tx.delete(highlights).where(like(highlights.paperId, seeded));
-    for (const table of [projects, papers, seminars, thoughts]) {
+    for (const table of [projects, papers, seminars, thoughts, notes]) {
       await tx.delete(table).where(like(table.id, seeded));
     }
     // User projects may sit in a sample area: unassign before removing the areas.
     await tx.update(projects).set({ areaId: null }).where(like(projects.areaId, seeded));
+    await tx.update(notes).set({ areaId: null }).where(like(notes.areaId, seeded));
     await tx.delete(areas).where(like(areas.id, seeded));
     await pruneOrphanTags(tx);
 
@@ -380,6 +417,7 @@ async function main() {
     );
     await tx.insert(seminars).values(seminarRows);
     await tx.insert(thoughts).values(thoughtRows);
+    await tx.insert(notes).values(noteRows);
     for (const [ref, names] of tagAssignments) await setTagsWith(tx, ref, names);
     await tx.insert(links).values(
       linkPairs.map(([a, b], i) => ({
@@ -391,6 +429,16 @@ async function main() {
         createdAt: hoursAgo(48 - i),
       })),
     );
+    // seed-note-1's [[…]]: inserted directly, so the body link is written by hand.
+    await tx.insert(links).values({
+      id: `${PREFIX}link-note-body`,
+      sourceType: "note",
+      sourceId: "seed-note-1",
+      targetType: "thought",
+      targetId: "seed-thought-3",
+      via: "body",
+      createdAt: hoursAgo(20),
+    });
   });
 
   await mkdir(PDF_DIR, { recursive: true });
@@ -404,7 +452,8 @@ async function main() {
 
   console.log(
     `Seeded (${target}): ${areaRows.length} areas, ${projectRows.length} projects, ${paperRows.length} papers, ` +
-      `${seminarRows.length} seminars, ${thoughtRows.length} thoughts, ${linkPairs.length} links, ` +
+      `${seminarRows.length} seminars, ${thoughtRows.length} thoughts, ${noteRows.length} notes, ` +
+      `${linkPairs.length + 1} links, ` +
       `${PAPERS_WITH_PDF.length} dummy PDFs.`,
   );
 }
