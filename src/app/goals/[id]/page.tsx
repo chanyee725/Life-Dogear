@@ -105,11 +105,7 @@ export default async function GoalDetailPage({ params }: Props) {
             </Link>
           }
         >
-          {node.children.length ? (
-            <GoalTree nodes={node.children} />
-          ) : (
-            <p className="text-sm text-muted">아직 하위 목표가 없습니다.</p>
-          )}
+          {node.children.length ? <GoalTree nodes={node.children} /> : null}
         </Section>
       ) : null}
       {goal.horizon === "life" ? null : (
@@ -121,11 +117,7 @@ export default async function GoalDetailPage({ params }: Props) {
             </Link>
           }
         >
-          {node.projects.length === 0 ? (
-            <p className="text-sm text-muted">
-              이 목표를 향하는 프로젝트가 없습니다. 프로젝트 화면에서 목표를 고르면 여기 보입니다.
-            </p>
-          ) : (
+          {node.projects.length === 0 ? null : (
             <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
               {node.projects.map((p) => (
                 <li key={p.id}>
