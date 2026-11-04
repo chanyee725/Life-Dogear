@@ -53,12 +53,12 @@ describe("code blocks in the real editor (jsdom)", () => {
 
   it("round-trips Markdown -> document -> Markdown unchanged", () => {
     const e = mount(MARKDOWN);
-    expect(e.getJSON().content?.slice(1).map((n) => n.attrs?.language)).toEqual([
-      "ts",
-      "launch",
-      null,
-      "mermaid",
-    ]);
+    expect(
+      e
+        .getJSON()
+        .content?.slice(1)
+        .map((n) => n.attrs?.language),
+    ).toEqual(["ts", "launch", null, "mermaid"]);
     expect(getMarkdown(e)).toBe(MARKDOWN);
 
     // And once more through a fresh editor.

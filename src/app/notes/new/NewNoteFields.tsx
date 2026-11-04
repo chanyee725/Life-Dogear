@@ -10,7 +10,13 @@ import {
   type NoteTemplateKey,
 } from "@/lib/templates";
 import { NoteFields, type NoteFormValues } from "../NoteFields";
-import { canReplaceBody, nextIndex } from "./template-choice";
+import {
+  canReplaceBody,
+  chooseTemplate,
+  initialChoice,
+  KEPT_BODY_NOTICE,
+  nextIndex,
+} from "./template-choice";
 
 /**
  * The new-note fields with a template picker above them (docs/design/code.md 4).
@@ -28,11 +34,7 @@ export function NewNoteFields({
   tagSuggestions: string[];
   areaOptions: { value: string; label: string }[];
 }) {
-  const [selected, setSelected] = useState<NoteTemplateKey>(DEFAULT_NOTE_TEMPLATE);
-  const [applied, setApplied] = useState(() => ({
-    key: DEFAULT_NOTE_TEMPLATE,
-    body: noteTemplate(DEFAULT_NOTE_TEMPLATE).body(today),
-  }));
+  const [choice, setChoice] = useState(() => initialChoice(DEFAULT_NOTE_TEMPLATE));
   const [announce, setAnnounce] = useState("");
   const root = useRef<HTMLDivElement>(null);
   // The body as the editor serialised it right after loading the applied template.
@@ -57,26 +59,30 @@ export function NewNoteFields({
   }
 
   function choose(key: NoteTemplateKey) {
-    if (key === selected) return;
-    setSelected(key);
+    if (key === choice.selected) return;
+    const next = chooseTemplate(choice, key, canReplaceBody(currentBody(), baseline.current));
+    if (next.revision !== choice.revision) baseline.current = null;
+    setChoice(next);
     setAnnounce(`템플릿: ${noteTemplate(key).name}`);
-    if (!canReplaceBody(currentBody(), baseline.current)) return;
-    baseline.current = null;
-    setApplied({ key, body: noteTemplate(key).body(today) });
   }
 
   return (
     <div ref={root} className="contents">
-      <TemplatePicker selected={selected} onChoose={choose} />
+      <div className="flex flex-col gap-1.5">
+        <TemplatePicker selected={choice.selected} onChoose={choose} />
+        <p aria-live="polite" className="min-h-[1lh] text-[12px] text-muted">
+          {choice.skipped ? KEPT_BODY_NOTICE : ""}
+        </p>
+      </div>
       <p aria-live="polite" className="sr-only">
         {announce}
       </p>
       <NoteFields
         // A new key remounts the editor with the template body.
-        editorKey={`new-${applied.key}`}
+        editorKey={`new-${choice.revision}`}
         tagSuggestions={tagSuggestions}
         areaOptions={areaOptions}
-        values={{ ...values, body: applied.body }}
+        values={{ ...values, body: noteTemplate(choice.applied).body(today) }}
       />
     </div>
   );

@@ -88,4 +88,13 @@ test("새 노트 템플릿: 고르면 본문이 채워지고, 직접 쓴 본문�
     "true",
   );
   await expect(editor(page).locator("h2").first()).toHaveText("증상 빌드 멈춤");
+  await expect(page.getByText("본문이 있어 템플릿을 적용하지 않았습니다.")).toBeVisible();
+
+  // Clearing the body and picking the template already loaded (error) applies it again.
+  await editor(page).click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.press("Delete");
+  await group.getByRole("radio", { name: /에러 해결/ }).click();
+  await expect(editor(page).locator("h2")).toHaveText(["증상", "원인", "해결", "참고"]);
+  await expect(page.getByText("본문이 있어 템플릿을 적용하지 않았습니다.")).toBeHidden();
 });
