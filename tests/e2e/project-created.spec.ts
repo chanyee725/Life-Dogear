@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createItem, uniqueTitle } from "./helpers";
+import { createItem, deleteCurrentItem, uniqueTitle } from "./helpers";
 
 /** Today in Seoul as `YYYY.MM.DD`. */
 const seoulToday = () =>
@@ -28,4 +28,10 @@ test("프로젝트 생성일: 상세에 읽기 전용으로 보이고, 수정 �
   await expect(page.getByRole("columnheader", { name: "생성일" })).toBeVisible();
   const row = page.getByRole("row").filter({ hasText: `${title} 수정` });
   await expect(row).toContainText(today);
+
+  await row.getByRole("link").first().click();
+  await expect(page.getByLabel("제목", { exact: true })).toHaveValue(`${title} 수정`);
+  await deleteCurrentItem(page);
+  await expect(page).toHaveURL(/\/projects$/);
+  await expect(page.getByText(`${title} 수정`)).toHaveCount(0);
 });

@@ -164,7 +164,11 @@ test("프로젝트: 다음 할 일은 목록·상세에 없고, 저장해도 기
   await expect(title).toHaveValue(`${original} (e2e)`);
   await expect(hidden).toHaveValue("발표 슬라이드 목차 정하기");
   await title.fill(original);
+  // Wait for this save itself (not an earlier 저장됨), then check it stuck after a reload.
+  await expect(page.getByText("저장 안 됨")).toBeVisible();
   await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(title).toHaveValue(original);
 });
 
 test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {
