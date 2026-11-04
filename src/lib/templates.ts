@@ -127,7 +127,7 @@ export type NoteTemplate = {
 export const NOTE_TEMPLATES: readonly NoteTemplate[] = [
   {
     key: "blank",
-    name: "빈 노트",
+    name: "빈 페이지",
     description: "아무것도 없는 상태에서 시작해요.",
     body: () => "",
   },

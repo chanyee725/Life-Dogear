@@ -11,7 +11,7 @@ const headings = (md: string) =>
 describe("note templates", () => {
   it("offers five templates in picker order, blank first and by default", () => {
     expect(NOTE_TEMPLATES.map((t) => [t.key, t.name])).toEqual([
-      ["blank", "빈 노트"],
+      ["blank", "빈 페이지"],
       ["worklog", "작업 로그"],
       ["concept", "개념 정리"],
       ["error", "에러 해결"],

@@ -60,7 +60,7 @@ test("새 노트 템플릿: 고르면 본문이 채워지고, 직접 쓴 본문�
   await page.goto("/notes/new");
   const group = page.getByRole("radiogroup", { name: "템플릿" });
   await expect(group.getByRole("radio")).toHaveCount(5);
-  await expect(group.getByRole("radio", { name: /빈 노트/ })).toHaveAttribute(
+  await expect(group.getByRole("radio", { name: /빈 페이지/ })).toHaveAttribute(
     "aria-checked",
     "true",
   );
