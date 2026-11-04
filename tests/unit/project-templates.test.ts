@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { canReplaceBody, chooseTemplate, initialChoice } from "@/components/ui/template-choice";
 import {
   defaultProjectBody,
   defaultProjectTemplate,
   PROJECT_TEMPLATE,
   PROJECT_TEMPLATES,
+  projectKindAfter,
   projectTemplate,
+  type ProjectTemplateKey,
 } from "@/lib/templates";
 
 const headings = (md: string) =>
@@ -63,5 +66,31 @@ describe("project templates", () => {
     expect(defaultProjectTemplate("research")).toBe("research");
     expect(defaultProjectBody("research")).toBe(PROJECT_TEMPLATE);
     expect(defaultProjectBody("general")).toBe(projectTemplate("general").body);
+  });
+});
+
+describe("project template choice", () => {
+  it("a template sets 종류; 빈 페이지 keeps the current one", () => {
+    expect(projectKindAfter("research", "general")).toBe("research");
+    expect(projectKindAfter("dev", "research")).toBe("general");
+    expect(projectKindAfter("study", "research")).toBe("general");
+    expect(projectKindAfter("blank", "research")).toBe("research");
+    expect(projectKindAfter("blank", "general")).toBe("general");
+  });
+
+  it("applies a template over the untouched default, never over the user's text", () => {
+    const research = projectTemplate("research").body;
+    let state = initialChoice<ProjectTemplateKey>(defaultProjectTemplate("research"));
+
+    state = chooseTemplate(state, "dev", canReplaceBody(research, research));
+    expect(state).toMatchObject({ selected: "dev", applied: "dev", revision: 1, skipped: false });
+
+    const edited = `${projectTemplate("dev").body}\nROS2 MoveIt2 설치 완료`;
+    state = chooseTemplate(state, "study", canReplaceBody(edited, projectTemplate("dev").body));
+    expect(state).toMatchObject({ selected: "study", applied: "dev", revision: 1, skipped: true });
+
+    state = chooseTemplate(state, "blank", canReplaceBody("", null));
+    expect(state).toMatchObject({ selected: "blank", applied: "blank", revision: 2 });
+    expect(projectTemplate(state.applied).body).toBe("");
   });
 });

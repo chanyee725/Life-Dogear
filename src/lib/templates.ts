@@ -327,3 +327,8 @@ export function defaultProjectTemplate(kind: ProjectKind): ProjectTemplateKey {
 export function defaultProjectBody(kind: ProjectKind): string {
   return projectTemplate(defaultProjectTemplate(kind)).body;
 }
+
+/** 종류 after picking template `key`: the template's kind, or `current` for 빈 페이지. */
+export function projectKindAfter(key: ProjectTemplateKey, current: ProjectKind): ProjectKind {
+  return projectTemplate(key).kind ?? current;
+}

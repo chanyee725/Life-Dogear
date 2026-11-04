@@ -4,17 +4,17 @@ import { firstParam, type QueryParams } from "@/components/list/query";
 import { Page } from "@/components/shell/PageHeader";
 import { PROJECT_KIND } from "@/lib/enums";
 import { areas, goals, tags } from "@/lib/repo";
-import { TEMPLATES } from "@/lib/templates";
 import { goalOptionsFor } from "../../goals/options";
 import { createProject } from "../actions";
-import { areaOptionsFor, ProjectFields } from "../ProjectFields";
+import { areaOptionsFor } from "../ProjectFields";
+import { NewProjectFields } from "./NewProjectFields";
 
 export const metadata: Metadata = { title: "새 프로젝트" };
 export const dynamic = "force-dynamic";
 
 /**
- * `?kind=general` starts a general project; `?area=<id>` / `?goal=<id>` preselect the
- * area or goal.
+ * `?kind=general` starts a general project (template 일반 프로젝트, otherwise 연구(논문));
+ * `?area=<id>` / `?goal=<id>` preselect the area or goal. The template picker fills the body.
  */
 export default async function NewProjectPage({
   searchParams,
@@ -38,8 +38,7 @@ export default async function NewProjectPage({
   return (
     <Page>
       <ItemForm mode="create" action={createProject} basePath="/projects" backLabel="프로젝트">
-        <ProjectFields
-          editorKey="new"
+        <NewProjectFields
           tagSuggestions={allTags.map((t) => t.name)}
           areaOptions={areaOptionsFor(areaList, null)}
           goalOptions={goalOptionsFor(goalList, null)}
@@ -54,8 +53,6 @@ export default async function NewProjectPage({
             researchQuestion: "",
             startDate: null,
             dueDate: null,
-            // The research template (proposal, chapters…) doesn't fit general projects.
-            body: kind === "research" ? TEMPLATES.project : "",
             tags: [],
           }}
         />
