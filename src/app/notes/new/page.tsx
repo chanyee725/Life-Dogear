@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { seoulDate } from "@/components/calendar/model";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { firstParam, type QueryParams } from "@/components/list/query";
 import { Page } from "@/components/shell/PageHeader";
@@ -6,12 +7,15 @@ import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
 import { createNote } from "../actions";
-import { NoteFields } from "../NoteFields";
+import { NewNoteFields } from "./NewNoteFields";
 
 export const metadata: Metadata = { title: "새 노트" };
 export const dynamic = "force-dynamic";
 
-/** `?area=<id>` preselects the area, `?source=<kind>` the source kind. */
+/**
+ * `?area=<id>` preselects the area, `?source=<kind>` the source kind. A template picker
+ * above the fields fills the body.
+ */
 export default async function NewNotePage({
   searchParams,
 }: {
@@ -27,8 +31,8 @@ export default async function NewNotePage({
   return (
     <Page>
       <ItemForm mode="create" action={createNote} basePath="/notes" backLabel="노트">
-        <NoteFields
-          editorKey="new"
+        <NewNoteFields
+          today={seoulDate()}
           tagSuggestions={allTags.map((t) => t.name)}
           areaOptions={areaOptionsFor(areaList, null)}
           values={{
@@ -37,7 +41,6 @@ export default async function NewNotePage({
             sourceTitle: "",
             sourceUrl: "",
             areaId: areaList.some((a) => a.id === areaParam) ? areaParam! : null,
-            body: "",
             tags: [],
           }}
         />
