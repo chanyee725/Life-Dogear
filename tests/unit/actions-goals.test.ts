@@ -58,6 +58,18 @@ describe("goal actions", () => {
     expect(await deleteGoal(lifeId)).toEqual({ ok: false, error: "목표를 찾을 수 없습니다." });
   });
 
+  it("keeps createdAt when the goal is edited", async () => {
+    const made = await createGoal(form({ title: "독서", horizon: "year", period: "2027" }));
+    const id = made.ok ? made.data.id : "";
+    const createdAt = (await goals.get(id))?.createdAt;
+    expect(createdAt).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 5));
+    expect(
+      await updateGoal(id, form({ title: "독서 50권", why: "생각의 폭", status: "achieved" })),
+    ).toMatchObject({ ok: true });
+    expect(await goals.get(id)).toMatchObject({ title: "독서 50권", createdAt });
+  });
+
   it("lets a project pick and clear its goal", async () => {
     const g = await goals.create({ title: "분기", horizon: "quarter", period: "2027-Q1" });
     const p = await projects.create({ title: "연구" });
