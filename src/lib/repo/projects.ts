@@ -8,7 +8,7 @@ import {
   type ProjectStage,
   type ProjectStatus,
 } from "@/lib/enums";
-import { PROJECT_TEMPLATE } from "@/lib/templates";
+import { defaultProjectBody } from "@/lib/templates";
 import { goalsOfArea, inAreaWhere, isAssignable, liveGoalAreas, projectArea } from "./areas";
 import { isAssignable as isAssignableGoal } from "./goals";
 import { removeLinksFor, syncBodyLinks } from "./links";
@@ -251,7 +251,8 @@ export async function create(input: ProjectInput): Promise<Project> {
     await tx.insert(projects).values({
       id,
       title: requireTitle(input.title),
-      body: PROJECT_TEMPLATE,
+      // Only when no body is sent: the new-project form always sends the chosen template.
+      body: defaultProjectBody(lifecycle.kind),
       ...columns,
       ...lifecycle,
       areaId: areaId ?? null,

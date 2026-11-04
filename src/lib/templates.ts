@@ -1,5 +1,7 @@
 /** Default markdown bodies for new items (SPEC §3 "양식"). */
 
+import type { ProjectKind } from "@/lib/enums";
+
 export const PAPER_TEMPLATE = `## 왜 읽나
 
 
@@ -216,4 +218,112 @@ export const DEFAULT_NOTE_TEMPLATE: NoteTemplateKey = "blank";
 
 export function noteTemplate(key: NoteTemplateKey): NoteTemplate {
   return NOTE_TEMPLATES.find((t) => t.key === key) ?? NOTE_TEMPLATES[0]!;
+}
+
+/** Project templates offered on /projects/new. Order is the picker order. */
+export type ProjectTemplateKey = "blank" | "research" | "general" | "study" | "dev";
+
+export type ProjectTemplate = {
+  key: ProjectTemplateKey;
+  name: string;
+  /** 종류 the template sets; `null` (빈 페이지) leaves the current choice alone. */
+  kind: ProjectKind | null;
+  body: string;
+};
+
+export const GENERAL_PROJECT_TEMPLATE = `## 목표·완료 기준
+
+
+## 범위
+
+### 할 것
+- 
+
+### 안 할 것
+- 
+
+## 마일스톤
+
+- [ ] 
+- [ ] 
+- [ ] 
+
+## 리스크·의존성
+- 
+
+## 메모
+
+`;
+
+export const STUDY_PROJECT_TEMPLATE = `## 배우려는 것
+
+
+## 자료
+- 책: 
+- 강의: 
+- 문서: 
+
+## 커리큘럼
+
+- [ ] 1회차: 
+- [ ] 2회차: 
+- [ ] 3회차: 
+
+## 실습·과제
+- [ ] 
+
+## 정리 노트
+- [[ ]]
+
+## 회고
+
+`;
+
+export const DEV_PROJECT_TEMPLATE = `## 목표·요구사항
+- 
+
+## 환경·설치
+
+\`\`\`bash
+\`\`\`
+
+## 설계 메모
+
+
+## 작업
+
+- [ ] 
+- [ ] 
+- [ ] 
+
+## 이슈·에러 로그
+
+| 날짜 | 증상 | 원인 | 해결 |
+| --- | --- | --- | --- |
+|  |  |  |  |
+
+## 참고 링크
+- 
+`;
+
+export const PROJECT_TEMPLATES: readonly ProjectTemplate[] = [
+  { key: "blank", name: "빈 페이지", kind: null, body: "" },
+  { key: "research", name: "연구(논문)", kind: "research", body: PROJECT_TEMPLATE },
+  { key: "general", name: "일반 프로젝트", kind: "general", body: GENERAL_PROJECT_TEMPLATE },
+  { key: "study", name: "공부", kind: "general", body: STUDY_PROJECT_TEMPLATE },
+  { key: "dev", name: "개발", kind: "general", body: DEV_PROJECT_TEMPLATE },
+];
+
+export function projectTemplate(key: ProjectTemplateKey): ProjectTemplate {
+  return PROJECT_TEMPLATES.find((t) => t.key === key) ?? PROJECT_TEMPLATES[0]!;
+}
+
+/** Template preselected for a new project of `kind` (`?kind=general` → 일반 프로젝트). */
+export function defaultProjectTemplate(kind: ProjectKind): ProjectTemplateKey {
+  return kind === "general" ? "general" : "research";
+}
+
+/** Body a project gets when created without one: the default template for its kind. */
+export function defaultProjectBody(kind: ProjectKind): string {
+  return projectTemplate(defaultProjectTemplate(kind)).body;
 }

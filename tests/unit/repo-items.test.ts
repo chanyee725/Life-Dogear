@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { papers, projects, RepoError, seminars, thoughts } from "@/lib/repo";
-import { PAPER_TEMPLATE, PROJECT_TEMPLATE, SEMINAR_TEMPLATE } from "@/lib/templates";
+import {
+  defaultProjectBody,
+  PAPER_TEMPLATE,
+  PROJECT_TEMPLATE,
+  SEMINAR_TEMPLATE,
+} from "@/lib/templates";
 import { useFreshDb } from "./repo-helpers";
 
 beforeEach(async () => {
@@ -13,6 +18,13 @@ describe("projects", () => {
     expect(p).toMatchObject({ title: "첫 연구", stage: "exploring", body: PROJECT_TEMPLATE });
     expect(p.tags).toEqual([]);
     expect(await projects.get(p.id)).toEqual(p);
+  });
+
+  it("a sent body wins over the default; general projects default to their template", async () => {
+    expect((await projects.create({ title: "빈", body: "" })).body).toBe("");
+    expect((await projects.create({ title: "개발", body: "## 목표" })).body).toBe("## 목표");
+    const general = await projects.create({ title: "일반", kind: "general" });
+    expect(general.body).toBe(defaultProjectBody("general"));
   });
 
   it("updates fields and rejects invalid input", async () => {
