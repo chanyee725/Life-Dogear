@@ -35,7 +35,7 @@ import {
   sunPositions,
   sunRadius,
 } from "./cosmos-model";
-import { shapeBottom, traceShape, withAlpha } from "./draw";
+import { shapeBottom, shapeExtents, traceShape, withAlpha } from "./draw";
 import { forceAxis, forceCollideGrid, forceRadial } from "./forces";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { COSMOS_THEME as C } from "./graph-theme";
@@ -676,17 +676,7 @@ export default function CosmosCanvas({
     /** Shape extents from the centre (top, bottom, side) in graph units. */
     const extents = (n: SimNode) => {
       if (n.sun) return { top: n.r + 3, bottom: n.r + 3, side: n.r + 3 };
-      const bottom = shapeBottom(n.type, n.r);
-      const top = n.type === "seminar" ? 1.3 * n.r : bottom;
-      const side =
-        n.type === "project" || n.type === "tag"
-          ? 1.3 * n.r
-          : n.type === "seminar"
-            ? 1.3 * n.r * Math.cos(Math.PI / 6)
-            : n.type === "area" || n.type === "review"
-              ? 0.875 * n.r
-              : n.r;
-      return { top, bottom, side };
+      return shapeExtents(n.type, n.r);
     };
 
     const draw = (

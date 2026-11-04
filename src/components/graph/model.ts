@@ -86,7 +86,7 @@ const PARA_GROUPS: { key: string; label: string; types: GraphNodeType[] }[] = [
   { key: "goal", label: "목표", types: ["goal"] },
   { key: "area", label: "영역", types: ["area"] },
   { key: "project", label: "프로젝트", types: ["project"] },
-  { key: "source", label: "자료", types: ["paper", "seminar"] },
+  { key: "source", label: "자료", types: ["paper", "note", "seminar"] },
   { key: "thought", label: "생각", types: ["thought"] },
   { key: "review", label: "회고", types: ["review"] },
   { key: "tag", label: "주제", types: ["tag"] },

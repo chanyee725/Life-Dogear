@@ -78,6 +78,12 @@ export function ShapeIcon({
           <path d="M5 0.8 9.4 8.6H0.6Z" fill={c(theme.gray3)} />
         </svg>
       );
+    case "note":
+      return (
+        <svg {...common}>
+          <path d="M5 9.2 9.4 1.4H0.6Z" fill={c(theme.gray3)} />
+        </svg>
+      );
     case "thought":
       return (
         <svg {...common}>
