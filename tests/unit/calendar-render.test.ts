@@ -109,7 +109,7 @@ describe("CalendarView (month)", () => {
   });
 
   it("labels items by source, marks overdue tasks, opens Google in a new tab", () => {
-    const html = render({ range: "2w" });
+    const html = render({ range: "3w" });
     expect(html).toContain('aria-label="할 일: 2장 초안, 마감 11월 5일"');
     expect(html).toContain('aria-label="할 일: 지난 일, 마감 11월 2일, 마감 지남"');
     expect(html).toContain("text-tone-red-fg");
@@ -136,7 +136,7 @@ describe("CalendarView (month)", () => {
 
   it("shows the Google failure and app failure lines", () => {
     expect(render({ google: "error" })).toContain("캘린더를 불러오지 못했습니다.");
-    const partial = render({ google: "partial", range: "2w" });
+    const partial = render({ google: "partial", range: "3w" });
     expect(partial).toContain("캘린더 일정 일부를 불러오지 못했습니다.");
     expect(partial).toContain("연구실 회의"); // what did load still shows
     expect(render({ items: [], failed: true })).toContain("달력을 불러오지 못했습니다.");
@@ -144,18 +144,18 @@ describe("CalendarView (month)", () => {
 
   it("shows the empty line when nothing is dated", () => {
     expect(render({ items: [] })).toContain("이번 달에 표시할 날짜가 없습니다.");
-    expect(render({ items: [], range: "2w" })).toContain("이 2주에 표시할 날짜가 없습니다.");
+    expect(render({ items: [], range: "3w" })).toContain("이 3주에 표시할 날짜가 없습니다.");
   });
 });
 
-describe("CalendarView (2 weeks)", () => {
-  it("draws two week rows from Monday with the review as a bar", () => {
-    const html = render({ range: "2w" });
-    expect(html).toContain('role="grid" aria-label="11월 2일 – 15일"');
-    expect(html.match(/role="gridcell"/g)).toHaveLength(14);
+describe("CalendarView (3 weeks)", () => {
+  it("draws three week rows from Monday with the review as a bar", () => {
+    const html = render({ range: "3w" });
+    expect(html).toContain('role="grid" aria-label="11월 2일 – 22일"');
+    expect(html.match(/role="gridcell"/g)).toHaveLength(21);
     expect(html).toContain('data-cal-on="2026-11-02 2026-11-03');
-    expect(html).toContain("h-36");
-    expect(html).toContain('aria-label="이전 2주"');
+    expect(html).toContain("lg:h-[7.25rem]");
+    expect(html).toContain('aria-label="이전 3주"');
   });
 
   it("keeps five lines per cell and leaves the time to the panel", () => {
@@ -168,22 +168,22 @@ describe("CalendarView (2 weeks)", () => {
       href: "/tasks",
       taskId: `m${i}`,
     }));
-    const html = render({ range: "2w", items: many });
+    const html = render({ range: "3w", items: many });
     // 6 items > 5 lines → 4 shown + "+2"
     expect(html).toContain('aria-label="11월 10일 항목 2개 더 보기"');
-    const cell = render({ range: "2w", items: items.filter((i) => i.source === "google") });
+    const cell = render({ range: "3w", items: items.filter((i) => i.source === "google") });
     const grid = cell.slice(cell.indexOf('role="grid"'), cell.indexOf("aria-labelledby"));
     expect(grid).not.toContain(">14:00<");
   });
 
   it("marks the selected day and starts on `day` when it is on the grid", () => {
-    const html = render({ range: "2w", day: "2026-11-10" });
+    const html = render({ range: "3w", day: "2026-11-10" });
     expect(html).toMatch(/data-cal-cell="2026-11-10" tabindex="0" aria-selected="true"/);
     expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
     expect(html).toContain("11월 10일 화요일");
     expect(html).toContain("오늘로");
     // Off the grid: falls back to today.
-    expect(render({ range: "2w", day: "2027-01-01" })).toMatch(
+    expect(render({ range: "3w", day: "2027-01-01" })).toMatch(
       /data-cal-cell="2026-11-04" tabindex="0" aria-selected="true"/,
     );
   });
@@ -191,7 +191,7 @@ describe("CalendarView (2 weeks)", () => {
 
 describe("CalendarView (narrow)", () => {
   it("lists the selected day under the 2-week dot grid", () => {
-    const html = render({ range: "2w", day: "2026-11-05", forceNarrow: true });
+    const html = render({ range: "3w", day: "2026-11-05", forceNarrow: true });
     const list = html.slice(
       html.indexOf('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"'),
     );
@@ -203,7 +203,7 @@ describe("CalendarView (narrow)", () => {
 
 describe("TodayPanel (13.3)", () => {
   it("shows today large and what is left, grouped by day", () => {
-    const html = render({ range: "2w" });
+    const html = render({ range: "3w" });
     expect(html).toMatch(/<h2 id="[^"]+" aria-live="polite"[^>]*>11월 4일 수요일<\/h2>/);
     expect(html).not.toContain("오늘로");
     expect(html).toContain("다음 일정");
@@ -220,7 +220,7 @@ describe("TodayPanel (13.3)", () => {
   });
 
   it("says when nothing is ahead and offers a quick add", () => {
-    const html = render({ range: "2w", items: [] });
+    const html = render({ range: "3w", items: [] });
     expect(html).toContain("11월 4일 이후 예정된 일정이 없습니다.");
     expect(html).toContain("＋ 할 일 추가");
   });

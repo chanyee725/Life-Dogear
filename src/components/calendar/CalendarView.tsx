@@ -82,6 +82,8 @@ export type CalendarViewProps = {
   now: string;
   /** Use the narrow (< 640px) layout regardless of the viewport — for server-rendered tests. */
   forceNarrow?: boolean;
+  /** Mirror range/date/day into the address bar (the 할 일 page). Off when embedded (home). */
+  syncUrl?: boolean;
 };
 
 type Pop =
@@ -126,6 +128,7 @@ export function CalendarView({
   day,
   now,
   forceNarrow = false,
+  syncUrl = true,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
@@ -163,10 +166,11 @@ export function CalendarView({
 
   // Keep `?day=` in step with the selection (no server round trip) so reload/back keep it.
   useEffect(() => {
+    if (!syncUrl) return;
     const href = calendarHref({ range, date, day: selected }, today);
     if (`${window.location.pathname}${window.location.search}` !== href)
       window.history.replaceState(window.history.state, "", href);
-  }, [range, date, selected, today]);
+  }, [range, date, selected, today, syncUrl]);
 
   const [pop, setPop] = useState<Pop | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -498,9 +502,9 @@ export function CalendarView({
     !failed &&
     !noneChosen(choice, google) &&
     !shown.some((it) => dayOf(it.start) <= gridTo && lastDay(it) >= gridFrom);
-  const scope = range === "2w" ? "이 2주에" : "이번 달에";
-  const prevLabel = range === "2w" ? "이전 2주" : "이전 달";
-  const nextLabel = range === "2w" ? "다음 2주" : "다음 달";
+  const scope = range === "3w" ? "이 3주에" : "이번 달에";
+  const prevLabel = range === "3w" ? "이전 3주" : "이전 달";
+  const nextLabel = range === "3w" ? "다음 3주" : "다음 달";
   const goToday = () => {
     setFocusDay(today);
     pendingFocus.current = { day: today };
@@ -828,7 +832,7 @@ function RangeSwitch({
   onPick: (r: CalendarRangeKind) => void;
 }) {
   const options: { value: CalendarRangeKind; label: string }[] = [
-    { value: "2w", label: "2주" },
+    { value: "3w", label: "3주" },
     { value: "month", label: "월" },
   ];
   return (
@@ -850,7 +854,7 @@ function RangeSwitch({
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
                 e.preventDefault();
-                onPick(range === "month" ? "2w" : "month");
+                onPick(range === "month" ? "3w" : "month");
               }
             }}
             className={cn(
@@ -956,7 +960,7 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
             }}
             className={cn(
               "group relative flex min-w-0 flex-col gap-0.5 border-r border-b border-border p-1 focus-visible:outline-offset-[-2px]",
-              month ? "h-28" : "h-36 lg:h-44",
+              month ? "h-28" : "h-24 lg:h-[7.25rem]",
               outside && "bg-surface",
               ctx.overDay === d && "bg-accent-soft outline-2 -outline-offset-2 outline-accent",
             )}

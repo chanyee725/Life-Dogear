@@ -62,17 +62,17 @@ export function addMonths(date: string, n: number): string {
   return first.toISOString().slice(0, 10);
 }
 
-/** `2w`: two weeks from the anchor's Monday (default view); `month`: whole weeks of the month. */
-export type CalendarRangeKind = "2w" | "month";
+/** `3w`: three weeks from the anchor's Monday (default view); `month`: whole weeks of the month. */
+export type CalendarRangeKind = "3w" | "month";
 
-/** Days a 2-week page shows. */
-export const TWO_WEEKS = 14;
+/** Days a 3-week page shows. */
+export const THREE_WEEKS = 21;
 
-/** The days a view shows: whole weeks covering the month, or two weeks from Monday. */
+/** The days a view shows: whole weeks covering the month, or three weeks from Monday. */
 export function gridWeeks(kind: CalendarRangeKind, date: string): string[][] {
-  if (kind === "2w") {
+  if (kind === "3w") {
     const from = startOfWeek(date);
-    return [0, 7].map((o) => Array.from({ length: 7 }, (_, i) => addDays(from, o + i)));
+    return [0, 7, 14].map((o) => Array.from({ length: 7 }, (_, i) => addDays(from, o + i)));
   }
   const first = `${date.slice(0, 7)}-01`;
   const last = addDays(addMonths(first, 1), -1);
@@ -104,9 +104,9 @@ export function gridRange(kind: CalendarRangeKind, date: string): { from: string
 
 /** Date of the previous/next page (`dir` = -1 or 1). */
 export const stepDate = (kind: CalendarRangeKind, date: string, dir: -1 | 1) =>
-  kind === "2w" ? addDays(date, TWO_WEEKS * dir) : addMonths(date, dir);
+  kind === "3w" ? addDays(date, THREE_WEEKS * dir) : addMonths(date, dir);
 
-/** Heading: `2026년 11월`, or for two weeks `11월 2일 – 15일` / `10월 26일 – 11월 8일`. */
+/** Heading: `2026년 11월`, or for three weeks `11월 2일 – 22일` / `10월 26일 – 11월 15일`. */
 export function rangeTitle(kind: CalendarRangeKind, date: string): string {
   const [y, m] = date.split("-").map(Number);
   if (kind === "month") return `${y}년 ${m}월`;
@@ -118,7 +118,7 @@ export function rangeTitle(kind: CalendarRangeKind, date: string): string {
 
 /** Days the page is "about": the month (1st..last) or the week; period-line test uses it. */
 export function visibleSpan(kind: CalendarRangeKind, date: string): { from: string; to: string } {
-  if (kind === "2w") return gridRange("2w", date);
+  if (kind === "3w") return gridRange("3w", date);
   const from = `${date.slice(0, 7)}-01`;
   return { from, to: addDays(addMonths(from, 1), -1) };
 }
@@ -157,13 +157,13 @@ export function parseCalendarQuery(
   const day = one(params.day);
   return {
     view: one(params.view) === "calendar" ? "calendar" : "list",
-    range: one(params.range) === "month" ? "month" : "2w",
+    range: one(params.range) === "month" ? "month" : "3w",
     date: isDate(date) ? date : today,
     day: isDate(day) ? day : today,
   };
 }
 
-/** URL of a calendar page; defaults are left out (`range=2w`, today). */
+/** URL of a calendar page; defaults are left out (`range=3w`, today). */
 export function calendarHref(
   q: { range?: CalendarRangeKind; date?: string; day?: string },
   today?: string,

@@ -70,24 +70,24 @@ describe("grid", () => {
   });
 
   it("titles a month or two weeks from Monday", () => {
-    expect(gridRange("2w", "2026-11-04")).toEqual({ from: "2026-11-02", to: "2026-11-15" });
-    expect(gridWeeks("2w", "2026-11-04")).toHaveLength(2);
-    expect(rangeTitle("2w", "2026-11-04")).toBe("11월 2일 – 15일");
-    expect(rangeTitle("2w", "2026-10-28")).toBe("10월 26일 – 11월 8일");
+    expect(gridRange("3w", "2026-11-04")).toEqual({ from: "2026-11-02", to: "2026-11-22" });
+    expect(gridWeeks("3w", "2026-11-04")).toHaveLength(3);
+    expect(rangeTitle("3w", "2026-11-04")).toBe("11월 2일 – 22일");
+    expect(rangeTitle("3w", "2026-10-28")).toBe("10월 26일 – 11월 15일");
     expect(rangeTitle("month", "2026-11-04")).toBe("2026년 11월");
   });
 
   it("loads from the grid's first day up to the 93-day limit (panel look-ahead)", () => {
-    expect(fetchRange("2w", "2026-11-04")).toEqual({ from: "2026-11-02", to: "2027-02-02" });
+    expect(fetchRange("3w", "2026-11-04")).toEqual({ from: "2026-11-02", to: "2027-02-02" });
     expect(fetchRange("month", "2026-02-10")).toEqual({ from: "2026-01-26", to: "2026-04-28" });
-    expect(weekDays("2026-11-04")).toEqual(gridWeeks("2w", "2026-11-04")[0]);
+    expect(weekDays("2026-11-04")).toEqual(gridWeeks("3w", "2026-11-04")[0]);
   });
 
   it("steps by month (clamped) or two weeks", () => {
     expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
     expect(stepDate("month", "2026-12-15", 1)).toBe("2027-01-15");
-    expect(stepDate("2w", "2026-11-04", -1)).toBe("2026-10-21");
-    expect(stepDate("2w", "2026-11-04", 1)).toBe("2026-11-18");
+    expect(stepDate("3w", "2026-11-04", -1)).toBe("2026-10-14");
+    expect(stepDate("3w", "2026-11-04", 1)).toBe("2026-11-25");
     expect(nextMonday("2026-11-04")).toBe("2026-11-09");
     expect(nextMonday("2026-11-09")).toBe("2026-11-16");
   });
@@ -97,14 +97,14 @@ describe("query", () => {
   it("parses with safe defaults", () => {
     expect(parseCalendarQuery({}, "2026-11-04")).toEqual({
       view: "list",
-      range: "2w",
+      range: "3w",
       date: "2026-11-04",
       day: "2026-11-04",
     });
     // Old `range=week` links open the 2-week view.
     expect(
       parseCalendarQuery({ view: "calendar", range: "week", date: "2026-02-30" }, "2026-11-04"),
-    ).toEqual({ view: "calendar", range: "2w", date: "2026-11-04", day: "2026-11-04" });
+    ).toEqual({ view: "calendar", range: "3w", date: "2026-11-04", day: "2026-11-04" });
     expect(parseCalendarQuery({ range: "month", day: "2026-11-12" }, "2026-11-04")).toMatchObject({
       range: "month",
       day: "2026-11-12",
@@ -114,7 +114,7 @@ describe("query", () => {
   });
 
   it("builds short links", () => {
-    expect(calendarHref({ range: "2w", date: "2026-11-04", day: "2026-11-04" }, "2026-11-04")).toBe(
+    expect(calendarHref({ range: "3w", date: "2026-11-04", day: "2026-11-04" }, "2026-11-04")).toBe(
       "/tasks?view=calendar",
     );
     expect(calendarHref({ range: "month", date: "2026-11-10", day: "2026-11-12" })).toBe(
@@ -179,7 +179,7 @@ describe("period line (3.3)", () => {
     expect(line.map((i) => i.id)).toEqual(["goal"]);
     expect(rest.map((i) => i.id)).toEqual(["week", "t"]);
     // Two weeks are longer than the weekly review: it stays a bar.
-    expect(splitPeriodLine(rest, visibleSpan("2w", "2026-11-04")).line).toEqual([]);
+    expect(splitPeriodLine(rest, visibleSpan("3w", "2026-11-04")).line).toEqual([]);
   });
 });
 
@@ -291,11 +291,11 @@ describe("helpers", () => {
   it("grid keys (5.2)", () => {
     expect(navDay("month", "2026-11-04", "ArrowLeft")).toBe("2026-11-03");
     expect(navDay("month", "2026-11-04", "ArrowDown")).toBe("2026-11-11");
-    expect(navDay("2w", "2026-11-11", "ArrowUp")).toBe("2026-11-04");
+    expect(navDay("3w", "2026-11-11", "ArrowUp")).toBe("2026-11-04");
     expect(navDay("month", "2026-11-04", "Home")).toBe("2026-11-02");
     expect(navDay("month", "2026-11-04", "End")).toBe("2026-11-08");
     expect(navDay("month", "2026-01-31", "PageDown")).toBe("2026-02-28");
-    expect(navDay("2w", "2026-11-04", "PageUp")).toBe("2026-10-21");
+    expect(navDay("3w", "2026-11-04", "PageUp")).toBe("2026-10-14");
     expect(navDay("month", "2026-11-04", "x")).toBeNull();
   });
 });

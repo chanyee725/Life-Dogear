@@ -6,7 +6,7 @@ import { describeError } from "@/lib/storage/describe-error";
 import { WeekStripPlaceholder } from "./WeekStripSection";
 
 /**
- * Home calendar: the same 5:5 view as 할 일 → 달력 (two weeks | today panel), streamed so a
+ * Home calendar: the same 5:5 view as 할 일 → 달력 (three weeks | today panel), streamed so a
  * slow Google feed never holds up the rest of the home. Moving to other weeks opens the full
  * calendar page.
  */
@@ -24,14 +24,15 @@ async function HomeCalendarData({ today }: { today: string }) {
   let data: CalendarResult = { items: [], google: "off" };
   let failed = false;
   try {
-    data = await getCalendar(fetchRange("2w", today), { papers: true });
+    data = await getCalendar(fetchRange("3w", today), { papers: true });
   } catch (error) {
     console.error("home calendar: app data failed", describeError(error));
     failed = true;
   }
   return (
     <CalendarView
-      range="2w"
+      range="3w"
+      syncUrl={false}
       date={today}
       today={today}
       items={data.items}
