@@ -40,12 +40,15 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
   await expect(input).toHaveValue("");
   await expect(calendar.locator(`[data-cal-cell="${tomorrow}"]`).getByText(title)).toBeVisible();
   await expect(page.getByText(`${m}월 ${d}일 마감으로 추가했습니다.`)).toBeVisible();
-  // Picking another day (closes the popover) moves the due day of the next add.
+  // Picking another day (closes the popover) moves the due day of the next add, while the
+  // saved line keeps the day it was saved for.
   await calendar.locator(`[data-cal-cell="${today}"]`).first().click();
   await expect(page.getByRole("dialog", { name: "빠른 추가" })).toHaveCount(0);
-  await expect(
-    (await openQuickAdd(page)).getByRole("textbox", { name: /^할 일 추가/ }),
-  ).toHaveAccessibleName(/할 일 추가.*마감/);
+  await openQuickAdd(page);
+  const [, tm, td] = today.split("-").map(Number);
+  await expect(input).toHaveAccessibleName(`할 일 추가 (Enter로 ${tm}월 ${td}일 마감)`);
+  await expect(page.getByText(`${m}월 ${d}일 마감으로 추가했습니다.`)).toBeVisible();
+  await expect(page.getByText("오늘 마감으로 추가했습니다.")).toHaveCount(0);
   await page.reload();
   await expect(
     page
@@ -213,9 +216,37 @@ test("빠른 추가: 열면 할 일 추가에 포커스, 생각 추가는 그 �
   await page.getByRole("heading", { name: /다음 일정/ }).click();
   await expect(popover).toHaveCount(0);
   await expect(quick).toBeFocused();
-  // `/` opens it on 생각 추가.
+  // Closed, it stays in the DOM but hidden: Tab from the button never lands in its inputs.
+  const kept = page.locator('[role="dialog"][aria-label="빠른 추가"]');
+  await expect(kept).toBeAttached();
+  await expect(kept).toBeHidden();
+  await expect(kept.locator("input")).toHaveCount(2);
+  await page.keyboard.press("Tab");
+  await expect(kept.locator("input:focus")).toHaveCount(0);
+  // `/` opens it on 생각 추가, even though the hidden input is still in the DOM.
   await page.keyboard.press("/");
   await expect(thought).toBeFocused();
+  await expect(quick).toHaveAttribute("aria-controls", (await popover.getAttribute("id"))!);
+});
+
+test("빠른 추가: 오른쪽 끝이 버튼 오른쪽에 맞고, 닫았다 열어도 입력값이 남는다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const quick = page.getByRole("button", { name: "빠른 추가" });
+  const popover = await openQuickAdd(page);
+  const [b, p] = await Promise.all([quick, popover].map(async (l) => (await l.boundingBox())!));
+  expect(Math.abs(b.x + b.width - (p.x + p.width))).toBeLessThan(2);
+  const task = popover.getByRole("textbox", { name: /^할 일 추가/ });
+  const thought = popover.getByRole("textbox", { name: /생각 추가/ });
+  await task.fill("닫아도 남는 할 일");
+  await thought.fill("닫아도 남는 생각");
+  await page.keyboard.press("Escape");
+  await expect(popover).toHaveCount(0);
+  await openQuickAdd(page);
+  await expect(task).toHaveValue("닫아도 남는 할 일");
+  await expect(thought).toHaveValue("닫아도 남는 생각");
 });
 
 test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번 보인다 (390px·1280px)", async ({

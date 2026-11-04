@@ -4,21 +4,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { OPEN_CAPTURE_EVENT } from "@/components/capture/capture";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import {
-  GRAPH_SEARCH_EVENT,
-  isTypingTarget,
-  QUICK_ADD_EVENT,
-  QUICK_INPUT_ID,
-  resolveShortcut,
-} from "./shortcuts";
+import { GRAPH_SEARCH_EVENT, isTypingTarget, QUICK_ADD_EVENT, resolveShortcut } from "./shortcuts";
 
+/**
+ * Asks the home 빠른 추가 to open on 생각 추가 (`#quick-input`). Always the event, never a
+ * direct focus: the input stays in the DOM (hidden) after the popover closes.
+ */
 function focusQuickInput(): boolean {
-  const el = document.getElementById(QUICK_INPUT_ID);
-  if (el) {
-    el.focus();
-    return true;
-  }
-  // Closed 빠른 추가 popover on the home: it opens and focuses the input itself.
   const event = new Event(QUICK_ADD_EVENT, { cancelable: true });
   window.dispatchEvent(event);
   return event.defaultPrevented;

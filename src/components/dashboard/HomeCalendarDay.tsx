@@ -1,10 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { CalendarView, type CalendarViewProps } from "@/components/calendar/CalendarView";
 import { Popover } from "@/components/calendar/Popover";
 import { PlusIcon } from "@/components/shell/icons";
-import { QUICK_ADD_EVENT } from "@/components/shell/shortcuts";
+import { QUICK_ADD_EVENT, QUICK_INPUT_ID } from "@/components/shell/shortcuts";
 import { Button } from "@/components/ui";
 import type { CalendarResult } from "@/lib/calendar/types";
 import { QuickInput, TaskQuickInput } from "./QuickInput";
@@ -84,24 +92,40 @@ const EMPTY: HomeCalendarData = { items: [], google: "off", failed: false };
  * 빠른 추가: a + button at the right of the calendar toolbar opening a small popover with
  * 할 일 추가 (due on the day selected in the calendar) over 생각 추가. Opening focuses the
  * first input, `/` (QUICK_ADD_EVENT) opens it on 생각 추가. Esc and outside presses close
- * it; focus goes back to the button unless the press moved it somewhere else.
+ * it; focus goes back to the button unless the press moved it somewhere else. Once opened
+ * it stays mounted and is only hidden, so typed text and the saved / error lines survive.
  */
 export function HomeQuickAdd({ today }: { today: string }) {
   const { day } = useDay();
+  const id = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState<null | "task" | "thought">(null);
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  // Bumped by `/`: focus 생각 추가 once the popover is shown (it may be open already).
+  const [thoughtFocus, setThoughtFocus] = useState(0);
+
+  const show = () => {
+    setMounted(true);
+    setOpen(true);
+  };
 
   useEffect(() => {
     const onOpen = (e: Event) => {
       e.preventDefault();
-      setOpen("thought");
+      show();
+      setThoughtFocus((n) => n + 1);
     };
     window.addEventListener(QUICK_ADD_EVENT, onOpen);
     return () => window.removeEventListener(QUICK_ADD_EVENT, onOpen);
   }, []);
 
+  // Runs after Popover's own effect (which focuses the first input, 할 일 추가).
+  useEffect(() => {
+    if (thoughtFocus) document.getElementById(QUICK_INPUT_ID)?.focus();
+  }, [thoughtFocus]);
+
   const close = (refocus: boolean) => {
-    setOpen(null);
+    setOpen(false);
     const button = buttonRef.current;
     if (refocus) button?.focus();
     // Outside press: refocus only if it left focus nowhere (not on a link or field).
@@ -122,20 +146,27 @@ export function HomeQuickAdd({ today }: { today: string }) {
         aria-label="빠른 추가"
         title="빠른 추가 (/)"
         aria-haspopup="dialog"
-        aria-expanded={open !== null}
-        onClick={() => (open ? close(true) : setOpen("task"))}
+        aria-expanded={open}
+        aria-controls={mounted ? id : undefined}
+        onClick={() => (open ? close(true) : show())}
       >
         <PlusIcon />
       </Button>
-      {open ? (
+      {mounted ? (
         <Popover
+          id={id}
           anchor={buttonRef.current}
           onClose={close}
           label="빠른 추가"
-          className="flex w-72 max-w-[calc(100vw-1rem)] flex-col gap-1 p-3"
+          align="end"
+          hidden={!open}
+          className="w-72 max-w-[calc(100vw-1rem)] p-3"
         >
-          <TaskQuickInput day={day} today={today} autoFocus={open === "task"} />
-          <QuickInput autoFocus={open === "thought"} />
+          {/* Layout on an inner box: a display class on the root would beat `hidden`. */}
+          <div className="flex flex-col gap-1">
+            <TaskQuickInput day={day} today={today} />
+            <QuickInput />
+          </div>
         </Popover>
       ) : null}
     </>
