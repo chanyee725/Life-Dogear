@@ -14,6 +14,7 @@ import {
   type GraphNodeType,
   parseGraphNodeId,
 } from "@/lib/graph/types";
+import { isGraphColorBy, type GraphColorBy } from "@/lib/graph/color";
 
 /** Korean labels for chips, PARA column titles and the preview. */
 export const GRAPH_TYPE_LABEL: Record<GraphNodeType, string> = {
@@ -386,6 +387,8 @@ export type GraphUrlState = {
   focus: GraphNodeId | null;
   /** Absent from the URL when not given (the screen then uses the last choice). */
   mode?: GraphMode;
+  /** Basic graph color basis (`color=area`); absent → the last choice. */
+  color?: GraphColorBy;
 };
 export const GRAPH_MODE_STORAGE_KEY = "rb-graph-mode";
 
@@ -448,6 +451,7 @@ export function pageQuery(state: GraphUrlState): string {
   const p = new URLSearchParams(graphQuery(state.filter));
   if (state.view === "para") p.set("view", "para");
   if (state.mode === "cosmos") p.set("mode", "cosmos");
+  if (state.color === "area") p.set("color", "area");
   if (state.focus) p.set("focus", state.focus);
   const s = p.toString();
   return s ? `?${s}` : "";
@@ -469,6 +473,7 @@ export function parsePageQuery(params: URLSearchParams): GraphUrlState {
   if (params.get("orphans") === "1") filter.orphans = true;
   if (params.get("doneTasks") === "1") filter.doneTasks = true;
   const focusRef = parseGraphNodeId(params.get("focus"));
+  const color = params.get("color");
   return {
     filter: normalizeFilter(filter),
     view: params.get("view") === "para" ? "para" : "free",
@@ -477,6 +482,7 @@ export function parsePageQuery(params: URLSearchParams): GraphUrlState {
       : params.get("mode") === "basic"
         ? { mode: "basic" as const }
         : {}),
+    ...(isGraphColorBy(color) ? { color } : {}),
     focus: focusRef ? (`${focusRef.type}:${focusRef.id}` as GraphNodeId) : null,
   };
 }
