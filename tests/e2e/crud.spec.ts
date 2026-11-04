@@ -91,8 +91,11 @@ test("저장 토스트: 저장·Cmd+S면 오른쪽 위에 하나만, 자동 저�
   await page.getByRole("button", { name: "저장", exact: true }).click();
   await expect(toast).toHaveCount(1);
   const box = (await toast.boundingBox())!;
-  expect(box.y).toBeLessThan(40);
   expect(1280 - (box.x + box.width)).toBeLessThan(40);
+  // Below the header's buttons (저장 sits in the top right corner).
+  const save = (await page.getByRole("button", { name: "저장", exact: true }).boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(save.y + save.height);
+  expect(box.y).toBeLessThan(100);
   await page.mouse.move(0, 400); // keep the pointer off it (hover pauses the timer)
   await page.screenshot({ path: "test-results/save-toast-1280-light.png" });
 
@@ -112,6 +115,13 @@ test("저장 토스트: 저장·Cmd+S면 오른쪽 위에 하나만, 자동 저�
   await page.setViewportSize({ width: 390, height: 844 });
   await titleField.press("ControlOrMeta+s");
   await expect(toast).toHaveCount(1);
+  // Phones: top corner, above the header row (보관 · 삭제 · 저장).
+  const narrow = (await toast.boundingBox())!;
+  expect(narrow.y).toBeLessThan(40);
+  for (const name of ["보관", "삭제", "저장"]) {
+    const b = (await page.getByRole("button", { name, exact: true }).first().boundingBox())!;
+    expect(narrow.y + narrow.height).toBeLessThanOrEqual(b.y);
+  }
   await page.screenshot({ path: "test-results/save-toast-390.png" });
 
   await deleteCurrentItem(page);

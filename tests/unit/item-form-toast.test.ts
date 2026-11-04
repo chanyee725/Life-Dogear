@@ -87,6 +87,7 @@ describe("ItemForm saved toast", () => {
     const [toast] = f.toasts();
     expect(toast).toBeDefined();
     expect(toast!.className).toContain("top-4");
+    expect(toast!.className).toContain("md:top-20");
     expect(toast!.className).toContain("right-4");
     expect(toast!.className).toContain("z-50");
     await f.wait(SAVED_TOAST_MS + 10);
