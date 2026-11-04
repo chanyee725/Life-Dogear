@@ -205,11 +205,7 @@ export function LocalGraph({ node, className }: { node: GraphNodeId; className?:
             <p className="flex h-24 items-center justify-center text-[13px] text-muted">
               로컬 그래프를 불러오지 못했습니다.
             </p>
-          ) : empty ? (
-            <p className="flex h-24 items-center justify-center text-[13px] text-muted">
-              아직 연결된 항목이 없습니다.
-            </p>
-          ) : (
+          ) : empty ? null : (
             <>
               <div
                 ref={canvasRef}
