@@ -51,6 +51,14 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
       .locator(`[data-cal-cell="${tomorrow}"]`)
       .getByText(title),
   ).toBeVisible();
+
+  // Clean up through the task list so later specs (tasks.spec "소속 없음 0") see no extra task.
+  await page.goto("/tasks?tab=by-parent");
+  await page.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await page.getByRole("menuitem", { name: "삭제" }).click();
+  await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: `할 일 메뉴: ${title}` })).toHaveCount(0);
 });
 
 test("할 일 추가: 300자를 넘으면 자르지 않고 안내하며 저장하지 않는다", async ({ page }) => {
