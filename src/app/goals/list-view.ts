@@ -341,3 +341,29 @@ export function hasGoalsWithoutArea(view: GoalListView): boolean {
     [...view.direction, ...view.ended].some((g) => g.areaId === null)
   );
 }
+
+/** Local `YYYY-MM-DD` of a date (the "today" the due labels count from). */
+export function localDay(now = new Date()): string {
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${m}-${d}`;
+}
+
+/** Last day of a period: `2026` → 2026-12-31, `2026-Q2` → 2026-06-30; null otherwise. */
+export function periodEnd(period: string | null): string | null {
+  const m = /^(\d{4})(?:-Q([1-4]))?$/.exec(period ?? "");
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = m[2] ? Number(m[2]) * 3 : 12;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${m[1]}-${String(month).padStart(2, "0")}-${last}`;
+}
+
+/** Days left to the period's end: "D-12", "D-day", "끝남" when past; null without a period. */
+export function dueLabel(period: string | null, today: string): string | null {
+  const end = periodEnd(period);
+  if (!end) return null;
+  const days = Math.round((Date.parse(end) - Date.parse(today)) / 86_400_000);
+  if (days < 0) return "끝남";
+  return days === 0 ? "D-day" : `D-${days}`;
+}

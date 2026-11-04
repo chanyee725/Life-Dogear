@@ -2,16 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   areasWithGoals,
   buildGoalList,
+  dueLabel,
   endedCounts,
   filterGroupsByText,
   filterLabels,
   groupStats,
   hasGoalsWithoutArea,
   inPeriod,
+  localDay,
   NO_AREA,
   otherYears,
   parsePeriodFilter,
   periodLabel,
+  periodEnd,
   periodParam,
   titleMatches,
   type GoalTreeInput,
@@ -235,5 +238,25 @@ describe("filterLabels", () => {
     ]);
     expect(filterLabels({ period: ALL, areaTitle: "영역 없음" })).toEqual(["영역 없음"]);
     expect(filterLabels({ period: ALL, query: "" })).toEqual([]);
+  });
+});
+
+describe("due labels", () => {
+  it("ends a period on its last day", () => {
+    expect(periodEnd("2026")).toBe("2026-12-31");
+    expect(periodEnd("2026-Q1")).toBe("2026-03-31");
+    expect(periodEnd("2028-Q1")).toBe("2028-03-31");
+    expect(periodEnd("2026-Q2")).toBe("2026-06-30");
+    expect(periodEnd(null)).toBeNull();
+    expect(periodEnd("x")).toBeNull();
+  });
+
+  it("counts days left to the period end", () => {
+    const today = localDay(NOW);
+    expect(today).toBe("2026-11-03");
+    expect(dueLabel("2026-Q4", today)).toBe("D-58");
+    expect(dueLabel("2026", "2026-12-31")).toBe("D-day");
+    expect(dueLabel("2026-Q3", today)).toBe("끝남");
+    expect(dueLabel(null, today)).toBeNull();
   });
 });
