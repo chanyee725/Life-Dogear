@@ -4,6 +4,7 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
+import { ItemNotes } from "@/components/notes/ItemNotes";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
@@ -78,6 +79,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
+      <ItemNotes owner={ref} archived={Boolean(project.archivedAt)} />
       <TaskSection parent={ref} archived={Boolean(project.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>
