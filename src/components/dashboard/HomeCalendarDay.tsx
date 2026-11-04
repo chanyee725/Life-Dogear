@@ -26,8 +26,9 @@ export type HomeCalendarData = CalendarResult & { failed: boolean };
  * The home calendar block (`section` "달력"), reporting its selected day to the provider.
  * `data` is the server's unawaited promise: the grid draws empty at once and fills when it
  * settles (a refresh hands a new promise; the old items stay until it settles). Until the
- * first one settles the block is `aria-busy` and the panel says so above "다음 일정". No
- * Suspense, so nothing in the block — the inputs above all — is ever swapped out.
+ * first one settles CalendarView is `loading` (grid `aria-busy`, "다음 일정 …") and the
+ * panel says "일정 불러오는 중…" under the add input.
+ * No Suspense, so nothing in the block — the inputs above all — is ever swapped out.
  */
 export function HomeCalendarView({
   data,
@@ -49,12 +50,14 @@ export function HomeCalendarView({
   }, [data]);
   const current = loaded ?? EMPTY;
   return (
-    <section aria-label="달력" aria-busy={loaded ? undefined : true}>
+    <section aria-label="달력">
       <CalendarView
         {...props}
         items={current.items}
         google={current.google}
         failed={current.failed}
+        loading={!loaded}
+        gridTestId="home-calendar-grid"
         onSelectDay={setDay}
         panelSlot={
           <>
