@@ -4,10 +4,14 @@ import { ShapeIcon } from "@/components/graph/ShapeIcon";
 import type { GraphTheme } from "@/components/graph/graph-theme";
 import type { CalendarSource } from "@/lib/calendar/types";
 
-/** Source color: graph kind colors; Google events in Google blue. */
-export const GOOGLE_BLUE = { light: "#1a73e8", dark: "#8ab4f8" };
+/** Source color: graph kind colors; personal (Google) events in a deep orange. */
+export const PERSONAL_ORANGE = { light: "#d9480f", dark: "#ff8a4c" };
 export const sourceColor = (theme: GraphTheme, source: CalendarSource) =>
-  source === "google" ? (theme.dark ? GOOGLE_BLUE.dark : GOOGLE_BLUE.light) : theme.kind[source];
+  source === "google"
+    ? theme.dark
+      ? PERSONAL_ORANGE.dark
+      : PERSONAL_ORANGE.light
+    : theme.kind[source];
 
 /** Soft tint of a source color for chip and row backgrounds. */
 export const sourceTint = (theme: GraphTheme, source: CalendarSource, pct = 14) =>
