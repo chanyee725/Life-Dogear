@@ -7,6 +7,7 @@ import type { NodePreview } from "@/components/graph/preview-types";
 import {
   GOAL_HORIZON,
   GOAL_STATUS,
+  NOTE_SOURCE_KIND,
   PROJECT_STAGE,
   REVIEW_KIND,
   PROJECT_STATUS,
@@ -86,6 +87,12 @@ export type ThoughtRow = {
   body: string;
   archivedAt: string | null;
 };
+export type NoteRow = {
+  sourceKind: string | null;
+  sourceTitle: string | null;
+  body: string;
+  archivedAt: string | null;
+};
 export type AreaRow = { standard: string; body: string; archivedAt: string | null };
 
 const label = <V extends string>(
@@ -132,6 +139,18 @@ export function seminarPreview(s: SeminarRow): NodePreview {
     badge: s.kind !== "seminar" && SEMINAR_KIND.is(s.kind) ? SEMINAR_KIND.label(s.kind) : undefined,
     props: [...prop("날짜", s.date), ...prop("연사", s.speaker)],
     summary: nonEmpty(s.keyLine) ? clip(s.keyLine) : firstParagraph(s.body),
+  };
+}
+
+/** Note: 출처 종류 and 출처 이름, then the body's first paragraph (the title is the node's). */
+export function notePreview(n: NoteRow): NodePreview {
+  return {
+    archived: !!n.archivedAt,
+    props: [
+      ...prop("출처 종류", n.sourceKind ? label(NOTE_SOURCE_KIND, n.sourceKind) : null),
+      ...prop("출처", n.sourceTitle),
+    ],
+    summary: firstParagraph(n.body),
   };
 }
 

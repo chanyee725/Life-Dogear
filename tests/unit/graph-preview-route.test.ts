@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it } from "vitest";
 import { GET } from "@/app/graph/preview/route";
 import type { NodePreview } from "@/components/graph/preview-types";
-import { archive, areas, goals, papers, projects } from "@/lib/repo";
+import { archive, areas, goals, notes, papers, projects } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { useFreshDb } from "./repo-helpers";
 
@@ -36,6 +36,25 @@ describe("GET /graph/preview", () => {
     expect(res.headers.get("cache-control")).toBe("no-store");
     const body = (await res.json()) as NodePreview;
     expect(body.props).toContainEqual({ label: "연도", value: "2024" });
+  });
+
+  it("previews a note with its source and first paragraph; 404 for a missing one", async () => {
+    const note = await notes.create({
+      title: "1장 정리",
+      sourceKind: "lecture",
+      sourceTitle: "통계 입문",
+      body: "회귀는 관계를 본다.",
+    });
+    const body = (await (await get(`note:${note.id}`)).json()) as NodePreview;
+    expect(body).toEqual({
+      archived: false,
+      props: [
+        { label: "출처 종류", value: "강의" },
+        { label: "출처", value: "통계 입문" },
+      ],
+      summary: "회귀는 관계를 본다.",
+    });
+    expect((await get("note:seed-missing")).status).toBe(404);
   });
 
   it("includes goal progress, parent and period; 404 for a missing goal", async () => {
