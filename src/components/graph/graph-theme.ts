@@ -3,13 +3,24 @@
 /**
  * Canvas colors for the graph (`docs/design/graph.md` 1절). The canvas cannot read CSS
  * variables per frame, so light/dark values live here as constants; the hooks re-read
- * when the `dark` class on `<html>` changes. Neutral nodes, accent for goals only.
+ * when the `dark` class on `<html>` changes. Nodes are colored by kind (1.2) or by area
+ * (1.3); shapes still tell the kinds apart.
  */
 import { useEffect, useState } from "react";
+import type { GraphNodeType } from "@/lib/graph/types";
 
 export type GraphTheme = {
   dark: boolean;
   canvasBg: string;
+  /** Node color per kind (1.2). */
+  kind: Readonly<Record<GraphNodeType, string>>;
+  /** Quarter-goal inner fill when colored by kind (1.2 `goalSoft`). */
+  goalSoft: string;
+  /** Area palette (1.3): the i-th used area takes `area[i % 12]`. */
+  area: readonly string[];
+  /** Color by area: nodes without an area (1.3 `neutral`). */
+  neutral: string;
+  /** Legacy grays/accent: only the cosmos side panel's icon theme still sets these. */
   gray1: string;
   gray2: string;
   gray3: string;
@@ -23,8 +34,10 @@ export type GraphTheme = {
   divider: string;
   /** Alpha of nodes outside the hover/selection neighbourhood. */
   dimAlpha: number;
-  /** Alpha of `belongs` edges at rest. */
+  /** Alpha of `belongs` edges at rest (1.5). */
   belongsAlpha: number;
+  /** Alpha of `link`/`body`/`topic` edges at rest (1.5; light is higher — colored lines fade more on white). */
+  linkAlpha: number;
   fontFamily: string;
 };
 
@@ -33,6 +46,33 @@ const FONT_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
 export const GRAPH_THEME_LIGHT: GraphTheme = {
   dark: false,
   canvasBg: "#ffffff",
+  kind: {
+    goal: "#cc3430",
+    area: "#953466",
+    project: "#6142aa",
+    paper: "#348dcf",
+    seminar: "#038586",
+    thought: "#c8800d",
+    task: "#357339",
+    review: "#756960",
+    tag: "#828fa0",
+  },
+  goalSoft: "#fbecea",
+  area: [
+    "#1587ba",
+    "#cc6c13",
+    "#167b26",
+    "#db5b94",
+    "#875cc6",
+    "#169d97",
+    "#7a8e24",
+    "#dd5652",
+    "#1f53b8",
+    "#2f9074",
+    "#95489b",
+    "#7f4d30",
+  ],
+  neutral: "#71747c",
   gray1: "#3f3f46",
   gray2: "#52525b",
   gray3: "#6b6b73",
@@ -45,13 +85,41 @@ export const GRAPH_THEME_LIGHT: GraphTheme = {
   labelStrong: "#18181b",
   divider: "#e7e7ea",
   dimAlpha: 0.12,
-  belongsAlpha: 0.5,
+  belongsAlpha: 0.55,
+  linkAlpha: 0.42,
   fontFamily: FONT_FALLBACK,
 };
 
 export const GRAPH_THEME_DARK: GraphTheme = {
   dark: true,
   canvasBg: "#141416",
+  kind: {
+    goal: "#f27166",
+    area: "#d474a1",
+    project: "#977ee5",
+    paper: "#75bffc",
+    seminar: "#78d7d6",
+    thought: "#f6c16b",
+    task: "#7ec180",
+    review: "#8f847c",
+    tag: "#a5b2c4",
+  },
+  goalSoft: "#311e1c",
+  area: [
+    "#5abdf2",
+    "#ed914c",
+    "#5bb661",
+    "#d76797",
+    "#a07cdb",
+    "#50ddd5",
+    "#b8d259",
+    "#f28881",
+    "#6a9cfb",
+    "#5cb99b",
+    "#d896db",
+    "#b67d5d",
+  ],
+  neutral: "#b4b7bf",
   gray1: "#d4d4d8",
   gray2: "#b4b4bc",
   gray3: "#9d9da6",
@@ -65,6 +133,7 @@ export const GRAPH_THEME_DARK: GraphTheme = {
   divider: "#2a2a2f",
   dimAlpha: 0.18,
   belongsAlpha: 0.45,
+  linkAlpha: 0.34,
   fontFamily: FONT_FALLBACK,
 };
 

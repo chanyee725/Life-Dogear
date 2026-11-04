@@ -1,10 +1,26 @@
 /**
- * Canvas drawing for graph nodes (`docs/design/graph.md` 2절). Shapes tell the kinds apart,
- * color is neutral except for goals. `k` is the zoom (globalScale): screen-px values are
- * divided by it, graph-unit values are not.
+ * Canvas drawing for graph nodes (`docs/design/graph.md` 2절). Shapes tell the kinds apart;
+ * the color `C` comes from the color basis (1.2 kind / 1.3 area). `k` is the zoom
+ * (globalScale): screen-px values are divided by it, graph-unit values are not.
  */
+import { slotColor, type GraphColorBy } from "@/lib/graph/color";
 import type { GraphNode, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
+
+/** Node color `C` (2.1): the kind's color, or its area slot's color (neutral without one). */
+export function nodeColor(
+  type: GraphNodeType,
+  colorBy: GraphColorBy,
+  areaSlot: number | null | undefined,
+  theme: GraphTheme,
+): string {
+  return colorBy === "area" ? slotColor(areaSlot, theme.area, theme.neutral) : theme.kind[type];
+}
+
+/** Quarter-goal inner fill: `goalSoft` by kind, the canvas background by area (1.3). */
+export function quarterGoalFill(colorBy: GraphColorBy, theme: GraphTheme): string {
+  return colorBy === "area" ? theme.canvasBg : theme.goalSoft;
+}
 
 /** `#rgb`/`#rrggbb` → `rgba(…, a)`; other color strings are returned unchanged. */
 export function withAlpha(color: string, alpha: number): string {
@@ -99,7 +115,10 @@ export function shapeBottom(type: GraphNodeType, r: number): number {
   }
 }
 
-/** Draws a node in its kind's shape and color at the current `ctx.globalAlpha`. */
+/**
+ * Draws a node in its kind's shape at the current `ctx.globalAlpha`: filled with `color`,
+ * or hollow (thought, topic, open task, quarter goal) with a `color` outline.
+ */
 export function drawNodeShape(
   ctx: CanvasRenderingContext2D,
   node: Pick<GraphNode, "type" | "horizon" | "done">,
@@ -108,85 +127,59 @@ export function drawNodeShape(
   r: number,
   k: number,
   theme: GraphTheme,
+  color: string,
+  quarterFill: string = theme.goalSoft,
 ): void {
   const { type } = node;
   traceShape(ctx, type, x, y, r);
+  const outline = (fill: string, width: number) => {
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineWidth = width / k;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  };
   switch (type) {
     case "goal":
       if (node.horizon === "quarter") {
-        ctx.fillStyle = theme.accentSoft;
-        ctx.fill();
+        outline(quarterFill, 1.5);
+        return;
+      }
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (node.horizon === "life") {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 2, 0, 2 * Math.PI);
         ctx.lineWidth = 1.5 / k;
-        ctx.strokeStyle = theme.accent;
+        ctx.strokeStyle = color;
         ctx.stroke();
-      } else {
-        ctx.fillStyle = theme.accent;
-        ctx.fill();
-        if (node.horizon === "life") {
-          ctx.beginPath();
-          ctx.arc(x, y, r + 2, 0, 2 * Math.PI);
-          ctx.lineWidth = 1.5 / k;
-          ctx.strokeStyle = theme.accent;
-          ctx.stroke();
-        }
       }
       return;
     case "thought":
-      ctx.fillStyle = theme.canvasBg;
-      ctx.fill();
-      ctx.lineWidth = 2 / k;
-      ctx.strokeStyle = theme.gray4;
-      ctx.stroke();
+      outline(theme.canvasBg, 2);
       return;
     case "tag":
-      ctx.fillStyle = theme.canvasBg;
-      ctx.fill();
-      ctx.lineWidth = 1.25 / k;
-      ctx.strokeStyle = theme.gray5;
-      ctx.stroke();
+      outline(theme.canvasBg, 1.25);
       return;
     case "task":
       // Open: an empty check box. Done: filled, faded (today.md 7절).
       if (node.done) {
         const alpha = ctx.globalAlpha;
         ctx.globalAlpha = alpha * 0.45;
-        ctx.fillStyle = theme.gray4;
+        ctx.fillStyle = color;
         ctx.fill();
         ctx.globalAlpha = alpha;
       } else {
-        ctx.fillStyle = theme.canvasBg;
-        ctx.fill();
-        ctx.lineWidth = 1.25 / k;
-        ctx.strokeStyle = theme.gray4;
-        ctx.stroke();
+        outline(theme.canvasBg, 1.25);
       }
       return;
     default:
-      ctx.fillStyle = nodeFill(type, theme);
+      ctx.fillStyle = color;
       ctx.fill();
   }
 }
 
-/** Fill color of a kind (also used for the chip icons). */
-export function nodeFill(type: GraphNodeType, theme: GraphTheme): string {
-  switch (type) {
-    case "goal":
-      return theme.accent;
-    case "area":
-      return theme.gray1;
-    case "project":
-      return theme.gray2;
-    case "paper":
-    case "seminar":
-      return theme.gray3;
-    case "thought":
-      return theme.gray4;
-    default:
-      return theme.gray5;
-  }
-}
-
-/** Focus/selection ring: accent 2s, 3s outside the node edge. */
+/** Focus/selection ring: `labelStrong` 2s (achromatic, 1.1), 3s outside the node edge. */
 export function drawRing(
   ctx: CanvasRenderingContext2D,
   type: GraphNodeType,
@@ -198,7 +191,7 @@ export function drawRing(
 ): void {
   traceShape(ctx, type === "goal" ? "paper" : type, x, y, r + 3 / k + (type === "goal" ? 2 : 0));
   ctx.lineWidth = 2 / k;
-  ctx.strokeStyle = theme.accent;
+  ctx.strokeStyle = theme.labelStrong;
   ctx.stroke();
 }
 

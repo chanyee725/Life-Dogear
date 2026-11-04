@@ -20,7 +20,17 @@ import type {
   GraphNodeId,
   GraphPosition,
 } from "@/lib/graph/types";
-import { drawLabel, drawNodeShape, drawRing, measureLabel, shapeBottom, withAlpha } from "./draw";
+import type { GraphColorBy } from "@/lib/graph/color";
+import {
+  drawLabel,
+  drawNodeShape,
+  drawRing,
+  measureLabel,
+  nodeColor,
+  quarterGoalFill,
+  shapeBottom,
+  withAlpha,
+} from "./draw";
 import { EARLY_FIT_TICKS, grewBeyond, seedNear, type Box } from "./fit";
 import { forceAxis, forceCollideGrid } from "./forces";
 import type { GraphTheme } from "./graph-theme";
@@ -67,6 +77,10 @@ export type GraphCanvasApi = {
 export type GraphCanvasProps = {
   data: GraphData;
   theme: GraphTheme;
+  /** Node color basis (design 1.2 / 1.3). The local graph always uses `kind`. */
+  colorBy?: GraphColorBy;
+  /** Area palette slot per node (`assignAreaSlots`), for `colorBy="area"`. */
+  areaSlots?: ReadonlyMap<GraphNodeId, number | null> | null;
   reducedMotion: boolean;
   width: number;
   height: number;
@@ -118,6 +132,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   const {
     data,
     theme,
+    colorBy = "kind",
+    areaSlots,
     reducedMotion,
     width,
     height,
@@ -148,6 +164,15 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   const count = data.nodes.length;
   const large = count > LARGE_GRAPH;
   const neighbors = useMemo(() => buildNeighbors(data.edges), [data.edges]);
+
+  // ----- Colors (1.2–1.5): recomputed on theme/basis change without touching the layout -----
+  const colors = useMemo(() => {
+    const out = new Map<string, string>();
+    for (const n of data.nodes)
+      out.set(n.id, nodeColor(n.type, colorBy, areaSlots?.get(n.id), theme));
+    return out;
+  }, [data.nodes, colorBy, areaSlots, theme]);
+  const quarterFill = quarterGoalFill(colorBy, theme);
 
   // ----- Simulation data (keeps coordinates across filter changes) -----
   const graphData = useMemo(() => {
@@ -312,7 +337,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   }, [activeId, emphasisFor, instant, kick]);
 
   // Other visual inputs: repaint once.
-  useEffect(() => kick(), [theme, focusId, selectedId, centerId, kick]);
+  useEffect(() => kick(), [theme, colors, focusId, selectedId, centerId, kick]);
 
   /** 0..1 progress of the current fade. */
   const progress = () => {
@@ -332,6 +357,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   // Refs for per-frame accessors.
   const live = useRef({
     theme,
+    colors,
+    quarterFill,
     selectedId,
     focusId,
     centerId,
@@ -341,7 +368,19 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     count,
     hoverId,
   });
-  live.current = { theme, selectedId, focusId, centerId, nodeAlpha, large, local, count, hoverId };
+  live.current = {
+    theme,
+    colors,
+    quarterFill,
+    selectedId,
+    focusId,
+    centerId,
+    nodeAlpha,
+    large,
+    local,
+    count,
+    hoverId,
+  };
   const kRef = useRef(1);
 
   const nodeCanvasObject = useCallback(
@@ -350,7 +389,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       const x = node.x ?? 0;
       const y = node.y ?? 0;
       ctx.globalAlpha = L.nodeAlpha(node);
-      drawNodeShape(ctx, node, x, y, node.r, k, L.theme);
+      const color = L.colors.get(node.id as string) ?? L.theme.neutral;
+      drawNodeShape(ctx, node, x, y, node.r, k, L.theme, color, L.quarterFill);
       const id = node.id as GraphNodeId;
       if (id === L.selectedId || id === L.focusId || id === L.centerId) {
         ctx.globalAlpha = 1;
@@ -371,9 +411,15 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     [],
   );
 
-  // ----- Edges -----
+  // ----- Edges (1.5: source node's color, low alpha) -----
   const restEdgeAlpha = (kind: GraphEdgeKind) =>
-    large ? (kind === "belongs" ? 0.4 : 0.14) : kind === "belongs" ? theme.belongsAlpha : 0.22;
+    large
+      ? kind === "belongs"
+        ? 0.35
+        : 0.14
+      : kind === "belongs"
+        ? theme.belongsAlpha
+        : theme.linkAlpha;
   const endId = (end: SimLink["source"]): string =>
     typeof end === "object" && end !== null ? String(end.id) : String(end);
   const edgeAlphaIn = (l: SimLink, e: Emphasis) => {
@@ -381,7 +427,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     if (!e.focus) return restEdgeAlpha(kind);
     const touches = endId(l.source) === e.focus || endId(l.target) === e.focus;
     if (!touches) return 0.04;
-    return kind === "belongs" ? 0.85 : 0.6;
+    return kind === "belongs" ? 0.9 : 0.7;
   };
   const edgeFns = useRef({ edgeAlphaIn, restEdgeAlpha });
   edgeFns.current = { edgeAlphaIn, restEdgeAlpha };
@@ -393,7 +439,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       t >= 1
         ? edgeFns.current.edgeAlphaIn(l, to)
         : edgeFns.current.edgeAlphaIn(l, from) * (1 - t) + edgeFns.current.edgeAlphaIn(l, to) * t;
-    return edgeColor(live.current.theme.edge, a);
+    const L = live.current;
+    return edgeColor(L.colors.get(endId(l.source)) ?? L.theme.edge, a);
   }, []);
   const linkWidth = useCallback((l: SimLink) => {
     const base = live.current.large

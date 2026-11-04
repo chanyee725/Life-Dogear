@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
+import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
 import {
@@ -29,8 +30,62 @@ export function hiddenFilterCount(filter: GraphFilter): number {
   return [filter.area, filter.tag, filter.archived, filter.orphans].filter(Boolean).length;
 }
 
+const COLOR_BY_OPTIONS: readonly (readonly [GraphColorBy, string])[] = [
+  ["kind", "종류"],
+  ["area", "영역"],
+];
+
+/** "색 [종류 | 영역]" segmented control (design 1.3). ←/→ move and select. */
+export function ColorByToggle({
+  value,
+  onChange,
+}: {
+  value: GraphColorBy;
+  onChange: (next: GraphColorBy) => void;
+}) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5">
+      <span aria-hidden className="text-[13px] text-muted">
+        색
+      </span>
+      <div
+        role="radiogroup"
+        aria-label="색 기준"
+        className="inline-flex h-7 rounded-md border border-border bg-surface p-px"
+        onKeyDown={(e) => {
+          if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+          e.preventDefault();
+          const next = value === "kind" ? "area" : "kind";
+          onChange(next);
+          (
+            e.currentTarget.querySelector(`[data-color-by="${next}"]`) as HTMLElement | null
+          )?.focus();
+        }}
+      >
+        {COLOR_BY_OPTIONS.map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            data-color-by={v}
+            aria-checked={value === v}
+            tabIndex={value === v ? 0 : -1}
+            onClick={() => onChange(v)}
+            className={cn(
+              "h-6 rounded-[5px] px-2.5 text-[13px] transition-colors",
+              value === v ? "bg-bg font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </span>
+  );
+}
+
 /**
- * Filter controls (design 6.2): type chips (also the legend), area and topic selects,
+ * Filter controls (design 6.2): color basis toggle (basic graph only), type chips (also the legend), area and topic selects,
  * archived / orphans checkboxes, reset. `stacked` lays them out vertically (narrow panel).
  * `compact` (medium widths, where one row would wrap): the chips stay in the row and the
  * selects and checkboxes move into a "필터" popover.
@@ -40,6 +95,8 @@ export function GraphFilterControls({
   onChange,
   options,
   theme,
+  colorBy,
+  onColorByChange,
   stacked = false,
   compact = false,
 }: {
@@ -47,6 +104,12 @@ export function GraphFilterControls({
   onChange: (next: GraphFilter) => void;
   options: FilterOptions;
   theme: GraphTheme;
+  /**
+   * Basic graph: shows the color toggle and paints chip icons by it (1.4 — kind colors,
+   * or achromatic `label` when colored by area). Absent (cosmos view): legacy icons.
+   */
+  colorBy?: GraphColorBy;
+  onColorByChange?: (next: GraphColorBy) => void;
   stacked?: boolean;
   compact?: boolean;
 }) {
@@ -79,6 +142,9 @@ export function GraphFilterControls({
           type={type}
           horizon={type === "goal" ? "year" : undefined}
           theme={theme}
+          color={
+            colorBy === "kind" ? theme.kind[type] : colorBy === "area" ? theme.label : undefined
+          }
           className={on ? "" : "opacity-35"}
         />
         {GRAPH_TYPE_LABEL[type]}
@@ -179,10 +245,21 @@ export function GraphFilterControls({
     </Button>
   ) : null;
 
+  const colorSection =
+    colorBy && onColorByChange ? (
+      <ColorByToggle key="color" value={colorBy} onChange={onColorByChange} />
+    ) : null;
+
   if (compact) {
     const hidden = hiddenFilterCount(filter);
     return (
       <div className="flex items-center gap-3">
+        {colorSection ? (
+          <>
+            {colorSection}
+            <Divider />
+          </>
+        ) : null}
         {typesSection}
         <Divider />
         <FilterPopover label={`필터${hidden ? ` ${hidden}` : ""}`}>
@@ -194,7 +271,7 @@ export function GraphFilterControls({
     );
   }
 
-  const sections = [typesSection, selectsSection, checksSection];
+  const sections = [colorSection, typesSection, selectsSection, checksSection].filter(Boolean);
   return (
     <div className={cn("flex", stacked ? "flex-col items-start gap-3" : "items-center gap-3")}>
       {sections.map((s, i) => (

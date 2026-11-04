@@ -219,6 +219,16 @@ describe("filter and URL state", () => {
     expect(parsePageQuery(new URLSearchParams("mode=3d")).mode).toBeUndefined();
   });
 
+  it("round-trips the color basis; kind is the default and stays out of the URL", () => {
+    const q = pageQuery({ filter: {}, view: "free", focus: null, color: "area" });
+    expect(q).toBe("?color=area");
+    expect(parsePageQuery(new URLSearchParams(q)).color).toBe("area");
+    expect(pageQuery({ filter: {}, view: "free", focus: null, color: "kind" })).toBe("");
+    expect(parsePageQuery(new URLSearchParams("color=kind")).color).toBe("kind");
+    expect(parsePageQuery(new URLSearchParams("")).color).toBeUndefined();
+    expect(parsePageQuery(new URLSearchParams("color=rainbow")).color).toBeUndefined();
+  });
+
   it("falls back to defaults for unknown values", () => {
     const parsed = parsePageQuery(
       new URLSearchParams("view=3d&focus=bogus:1&types=goal,nope&archived=yes"),

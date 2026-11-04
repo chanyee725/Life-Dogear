@@ -126,7 +126,14 @@ export type GraphPosition = { node: GraphNodeId; x: number; y: number };
 export type GraphLayoutBody = { positions: GraphPosition[] };
 
 /** `GET /api/graph` also returns saved positions so the screen can pin them. */
-export type GraphResponse = GraphData & { positions: GraphPosition[] };
+export type GraphResponse = GraphData & {
+  positions: GraphPosition[];
+  /**
+   * Every area id (archived too, filtered out or not) in sidebar order — the area color
+   * order shared with the cosmos view. Absent from mocks and older responses.
+   */
+  areaOrder?: string[];
+};
 
 export function graphNodeId(type: GraphNodeType, id: string): GraphNodeId {
   return `${type}:${id}`;

@@ -52,6 +52,7 @@ export async function fetchGraph(filter: GraphFilter, signal?: AbortSignal): Pro
     nodes: body.nodes ?? [],
     edges: body.edges ?? [],
     positions: body.positions ?? [],
+    areaOrder: body.areaOrder ?? [],
     mock: false,
   };
 }

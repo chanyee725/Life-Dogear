@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import type { GraphNode } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
+import type { IconPaint } from "./ShapeIcon";
 import { GRAPH_TYPE_LABEL, searchNodes } from "./model";
 import { ShapeIcon } from "./ShapeIcon";
 
@@ -14,11 +15,14 @@ import { ShapeIcon } from "./ShapeIcon";
 export function GraphSearch({
   nodes,
   theme,
+  iconPaint,
   onPick,
   onClose,
 }: {
   nodes: readonly GraphNode[];
   theme: GraphTheme;
+  /** Basic graph: shape icons in the current node colors (1.4). Absent → legacy colors. */
+  iconPaint?: IconPaint;
   onPick: (node: GraphNode) => void;
   onClose: () => void;
 }) {
@@ -102,6 +106,8 @@ export function GraphSearch({
                   type={node.type}
                   horizon={node.horizon}
                   theme={theme}
+                  color={iconPaint?.color(node)}
+                  quarterFill={iconPaint?.quarterFill}
                   className="shrink-0"
                 />
                 <span className="min-w-0 flex-1 truncate">{node.title}</span>
