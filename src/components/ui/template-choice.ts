@@ -1,4 +1,4 @@
-/** Pure rules for the template picker on /notes/new. */
+/** Pure rules for the template pickers on /notes/new and /projects/new. */
 
 /** Shown under the cards when a choice leaves the user's body alone. */
 export const KEPT_BODY_NOTICE = "본문이 있어 템플릿을 적용하지 않았습니다.";
