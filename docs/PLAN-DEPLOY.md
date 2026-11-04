@@ -7,7 +7,7 @@
 
 - Auth.js(`next-auth` v5) Google provider, **JWT 세션**(DB 어댑터 없음).
 - 허용 목록: `ALLOWED_EMAILS`(쉼표 구분, 대소문자 무시)에 있는 이메일만. 아니면 **거부 화면**("이 계정은 사용할 수 없습니다").
-- 미들웨어: 기존 `src/middleware.ts`의 Host 검사(ALLOWED_HOSTS) 다음에 인증 검사. 페이지와 `/api/**` 전부 보호. 제외: `/_next/**`, 정적 자원(아이콘·manifest), `/api/auth/**`, 로그인·거부·설정 안내 화면. API는 401 JSON, 페이지는 로그인으로 리디렉션. 기존 같은 출처 검사는 그대로.
+- 미들웨어: 기존 `src/middleware.ts`의 Host 검사(ALLOWED_HOSTS) 다음에 인증 검사. 페이지와 `/api/**` 전부 보호. 제외: `/_next/**`, 정적 자원, `/api/auth/**`, 로그인·거부·설정 안내 화면. API는 401 JSON, 페이지는 로그인으로 리디렉션. 기존 같은 출처 검사는 그대로.
 - **모드 판정** (`src/lib/auth/mode.ts`, 순수 함수 + 테스트):
   - `AUTH_SECRET`·`AUTH_GOOGLE_ID`·`AUTH_GOOGLE_SECRET`·`ALLOWED_EMAILS`가 모두 있으면 → 로그인 필수.
   - 없고 로컬(`127.0.0.1`/`localhost`, `VERCEL` 아님) → 지금처럼 로그인 없이.
@@ -36,7 +36,7 @@ manifest·아이콘·apple-touch-icon·standalone·safe-area는 이번 단계에
 
 ## 5. `docs/DEPLOY.md` (사용자 체크리스트)
 
-Google Cloud OAuth 클라이언트(승인된 리디렉션 URI `https://<프로젝트>.vercel.app/api/auth/callback/google`, 로컬 테스트용 `http://127.0.0.1:3000/api/auth/callback/google`) → R2 버킷·API 토큰·CORS → Turso DB·토큰 → Vercel 프로젝트 연결·환경변수(값은 사용자가 직접) → PC에서 첫 마이그레이션·`storage:push` → 첫 로그인 확인. (아이폰 홈 화면 추가는 PWA 제외로 다루지 않는다.)
+Google Cloud OAuth 클라이언트(승인된 리디렉션 URI `https://<프로젝트>.vercel.app/api/auth/callback/google`, 로컬 테스트용 `http://localhost:3000/api/auth/callback/google` — Next 미들웨어 리디렉션이 127.0.0.1을 localhost로 바꾸므로 로컬 로그인은 localhost로) → R2 버킷·API 토큰·CORS → Turso DB·토큰 → Vercel 프로젝트 연결·환경변수(값은 사용자가 직접) → PC에서 첫 마이그레이션·`storage:push` → 첫 로그인 확인. (아이폰 홈 화면 추가는 PWA 제외로 다루지 않는다.)
 
 ## 6. 담당
 
