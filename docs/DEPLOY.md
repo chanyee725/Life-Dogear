@@ -182,3 +182,32 @@ PC에 있던 노트를 옮기려면 로컬 DB 대신 Turso를 쓰도록 `.env`�
 - 서버가 주소별로 10분 동안 기억합니다. Google에서 바꾼 일정은 최대 10분(Google 쪽 갱신이 늦으면 그보다 더) 뒤에 보입니다.
 - 불러오지 못하면 달력에 "캘린더를 불러오지 못했습니다" 한 줄이 나옵니다. 서버 로그에는 몇 번째 주소인지와 오류 종류만 남습니다(예: `Google calendar #2 failed: IcsFetchError(http_404)`). `http_404`면 주소가 재설정됐거나 잘못 복사된 것이니 다시 복사합니다. `https://`(또는 `webcal://`)로 시작하지 않는 주소는 쓰지 않습니다.
 - 반복 일정은 보고 있는 달·주 안에서만 펼치고, 시간대는 일정의 시간대를 따르되 한국 시간으로 보여 줍니다. 아주 촘촘한 반복(예: 매분)이나 일정이 지나치게 많은 캘린더는 상한에서 멈추고 일부만 보입니다(로그: `Google calendar #1 truncated`).
+
+## 7. Google 캘린더 쓰기 (선택)
+
+달력에서 '일정 추가'로 Google 캘린더에 일정을 넣습니다. 6절(읽기)과 따로 켜고, 1절 로그인 클라이언트(`AUTH_GOOGLE_*`)와도 별개입니다. 비워 두면 추가 버튼이 꺼진 채로 보입니다.
+
+1. [Google Cloud Console](https://console.cloud.google.com/)에서 1절과 같은 프로젝트 → **API 및 서비스 → 라이브러리** → **Google Calendar API** → **사용**.
+2. **OAuth 동의 화면 → 데이터 액세스(범위)**: **범위 추가** → `https://www.googleapis.com/auth/calendar.events` 선택 → 저장. 게시 상태 "테스트", 테스트 사용자에 본인 계정이 있는지 확인합니다.
+3. **사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**, 유형 **"데스크톱 앱"**. 리디렉션 URI는 넣지 않습니다(스크립트가 `127.0.0.1` 임의 포트를 씁니다).
+4. PC 터미널에서 refresh token을 한 번 받습니다(의존성 없음, 파일에 아무것도 쓰지 않음):
+   ```sh
+   GOOGLE_OAUTH_CLIENT_ID=<클라이언트 ID> GOOGLE_OAUTH_CLIENT_SECRET=<보안 비밀> \
+     node scripts/google-calendar-token.mjs
+   ```
+   출력된 주소를 브라우저로 열어 본인 계정으로 허용하면 터미널에 refresh token이 한 번 찍힙니다. 복사한 뒤 터미널을 지웁니다(`clear`, 셸 기록에서 위 명령도 지우기 권장).
+   - "refresh_token이 없다"고 나오면 [계정 권한](https://myaccount.google.com/permissions)에서 이 앱 접근을 지우고 다시 실행합니다.
+5. 환경변수 입력:
+   - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`: 3번 데스크톱 클라이언트 값.
+   - `GOOGLE_OAUTH_REFRESH_TOKEN`: 4번 값.
+   - `GOOGLE_CALENDAR_ID`: 비우면 기본 캘린더(`primary`). 다른 캘린더는 캘린더 설정 → **캘린더 통합 → 캘린더 ID**.
+   - Vercel: **Settings → Environment Variables**에 넣고 **Redeploy**. PC: `.env.local`에 넣고 개발 서버 재시작.
+6. 달력에서 일정 하나를 추가해 Google 캘린더에 생기는지 확인합니다.
+
+주의:
+
+- 세 값 모두 비밀입니다. 특히 refresh token은 캘린더 일정을 쓰고 지울 수 있습니다. Vercel 환경변수와 `.env.local`에만 두고, 새어 나갔다면 [계정 권한](https://myaccount.google.com/permissions)에서 앱 접근을 지운 뒤 4번부터 다시 합니다.
+- 앱은 서버에서만 토큰을 씁니다. 응답·로그에는 오류 종류(`not_configured`·`auth`·`network`·`invalid`)만 남습니다.
+- 동의 화면이 "테스트" 상태면 Google이 refresh token을 7일 뒤 만료시킵니다. 추가가 `auth` 오류로 실패하면 4번을 다시 하거나, 동의 화면을 **프로덕션으로 게시**합니다(본인만 쓰면 검증 없이 경고 화면만 나옴).
+- 시간 없는 일정은 종일, 시간만 있으면 1시간짜리로 한국 시간(`Asia/Seoul`)에 넣습니다.
+- 추가한 일정은 바로 달력에 보이지만, 6절 읽기 쪽 목록에는 최대 10분 뒤에 반영됩니다.
