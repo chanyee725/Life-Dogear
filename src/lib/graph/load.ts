@@ -15,7 +15,7 @@ import {
 import { listPositions } from "@/lib/repo/graph-layout";
 import { db } from "@/lib/repo/shared";
 import { buildGraph, buildLocalGraph, type GraphSource, type SourceItem } from "./build";
-import { inArray } from "drizzle-orm";
+import { asc, inArray } from "drizzle-orm";
 import { tableFor } from "@/lib/repo/items";
 import {
   parseGraphNodeId,
@@ -55,7 +55,11 @@ export async function loadGraphSource(
         period: goals.period,
       })
       .from(goals),
-    d.select({ id: areas.id, title: areas.title, archivedAt: areas.archivedAt }).from(areas),
+    // Same order as the cosmos view, so an area keeps its palette slot in both modes.
+    d
+      .select({ id: areas.id, title: areas.title, archivedAt: areas.archivedAt })
+      .from(areas)
+      .orderBy(asc(areas.sortOrder), asc(areas.id)),
     d
       .select({
         id: projects.id,
@@ -165,7 +169,11 @@ export async function getGraph(filter: GraphFilter = {}): Promise<GraphResponse>
   ]);
   const graph = buildGraph(source, filter);
   const shown = new Set(graph.nodes.map((n) => n.id));
-  return { ...graph, positions: positions.filter((p) => shown.has(p.node)) };
+  return {
+    ...graph,
+    positions: positions.filter((p) => shown.has(p.node)),
+    areaOrder: source.items.filter((i) => i.type === "area").map((i) => i.id),
+  };
 }
 
 export async function getLocalGraph(center: GraphNodeId, depth: 1 | 2): Promise<LocalGraphData> {

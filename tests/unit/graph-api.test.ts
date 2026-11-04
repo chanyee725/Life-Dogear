@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as graphRoute from "@/app/api/graph/route";
 import * as layoutRoute from "@/app/api/graph/layout/route";
 import * as localRoute from "@/app/api/graph/local/route";
-import { goals, graphLayout, links as linksTable, projects as projectsTable } from "@/db/schema";
+import { areas as areasTable, goals, graphLayout, links as linksTable, projects as projectsTable } from "@/db/schema";
 import { loadGraphSource } from "@/lib/graph/load";
 import { parseGraphFilter, parseLayoutBody, parseLocalQuery } from "@/lib/graph/query";
 import type { GraphResponse } from "@/lib/graph/types";
@@ -108,6 +108,18 @@ describe("GET /api/graph", () => {
       ]),
     );
     expect(body.positions).toEqual([]);
+  });
+
+  it("lists every area id in sidebar order (the area color order)", async () => {
+    await db.insert(areasTable).values([
+      { id: "a-late", title: "늦게", sortOrder: 2, createdAt: T, updatedAt: T },
+      { id: "a-first", title: "먼저", sortOrder: 0, createdAt: T, updatedAt: T },
+      { id: "a-mid", title: "중간", sortOrder: 1, archivedAt: T, createdAt: T, updatedAt: T },
+    ]);
+    // Filtered to papers only: no area nodes, but the order is still complete.
+    const res = await graphRoute.GET(get("?types=paper"));
+    const body = (await res.json()) as GraphResponse;
+    expect(body.areaOrder).toEqual(["a-first", "a-mid", "a-late"]);
   });
 
   it("marks body links and applies filters", async () => {
