@@ -337,6 +337,28 @@ describe("POST /api/calendar/events", () => {
     expect((await post({ title: "x", date: "2026-11-05" }, cross)).status).toBe(403);
   });
 
+  it("413 when the body passes 4 KB, even without a content-length", async () => {
+    stubKeys();
+    const big = { title: "x", date: "2026-11-05", pad: "a".repeat(5000) };
+    const res = await post(big);
+    expect([res.status, await res.json()]).toEqual([413, { error: "too_large" }]);
+    const stream = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(new TextEncoder().encode(JSON.stringify(big)));
+        c.close();
+      },
+    });
+    const chunked = await POST(
+      new NextRequest("http://localhost:3000/api/calendar/events", {
+        method: "POST",
+        headers: SAME,
+        body: stream,
+        duplex: "half",
+      } as ConstructorParameters<typeof NextRequest>[1]),
+    );
+    expect(chunked.status).toBe(413);
+  });
+
   it("503 not_configured, 502 auth / network", async () => {
     for (const k of Object.keys(ENV)) vi.stubEnv(k, "");
     const off = await post({ title: "x", date: "2026-11-05" });

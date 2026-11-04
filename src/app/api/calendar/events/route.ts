@@ -14,8 +14,9 @@ export const dynamic = "force-dynamic";
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 const MAX_BODY = 4096;
 
-const STATUS: Record<GoogleWriteErrorCode | "forbidden" | "server", number> = {
+const STATUS: Record<GoogleWriteErrorCode | "forbidden" | "too_large" | "server", number> = {
   forbidden: 403,
+  too_large: 413,
   invalid: 400,
   not_configured: 503,
   auth: 502,
@@ -33,9 +34,9 @@ const fail = (code: keyof typeof STATUS) =>
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isSameOriginRequest(request.headers)) return fail("forbidden");
   const declared = Number(request.headers.get("content-length") ?? 0);
-  if (declared > MAX_BODY) return fail("invalid");
-  const text = await request.text();
-  if (text.length > MAX_BODY) return fail("invalid");
+  if (declared > MAX_BODY) return fail("too_large");
+  const text = await readCapped(request, MAX_BODY);
+  if (text === null) return fail("too_large");
   let body: unknown;
   try {
     body = JSON.parse(text);
@@ -55,4 +56,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("[api/calendar/events]", describeError(e));
     return fail("server");
   }
+}
+
+/** Body as text, or null once it passes `max` bytes (stops reading there). */
+async function readCapped(request: NextRequest, max: number): Promise<string | null> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf8");
 }
