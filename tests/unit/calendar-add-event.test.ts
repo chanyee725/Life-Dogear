@@ -60,20 +60,25 @@ describe("add-event helpers", () => {
 
   it("postEvent returns the item or a message, never throws", async () => {
     const ok = vi.fn(async () => json(201, { item: ITEM }));
-    expect(await postEvent(base, ok as unknown as typeof fetch)).toEqual({ ok: true, item: ITEM });
+    expect(
+      await postEvent(base, { clientId: "abc12", fetchImpl: ok as unknown as typeof fetch }),
+    ).toEqual({ ok: true, item: ITEM });
     expect(ok).toHaveBeenCalledWith(
       "/api/calendar/events",
-      expect.objectContaining({ method: "POST", body: JSON.stringify(eventPayload(base)) }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ ...eventPayload(base), clientId: "abc12" }),
+      }),
     );
     const auth = vi.fn(async () => json(502, { error: "auth" }));
-    expect(await postEvent(base, auth as unknown as typeof fetch)).toEqual({
+    expect(await postEvent(base, { fetchImpl: auth as unknown as typeof fetch })).toEqual({
       ok: false,
       message: addEventError("auth"),
     });
     const down = vi.fn(async () => {
       throw new TypeError("down");
     });
-    expect((await postEvent(base, down as unknown as typeof fetch)).ok).toBe(false);
+    expect((await postEvent(base, { fetchImpl: down as unknown as typeof fetch })).ok).toBe(false);
   });
 
   it("mergeAdded skips ids already in the list", () => {
@@ -127,7 +132,9 @@ describe("AddEventButton", () => {
   });
 
   it("posts the form and hands the item to onAdded", async () => {
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => json(201, { item: ITEM }));
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+      json(201, { item: ITEM }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const onAdded = vi.fn();
     await mount({ enabled: true, defaultDate: "2026-11-05", onAdded });
@@ -150,6 +157,7 @@ describe("AddEventButton", () => {
       title: "회의",
       date: "2026-11-05",
       start: "14:00",
+      clientId: expect.stringMatching(/^[0-9a-f]{32}$/),
     });
     expect(onAdded).toHaveBeenCalledWith(ITEM);
     expect(document.querySelector("[role=status]")?.textContent).toBe(ADDED);
@@ -173,5 +181,27 @@ describe("AddEventButton", () => {
       addEventError("not_configured"),
     );
     expect(document.querySelector("form")).not.toBeNull();
+  });
+
+  it("a retry of the same form sends the same clientId; an edit gets a new one", async () => {
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+      json(502, { error: "network" }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await mount({ enabled: true, defaultDate: "2026-11-05" });
+    await act(async () => button().click());
+    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const submit = () =>
+      act(async () => {
+        document.querySelector("form")!.requestSubmit();
+      });
+    await act(async () => type(title, "회의"));
+    await submit();
+    await submit();
+    await act(async () => type(title, "회의 2"));
+    await submit();
+    const ids = fetchMock.mock.calls.map((c) => JSON.parse(String(c[1]?.body)).clientId);
+    expect(ids[0]).toBe(ids[1]);
+    expect(ids[2]).not.toBe(ids[0]);
   });
 });

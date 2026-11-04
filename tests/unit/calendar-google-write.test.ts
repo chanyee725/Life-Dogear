@@ -68,6 +68,9 @@ describe("parseNewEvent", () => {
     expect(parseNewEvent({ title: "x", date: "2026-11-05", start: "09:30", end: "10:00" })).toEqual(
       { title: "x", date: "2026-11-05", start: "09:30", end: "10:00" },
     );
+    expect(parseNewEvent({ title: "x", date: "2026-11-05", clientId: "abc0v" })).toMatchObject({
+      clientId: "abc0v",
+    });
   });
 
   it("rejects bad input", () => {
@@ -81,6 +84,9 @@ describe("parseNewEvent", () => {
       { title: "x", date: "2026-11-05", end: "10:00" },
       { title: "x", date: "2026-11-05", start: "10:00", end: "10:00" },
       { title: "x", date: "2026-11-05", start: 9 },
+      { title: "x", date: "2026-11-05", clientId: "ABCDE" },
+      { title: "x", date: "2026-11-05", clientId: "abcw1" },
+      { title: "x", date: "2026-11-05", clientId: "abc" },
     ]) {
       expect(parseNewEvent(bad)).toBeNull();
     }
@@ -179,6 +185,44 @@ describe("insertEvent", () => {
       .filter((c) => c.url === EVENTS)
       .map((c) => (c.init.headers as Record<string, string>).authorization);
     expect(auths).toEqual(["Bearer access-1", "Bearer access-1", "Bearer access-2"]);
+  });
+
+  it("sends an event id; a client id is reused as is", async () => {
+    const { impl, calls } = mockFetch({ token: [tokenOk()], events: [created(), created()] });
+    await insertEvent({ title: "x", date: "2026-11-05" }, { env: ENV, fetchImpl: impl });
+    expect(JSON.parse(String(calls[1].init.body)).id).toMatch(/^[a-v0-9]{32}$/);
+    await insertEvent(
+      { title: "x", date: "2026-11-05", clientId: "again0001" },
+      { env: ENV, fetchImpl: impl },
+    );
+    expect(JSON.parse(String(calls[2].init.body)).id).toBe("again0001");
+  });
+
+  it("409 (an earlier try went through) returns the existing event", async () => {
+    const { impl, calls } = mockFetch({
+      token: [tokenOk()],
+      events: [json(409, { error: { code: 409 } }), created({ id: "again0001" })],
+    });
+    const item = await insertEvent(
+      { title: "회의", date: "2026-11-05", start: "14:00", clientId: "again0001" },
+      { env: ENV, fetchImpl: impl },
+    );
+    expect(item.id).toBe("google:abc123@google.com:2026-11-05T14:00:00+09:00");
+    expect(calls[2].init.method).toBe("GET");
+    expect(calls[2].url).toBe(`${EVENTS}/again0001`);
+  });
+
+  it("409 on a deleted event is invalid", async () => {
+    const { impl } = mockFetch({
+      token: [tokenOk()],
+      events: [json(409, {}), created({ status: "cancelled" })],
+    });
+    expect(
+      await insertEvent(
+        { title: "x", date: "2026-11-05", clientId: "again0001" },
+        { env: ENV, fetchImpl: impl },
+      ).catch((e: { code: string }) => e.code),
+    ).toBe("invalid");
   });
 
   it("uses a custom calendar id, URL-encoded", async () => {

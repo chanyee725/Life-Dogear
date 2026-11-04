@@ -28,8 +28,24 @@ export class GoogleWriteError extends Error {
   }
 }
 
-/** `date` is `YYYY-MM-DD`; `start`/`end` are `HH:mm` in `CALENDAR_TZ`. No `start` = all day. */
-export type NewEvent = { title: string; date: string; start?: string; end?: string };
+/**
+ * `date` is `YYYY-MM-DD`; `start`/`end` are `HH:mm` in `CALENDAR_TZ`. No `start` = all day.
+ * `clientId`: Google event id the client keeps across retries, so a retry after a lost
+ * response does not create a second event.
+ */
+export type NewEvent = {
+  title: string;
+  date: string;
+  start?: string;
+  end?: string;
+  clientId?: string;
+};
+
+/** Google event ids: base32hex lowercase, 5–1024 chars. */
+export const EVENT_ID_RE = /^[a-v0-9]{5,1024}$/;
+
+/** Fresh event id (hex is a subset of base32hex). */
+export const newEventId = (): string => crypto.randomUUID().replace(/-/g, "");
 
 type Config = { clientId: string; clientSecret: string; refreshToken: string; calendarId: string };
 
@@ -62,7 +78,17 @@ export function parseNewEvent(value: unknown): NewEvent | null {
   if (start !== undefined && (typeof start !== "string" || !TIME_RE.test(start))) return null;
   if (end !== undefined && (typeof end !== "string" || !TIME_RE.test(end))) return null;
   if (end !== undefined && (start === undefined || end <= start)) return null;
-  return { title, date: v.date, ...(start ? { start } : {}), ...(end ? { end } : {}) };
+  const clientId = blank(v.clientId) ? undefined : v.clientId;
+  if (clientId !== undefined && (typeof clientId !== "string" || !EVENT_ID_RE.test(clientId))) {
+    return null;
+  }
+  return {
+    title,
+    date: v.date,
+    ...(start ? { start } : {}),
+    ...(end ? { end } : {}),
+    ...(clientId ? { clientId } : {}),
+  };
 }
 
 // ---- access token ----------------------------------------------------------------------
@@ -134,11 +160,12 @@ function wallMs(date: string, time: string): number {
   return wallToMs({ year, month, day, hour, minute, second: 0 }, CALENDAR_TZ);
 }
 
-/** Calendar API request body. */
-export function eventBody(event: NewEvent): Record<string, unknown> {
+/** Calendar API request body (`id` makes the insert idempotent). */
+export function eventBody(event: NewEvent, id?: string): Record<string, unknown> {
+  const head = { ...(id ? { id } : {}), summary: event.title };
   if (!event.start) {
     return {
-      summary: event.title,
+      ...head,
       start: { date: event.date },
       // Google's all-day end is exclusive.
       end: { date: addDays(event.date, 1) },
@@ -147,7 +174,7 @@ export function eventBody(event: NewEvent): Record<string, unknown> {
   const startMs = wallMs(event.date, event.start);
   const endMs = event.end ? wallMs(event.date, event.end) : startMs + HOUR_MS;
   return {
-    summary: event.title,
+    ...head,
     start: { dateTime: msToZonedIso(startMs, CALENDAR_TZ), timeZone: CALENDAR_TZ },
     end: { dateTime: msToZonedIso(endMs, CALENDAR_TZ), timeZone: CALENDAR_TZ },
   };
@@ -156,6 +183,7 @@ export function eventBody(event: NewEvent): Record<string, unknown> {
 type ApiTime = { date?: string; dateTime?: string };
 type ApiEvent = {
   id?: string;
+  status?: string;
   iCalUID?: string;
   htmlLink?: string;
   summary?: string;
@@ -220,26 +248,41 @@ export async function insertEvent(
   const event = parseNewEvent(input);
   if (!event) throw new GoogleWriteError("invalid");
 
-  const post = async () =>
-    send(fetchImpl, EVENTS_URL(config.calendarId), {
-      method: "POST",
+  const eventId = event.clientId ?? newEventId();
+  const eventsUrl = EVENTS_URL(config.calendarId);
+
+  const once = async (method: "POST" | "GET", url: string, body?: string) =>
+    send(fetchImpl, url, {
+      method,
       headers: {
         authorization: `Bearer ${await accessToken(config, fetchImpl, now)}`,
-        "content-type": "application/json",
+        ...(body ? { "content-type": "application/json" } : {}),
       },
-      body: JSON.stringify(eventBody(event)),
+      ...(body ? { body } : {}),
     });
-
-  let res = await post();
-  if (res.status === 401) {
+  const call = async (method: "POST" | "GET", url: string, body?: string) => {
+    const res = await once(method, url, body);
+    if (res.status !== 401) return res;
     // The cached access token may have been revoked early: one retry with a fresh one.
     clearGoogleTokenCache();
-    res = await post();
+    return once(method, url, body);
+  };
+
+  let res = await call("POST", eventsUrl, JSON.stringify(eventBody(event, eventId)));
+  if (res.status === 409) {
+    // The id exists: an earlier attempt went through. Return that event.
+    res = await call("GET", `${eventsUrl}/${encodeURIComponent(eventId)}`);
+    if (res.ok) {
+      const existing = (await res.json().catch(() => ({}))) as ApiEvent;
+      // A deleted event keeps its id; the client must start over with a new one.
+      if (existing.status === "cancelled") throw new GoogleWriteError("invalid");
+      return toCalendarItem(existing, event);
+    }
   }
   if (res.status === 401 || res.status === 403) throw new GoogleWriteError("auth");
   // Unknown calendar id: a setup problem, not the user's input.
   if (res.status === 404) throw new GoogleWriteError("not_configured");
-  if (res.status === 400) throw new GoogleWriteError("invalid");
+  if (res.status === 400 || res.status === 409) throw new GoogleWriteError("invalid");
   if (!res.ok) throw new GoogleWriteError("network");
   const created = (await res.json().catch(() => ({}))) as ApiEvent;
   return toCalendarItem(created, event);

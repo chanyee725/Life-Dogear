@@ -43,16 +43,26 @@ export function checkEvent(input: AddEventInput): string | null {
 export type AddEventResult = { ok: true; item: CalendarItem } | { ok: false; message: string };
 
 /** Posts the event; never throws. */
+/**
+ * Google event id for one attempt (base32hex: hex is a subset). Kept across retries of the
+ * same form so a retry after a lost response does not add the event twice.
+ * `getRandomValues` also works on plain-http LAN hosts, unlike `randomUUID`.
+ */
+export function newClientId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function postEvent(
   input: AddEventInput,
-  fetchImpl: typeof fetch = fetch,
+  { clientId, fetchImpl = fetch }: { clientId?: string; fetchImpl?: typeof fetch } = {},
 ): Promise<AddEventResult> {
   let res: Response;
   try {
     res = await fetchImpl(ADD_EVENT_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(eventPayload(input)),
+      body: JSON.stringify({ ...eventPayload(input), ...(clientId ? { clientId } : {}) }),
     });
   } catch {
     return { ok: false, message: addEventError("network") };

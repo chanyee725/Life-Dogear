@@ -1,10 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { DateField } from "@/components/fields/DateField";
 import { Button, Dialog, Field, Input, type ButtonSize } from "@/components/ui";
 import type { CalendarItem } from "@/lib/calendar/types";
-import { ADDED, checkEvent, EVENT_TITLE_MAX, postEvent, type AddEventInput } from "./add-event";
+import {
+  ADDED,
+  checkEvent,
+  EVENT_TITLE_MAX,
+  eventPayload,
+  newClientId,
+  postEvent,
+  type AddEventInput,
+} from "./add-event";
 
 const TOAST_MS = 4000;
 
@@ -37,6 +45,8 @@ export function AddEventButton({
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  /** Event id per payload: the same form retried keeps it, an edited form gets a new one. */
+  const attempt = useRef<{ payload: string; id: string } | null>(null);
   const [toast, setToast] = useState<{ n: number; text: string }>({ n: 0, text: "" });
   const hideToast = useCallback(() => setToast((t) => ({ ...t, n: 0 })), []);
   const notify = (text: string) => setToast((t) => ({ n: t.n + 1, text }));
@@ -55,7 +65,10 @@ export function AddEventButton({
     if (problem) return setError(problem);
     setError(null);
     setPending(true);
-    const result = await postEvent(form);
+    const payload = JSON.stringify(eventPayload(form));
+    if (attempt.current?.payload !== payload) attempt.current = { payload, id: newClientId() };
+    const result = await postEvent(form, { clientId: attempt.current.id });
+    if (result.ok) attempt.current = null;
     setPending(false);
     if (result.ok) {
       onAdded?.(result.item);
