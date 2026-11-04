@@ -32,8 +32,8 @@ export function ProjectKindFields({
   const [ownKind, setOwnKind] = useState<ProjectKind>(initialKind);
   const kind = onKindChange ? initialKind : ownKind;
   return (
-    <>
-      <Property label="종류" htmlFor="project-kind">
+    <Property label="종류" htmlFor="project-kind">
+      <div className="flex flex-wrap items-center gap-2">
         <EnumSelect
           id="project-kind"
           name="kind"
@@ -44,28 +44,26 @@ export function ProjectKindFields({
           }}
           className="w-auto"
         />
-      </Property>
-      {kind === "research" ? (
-        <Property label="단계" htmlFor="project-stage">
+        {kind === "research" ? (
           <EnumSelect
             id="project-stage"
             name="stage"
+            aria-label="단계"
             options={PROJECT_STAGE.options}
             defaultValue={stage}
             className="w-auto"
           />
-        </Property>
-      ) : (
-        <Property label="상태" htmlFor="project-status">
+        ) : (
           <EnumSelect
             id="project-status"
             name="status"
+            aria-label="상태"
             options={PROJECT_STATUS.options}
             defaultValue={status}
             className="w-auto"
           />
-        </Property>
-      )}
-    </>
+        )}
+      </div>
+    </Property>
   );
 }

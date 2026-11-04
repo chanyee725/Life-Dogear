@@ -39,7 +39,7 @@ export function TemplatePicker<K extends string>({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <span id={labelId} className="text-[13px] text-muted">
         {label}
       </span>
@@ -47,7 +47,7 @@ export function TemplatePicker<K extends string>({
         role="radiogroup"
         aria-labelledby={labelId}
         onKeyDown={onKeyDown}
-        className="flex flex-col gap-2 sm:flex-row"
+        className="flex flex-wrap gap-1.5"
       >
         {templates.map((t, i) => {
           const checked = t.key === selected;
@@ -62,16 +62,15 @@ export function TemplatePicker<K extends string>({
               aria-checked={checked}
               tabIndex={checked ? 0 : -1}
               onClick={() => onChoose(t.key)}
+              title={t.description}
               className={cn(
-                "flex flex-1 flex-col items-start rounded-lg border px-3 py-2 text-left transition-colors",
-                t.description ? "min-h-[56px]" : "min-h-[40px] justify-center",
-                checked ? "border-accent bg-accent-soft" : "border-border bg-bg hover:bg-hover",
+                "h-8 rounded-full border px-3 text-[13px] transition-colors",
+                checked
+                  ? "border-accent bg-accent-soft font-medium text-fg"
+                  : "border-border bg-bg text-muted hover:bg-hover hover:text-fg",
               )}
             >
-              <span className="text-[14px] font-medium text-fg">{t.name}</span>
-              {t.description ? (
-                <span className="text-[12px] text-muted">{t.description}</span>
-              ) : null}
+              {t.name}
             </button>
           );
         })}

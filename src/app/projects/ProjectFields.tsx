@@ -60,39 +60,58 @@ export function ProjectFields({
             placeholder="바로 다음에 할 한 가지"
           />
         </Property>
-        <Property label="영역" htmlFor="project-area">
-          <EnumSelect
-            id="project-area"
-            name="areaId"
-            options={areaOptions}
-            emptyLabel="없음"
-            defaultValue={values.areaId ?? ""}
-            className="w-auto"
-          />
+        <Property label="영역 · 목표" htmlFor="project-area">
+          <div className="flex flex-wrap items-center gap-2">
+            <EnumSelect
+              id="project-area"
+              name="areaId"
+              aria-label="영역"
+              options={areaOptions}
+              emptyLabel="영역 없음"
+              defaultValue={values.areaId ?? ""}
+              className="w-auto"
+            />
+            <EnumSelect
+              id="project-goal"
+              name="goalId"
+              aria-label="목표"
+              options={goalOptions}
+              emptyLabel="목표 없음"
+              defaultValue={values.goalId ?? ""}
+              className="w-auto max-w-full"
+            />
+          </div>
         </Property>
-        <Property label="목표" htmlFor="project-goal">
-          <EnumSelect
-            id="project-goal"
-            name="goalId"
-            options={goalOptions}
-            emptyLabel="없음"
-            defaultValue={values.goalId ?? ""}
-            className="w-auto max-w-full"
-          />
-        </Property>
-        <Property label="연구 질문" htmlFor="project-question">
-          <Input
-            id="project-question"
-            name="researchQuestion"
-            defaultValue={values.researchQuestion}
-            placeholder="무엇을 밝히고 싶은가?"
-          />
-        </Property>
-        <Property label="시작일" htmlFor="project-start">
-          <DateField id="project-start" name="startDate" defaultValue={values.startDate} />
-        </Property>
-        <Property label="마감일" htmlFor="project-due">
-          <DateField id="project-due" name="dueDate" defaultValue={values.dueDate} />
+        {values.kind === "research" ? (
+          <Property label="연구 질문" htmlFor="project-question">
+            <Input
+              id="project-question"
+              name="researchQuestion"
+              defaultValue={values.researchQuestion}
+              placeholder="무엇을 밝히고 싶은가?"
+            />
+          </Property>
+        ) : (
+          <input type="hidden" name="researchQuestion" value={values.researchQuestion} />
+        )}
+        <Property label="기간" htmlFor="project-start">
+          <div className="flex flex-wrap items-center gap-2">
+            <DateField
+              id="project-start"
+              name="startDate"
+              aria-label="시작일"
+              defaultValue={values.startDate}
+            />
+            <span aria-hidden className="text-muted">
+              ~
+            </span>
+            <DateField
+              id="project-due"
+              name="dueDate"
+              aria-label="마감일"
+              defaultValue={values.dueDate}
+            />
+          </div>
         </Property>
         <Property label="태그" htmlFor="project-tags">
           <TagInput
