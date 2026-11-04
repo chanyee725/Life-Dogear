@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { Task } from "@/lib/repo/tasks";
-import { Section } from "@/components/ui";
+import { Section, SectionHeader } from "@/components/ui";
 import { TODAY_MAX, WEEK_MAX } from "./today";
 
-const actionClass = "text-[13px] text-muted hover:text-fg";
+const actionClass = "text-xs text-muted hover:text-fg";
 
 function More({ count, href }: { count: number; href: string }) {
   if (count <= 0) return null;
@@ -16,8 +16,9 @@ function More({ count, href }: { count: number; href: string }) {
 }
 
 /**
- * Home "오늘" (today.md 4.2): overdue first (with their due date), then today's, as the
- * shared task rows (check, edit, menu) with an add line for today. Always shown.
+ * "오늘 할 일" in the home today panel (today.md 4.2): overdue first (with their due date),
+ * then today's, then the finished ones struck through — the shared task rows (check, edit,
+ * menu). The add input follows it in the panel. Always shown, so the input keeps its heading.
  */
 export function TodayTasks({
   overdue,
@@ -33,46 +34,49 @@ export function TodayTasks({
 }) {
   const all = [...overdue, ...dueToday];
   const href = "/tasks?tab=today";
-  // Nothing due: the section stays out; new tasks go in through the calendar's input.
-  if (all.length === 0 && done.length === 0) return null;
   return (
-    <Section
-      id="today"
-      title={
-        <>
-          오늘
-          {all.length ? (
-            <span className="ml-2 text-xs font-normal text-muted tabular-nums">
-              {dueToday.length}
-              {overdue.length ? (
-                <>
-                  {" · 지남 "}
-                  <span className="text-tone-red-fg">{overdue.length}</span>
-                </>
-              ) : null}
-            </span>
-          ) : null}
-        </>
-      }
-      action={
-        <Link href={href} className={actionClass}>
-          모두 보기 →
-        </Link>
-      }
-    >
-      <div className="flex flex-col">
-        <TaskList
-          tasks={[...all.slice(0, TODAY_MAX), ...done]}
-          today={today}
-          label="오늘 할 일"
-          showParent
-          dueMode="overdue"
-          showCompleted
-          doneOpen
-        />
-        <More count={all.length - TODAY_MAX} href={href} />
-      </div>
-    </Section>
+    <section aria-labelledby="today-heading" className="flex flex-col gap-1">
+      <SectionHeader
+        as="h3"
+        id="today-heading"
+        title={
+          <>
+            오늘 할 일
+            {all.length ? (
+              <span className="ml-2 text-xs font-normal tabular-nums">
+                {dueToday.length}
+                {overdue.length ? (
+                  <>
+                    {" · 지남 "}
+                    <span className="text-tone-red-fg">{overdue.length}</span>
+                  </>
+                ) : null}
+              </span>
+            ) : null}
+          </>
+        }
+        action={
+          <Link href={href} className={actionClass}>
+            모두 보기
+          </Link>
+        }
+        className="h-8"
+      />
+      {all.length || done.length ? (
+        <div className="flex flex-col">
+          <TaskList
+            tasks={[...all.slice(0, TODAY_MAX), ...done]}
+            today={today}
+            label="오늘 할 일"
+            showParent
+            dueMode="overdue"
+            showCompleted
+            doneOpen
+          />
+          <More count={all.length - TODAY_MAX} href={href} />
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -86,7 +90,7 @@ export function WeekTasks({ tasks, today }: { tasks: Task[]; today: string }) {
       title="이번 주"
       action={
         <Link href={href} className={actionClass}>
-          모두 보기 →
+          모두 보기
         </Link>
       }
     >

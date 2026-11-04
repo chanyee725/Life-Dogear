@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { CalendarView, type CalendarViewProps } from "@/components/calendar/CalendarView";
-import { QuickInput, TaskQuickInput } from "./QuickInput";
+import { DraftProvider } from "./drafts";
+import { TaskQuickInput } from "./QuickInput";
 
-/** The day selected in the home calendar, shared with the 할 일 추가 input below it. */
+/** The day selected in the home calendar, shared with the 할 일 추가 input in its panel. */
 const DayContext = createContext<{ day: string; setDay: (day: string) => void } | null>(null);
 
 function useDay() {
@@ -13,10 +14,14 @@ function useDay() {
   return ctx;
 }
 
-/** Holds the selected day (starts on today) for the home calendar block. */
+/** Holds the selected day (starts on today) and the inputs' drafts for the home calendar block. */
 export function HomeDayProvider({ today, children }: { today: string; children: ReactNode }) {
   const [day, setDay] = useState(today);
-  return <DayContext.Provider value={{ day, setDay }}>{children}</DayContext.Provider>;
+  return (
+    <DayContext.Provider value={{ day, setDay }}>
+      <DraftProvider>{children}</DraftProvider>
+    </DayContext.Provider>
+  );
 }
 
 /** The home calendar, reporting its selected day to the provider. */
@@ -25,13 +30,8 @@ export function HomeCalendarView(props: Omit<CalendarViewProps, "onSelectDay">) 
   return <CalendarView {...props} onSelectDay={setDay} />;
 }
 
-/** Under the calendar, full width: 할 일 추가 | 생각 추가 (5:5, stacked below `lg`). */
-export function HomeInputs({ today }: { today: string }) {
+/** 할 일 추가 in the today panel: due on the day selected in the calendar. */
+export function HomeTaskInput({ today }: { today: string }) {
   const { day } = useDay();
-  return (
-    <div className="grid grid-cols-1 gap-x-4 lg:grid-cols-2">
-      <TaskQuickInput day={day} today={today} />
-      <QuickInput />
-    </div>
-  );
+  return <TaskQuickInput day={day} today={today} />;
 }
