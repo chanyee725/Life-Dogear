@@ -35,7 +35,24 @@ import {
   sunPositions,
   sunRadius,
 } from "./cosmos-model";
-import { shapeBottom, shapeExtents, traceShape, withAlpha } from "./draw";
+import {
+  LABEL_BELOW_PX,
+  measureCtx,
+  shapeBottom,
+  shapeExtents,
+  traceShape,
+  withAlpha,
+} from "./draw";
+import {
+  armRefit,
+  DISARMED,
+  fitTransform,
+  noteTransform,
+  overflowsArea,
+  refitOnStop,
+  type FitItem,
+  type RefitGuard,
+} from "./fit";
 import { forceAxis, forceCollideGrid, forceRadial } from "./forces";
 import type { GraphCanvasApi } from "./GraphCanvas";
 import { COSMOS_THEME as C } from "./graph-theme";
@@ -77,7 +94,7 @@ export type CosmosCanvasProps = {
 
 const FADE_MS = 120;
 const NO_INSETS = { left: 0, right: 0 };
-const FIT_PAD = 64;
+const FIT_PAD = 40;
 const PATH_MS = 450;
 
 type Emph =
@@ -94,13 +111,6 @@ type Emph =
     };
 
 const NONE: Emph = { kind: "none" };
-
-let measureCanvas: CanvasRenderingContext2D | null = null;
-/** Shared 2D context for measuring label text outside a frame. */
-function measureCtx(): CanvasRenderingContext2D {
-  measureCanvas ??= document.createElement("canvas").getContext("2d")!;
-  return measureCanvas;
-}
 
 // ---------- Glow sprites (3.3): one 64×64 radial sprite per color, (1 − t)² falloff ----------
 const spriteCache = new Map<string, HTMLCanvasElement>();
@@ -810,51 +820,73 @@ export default function CosmosCanvas({
     return { w, top: below - 2, bottom: below + 15 + 2 };
   }, []);
 
+  /** Nodes (all when `ids` is omitted) with their shapes and labels, for fitting. */
+  const fitItems = useCallback((ids?: ReadonlySet<GraphNodeId>, labelFor?: GraphNodeId) => {
+    const ctx = measureCtx();
+    const items: FitItem[] = [];
+    for (const n of graphRef.current.nodes) {
+      if (n.x == null || n.y == null || (ids && !ids.has(n.id as GraphNodeId))) continue;
+      const ext = n.sun
+        ? { top: n.r + 3, bottom: n.r + 3, side: n.r + 3 }
+        : shapeExtents(n.type, n.r);
+      const strong = n.id === labelFor;
+      const weight = strong || n.sun ? 600 : n.type === "goal" || n.type === "area" ? 500 : 400;
+      ctx.font = `${weight} ${n.sun ? 13 : 12}px ui-sans-serif, system-ui, sans-serif`;
+      items.push({
+        x: n.x,
+        y: n.y,
+        ...ext,
+        labelW: ctx.measureText(labelText(n, strong)).width + 4,
+        labelH: LABEL_BELOW_PX + (n.sun ? 2 : 0),
+      });
+    }
+    return items;
+  }, []);
+
   const fitView = useCallback(
     (
       duration: number,
       opts: { ids?: ReadonlySet<GraphNodeId>; noZoomIn?: boolean; labelFor?: GraphNodeId } = {},
     ) => {
       const fg = fgRef.current;
-      const b0 = boundsOf(opts.ids);
-      if (!fg || !b0) return null;
+      const b = boundsOf(opts.ids);
+      if (!fg || !b) return null;
       const { left, right } = insetsRef.current;
-      const freeW = Math.max(width - left - right, 1);
-      const zoomFor = (b: Box) => {
-        let k = Math.min(
-          2.5,
-          (freeW - FIT_PAD * 2) / Math.max(b.x1 - b.x0, 1),
-          (height - FIT_PAD * 2) / Math.max(b.y1 - b.y0, 1),
-        );
-        if (opts.noZoomIn) k = Math.min(k, fg.zoom());
-        return Math.max(0.2, k);
-      };
-      let b = b0;
-      let k = zoomFor(b);
-      // Include the selected label: its size is in screen px, so widen at this zoom and
-      // re-fit once (the zoom only gets smaller, so the label still fits).
-      const node = opts.labelFor ? simCache.current.get(opts.labelFor) : undefined;
-      const ext = opts.labelFor ? labelExtent(opts.labelFor, k) : null;
-      if (node && ext && node.x != null && node.y != null) {
-        b = {
-          x0: Math.min(b.x0, node.x - ext.w / 2 / k),
-          x1: Math.max(b.x1, node.x + ext.w / 2 / k),
-          y0: b.y0,
-          y1: Math.max(b.y1, node.y + ext.bottom / k),
-        };
-        k = zoomFor(b);
-      }
-      const w = Math.max(b.x1 - b.x0, 1);
-      const h = Math.max(b.y1 - b.y0, 1);
-      // Put the bounds' centre at the free area's centre: shift by (left − right) / 2 px.
-      const cx = (b.x0 + b.x1) / 2 - (left - right) / 2 / k;
-      const cy = (b.y0 + b.y1) / 2;
-      fg.zoom(k, duration);
-      fg.centerAt(cx, cy, duration);
-      return { w, h };
+      // Every node's shape and label (screen-size text below it) inside the free area.
+      const t = fitTransform(fitItems(opts.ids, opts.labelFor), {
+        width,
+        height,
+        left,
+        right,
+        pad: FIT_PAD,
+        minZoom: 0.2,
+        maxZoom: opts.noZoomIn ? Math.max(0.2, Math.min(2.5, fg.zoom())) : 2.5,
+      });
+      if (!t) return null;
+      fg.zoom(t.k, duration);
+      fg.centerAt(t.cx, t.cy, duration);
+      return { w: b.x1 - b.x0, h: b.y1 - b.y0 };
     },
-    [boundsOf, labelExtent, width, height],
+    [boundsOf, fitItems, width, height],
   );
+
+  /** True when part of the whole drawing is outside the free area at the current view. */
+  const drawingOffScreen = useCallback(() => {
+    const fg = fgRef.current;
+    if (!fg) return false;
+    const c = fg.centerAt();
+    const { left, right } = insetsRef.current;
+    return overflowsArea(
+      fitItems(),
+      { k: fg.zoom(), cx: c.x, cy: c.y },
+      {
+        width,
+        height,
+        left,
+        right,
+      },
+    );
+  }, [fitItems, width, height]);
 
   /** True when any of the nodes is outside the free area on screen. */
   const outsideFree = useCallback(
@@ -897,6 +929,8 @@ export default function CosmosCanvas({
   const fittedKey = useRef<string | null>(null);
   const fitKeyRef = useRef(fitKey);
   fitKeyRef.current = fitKey;
+  /** May the next stop refit a drawing that drifted off screen (see `RefitGuard`)? */
+  const refitGuard = useRef<RefitGuard>(DISARMED);
   const fitIfNew = useCallback(() => {
     if (fittedKey.current === fitKeyRef.current) return;
     // Until the simulation has taken the new nodes, only the pinned suns have positions.
@@ -905,6 +939,7 @@ export default function CosmosCanvas({
     if (!size) return;
     fittedKey.current = fitKeyRef.current;
     lastFit.current = size;
+    refitGuard.current = armRefit(performance.now(), 0);
     onTransform?.();
   }, [fitView, onTransform]);
 
@@ -982,7 +1017,13 @@ export default function CosmosCanvas({
       d3VelocityDecay={0.4}
       onRenderFramePre={onRenderFramePre}
       onRenderFramePost={onRenderFramePost}
-      onZoom={(t) => onTransform?.(t)}
+      onZoom={(t) => {
+        refitGuard.current = noteTransform(refitGuard.current, performance.now());
+        onTransform?.(t);
+      }}
+      onNodeDrag={() => {
+        refitGuard.current = DISARMED;
+      }}
       onNodeHover={(node) => {
         const id = (node?.id as GraphNodeId | undefined) ?? null;
         setHoverId(id);
@@ -1003,11 +1044,15 @@ export default function CosmosCanvas({
         fitIfNew();
         recomputeNebulae();
         kick();
-        // Re-fit only if the layout spread out noticeably since the last fit.
+        // Re-fit only if the layout spread out noticeably since the last fit, or — on the
+        // first stop after an automatic fit the user has not moved since — drifted partly
+        // out of the free area (the bottom row below the screen).
+        const stop = refitOnStop(refitGuard.current, drawingOffScreen);
+        refitGuard.current = stop.next;
         const b = boundsOf();
         if (!b || !lastFit.current) return;
         const size = { w: b.x1 - b.x0, h: b.y1 - b.y0 };
-        if (grewBeyond(lastFit.current, size)) {
+        if (grewBeyond(lastFit.current, size) || stop.refit) {
           lastFit.current = fitView(dur(400)) ?? size;
           onTransform?.();
         }

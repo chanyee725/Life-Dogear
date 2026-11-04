@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { ITEM_ROUTE } from "@/lib/enums";
+import { LIST_CHANGED, resolveAnchor } from "@/lib/tasks/order";
 import { RepoError, tasks } from "@/lib/repo";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { parseId } from "./parse";
@@ -100,16 +101,53 @@ export async function moveTask(id: unknown, direction: unknown): Promise<ActionR
   });
 }
 
-/** Drag and drop: right after `afterId` (null = first) among same-state siblings. */
-export async function moveTaskAfter(id: unknown, afterId: unknown): Promise<ActionResult<boolean>> {
+/**
+ * Drag and drop: right after `afterId` (null = first) among same-state siblings. The order
+ * may have changed on another device since the client loaded it, so the place is worked out
+ * against the current order from the drop's neighbours (`beforeId` = the task it was dropped
+ * above); when neither is left, it fails and the client reloads the list.
+ */
+export async function moveTaskAfter(
+  id: unknown,
+  afterId: unknown,
+  beforeId: unknown = null,
+): Promise<ActionResult<boolean>> {
   return runAction(async () => {
     const taskId = parseId(id);
-    const anchor = afterId === null ? null : parseId(afterId);
-    const moved = await tasks.moveAfter(taskId, anchor);
+    const after = afterId === null ? null : parseId(afterId);
+    const before = beforeId === null ? null : parseId(beforeId);
     const task = await tasks.get(taskId);
     if (!task) throw new RepoError("not_found", NOT_FOUND);
+    const parent: TaskParent =
+      task.parentType && task.parentId ? { type: task.parentType, id: task.parentId } : null;
+    const current = await tasks.list({
+      parent,
+      done: task.doneAt !== null,
+      includeArchivedParents: true,
+    });
+    const anchor = resolveAnchor(
+      current.map((t) => t.id),
+      taskId,
+      after,
+      before,
+    );
+    if (anchor === undefined) throw new RepoError("invalid", LIST_CHANGED);
+    const moved = await tasks.moveAfter(taskId, anchor);
     revalidateFor(task);
     return moved;
+  });
+}
+
+/**
+ * After a failed drop: revalidates the task's lists so the client reloads them in the
+ * server's current order (it may have been changed on another device).
+ */
+export async function reloadTasks(id: unknown): Promise<ActionResult<null>> {
+  return runAction(async () => {
+    const task = await tasks.get(parseId(id));
+    if (!task) throw new RepoError("not_found", NOT_FOUND);
+    revalidateFor(task);
+    return null;
   });
 }
 

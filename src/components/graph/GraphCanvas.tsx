@@ -25,19 +25,36 @@ import {
   drawLabel,
   drawNodeShape,
   drawRing,
+  LABEL_BELOW_PX,
+  measureCtx,
   measureLabel,
   nodeColor,
   quarterGoalFill,
   shapeBottom,
   withAlpha,
 } from "./draw";
-import { EARLY_FIT_TICKS, grewBeyond, seedNear, type Box } from "./fit";
+import {
+  armRefit,
+  DISARMED,
+  EARLY_FIT_TICKS,
+  fitTransform,
+  grewBeyond,
+  noteTransform,
+  overflowsArea,
+  refitOnStop,
+  type RefitGuard,
+  seedNear,
+  type Box,
+  type FitItem,
+} from "./fit";
 import { forceAxis, forceCollideGrid } from "./forces";
 import type { GraphTheme } from "./graph-theme";
 import {
   baseRadius,
   buildNeighbors,
+  byLabelPriority,
   DENSE_GRAPH,
+  fitLabel,
   goalRowY,
   labelPriority,
   labelText,
@@ -519,18 +536,24 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const isStrong = strong.has(n.id as string);
         const emphasised = isStrong || (emph.lit?.has(n.id as GraphNodeId) ?? false);
         if (emph.lit && !emphasised && !force) return; // R: hidden while something is lit
-        const text = labelText(n, isStrong || emphasised);
         const weight = isStrong || n.type === "goal" || n.type === "area" ? 500 : 400;
         const top =
           y +
           shapeBottom(n.type, n.r) +
           (n.type === "goal" && n.horizon === "life" ? 2 : 0) +
           3 / k;
-        if (dense && !isStrong) {
-          const box = measureLabel(ctx, text, x, top, k, weight, L.theme);
-          if (boxes.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1))
-            return;
-          boxes.push(box);
+        let text = labelText(n, isStrong || emphasised);
+        // Skip (or shorten) labels that would overlap one already drawn: in dense graphs, and
+        // for the neighbours lit by a selection or hover. Strong labels are always drawn.
+        if ((dense || emph.lit) && !isStrong) {
+          const texts = emphasised ? [text, labelText(n, false)] : [text];
+          const pick = fitLabel(
+            texts.map((t) => measureLabel(ctx, t, x, top, k, weight, L.theme)),
+            boxes,
+            2 / k,
+          );
+          if (pick < 0) return;
+          text = texts[pick]!;
         }
         ctx.globalAlpha = emph.lit && emphasised ? Math.min(1, 0.4 + fadeT) : L.nodeAlpha(n);
         const box = drawLabel(
@@ -543,7 +566,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
           weight,
           L.theme,
         );
-        if (!dense || isStrong) boxes.push(box);
+        boxes.push(box);
         drawn.add(n.id as string);
       };
 
@@ -553,11 +576,14 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const n = id ? byId.get(id) : undefined;
         if (n) tryDraw(n, true);
       }
-      if (emph.lit)
+      if (emph.lit) {
+        const lit: SimNode[] = [];
         for (const id of emph.lit) {
           const n = byId.get(id);
-          if (n) tryDraw(n, true);
+          if (n) lit.push(n);
         }
+        for (const n of byLabelPriority(lit)) tryDraw(n, true);
+      }
       let budget = 400;
       for (const n of labelOrderRef.current) {
         if (budget <= 0) break;
@@ -576,30 +602,55 @@ export default function GraphCanvas(props: GraphCanvasProps) {
 
   /**
    * zoomToFit with a zoom cap, so a handful of nodes is not blown up to the max zoom.
-   * Padding: 48s (24s local) plus the largest node radius.
+   * Fits every node's shape *and* its label (screen-size text below it), so the bottom row
+   * and long labels at the edges stay on screen. Padding 32px (12px local).
    */
+  const fitItems = useCallback((): FitItem[] => {
+    const ctx = measureCtx();
+    const items: FitItem[] = [];
+    for (const n of graphData.nodes) {
+      if (n.x == null || n.y == null) continue;
+      const weight = n.type === "goal" || n.type === "area" ? 500 : 400;
+      ctx.font = `${weight} 12px ${theme.fontFamily}`;
+      items.push({
+        x: n.x,
+        y: n.y,
+        side: n.r * 1.3,
+        top: n.r * 1.3,
+        bottom: shapeBottom(n.type, n.r) + (n.type === "goal" ? 2 : 0),
+        labelW: ctx.measureText(labelText(n, false)).width + 3,
+        labelH: LABEL_BELOW_PX,
+      });
+    }
+    return items;
+  }, [graphData, theme.fontFamily]);
+  const fitPad = local ? 12 : 32;
+
   const fitView = useCallback(
     (duration: number) => {
       const fg = fgRef.current;
-      if (!fg || graphData.nodes.length === 0) return;
-      const box = fg.getGraphBbox();
-      const maxR = graphData.nodes.reduce((m, n) => Math.max(m, n.r), 0) + 12;
-      const pad = local ? 24 : 48;
-      const w = box.x[1] - box.x[0] + maxR * 2;
-      const h = box.y[1] - box.y[0] + maxR * 2;
-      const k = Math.max(
-        0.2,
-        Math.min(
-          local ? 2 : 2.5,
-          (width - pad * 2) / Math.max(w, 1),
-          (height - pad * 2) / Math.max(h, 1),
-        ),
-      );
-      fg.zoom(k, duration);
-      fg.centerAt((box.x[0] + box.x[1]) / 2, (box.y[0] + box.y[1]) / 2, duration);
+      if (!fg) return;
+      const t = fitTransform(fitItems(), {
+        width,
+        height,
+        pad: fitPad,
+        minZoom: 0.2,
+        maxZoom: local ? 2 : 2.5,
+      });
+      if (!t) return;
+      fg.zoom(t.k, duration);
+      fg.centerAt(t.cx, t.cy, duration);
     },
-    [graphData, local, width, height],
+    [fitItems, fitPad, local, width, height],
   );
+
+  /** True when part of the drawing is off screen at the current zoom and centre. */
+  const offScreen = useCallback(() => {
+    const fg = fgRef.current;
+    if (!fg) return false;
+    const c = fg.centerAt();
+    return overflowsArea(fitItems(), { k: fg.zoom(), cx: c.x, cy: c.y }, { width, height });
+  }, [fitItems, width, height]);
 
   // ----- Fit on first settle and after filter changes -----
   // First load: fit when the simulation stops (focus may take over). After a filter change
@@ -609,6 +660,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
   const loadedOnce = useRef(false);
   const earlyFit = useRef<{ data: unknown; ticks: number } | null>(null);
   const earlyBox = useRef<Box | null>(null);
+  /** May the next stop refit a drawing that drifted off screen (see `RefitGuard`)? */
+  const refitGuard = useRef<RefitGuard>(DISARMED);
   const graphDataRef = useRef(graphData);
   graphDataRef.current = graphData;
   useEffect(() => {
@@ -631,6 +684,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     if (!fg) return;
     fitView(fitDuration);
     earlyBox.current = fg.getGraphBbox();
+    refitGuard.current = armRefit(performance.now(), fitDuration);
     pendingFit.current = false;
     onTransform?.();
   };
@@ -715,7 +769,13 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       d3VelocityDecay={0.4}
       onRenderFramePre={onRenderFramePre}
       onRenderFramePost={onRenderFramePost}
-      onZoom={() => onTransform?.()}
+      onZoom={() => {
+        refitGuard.current = noteTransform(refitGuard.current, performance.now());
+        onTransform?.();
+      }}
+      onNodeDrag={() => {
+        refitGuard.current = DISARMED;
+      }}
       onNodeHover={(node) => {
         const id = (node?.id as GraphNodeId | undefined) ?? null;
         setHoverId(id);
@@ -733,8 +793,11 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       onEngineStop={() => {
         loadedOnce.current = true;
         const box = earlyBox.current;
+        const stop = refitOnStop(refitGuard.current, offScreen);
+        refitGuard.current = stop.next;
         earlyBox.current = null;
-        if (box && fgRef.current && grewBeyond(box, fgRef.current.getGraphBbox())) {
+        // Refit when the layout grew noticeably or drifted partly off screen since the fit.
+        if (box && fgRef.current && (grewBeyond(box, fgRef.current.getGraphBbox()) || stop.refit)) {
           fitView(fitDuration);
           onTransform?.();
           return;

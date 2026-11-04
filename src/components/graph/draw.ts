@@ -265,3 +265,13 @@ export function measureLabel(
   const w = ctx.measureText(text).width;
   return { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + size * 1.25 };
 }
+
+let measureCanvas: CanvasRenderingContext2D | null = null;
+/** Shared 2D context for measuring label text outside a frame. */
+export function measureCtx(): CanvasRenderingContext2D {
+  measureCanvas ??= document.createElement("canvas").getContext("2d")!;
+  return measureCanvas;
+}
+
+/** Screen px a label adds below its shape: 3px gap + 12px × 1.25 line + 1.5px halo. */
+export const LABEL_BELOW_PX = 3 + 15 + 1.5;

@@ -5,6 +5,7 @@
  */
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { areas, goals, graphLayout, projects, tasks } from "@/db/schema";
+import { LIST_CHANGED } from "@/lib/tasks/order";
 import {
   db,
   newId,
@@ -420,9 +421,7 @@ export async function moveAfter(id: string, afterId: string | null): Promise<boo
     let at = 0;
     if (afterId !== null) {
       const k = without.indexOf(afterId);
-      if (k < 0) {
-        throw new RepoError("invalid", "할 일 목록이 바뀌었습니다. 새로고침 후 다시 시도하세요.");
-      }
+      if (k < 0) throw new RepoError("invalid", LIST_CHANGED);
       at = k + 1;
     }
     const next = [...without.slice(0, at), id, ...without.slice(at)];

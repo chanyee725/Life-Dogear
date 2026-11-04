@@ -7,6 +7,7 @@ import {
   deleteTask,
   moveTask,
   moveTaskAfter,
+  reloadTasks,
   restoreTask,
   updateTask,
 } from "@/app/_actions/tasks";
@@ -67,6 +68,31 @@ describe("task actions", () => {
     expect(back.ok && back.data.doneAt).toBe(doneAt);
     expect(await order()).toEqual(["b", "c", "a"]);
     expect(await restoreTask({ title: "x", sortOrder: "1" })).toMatchObject({ ok: false });
+  });
+
+  it("places a drop by its neighbours when another device changed the list", async () => {
+    const p = await projects.create({ title: "p" });
+    const parent = { type: "project", id: p.id } as const;
+    const ids: string[] = [];
+    for (const title of ["a", "b", "c", "d"]) {
+      const r = await createTask({ title, parent });
+      ids.push(r.ok ? r.data.id : "");
+    }
+    const [a, b, c, d] = ids as [string, string, string, string];
+    const order = async () => (await tasks.list({ parent })).map((t) => t.title);
+    // Client saw a b c d and dropped d between b and c; elsewhere b was deleted meanwhile.
+    await tasks.remove(b);
+    expect(await moveTaskAfter(d, b, c)).toEqual({ ok: true, data: true });
+    expect(await order()).toEqual(["a", "d", "c"]);
+    // Both neighbours gone: refused, so the client reloads.
+    await tasks.remove(c);
+    expect(await moveTaskAfter(a, b, c)).toMatchObject({ ok: false });
+    expect(await order()).toEqual(["a", "d"]);
+    // The client then asks for a reload of that list.
+    vi.mocked(revalidatePath).mockClear();
+    expect(await reloadTasks(a)).toEqual({ ok: true, data: null });
+    expect(paths()).toContain(`/projects/${p.id}`);
+    expect(await reloadTasks("seed-x")).toMatchObject({ ok: false });
   });
 
   it("rejects bad input with Korean messages", async () => {

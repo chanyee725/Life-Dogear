@@ -15,6 +15,7 @@ import {
   deleteTask,
   moveTask,
   moveTaskAfter,
+  reloadTasks,
   restoreTask,
   updateTask,
 } from "@/app/_actions/tasks";
@@ -25,7 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
-import { applyDrop, dropSlot, placeInOrder } from "./reorder";
+import { applyDrop, dragPosition, placeInOrder } from "./reorder";
 
 const TITLE_MAX = 300;
 /** A just-checked task stays in place this long before moving to 완료 (today.md 2.1). */
@@ -73,8 +74,11 @@ const DRAG_THRESHOLD = 4;
 type DragState = {
   id: string;
   pointerId: number;
+  /** Pointer y at the press, px from the list's top (list coordinates survive scrolling). */
   startY: number;
-  /** Vertical middles of the other movable rows (viewport px), in list order. */
+  /** Last pointer y in the viewport, to re-place the drop when the page scrolls. */
+  clientY: number;
+  /** Vertical middles of the other movable rows (px from the list's top), in list order. */
   mids: number[];
   /** Top and bottom of the other movable rows relative to the list, for the drop line. */
   edges: { top: number; bottom: number }[];
@@ -248,8 +252,9 @@ export function TaskList({
     setDrag({
       id: task.id,
       pointerId: e.pointerId,
-      startY: e.clientY,
-      mids: others.map((r) => r.top + r.height / 2),
+      startY: e.clientY - listTop,
+      clientY: e.clientY,
+      mids: others.map((r) => r.top - listTop + r.height / 2),
       edges: others.map((r) => ({ top: r.top - listTop, bottom: r.bottom - listTop })),
       active: false,
       dy: 0,
@@ -258,12 +263,27 @@ export function TaskList({
   };
 
   const dragMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    const dy = e.clientY - drag.startY;
-    if (!drag.active && Math.abs(dy) < DRAG_THRESHOLD) return;
+    const list = listRef.current;
+    if (!drag || e.pointerId !== drag.pointerId || !list) return;
+    const at = dragPosition(drag, e.clientY, list.getBoundingClientRect().top);
+    if (!drag.active && Math.abs(at.dy) < DRAG_THRESHOLD) return;
     e.preventDefault();
-    setDrag({ ...drag, active: true, dy, slot: dropSlot(drag.mids, e.clientY) });
+    setDrag({ ...drag, active: true, clientY: e.clientY, ...at });
   };
+
+  // Scrolling (wheel, auto-scroll) moves the list under a still pointer: re-place the drop.
+  const dragActive = !!drag?.active;
+  useEffect(() => {
+    if (!dragActive) return;
+    const onScroll = () => {
+      const list = listRef.current;
+      if (!list) return;
+      const top = list.getBoundingClientRect().top;
+      setDrag((d) => (d?.active ? { ...d, ...dragPosition(d, d.clientY, top) } : d));
+    };
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => window.removeEventListener("scroll", onScroll, { capture: true });
+  }, [dragActive]);
 
   const dragEnd = (task: Task, e: ReactPointerEvent<HTMLButtonElement>, cancel = false) => {
     if (!drag || e.pointerId !== drag.pointerId) return;
@@ -276,8 +296,12 @@ export function TaskList({
     setItems((list) => placeInOrder(list, drop.order));
     setAnnounce(`${task.title}, ${ids.length}개 중 ${drop.order.indexOf(task.id) + 1}번째로 옮김`);
     run(
-      () => moveTaskAfter(task.id, drop.afterId),
-      () => setItems(snapshot),
+      () => moveTaskAfter(task.id, drop.afterId, drop.beforeId),
+      () => {
+        // The order may have changed elsewhere: show the server's order, not the old one.
+        setItems(snapshot);
+        void safeAction(() => reloadTasks(task.id));
+      },
     );
   };
 
