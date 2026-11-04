@@ -413,7 +413,13 @@ export default function GraphCanvas(props: GraphCanvasProps) {
 
   // ----- Edges (1.5: source node's color, low alpha) -----
   const restEdgeAlpha = (kind: GraphEdgeKind) =>
-    large ? (kind === "belongs" ? 0.35 : 0.14) : kind === "belongs" ? theme.belongsAlpha : 0.3;
+    large
+      ? kind === "belongs"
+        ? 0.35
+        : 0.14
+      : kind === "belongs"
+        ? theme.belongsAlpha
+        : theme.linkAlpha;
   const endId = (end: SimLink["source"]): string =>
     typeof end === "object" && end !== null ? String(end.id) : String(end);
   const edgeAlphaIn = (l: SimLink, e: Emphasis) => {

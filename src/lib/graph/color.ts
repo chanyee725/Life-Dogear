@@ -9,9 +9,9 @@
  *   life goal with an area takes that area's color like any goal (the cosmos view draws
  *   life goals as suns); a life goal without one stays neutral.
  *
- * Area colors are palette slots, not ids: the i-th area actually used, in sidebar order
- * (`areaOrder`), takes slot i — the same numbering as the cosmos view, so an area has the
- * same hue in both modes for the same filter.
+ * Area colors are palette slots, not ids: the i-th area of the full sidebar order
+ * (`areaOrder`, every area) takes slot i, whatever the filter shows — so an area keeps its
+ * color when the filter changes. (The cosmos view numbers only the areas on screen.)
  */
 import { assignGalaxies } from "@/lib/cosmos/galaxy";
 import type { GraphEdge, GraphNode, GraphNodeId } from "./types";
@@ -28,13 +28,13 @@ export function isGraphColorBy(value: unknown): value is GraphColorBy {
 export type AreaSlots = {
   /** Node id → palette slot, or null for neutral. */
   slot: Map<GraphNodeId, number | null>;
-  /** Areas in slot order (slot = index). */
-  areas: string[];
+  /** Areas that color at least one node, in slot order. */
+  areas: { id: string; slot: number }[];
 };
 
 /**
- * Area palette slot per node. `areaOrder` lists every area id in sidebar order (areas that
- * only appear as nodes are appended in node order).
+ * Area palette slot per node: the area's index in `areaOrder` (every area id in sidebar
+ * order); areas missing from it (mocks) follow after, in node order.
  */
 export function assignAreaSlots(
   nodes: readonly Pick<GraphNode, "id" | "type" | "areaId" | "horizon">[],
@@ -49,18 +49,16 @@ export function assignAreaSlots(
   const used = new Set<string>();
   for (const g of galaxies.values()) if (g !== null) used.add(g);
 
-  const areas = areaOrder.filter((a) => used.has(a));
-  const listed = new Set(areas);
+  const index = new Map(areaOrder.map((a, i) => [a, i] as const));
   for (const n of nodes) {
     const g = galaxies.get(n.id);
-    if (g != null && !listed.has(g)) {
-      listed.add(g);
-      areas.push(g);
-    }
+    if (g != null && !index.has(g)) index.set(g, index.size);
   }
-  const index = new Map(areas.map((a, i) => [a, i] as const));
   const slot = new Map<GraphNodeId, number | null>();
   for (const [id, g] of galaxies) slot.set(id, g === null ? null : index.get(g)!);
+  const areas = [...used]
+    .map((id) => ({ id, slot: index.get(id)! }))
+    .sort((a, b) => a.slot - b.slot);
   return { slot, areas };
 }
 

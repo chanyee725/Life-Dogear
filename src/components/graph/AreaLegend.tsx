@@ -9,7 +9,7 @@ import { cn } from "@/components/ui/cn";
 import { slotColor } from "@/lib/graph/color";
 import type { GraphTheme } from "./graph-theme";
 
-export type AreaLegendRow = { id: string; title: string };
+export type AreaLegendRow = { id: string; title: string; slot: number };
 
 export function AreaLegend({
   areas,
@@ -18,7 +18,7 @@ export function AreaLegend({
   theme,
   onPick,
 }: {
-  /** Areas in slot order (slot = index). */
+  /** Areas on screen, in slot order. */
   areas: readonly AreaLegendRow[];
   hasNeutral: boolean;
   activeArea: string | undefined;
@@ -35,7 +35,7 @@ export function AreaLegend({
       aria-label="영역 범례"
       className="absolute bottom-11 left-4 flex max-h-[40%] flex-col gap-1 overflow-auto rounded-lg border border-border bg-bg/95 px-3 py-2 text-xs text-fg"
     >
-      {areas.map((a, i) => {
+      {areas.map((a) => {
         const on = activeArea === a.id;
         return (
           <button
@@ -48,7 +48,7 @@ export function AreaLegend({
               on ? "font-medium" : "text-fg",
             )}
           >
-            {swatch(slotColor(i, theme.area, theme.neutral))}
+            {swatch(slotColor(a.slot, theme.area, theme.neutral))}
             <span className="max-w-40 truncate">{a.title}</span>
           </button>
         );

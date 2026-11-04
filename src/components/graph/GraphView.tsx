@@ -109,8 +109,12 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   // Basic graph color basis (design 1.3): URL, else the last choice.
   const [colorBy, setColorBy] = useState<GraphColorBy>(() => {
     if (initial.color) return initial.color;
-    const saved =
-      typeof window === "undefined" ? null : localStorage.getItem(GRAPH_COLOR_BY_STORAGE_KEY);
+    let saved: string | null = null;
+    try {
+      if (typeof window !== "undefined") saved = localStorage.getItem(GRAPH_COLOR_BY_STORAGE_KEY);
+    } catch {
+      // Storage blocked (privacy mode): fall back to the default.
+    }
     return isGraphColorBy(saved) ? saved : DEFAULT_GRAPH_COLOR_BY;
   });
   const [externalHover, setExternalHover] = useState<GraphNodeId | null>(null);
@@ -220,8 +224,9 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const legendAreas = useMemo(() => {
     if (!areaSlots) return [];
     const titles = new Map(options.areas.map((a) => [a.id, a.title]));
-    return areaSlots.areas.map((id) => ({
+    return areaSlots.areas.map(({ id, slot }) => ({
       id,
+      slot,
       title: byId.get(`area:${id}`)?.title ?? titles.get(id) ?? "보관된 영역",
     }));
   }, [areaSlots, options.areas, byId]);
@@ -282,7 +287,11 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   function changeColorBy(next: GraphColorBy) {
     if (next === colorBy) return;
     setColorBy(next);
-    localStorage.setItem(GRAPH_COLOR_BY_STORAGE_KEY, next);
+    try {
+      localStorage.setItem(GRAPH_COLOR_BY_STORAGE_KEY, next);
+    } catch {
+      // Not remembered when storage is blocked; the URL still keeps it.
+    }
     setAnnounce(next === "area" ? "색: 영역" : "색: 종류");
   }
 

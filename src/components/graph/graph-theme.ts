@@ -34,8 +34,10 @@ export type GraphTheme = {
   divider: string;
   /** Alpha of nodes outside the hover/selection neighbourhood. */
   dimAlpha: number;
-  /** Alpha of `belongs` edges at rest. */
+  /** Alpha of `belongs` edges at rest (1.5). */
   belongsAlpha: number;
+  /** Alpha of `link`/`body`/`topic` edges at rest (1.5; light is higher — colored lines fade more on white). */
+  linkAlpha: number;
   fontFamily: string;
 };
 
@@ -83,7 +85,8 @@ export const GRAPH_THEME_LIGHT: GraphTheme = {
   labelStrong: "#18181b",
   divider: "#e7e7ea",
   dimAlpha: 0.12,
-  belongsAlpha: 0.45,
+  belongsAlpha: 0.55,
+  linkAlpha: 0.42,
   fontFamily: FONT_FALLBACK,
 };
 
@@ -130,6 +133,7 @@ export const GRAPH_THEME_DARK: GraphTheme = {
   divider: "#2a2a2f",
   dimAlpha: 0.18,
   belongsAlpha: 0.45,
+  linkAlpha: 0.34,
   fontFamily: FONT_FALLBACK,
 };
 

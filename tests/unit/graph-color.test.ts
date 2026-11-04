@@ -33,12 +33,35 @@ describe("assignAreaSlots", () => {
     e("goal:life", "project:p"),
   ];
 
-  it("numbers used areas in sidebar order, skipping unused ones", () => {
+  it("numbers areas by their place in the full sidebar order, used or not", () => {
     const { slot, areas } = assignAreaSlots(nodes, edges, ["unused", "b", "a"]);
-    expect(areas).toEqual(["b", "a"]);
-    expect(slot.get("area:b" as GraphNodeId)).toBe(0);
-    expect(slot.get("project:q" as GraphNodeId)).toBe(0);
-    expect(slot.get("project:p" as GraphNodeId)).toBe(1);
+    expect(areas).toEqual([
+      { id: "b", slot: 1 },
+      { id: "a", slot: 2 },
+    ]);
+    expect(slot.get("area:b" as GraphNodeId)).toBe(1);
+    expect(slot.get("project:q" as GraphNodeId)).toBe(1);
+    expect(slot.get("project:p" as GraphNodeId)).toBe(2);
+  });
+
+  it("keeps an area's slot when the filter changes", () => {
+    const order = ["a", "b", "c"];
+    const all = assignAreaSlots(
+      [n("area:a"), n("area:b"), n("area:c"), n("project:pc", { areaId: "c" })],
+      [e("project:pc", "area:c")],
+      order,
+    );
+    // Area filter "c": only c's items remain; projects only (no area nodes) as well.
+    const onlyC = assignAreaSlots(
+      [n("area:c"), n("project:pc", { areaId: "c" })],
+      [e("project:pc", "area:c")],
+      order,
+    );
+    const noAreas = assignAreaSlots([n("project:pc", { areaId: "c" })], [], order);
+    for (const r of [all, onlyC, noAreas]) {
+      expect(r.slot.get("project:pc" as GraphNodeId)).toBe(2);
+    }
+    expect(onlyC.areas).toEqual([{ id: "c", slot: 2 }]);
   });
 
   it("follows the neighbour majority; ties, loners, reviews and area-less life goals are neutral", () => {
@@ -72,8 +95,11 @@ describe("assignAreaSlots", () => {
   });
 
   it("appends areas missing from the order (mocks) in node order", () => {
-    const { areas } = assignAreaSlots([n("area:z"), n("area:y")], []);
-    expect(areas).toEqual(["z", "y"]);
+    const { areas } = assignAreaSlots([n("area:z"), n("area:y")], [], ["a"]);
+    expect(areas).toEqual([
+      { id: "z", slot: 1 },
+      { id: "y", slot: 2 },
+    ]);
   });
 });
 
@@ -115,6 +141,11 @@ describe("nodeColor / quarterGoalFill (design 1.2–1.3)", () => {
   it("fills quarter goals with goalSoft by kind and the background by area", () => {
     expect(quarterGoalFill("kind", GRAPH_THEME_LIGHT)).toBe("#fbecea");
     expect(quarterGoalFill("area", GRAPH_THEME_DARK)).toBe("#141416");
+  });
+
+  it("rests edges at the 1.5 alphas (light higher than dark)", () => {
+    expect([GRAPH_THEME_LIGHT.belongsAlpha, GRAPH_THEME_LIGHT.linkAlpha]).toEqual([0.55, 0.42]);
+    expect([GRAPH_THEME_DARK.belongsAlpha, GRAPH_THEME_DARK.linkAlpha]).toEqual([0.45, 0.34]);
   });
 
   it("has a color for every kind and 12 area colors in both themes", () => {
