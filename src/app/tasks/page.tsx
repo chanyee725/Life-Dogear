@@ -141,7 +141,6 @@ export default async function TasksPage({ searchParams }: Props) {
             ) : null}
             {dueToday.length || !overdue.length ? (
               <Group title="오늘" count={dueToday.length}>
-                {dueToday.length ? null : <EmptyState title="오늘 할 일이 없습니다" />}
                 <TaskList
                   tasks={dueToday}
                   today={today}
