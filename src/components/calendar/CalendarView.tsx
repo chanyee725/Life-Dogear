@@ -574,7 +574,7 @@ export function CalendarView({
       </div>
 
       {/* 13.1: two columns from lg (calendar | panel); below lg the panel goes first. */}
-      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6">
         <div className="flex min-w-0 flex-col">
           {/* Messages (10절) and the period line (3.3) */}
           <div className="mb-2 flex flex-col gap-1 empty:hidden">
@@ -693,7 +693,7 @@ export function CalendarView({
           {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
         </div>
         <TodayPanel
-          className="order-first min-w-0 lg:sticky lg:top-6 lg:order-none"
+          className="order-first min-w-0 lg:order-none lg:rounded-lg lg:border lg:border-border lg:p-6"
           day={selected}
           today={today}
           now={now}
@@ -956,7 +956,7 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
             }}
             className={cn(
               "group relative flex min-w-0 flex-col gap-0.5 border-r border-b border-border p-1 focus-visible:outline-offset-[-2px]",
-              month ? "h-28" : "h-36",
+              month ? "h-28" : "h-36 lg:h-44",
               outside && "bg-surface",
               ctx.overDay === d && "bg-accent-soft outline-2 -outline-offset-2 outline-accent",
             )}

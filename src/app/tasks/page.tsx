@@ -75,7 +75,7 @@ async function CalendarPage({ params }: { params: Record<string, string | string
     failed = true;
   }
   return (
-    <Page className="max-w-7xl">
+    <Page className="max-w-[1600px]">
       <PageHeader title="할 일" className="mb-0" actions={<ViewSwitch view="calendar" />} />
       <CalendarView
         range={q.range}
