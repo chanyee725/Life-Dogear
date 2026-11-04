@@ -67,25 +67,29 @@ export default async function HomePage() {
   const stars = revisitStars(cosmos, now);
 
   return (
-    <Page className="flex max-w-6xl flex-col gap-10">
+    <Page className="flex max-w-6xl flex-col gap-8">
       {/* No date heading: the today panel already shows the day large. */}
       <h1 className="sr-only">홈</h1>
-      <HomeCalendarSection today={today}>
+      <HomeCalendarSection
+        today={today}
+        tasks={
+          <TodayTasks
+            overdue={todayTasks.overdue}
+            dueToday={todayTasks.today}
+            done={todayTasks.done}
+            today={today}
+          />
+        }
+      >
         <InboxLine count={inboxCount} />
         <WeeklyReviewLine period={reviewDue} today={day} />
       </HomeCalendarSection>
-      <TodayTasks
-        overdue={todayTasks.overdue}
-        dueToday={todayTasks.today}
-        done={todayTasks.done}
-        today={today}
-      />
       <WeekTasks tasks={weekTasks} today={today} />
       {quarter.length || stars.length ? (
         // Two columns only when both have something (today.md 4.1).
         <div
           className={
-            quarter.length && stars.length ? "grid grid-cols-1 gap-10 md:grid-cols-2" : "contents"
+            quarter.length && stars.length ? "grid grid-cols-1 gap-8 md:grid-cols-2" : "contents"
           }
         >
           <QuarterGoals goals={quarter} />
@@ -95,7 +99,7 @@ export default async function HomePage() {
       <ContinueReading papers={reading} />
       <ActiveResearch stages={stages} />
       <ActiveGeneralProjects projects={general} />
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <RecentThoughts thoughts={recentThoughts} />
         <RecentSeminars seminars={recentSeminars} />
       </div>

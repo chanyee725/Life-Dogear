@@ -47,7 +47,7 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-2", className)}>
+    <div className={cn("flex min-h-6 items-center justify-between gap-2", className)}>
       <Heading id={id} className="text-[13px] font-semibold text-muted">
         {title}
       </Heading>

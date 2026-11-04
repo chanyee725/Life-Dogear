@@ -164,8 +164,9 @@ describe("today task sections", () => {
     const empty = renderToStaticMarkup(
       createElement(TodayTasks, { overdue: [], dueToday: [], today: "2026-11-03" }),
     );
-    // Nothing due today: the section is left out (the calendar's input adds tasks).
-    expect(empty).toBe("");
+    // Nothing due today: only the heading stays, over the panel's add input.
+    expect(empty).toContain("오늘 할 일");
+    expect(empty).not.toContain("<ul");
   });
 
   it("hides this week when empty and caps it at 5", () => {

@@ -147,3 +147,40 @@ test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {
   const link = page.getByRole("link", { name: /수집함에 정리할 항목 \d+개/ });
   await expect(link).toHaveAttribute("href", "/inbox");
 });
+
+test("홈 달력 블록: 오른쪽 패널에 오늘 할 일 → 할 일 추가 → 다음 일정, 높이는 달력에 맞춘다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const calendar = page.getByRole("region", { name: "달력" });
+  const heading = calendar.getByRole("heading", { name: /오늘 할 일/ });
+  const taskInput = calendar.getByRole("textbox", { name: /^할 일 추가/ });
+  const upcoming = calendar.getByRole("heading", { name: /다음 일정/ });
+  const thought = calendar.getByRole("textbox", { name: /생각 추가/ });
+  const grid = calendar.getByRole("grid");
+  await expect(upcoming).toBeVisible();
+  const [h, i, u, g, t] = await Promise.all(
+    [heading, taskInput, upcoming, grid, thought].map(async (l) => (await l.boundingBox())!),
+  );
+  expect(h.y).toBeLessThan(i.y);
+  expect(i.y).toBeLessThan(u.y);
+  // 생각 추가 sits under the grid, as wide as it.
+  expect(t.y).toBeGreaterThan(g.y + g.height - 1);
+  expect(Math.abs(t.width - g.width)).toBeLessThan(2);
+  // The separate 오늘 section is gone: one "오늘 할 일" heading on the page.
+  await expect(page.getByRole("heading", { name: /오늘 할 일/ })).toHaveCount(1);
+  // The panel ends with the grid column (no gap under the calendar).
+  const panel = upcoming.locator("xpath=ancestor::section[1]");
+  const p = (await panel.boundingBox())!;
+  const left = (await grid.locator("xpath=..").boundingBox())!;
+  expect(p.y + p.height).toBeLessThanOrEqual(left.y + left.height + 2);
+
+  // Narrow: today panel (tasks + input) → grid → 생각 추가.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const [i2, g2, t2] = await Promise.all(
+    [taskInput, grid, thought].map(async (l) => (await l.boundingBox())!),
+  );
+  expect(i2.y).toBeLessThan(g2.y);
+  expect(g2.y).toBeLessThan(t2.y);
+});

@@ -84,6 +84,15 @@ export type CalendarViewProps = {
   syncUrl?: boolean;
   /** Told the selected day whenever it changes (home: the 할 일 추가 input's due date). */
   onSelectDay?: (day: string) => void;
+  /** Home: shown in the today panel between the day and "다음 일정" (today's tasks + add). */
+  panelSlot?: ReactNode;
+  /** Home: shown under the grid, in the grid's column (생각 추가). */
+  belowGrid?: ReactNode;
+  /**
+   * Home: from `lg` the panel takes the left column's height and scrolls inside ("다음 일정"
+   * first), so a long panel never leaves a gap under the calendar.
+   */
+  fitPanel?: boolean;
 };
 
 type Pop =
@@ -130,6 +139,9 @@ export function CalendarView({
   forceNarrow = false,
   syncUrl = true,
   onSelectDay,
+  panelSlot,
+  belowGrid,
+  fitPanel = false,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
@@ -570,7 +582,12 @@ export function CalendarView({
       </div>
 
       {/* 13.1: two columns from lg (calendar | panel); below lg the panel goes first. */}
-      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:items-start lg:gap-8">
+      <div
+        className={cn(
+          "mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:gap-8",
+          fitPanel ? "lg:items-stretch" : "lg:items-start",
+        )}
+      >
         <div className="flex min-w-0 flex-col">
           {/* Messages (10절) and the period line (3.3) */}
           <div className="mb-2 flex flex-col gap-1 empty:hidden">
@@ -684,17 +701,24 @@ export function CalendarView({
           </div>
 
           {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+          {belowGrid}
         </div>
-        <TodayPanel
-          className="order-first min-w-0 lg:order-none lg:pt-1"
-          day={selected}
-          today={today}
-          now={now}
-          items={shown}
-          theme={theme}
-          onToday={goToday}
-          onAdd={(anchor) => openAdd(selected, anchor)}
-        />
+        {/* fitPanel: the wrapper adds no height (absolute child), so the row = the grid column. */}
+        <div className={cn("order-first min-w-0 lg:order-none", fitPanel && "lg:relative")}>
+          <TodayPanel
+            className={fitPanel ? "lg:absolute lg:inset-0 lg:overflow-y-auto lg:pt-1" : "lg:pt-1"}
+            day={selected}
+            today={today}
+            now={now}
+            items={shown}
+            theme={theme}
+            onToday={goToday}
+            onAdd={(anchor) => openAdd(selected, anchor)}
+            fit={fitPanel}
+          >
+            {panelSlot}
+          </TodayPanel>
+        </div>
       </div>
 
       {drag ? (
