@@ -696,8 +696,12 @@ function AddLine({
         data-task-add
         onClick={() => setEditing(true)}
         className={cn(
-          "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
-          indent,
+          bare
+            ? "flex w-full items-center justify-center rounded-lg border border-dashed border-border py-5 text-sm text-muted hover:bg-hover hover:text-fg"
+            : cn(
+                "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
+                indent,
+              ),
         )}
       >
         ＋ 할 일 추가

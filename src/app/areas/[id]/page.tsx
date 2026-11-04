@@ -6,6 +6,7 @@ import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
+import { DashboardAdd } from "@/components/dashboard/DashboardSection";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { buttonClass } from "@/components/ui/Button";
@@ -88,22 +89,32 @@ export default async function AreaDetailPage({ params }: Props) {
       <Section
         title={`목표${countLabel(goalOrder(areaGoals).length)}`}
         action={
-          <Link href={`/goals/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
-            새 목표
-          </Link>
+          areaGoals.length === 0 ? undefined : (
+            <Link href={`/goals/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
+              새 목표
+            </Link>
+          )
         }
       >
-        {areaGoals.length === 0 ? null : <GoalTree nodes={areaGoals} />}
+        {areaGoals.length === 0 ? (
+          <DashboardAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</DashboardAdd>
+        ) : (
+          <GoalTree nodes={areaGoals} />
+        )}
       </Section>
       <Section
         title={`프로젝트${countLabel(areaProjects.length)}`}
         action={
-          <Link href={`/projects/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
-            새 프로젝트
-          </Link>
+          areaProjects.length === 0 ? undefined : (
+            <Link href={`/projects/new?area=${area.id}`} className={buttonClass("ghost", "sm")}>
+              새 프로젝트
+            </Link>
+          )
         }
       >
-        {areaProjects.length === 0 ? null : (
+        {areaProjects.length === 0 ? (
+          <DashboardAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</DashboardAdd>
+        ) : (
           <div className="flex flex-col gap-4">
             {projectGroups.map((group) => (
               <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
