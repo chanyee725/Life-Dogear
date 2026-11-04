@@ -190,7 +190,9 @@ describe("search", () => {
 describe("filter and URL state", () => {
   it("treats the default kinds as no filter and counts active conditions", () => {
     expect(
-      isDefaultFilter({ types: ["goal", "area", "project", "paper", "seminar", "thought"] }),
+      isDefaultFilter({
+        types: ["goal", "area", "project", "paper", "seminar", "thought", "note"],
+      }),
     ).toBe(true);
     expect(isDefaultFilter({ types: ["goal"] })).toBe(false);
     expect(activeFilterCount({ types: ["goal"], archived: true, tag: "통계" })).toBe(3);

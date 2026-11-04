@@ -3,7 +3,16 @@
  * Badge tones are semantic tokens; the design system maps them to colors.
  */
 
-export type BadgeTone = "gray" | "blue" | "green" | "amber" | "red" | "violet" | "teal" | "rose";
+export type BadgeTone =
+  | "gray"
+  | "blue"
+  | "green"
+  | "amber"
+  | "red"
+  | "violet"
+  | "teal"
+  | "rose"
+  | "orange";
 
 export type EnumOption<V extends string> = {
   readonly value: V;
@@ -28,6 +37,8 @@ export const ITEM_TYPE = defineEnum([
   { value: "paper", label: "논문", tone: "blue" },
   { value: "seminar", label: "세미나", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
+  // Every other tone is taken (highlights use green); see docs/design/graph.md 1.2.1.
+  { value: "note", label: "노트", tone: "orange" },
   { value: "area", label: "영역", tone: "rose" },
   { value: "goal", label: "목표", tone: "red" },
   { value: "review", label: "회고", tone: "gray" },
@@ -41,6 +52,7 @@ export const ITEM_ROUTE: Record<ItemType, string> = {
   paper: "/papers",
   seminar: "/seminars",
   thought: "/thoughts",
+  note: "/notes",
   goal: "/goals",
   review: "/reviews",
 };
@@ -148,6 +160,16 @@ export const THOUGHT_MATURITY = defineEnum([
   { value: "refined", label: "정리됨", tone: "green" },
 ] as const);
 export type ThoughtMaturity = (typeof THOUGHT_MATURITY.values)[number];
+
+/** What a study note was taken from (null = not said). */
+export const NOTE_SOURCE_KIND = defineEnum([
+  { value: "book", label: "책", tone: "blue" },
+  { value: "lecture", label: "강의", tone: "teal" },
+  { value: "video", label: "영상", tone: "red" },
+  { value: "article", label: "글", tone: "violet" },
+  { value: "other", label: "기타", tone: "gray" },
+] as const);
+export type NoteSourceKind = (typeof NOTE_SOURCE_KIND.values)[number];
 
 /** Areas offered when the user has none yet (created only when chosen). */
 export const RECOMMENDED_AREAS = [

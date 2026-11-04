@@ -29,7 +29,7 @@ export type SourceItem = {
   id: string;
   title: string;
   archived: boolean;
-  /** Projects and goals. */
+  /** Projects, goals and notes. */
   areaId?: string | null;
   /** Projects: the goal they serve. */
   goalId?: string | null;
@@ -114,7 +114,7 @@ function fullGraph(source: GraphSource, withTags: boolean) {
     if (item.type === "project" && item.goalId) {
       add(self, graphNodeId("goal", item.goalId), "belongs");
     }
-    if ((item.type === "project" || item.type === "goal") && item.areaId) {
+    if ((item.type === "project" || item.type === "goal" || item.type === "note") && item.areaId) {
       add(self, graphNodeId("area", item.areaId), "belongs");
     }
   }
