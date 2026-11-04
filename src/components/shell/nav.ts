@@ -20,6 +20,7 @@ export const NAV_SECTIONS = {
   ],
   library: [
     { href: "/papers", label: "논문", icon: "paper" },
+    { href: "/notes", label: "노트", icon: "note" },
     { href: "/seminars", label: "세미나", icon: "seminar" },
     { href: "/thoughts", label: "생각", icon: "thought" },
     { href: "/tags", label: "주제", icon: "tag" },

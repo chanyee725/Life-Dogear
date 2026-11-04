@@ -3,7 +3,7 @@ export const QUICK_INPUT_ID = "quick-input";
 export const GRAPH_SEARCH_EVENT = "rb:graph-search";
 export const GRAPH_HREF = "/graph";
 
-const SECTIONS = ["projects", "areas", "papers", "seminars", "thoughts"] as const;
+const SECTIONS = ["projects", "areas", "papers", "notes", "seminars", "thoughts"] as const;
 /** Where `N` goes outside the item sections (home, inbox, tags, archive). */
 const DEFAULT_NEW_SECTION = "thoughts";
 

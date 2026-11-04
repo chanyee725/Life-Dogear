@@ -4,11 +4,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as graphRoute from "@/app/api/graph/route";
 import * as layoutRoute from "@/app/api/graph/layout/route";
 import * as localRoute from "@/app/api/graph/local/route";
-import { areas as areasTable, goals, graphLayout, links as linksTable, projects as projectsTable } from "@/db/schema";
+import {
+  areas as areasTable,
+  goals,
+  graphLayout,
+  links as linksTable,
+  projects as projectsTable,
+} from "@/db/schema";
 import { loadGraphSource } from "@/lib/graph/load";
 import { parseGraphFilter, parseLayoutBody, parseLocalQuery } from "@/lib/graph/query";
 import type { GraphResponse } from "@/lib/graph/types";
-import { links, papers, projects, thoughts } from "@/lib/repo";
+import { areas, links, notes, papers, projects, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 const HOST = { host: "localhost:3000" };
@@ -83,6 +89,23 @@ describe("graph query parsing", () => {
 });
 
 describe("GET /api/graph", () => {
+  it("returns notes with their area membership", async () => {
+    const area = await areas.create({ title: "공부" });
+    const note = await notes.create({ title: "노트", areaId: area.id });
+    const body = (await (await graphRoute.GET(get(""))).json()) as GraphResponse;
+    expect(body.nodes.find((n) => n.id === `note:${note.id}`)).toMatchObject({
+      type: "note",
+      title: "노트",
+      areaId: area.id,
+      size: 1,
+    });
+    expect(body.edges).toContainEqual({
+      source: `note:${note.id}`,
+      target: `area:${area.id}`,
+      kind: "belongs",
+    });
+  });
+
   it("returns goals, membership and links with sizes", async () => {
     await seedGoals();
     const project = await projects.create({ title: "연구 X" });

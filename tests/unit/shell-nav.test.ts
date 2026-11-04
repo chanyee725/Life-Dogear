@@ -11,6 +11,7 @@ describe("sidebar 자료 section", () => {
   it("keeps the per-kind menus", () => {
     expect(NAV_SECTIONS.library.map((e) => e.href)).toEqual([
       "/papers",
+      "/notes",
       "/seminars",
       "/thoughts",
       "/tags",

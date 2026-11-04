@@ -4,11 +4,12 @@ import { isSameOriginRequest } from "@/app/api/papers/_lib/origin";
 import type { NodePreview } from "@/components/graph/preview-types";
 import { parseGraphNodeId } from "@/lib/graph/types";
 import { isValidItemId } from "@/lib/ids";
-import { areas, goals, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { areas, goals, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import {
   areaPreview,
   goalPreview,
+  notePreview,
   paperPreview,
   projectPreview,
   reviewPreview,
@@ -56,6 +57,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       case "thought": {
         const row = await thoughts.get(ref.id);
         preview = row && thoughtPreview(row);
+        break;
+      }
+      case "note": {
+        const row = await notes.get(ref.id);
+        preview = row && notePreview(row);
         break;
       }
       case "area": {

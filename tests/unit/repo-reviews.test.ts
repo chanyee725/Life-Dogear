@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   goals,
   links as linksTable,
+  notes as notesTable,
   papers as papersTable,
   projects as projectsTable,
   tasks as tasksTable,
   reviews as reviewsTable,
 } from "@/db/schema";
-import { links, papers, projects, RepoError, tasks } from "@/lib/repo";
+import { links, notes, papers, projects, RepoError, tasks } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { useFreshDb } from "./repo-helpers";
 
@@ -184,6 +185,21 @@ describe("weekly review draft", () => {
     // Only once: reopening keeps what the user wrote.
     await reviews.update(review.id, { body: "고친 내용" });
     expect((await reviews.open("week", "2026-W45")).review.body).toBe("고친 내용");
+  });
+
+  it("counts notes made this week, not archived ones", async () => {
+    const made = await notes.create({ title: "이번 주 노트" });
+    const gone = await notes.create({ title: "보관한 노트" });
+    await db.update(notesTable).set({ createdAt: inWeek }).where(eq(notesTable.id, made.id));
+    await db
+      .update(notesTable)
+      .set({ createdAt: inWeek, archivedAt: inWeek })
+      .where(eq(notesTable.id, gone.id));
+    expect((await reviews.weekDigest("2026-W45")).created).toEqual([
+      { type: "note", title: "이번 주 노트" },
+    ]);
+    const { review } = await reviews.open("week", "2026-W45");
+    expect(review.body).toContain("### 새로 만든 항목 1\n- 노트 · 이번 주 노트");
   });
 
   it("lists tasks done this week with their parent", async () => {

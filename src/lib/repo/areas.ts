@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
-import { areas, goals, links, projects, tasks } from "@/db/schema";
+import { areas, goals, links, notes, projects, tasks } from "@/db/schema";
 import { getHeads, refKey } from "./items";
 import { removeLinksFor, syncBodyLinks } from "./links";
 import {
@@ -271,30 +271,33 @@ export const projectArea = (
 ): string | null => p.areaId ?? (p.goalId ? (areaOf.get(p.goalId) ?? null) : null);
 
 // ---------------------------------------------------------------------------
-// Material (논문·세미나·생각) around an area
+// Material (논문·세미나·생각·노트) around an area
 
-export type MaterialType = "paper" | "seminar" | "thought";
-const MATERIAL_TYPES: readonly string[] = ["paper", "seminar", "thought"];
+export type MaterialType = "paper" | "seminar" | "thought" | "note";
+const MATERIAL_TYPES: readonly string[] = ["paper", "seminar", "thought", "note"];
 
-/** Where a material is linked from: the area itself, or one of its projects or goals. */
+/**
+ * How a material reaches the area: `member` — a note whose own area it is (`notes.area_id`);
+ * `area` — linked to the area itself; or linked to one of its projects or goals.
+ */
 export type MaterialVia =
-  { type: "area" } | { type: "project" | "goal"; id: string; title: string };
+  { type: "member" } | { type: "area" } | { type: "project" | "goal"; id: string; title: string };
 
 export type AreaMaterial = {
   ref: ItemRef & { type: MaterialType };
   title: string;
-  /** Direct link first, then projects and goals by title; never empty. */
+  /** Membership, then direct link, then projects and goals by title; never empty. */
   via: MaterialVia[];
 };
 
 const typeOrder = (t: string) => MATERIAL_TYPES.indexOf(t);
 
 /**
- * Papers, seminars and thoughts linked to the area, to its goals (own or inherited
- * from the parent, see {@link effectiveAreas}), to its projects or to area-less projects
- * working toward its goals (non-archived on both ends), one entry per item with every
- * path that reaches it. Fixed query count: goals, projects, links, then one title query
- * per material type.
+ * Notes that belong to the area, plus papers, seminars, thoughts and notes linked to the
+ * area, to its goals (own or inherited from the parent, see {@link effectiveAreas}), to its
+ * projects or to area-less projects working toward its goals (non-archived on both ends),
+ * one entry per item with every path that reaches it. Fixed query count: goals, projects,
+ * member notes, links, then one title query per material type.
  */
 export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
   const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
@@ -333,6 +336,14 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
     );
 
   const found = new Map<string, { ref: AreaMaterial["ref"]; via: MaterialVia[] }>();
+  const member: MaterialVia = { type: "member" };
+  const memberNotes = await db()
+    .select({ id: notes.id })
+    .from(notes)
+    .where(and(eq(notes.areaId, areaId), isNull(notes.archivedAt)));
+  for (const n of memberNotes) {
+    found.set(`note:${n.id}`, { ref: { type: "note", id: n.id }, via: [member] });
+  }
   for (const l of rows) {
     const pairs: [string, ItemRef][] = [
       [`${l.sourceType}:${l.sourceId}`, { type: l.targetType, id: l.targetId }],
@@ -351,7 +362,8 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
   }
 
   const heads = await getHeads([...found.values()].map((e) => e.ref));
-  const viaRank = (v: MaterialVia) => (v.type === "area" ? "" : `${v.type}:${v.title}`);
+  const viaRank = (v: MaterialVia) =>
+    v.type === "member" ? "" : v.type === "area" ? "1" : `2${v.type}:${v.title}`;
   return [...found.values()]
     .flatMap((e) => {
       const head = heads.get(refKey(e.ref));

@@ -7,6 +7,7 @@ import {
   reviews,
   seminars as seminarsTable,
   thoughts as thoughtsTable,
+  notes as notesTable,
 } from "@/db/schema";
 import { ITEM_TYPE, REVIEW_KIND, type ItemType, type ReviewKind } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
@@ -197,34 +198,45 @@ export async function weekDigest(period: string): Promise<WeekDigest> {
       | typeof projectsTable
       | typeof papersTable
       | typeof seminarsTable
-      | typeof thoughtsTable,
+      | typeof thoughtsTable
+      | typeof notesTable,
   ) =>
     d
       .select({ title: t.title, createdAt: t.createdAt })
       .from(t)
       .where(and(gte(t.createdAt, from), lt(t.createdAt, to), isNull(t.archivedAt)))
       .then((rows) => rows.map((r) => ({ type, ...r })));
-  const [areaRows, goalRows, projectRows, paperRows, seminarRows, thoughtRows, finished, done] =
-    await Promise.all([
-      pick("area", areasTable),
-      pick("goal", goalsTable),
-      pick("project", projectsTable),
-      pick("paper", papersTable),
-      pick("seminar", seminarsTable),
-      pick("thought", thoughtsTable),
-      d
-        .select({ title: projectsTable.title })
-        .from(projectsTable)
-        .where(
-          and(
-            gte(projectsTable.completedAt, from),
-            lt(projectsTable.completedAt, to),
-            isNull(projectsTable.archivedAt),
-          ),
-        )
-        .orderBy(asc(projectsTable.completedAt)),
-      listCompletedBetween(from, to),
-    ]);
+  const [
+    areaRows,
+    goalRows,
+    projectRows,
+    paperRows,
+    seminarRows,
+    thoughtRows,
+    noteRows,
+    finished,
+    done,
+  ] = await Promise.all([
+    pick("area", areasTable),
+    pick("goal", goalsTable),
+    pick("project", projectsTable),
+    pick("paper", papersTable),
+    pick("seminar", seminarsTable),
+    pick("thought", thoughtsTable),
+    pick("note", notesTable),
+    d
+      .select({ title: projectsTable.title })
+      .from(projectsTable)
+      .where(
+        and(
+          gte(projectsTable.completedAt, from),
+          lt(projectsTable.completedAt, to),
+          isNull(projectsTable.archivedAt),
+        ),
+      )
+      .orderBy(asc(projectsTable.completedAt)),
+    listCompletedBetween(from, to),
+  ]);
   const created = [
     ...areaRows,
     ...goalRows,
@@ -232,6 +244,7 @@ export async function weekDigest(period: string): Promise<WeekDigest> {
     ...paperRows,
     ...seminarRows,
     ...thoughtRows,
+    ...noteRows,
   ].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   return {
     doneTasks: [...done]
