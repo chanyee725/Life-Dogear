@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -9,8 +11,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
-      // Tests run outside React Server Components; treat the guard as a no-op.
-      "server-only": fileURLToPath(new URL("./node_modules/server-only/empty.js", import.meta.url)),
+      // Tests run outside React Server Components; treat the guard as a no-op. Found by
+      // Node resolution (so a git worktree without node_modules uses the parent's); the
+      // package exports only ".", so take empty.js next to its entry.
+      "server-only": join(
+        dirname(createRequire(import.meta.url).resolve("server-only")),
+        "empty.js",
+      ),
     },
   },
   // tsconfig keeps JSX as-is for Next; tests need it compiled.
