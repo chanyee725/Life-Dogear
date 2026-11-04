@@ -24,6 +24,7 @@ export function TodayPanel({
   onToday,
   onAdd,
   fit = false,
+  loading = false,
   className,
   children,
 }: {
@@ -37,6 +38,8 @@ export function TodayPanel({
   onAdd: (anchor: HTMLElement) => void;
   /** Fill the parent's height; "다음 일정" scrolls in what is left. */
   fit?: boolean;
+  /** Items not here yet: "…" stands in for the count (never 0), no empty line. */
+  loading?: boolean;
   className?: string;
   /** Between the day and "다음 일정" (home: today's tasks and the add input). */
   children?: ReactNode;
@@ -77,10 +80,12 @@ export function TodayPanel({
         )}
       >
         다음 일정
-        <span className="text-xs font-normal tabular-nums">{list.shown + list.more}</span>
+        <span data-testid="next-count" className="text-xs font-normal tabular-nums">
+          {loading ? "…" : list.shown + list.more}
+        </span>
       </h3>
 
-      {list.shown === 0 ? (
+      {loading ? null : list.shown === 0 ? (
         children ? (
           // The add input sits right above; no second add button.
           <p className="text-xs text-muted">없음</p>

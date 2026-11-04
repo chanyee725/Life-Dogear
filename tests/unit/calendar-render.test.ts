@@ -256,6 +256,29 @@ describe("TodayPanel (13.3)", () => {
     expect(panel).toContain(">내일<");
   });
 
+  it("while loading: grid busy, count shows … (never 0), no empty line; after: no aria-busy", () => {
+    const loading = render({
+      range: "3w",
+      items: [],
+      loading: true,
+      gridTestId: "home-calendar-grid",
+      panelSlot: createElement("p", null, "slot"),
+    });
+    expect(loading).toMatch(
+      /role="grid"[^>]*aria-busy="true"[^>]*data-testid="home-calendar-grid"/,
+    );
+    expect(loading).toMatch(/data-testid="next-count"[^>]*>…<\/span>/);
+    expect(loading).not.toContain(">없음<");
+    const done = render({
+      range: "3w",
+      items: [],
+      gridTestId: "home-calendar-grid",
+      panelSlot: createElement("p", null, "slot"),
+    });
+    expect(done).not.toContain("aria-busy");
+    expect(done).toMatch(/data-testid="next-count"[^>]*>0<\/span>/);
+  });
+
   it("offers only a quick add when nothing is ahead", () => {
     const html = render({ range: "3w", items: [] });
     expect(html).not.toContain("예정된 일정이 없습니다");

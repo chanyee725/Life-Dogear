@@ -60,3 +60,54 @@ test("하드 로드 중 '할 일 추가'에 입력하고 Enter 하면 로딩 후
     await context.clearCookies({ name: "e2e-calendar-delay" });
   }
 });
+
+// Selector contract with the home calendar (#69).
+const GRID = (page: Page) => page.getByTestId("home-calendar-grid");
+const NEXT_COUNT = (page: Page) => page.getByTestId("next-count");
+
+test("로딩 중 입력칸('할 일 추가', `/` 검색)은 aria-busy 영역 밖에 있다", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  try {
+    const { loading } = await hardLoadSlow(page, context, baseURL!);
+    for (const name of [/할 일 추가/, /생각 추가/]) {
+      const input = page.getByRole("textbox", { name });
+      const busyAncestors = input.locator('xpath=ancestor-or-self::*[@aria-busy="true"]');
+      // One-shot count (no retry): a retrying assertion would pass once loading ends.
+      expect(await busyAncestors.count()).toBe(0);
+    }
+    // Still loading when checked, so the zero above was measured during the load.
+    await expect(loading).toBeVisible();
+  } finally {
+    await context.clearCookies({ name: "e2e-calendar-delay" });
+  }
+});
+
+test("로딩 중 달력 그리드에 aria-busy=true, 로딩 후 사라진다", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  try {
+    const { loading } = await hardLoadSlow(page, context, baseURL!);
+    await expect(GRID(page)).toHaveAttribute("aria-busy", "true");
+    await expect(loading).toBeHidden({ timeout: 10_000 });
+    await expect(GRID(page)).not.toHaveAttribute("aria-busy");
+  } finally {
+    await context.clearCookies({ name: "e2e-calendar-delay" });
+  }
+});
+
+test("로딩 중 '다음 일정' 숫자가 0으로 잘못 보이지 않는다", async ({ page, context, baseURL }) => {
+  try {
+    const { loading } = await hardLoadSlow(page, context, baseURL!);
+    // While loading the count is the placeholder "…", never a real "0".
+    await expect(NEXT_COUNT(page)).toHaveText("\u2026");
+    await expect(loading).toBeHidden({ timeout: 10_000 });
+    await expect(NEXT_COUNT(page)).toHaveText(/^\d+$/);
+  } finally {
+    await context.clearCookies({ name: "e2e-calendar-delay" });
+  }
+});

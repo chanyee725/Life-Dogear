@@ -93,6 +93,10 @@ export type CalendarViewProps = {
    * first), so a long panel never leaves a gap under the calendar.
    */
   fitPanel?: boolean;
+  /** Items still on their way (home streams them): the grid is `aria-busy`, the panel says so. */
+  loading?: boolean;
+  /** `data-testid` on the grid (home: "home-calendar-grid"). */
+  gridTestId?: string;
 };
 
 type Pop =
@@ -142,6 +146,8 @@ export function CalendarView({
   panelSlot,
   belowGrid,
   fitPanel = false,
+  loading = false,
+  gridTestId,
 }: CalendarViewProps) {
   const router = useRouter();
   const theme = useGraphTheme();
@@ -674,6 +680,8 @@ export function CalendarView({
             aria-label={rangeTitle(range, date)}
             aria-describedby={helpId}
             aria-readonly="true"
+            aria-busy={loading || undefined}
+            data-testid={gridTestId}
             onKeyDown={onGridKeyDown}
             className="overflow-hidden rounded-lg border-t border-l border-border"
           >
@@ -716,6 +724,7 @@ export function CalendarView({
             onToday={goToday}
             onAdd={(anchor) => openAdd(selected, anchor)}
             fit={fitPanel}
+            loading={loading}
           >
             {panelSlot}
           </TodayPanel>

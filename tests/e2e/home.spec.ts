@@ -224,13 +224,18 @@ test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스
   await page.keyboard.press("/");
   const input = page.getByRole("textbox", { name: /생각 추가/ });
   await expect(input).toBeFocused();
-  // Still loading: the block is busy and says so; the input works meanwhile.
+  // Still loading: the grid is busy and the panel says so; the input works meanwhile.
   const calendar = page.getByRole("region", { name: "달력" });
-  await expect(calendar, HOOKS_HINT).toHaveAttribute("aria-busy", "true");
+  const grid = calendar.getByTestId("home-calendar-grid");
+  await expect(grid, HOOKS_HINT).toHaveAttribute("aria-busy", "true");
+  // Only the grid is busy, not the block with the inputs.
+  await expect(calendar).not.toHaveAttribute("aria-busy");
   await expect(calendar.getByText("일정 불러오는 중…")).toBeVisible();
+  await expect(calendar.getByTestId("next-count")).toHaveText("…");
   await page.keyboard.type("느린 달력");
-  await expect(calendar).not.toHaveAttribute("aria-busy", "true", { timeout: 10_000 });
+  await expect(grid).not.toHaveAttribute("aria-busy", { timeout: 10_000 });
   await expect(calendar.getByText("일정 불러오는 중…")).toHaveCount(0);
+  await expect(calendar.getByTestId("next-count")).toHaveText(/^\d+$/);
   await expect(input).toHaveValue("느린 달력");
   await expect(input).toBeFocused();
   await page.keyboard.type("!");
