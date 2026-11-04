@@ -6,7 +6,6 @@ import {
   LINER_MEMO_INPUT_MESSAGES,
   LINER_MEMO_KIND_LABEL,
   LINER_MEMO_KINDS,
-  LINER_SECTION_TITLE,
   MAX_LINER_MEMO_TEXT,
   validateLinerMemoInput,
   type LinerMemoKind,
@@ -97,7 +96,6 @@ export function LinerMemoDialog({
         open={open}
         onClose={close}
         title="라이너 메모 붙여넣기"
-        description={`라이너에서 복사한 답변·요약·하이라이트를 본문의 '${LINER_SECTION_TITLE}' 섹션에 오늘 날짜와 함께 추가합니다.`}
         className="w-[min(36rem,calc(100vw-2rem))]"
         footer={
           <>
@@ -130,7 +128,7 @@ export function LinerMemoDialog({
               rows={8}
               value={text}
               maxLength={MAX_LINER_MEMO_TEXT}
-              placeholder="라이너에서 복사한 내용을 붙여넣으세요."
+              placeholder="라이너에서 복사한 내용"
               onChange={(e) => setText(e.target.value)}
               autoFocus
             />
