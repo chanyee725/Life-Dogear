@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { seoulDate } from "@/components/calendar/model";
 import {
   areasWithGoals,
   buildGoalList,
@@ -9,7 +10,6 @@ import {
   groupStats,
   hasGoalsWithoutArea,
   inPeriod,
-  localDay,
   NO_AREA,
   otherYears,
   parsePeriodFilter,
@@ -252,11 +252,27 @@ describe("due labels", () => {
   });
 
   it("counts days left to the period end", () => {
-    const today = localDay(NOW);
-    expect(today).toBe("2026-11-03");
+    const today = "2026-11-03";
     expect(dueLabel("2026-Q4", today)).toBe("D-58");
     expect(dueLabel("2026", "2026-12-31")).toBe("D-day");
     expect(dueLabel("2026-Q3", today)).toBe("끝남");
     expect(dueLabel(null, today)).toBeNull();
+  });
+});
+
+describe("due labels count from the Seoul date", () => {
+  const tz = process.env.TZ;
+  afterEach(() => {
+    process.env.TZ = tz;
+  });
+
+  it("uses the next day in Seoul early morning on a UTC server", () => {
+    process.env.TZ = "UTC";
+    // 2026-11-05 01:30 in Seoul; still 11-04 on the server clock.
+    const at = new Date("2026-11-04T16:30:00Z");
+    expect(at.getDate()).toBe(4);
+    const today = seoulDate(at);
+    expect(today).toBe("2026-11-05");
+    expect(dueLabel("2026-Q4", today)).toBe("D-56");
   });
 });

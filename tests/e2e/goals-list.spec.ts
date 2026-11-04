@@ -4,6 +4,8 @@ import { deleteCurrentItem, uniqueTitle } from "./helpers";
 test("goals list: life card, filter bar, goal row with level badge and days left", async ({
   page,
 }) => {
+  // Three goal saves and two deletes on a dev server that compiles pages on first hit.
+  test.setTimeout(120_000);
   const title = uniqueTitle("E2E 연 목표");
   await page.goto("/goals/new?horizon=year");
   await page.getByLabel("제목", { exact: true }).fill(title);
@@ -28,7 +30,26 @@ test("goals list: life card, filter bar, goal row with level badge and days left
   await expect(page).toHaveURL(/period=all/);
   await expect(row).toBeVisible();
 
-  await page.goto(detailUrl);
-  await deleteCurrentItem(page);
-  await expect(page).toHaveURL(/\/goals$/);
+  // No goals in another year yet: no year select.
+  await expect(page.getByRole("combobox", { name: "다른 연도" })).toHaveCount(0);
+
+  const nextYear = String(new Date().getFullYear() + 1);
+  const later = uniqueTitle("E2E 내년 목표");
+  await page.goto("/goals/new?horizon=year");
+  await page.getByLabel("제목", { exact: true }).fill(later);
+  await page.getByLabel("연도").fill(nextYear);
+  await page.getByRole("button", { name: "저장" }).click();
+  await expect(page).toHaveURL(/\/goals\/(?!new)[^/]+$/, { timeout: 20_000 });
+  const laterUrl = page.url();
+
+  await page.goto("/goals");
+  await page.getByRole("combobox", { name: "다른 연도" }).selectOption(nextYear);
+  await expect(page).toHaveURL(new RegExp(`period=${nextYear}`));
+  await expect(page.getByRole("listitem").filter({ hasText: later })).toBeVisible();
+
+  for (const url of [detailUrl, laterUrl]) {
+    await page.goto(url);
+    await deleteCurrentItem(page);
+    await expect(page).toHaveURL(/\/goals$/);
+  }
 });

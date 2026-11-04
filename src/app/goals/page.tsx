@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import { EmptyState, LinkTabs, NewItemButton } from "@/components/ui";
+import { seoulDate } from "@/components/calendar/model";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { areas, goals } from "@/lib/repo";
 import { GoalDirection } from "./GoalDirection";
-import { GoalList, type AreaChoice, type PeriodChoice, type PeriodKey } from "./GoalList";
+import {
+  GoalList,
+  type AreaChoice,
+  type PeriodChoice,
+  type PeriodKey,
+  type YearChoice,
+} from "./GoalList";
 import { GoalMap } from "./GoalMap";
 import {
   areasWithGoals,
@@ -12,7 +19,7 @@ import {
   hasGoalsWithoutArea,
   NO_AREA,
   NO_AREA_TITLE,
-  localDay,
+  otherYears,
   parsePeriodFilter,
   periodParam,
   type PeriodFilter,
@@ -100,9 +107,13 @@ async function GoalListView({
     { value: "year", label: "올해", href: periodHref(parsePeriodFilter("year", now)) },
     { value: "all", label: "전체", href: periodHref({ kind: "all" }) },
   ];
-  // Another year (`?period=2027`) checks none of the three.
-  const periodValue: PeriodKey | null =
-    period.kind === "year" && !period.current ? null : period.kind;
+  // Another year (`?period=2027`) checks none of the three; the year select shows it.
+  const otherYear = period.kind === "year" && !period.current ? period.year : null;
+  const periodValue: PeriodKey | null = otherYear ? null : period.kind;
+  const yearChoices: YearChoice[] = otherYears(tree, now).map((year) => ({
+    value: year,
+    href: periodHref({ kind: "year", year, current: false }),
+  }));
 
   const areaHref = (value: string | undefined) => buildHref("/goals", listParams, { area: value });
   const areaChoices: AreaChoice[] = [
@@ -121,10 +132,12 @@ async function GoalListView({
         ended={ended}
         periodChoices={periodChoices}
         periodValue={periodValue}
+        yearChoices={yearChoices}
+        selectedYear={otherYear ?? ""}
         areaChoices={areaChoices}
         selectedArea={areaId ?? ""}
         areaTitles={Object.fromEntries(areaList.map((a) => [a.id, a.title]))}
-        today={localDay(now)}
+        today={seoulDate(now)}
         period={period}
         areaTitle={areaTitle}
         resetHref="/goals?period=all"

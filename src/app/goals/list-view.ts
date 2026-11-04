@@ -342,13 +342,6 @@ export function hasGoalsWithoutArea(view: GoalListView): boolean {
   );
 }
 
-/** Local `YYYY-MM-DD` of a date (the "today" the due labels count from). */
-export function localDay(now = new Date()): string {
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${m}-${d}`;
-}
-
 /** Last day of a period: `2026` → 2026-12-31, `2026-Q2` → 2026-06-30; null otherwise. */
 export function periodEnd(period: string | null): string | null {
   const m = /^(\d{4})(?:-Q([1-4]))?$/.exec(period ?? "");

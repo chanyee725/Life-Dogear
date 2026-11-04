@@ -26,6 +26,7 @@ import {
 
 export type PeriodKey = "quarter" | "year" | "all";
 export type PeriodChoice = { value: PeriodKey; label: string; href: string };
+export type YearChoice = { value: string; href: string };
 export type AreaChoice = { value: string; label: string; href: string };
 
 /**
@@ -37,6 +38,8 @@ export function GoalList({
   ended,
   periodChoices,
   periodValue,
+  yearChoices,
+  selectedYear,
   areaChoices,
   selectedArea,
   areaTitles,
@@ -50,6 +53,10 @@ export function GoalList({
   periodChoices: PeriodChoice[];
   /** null: a period outside the choices (e.g. `?period=2027`). */
   periodValue: PeriodKey | null;
+  /** Years with goals other than this one (empty: no year select). */
+  yearChoices: YearChoice[];
+  /** The other year shown, or "". */
+  selectedYear: string;
   areaChoices: AreaChoice[];
   selectedArea: string;
   /** Area id → title, for the rows. */
@@ -91,6 +98,27 @@ export function GoalList({
             if (choice) router.push(choice.href);
           }}
         />
+        {yearChoices.length ? (
+          <Select
+            aria-label="다른 연도"
+            size="sm"
+            value={selectedYear}
+            onChange={(e) => {
+              const choice = yearChoices.find((y) => y.value === e.target.value);
+              if (choice) router.push(choice.href);
+            }}
+            className="w-auto min-w-0"
+          >
+            <option value="" disabled>
+              다른 연도
+            </option>
+            {yearChoices.map((y) => (
+              <option key={y.value} value={y.value}>
+                {y.value}년
+              </option>
+            ))}
+          </Select>
+        ) : null}
         <Select
           aria-label="영역"
           size="sm"
