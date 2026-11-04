@@ -46,6 +46,12 @@ describe("decideAccess", () => {
       expect(decide(mode, "/_next/webpack-hmr", false, "GET", true)).toEqual({ type: "next" });
     }
     expect(decide(LOGIN, "/api/auth/signin/google", false, "POST")).toEqual({ type: "next" });
+    for (const method of ["GET", "POST"]) {
+      expect(decide(LOGIN, "/api/auth", false, method)).toMatchObject({
+        type: "json",
+        status: 404,
+      });
+    }
     expect(decide(LOGIN, "/api/auth/callback/google?code=1")).toEqual({ type: "next" });
     expect(decide(LOGIN, "/api/auth/session")).toEqual({ type: "next" });
   });

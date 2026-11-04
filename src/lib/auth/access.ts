@@ -96,7 +96,12 @@ export function decideAccess(input: {
   }
 
   // login
-  if (isAuthApiPath(pathname)) return NEXT;
+  // Only real Auth.js endpoints: bare `/api/auth` is not the catch-all route but the
+  // not-found page (root layout), which must not take signed-out POSTs.
+  if (pathname.startsWith("/api/auth/")) return NEXT;
+  if (pathname === "/api/auth" && !signedIn) {
+    return { type: "json", status: 404, error: "없는 주소입니다." };
+  }
   if (signedIn) {
     if (pathname === SETUP_PATH) return { type: "redirect", to: "/" };
     return NEXT;
