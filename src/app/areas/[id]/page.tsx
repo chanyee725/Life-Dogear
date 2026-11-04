@@ -139,7 +139,8 @@ export default async function AreaDetailPage({ params }: Props) {
       <Section title={`자료${countLabel(materials.length)}`}>
         {materials.length === 0 ? (
           <p className="text-sm text-muted">
-            이 영역이나 소속 프로젝트·목표에 연결된 논문·세미나·생각이 없습니다.
+            이 영역에 속한 노트나, 영역·소속 프로젝트·목표에 연결된 논문·세미나·생각·노트가
+            없습니다.
           </p>
         ) : (
           <ul
