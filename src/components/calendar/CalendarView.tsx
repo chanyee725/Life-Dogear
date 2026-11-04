@@ -552,9 +552,11 @@ export function CalendarView({
             </button>
           </p>
         ) : null}
-        {google === "error" && choice.google ? (
+        {(google === "error" || google === "partial") && choice.google ? (
           <p className="text-[13px] text-muted">
-            캘린더를 불러오지 못했습니다.{" "}
+            {google === "partial"
+              ? "캘린더 일정 일부를 불러오지 못했습니다."
+              : "캘린더를 불러오지 못했습니다."}{" "}
             <button
               type="button"
               className="underline hover:text-fg"

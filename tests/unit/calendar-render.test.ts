@@ -130,6 +130,9 @@ describe("CalendarView (month)", () => {
 
   it("shows the Google failure and app failure lines", () => {
     expect(render({ google: "error" })).toContain("캘린더를 불러오지 못했습니다.");
+    const partial = render({ google: "partial", range: "week" });
+    expect(partial).toContain("캘린더 일정 일부를 불러오지 못했습니다.");
+    expect(partial).toContain("연구실 회의"); // what did load still shows
     expect(render({ items: [], failed: true })).toContain("달력을 불러오지 못했습니다.");
   });
 
