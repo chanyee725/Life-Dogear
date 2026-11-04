@@ -44,7 +44,11 @@ async function mockPost(page: Page, status: number, body: unknown) {
 }
 
 const addButton = (page: Page) => page.getByRole("button", { name: "일정 추가", exact: true });
-const dialog = (page: Page) => page.getByRole("dialog", { name: "Google 캘린더에 일정 추가" });
+// By its heading: ui/Dialog does not name the <dialog> (no aria-labelledby) yet.
+const dialog = (page: Page) =>
+  page
+    .getByRole("dialog")
+    .filter({ has: page.getByRole("heading", { name: "Google 캘린더에 일정 추가" }) });
 const toast = (page: Page, text: string) => page.getByRole("status").filter({ hasText: text });
 /** Grid entries named after `title` (Google: "Google 캘린더: 10시, <title>, …"). */
 const entries = (page: Page, title: string) =>
@@ -84,7 +88,10 @@ test.describe("달력 일정 추가: 쓰기 설정 있음", () => {
     await expect(toast(page, ADDED)).toBeVisible();
     await expect(dialog(page)).toBeHidden();
     await expect(entries(page, item.title)).toHaveCount(1);
-    expect(sent).toEqual([{ title: item.title, date: seoulToday(), start: "10:00" }]);
+    expect(sent).toHaveLength(1);
+    // `clientId`: the retry key the form adds; its value is the form's business.
+    expect(sent[0]).toMatchObject({ title: item.title, date: seoulToday(), start: "10:00" });
+    expect(sent[0]).toHaveProperty("clientId", expect.any(String));
   });
 
   test("실패하면 안내 토스트가 뜨고 달력에는 없다", async ({ page }) => {
