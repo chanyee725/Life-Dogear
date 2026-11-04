@@ -10,7 +10,7 @@ import type { CalendarItem } from "@/lib/calendar/types";
 
 const item = (id: string, start: string, extra: Partial<CalendarItem> = {}): CalendarItem => ({
   id,
-  source: "task",
+  source: "project",
   title: id,
   start,
   allDay: !start.includes("T"),
@@ -25,14 +25,14 @@ describe("upcoming (다음 일정)", () => {
     const list = upcoming(
       [
         item("later", "2026-11-06", { source: "seminar" }),
-        item("task", TODAY),
+        item("task", TODAY, { source: "task" }), // under "오늘 할 일", not here
         item("g15", "2026-11-04T15:00:00+09:00", { source: "google" }),
         item("g9", "2026-11-04T09:00:00+09:00", { source: "google" }), // over
         item("g13", "2026-11-04T13:00:00+09:00", {
           source: "google",
           end: "2026-11-04T15:00:00+09:00", // still going
         }),
-        item("proj", TODAY, { source: "project" }),
+        item("proj", TODAY),
         item("before", "2026-11-03"),
       ],
       TODAY,
@@ -40,13 +40,13 @@ describe("upcoming (다음 일정)", () => {
       NOW,
     );
     expect(list.groups.map((g) => [g.day, g.items.map((i) => i.id)])).toEqual([
-      [TODAY, ["g13", "g15", "proj", "task"]],
+      [TODAY, ["g13", "g15", "proj"]],
       ["2026-11-06", ["later"]],
     ]);
-    expect(list).toMatchObject({ shown: 5, more: 0 });
+    expect(list).toMatchObject({ shown: 4, more: 0 });
   });
 
-  it("keeps a done task on the shown day only, struck through by the row", () => {
+  it("keeps a done item on the shown day only, struck through by the row", () => {
     const items = [
       item("doneToday", TODAY, { done: true }),
       item("doneLater", "2026-11-10", { done: true }),
@@ -56,10 +56,11 @@ describe("upcoming (다음 일정)", () => {
     ).toEqual(["doneToday"]);
   });
 
-  it("leaves out done tasks of later days, periods, papers and goals", () => {
+  it("leaves out tasks, done items of later days, periods, papers and goals", () => {
     const list = upcoming(
       [
         item("done", "2026-11-10", { done: true }),
+        item("task", "2026-11-05", { source: "task" }),
         item("rev", "2026-11-02", { source: "review", end: "2026-11-08" }),
         item("rev1", "2026-11-05", { source: "review", end: "2026-11-05" }),
         item("goal", "2026-10-01", { source: "goal", end: "2026-12-31" }),
@@ -104,9 +105,11 @@ describe("headings and origin", () => {
   });
 
   it("names the task's parent or the source", () => {
-    expect(originLabel(item("a", TODAY, { parent: "학위 논문" }))).toBe("학위 논문");
-    expect(originLabel(item("a", TODAY))).toBe("");
-    expect(originLabel(item("p", TODAY, { source: "project" }))).toBe("마감");
+    expect(originLabel(item("a", TODAY, { source: "task", parent: "학위 논문" }))).toBe(
+      "학위 논문",
+    );
+    expect(originLabel(item("a", TODAY, { source: "task" }))).toBe("");
+    expect(originLabel(item("p", TODAY))).toBe("마감");
     expect(originLabel(item("s", TODAY, { source: "seminar" }))).toBe("세미나");
     expect(originLabel(item("g", TODAY, { source: "google" }))).toBe("Google");
   });
