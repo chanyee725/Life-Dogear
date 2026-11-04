@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
-import { Button, cn, DetailHeader, QuietButton } from "@/components/ui";
+import { Button, cn, DetailHeader, QuietButton, Toast } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
@@ -23,6 +31,9 @@ export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: stri
 
 /** Pause after the last edit before autosaving (matches the paper editor). */
 export const AUTOSAVE_DELAY = 1000;
+
+/** How long "저장되었습니다" stays after an explicit save. */
+export const SAVED_TOAST_MS = 2500;
 
 type Props = {
   action: ItemFormAction;
@@ -178,16 +189,13 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
-  /** Shown for a moment after an explicit 저장 that left nothing unsaved. */
-  const [confirmed, setConfirmed] = useState(false);
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * "저장되었습니다" after an explicit 저장 / Cmd+S that left nothing unsaved (never after
+   * autosave). Bumped per save so the one toast restarts its timer; 0 = none.
+   */
+  const [toast, setToast] = useState(0);
+  const hideToast = useCallback(() => setToast(0), []);
   const failedRef = useRef(false);
-  useEffect(
-    () => () => {
-      if (confirmTimer.current) clearTimeout(confirmTimer.current);
-    },
-    [],
-  );
   const [titleMissing, setTitleMissing] = useState(false);
   /** Edited since the form was last read into the queue. */
   const [unread, setUnread] = useState(false);
@@ -204,7 +212,6 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       (next, message) => {
         setState(next);
         failedRef.current = next === "error";
-        if (next !== "saved" && next !== "idle") setConfirmed(false);
         if (next === "error") setError(message);
         if (next === "saved") {
           setError(null);
@@ -301,16 +308,13 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     // already stored everything (then there was nothing new to send).
     if (queue.dirty() || failedRef.current || unreadRef.current) return;
     setSavedOnce(true);
-    setConfirmed(true);
-    if (confirmTimer.current) clearTimeout(confirmTimer.current);
-    confirmTimer.current = setTimeout(() => setConfirmed(false), 2500);
+    setToast((n) => n + 1);
   }
 
   useFormEdits(formRef, () => {
     unreadRef.current = true;
     preHydrationOnlyRef.current = false;
     setUnread(true);
-    setConfirmed(false);
     autosave();
   });
   useSaveShortcut(() => void saveNow());
@@ -331,7 +335,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       <DetailHeader
         backHref={basePath}
         backLabel={backLabel}
-        status={<SaveStatus state={shown} savedOnce={savedOnce} confirmed={confirmed} />}
+        status={<SaveStatus state={shown} savedOnce={savedOnce} />}
         actions={
           <>
             {actions}
@@ -344,6 +348,18 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       />
       <ErrorLine error={error} />
       {children}
+      {toast ? (
+        // From md the detail header's buttons sit in the top corner: drop below them.
+        <Toast
+          key={toast}
+          ms={SAVED_TOAST_MS}
+          onDone={hideToast}
+          place="top-right"
+          className="md:top-20"
+        >
+          저장되었습니다
+        </Toast>
+      ) : null}
     </form>
   );
 }
