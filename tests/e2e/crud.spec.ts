@@ -74,3 +74,45 @@ test("자동 저장: 편집은 잠시 뒤 저장되고, 바로 떠나도 남는�
   await page.goto(detailUrl);
   await expect(page.getByLabel("제목", { exact: true })).toHaveValue(second);
 });
+
+test("저장 토스트: 저장·Cmd+S면 오른쪽 위에 하나만, 자동 저장이면 없음", async ({ page }) => {
+  const title = uniqueTitle("E2E toast");
+  await createItem(page, "thoughts", title);
+  const titleField = page.getByLabel("제목", { exact: true });
+  const toast = page.getByRole("status").filter({ hasText: "저장되었습니다" });
+
+  // Autosave: 저장됨 in the header, no toast.
+  await titleField.fill(`${title} (auto)`);
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+  await expect(toast).toHaveCount(0);
+
+  // 저장: one toast at the top right, gone after ~2.5 s.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.getByRole("button", { name: "저장", exact: true }).click();
+  await expect(toast).toHaveCount(1);
+  const box = (await toast.boundingBox())!;
+  expect(box.y).toBeLessThan(40);
+  expect(1280 - (box.x + box.width)).toBeLessThan(40);
+  await page.mouse.move(0, 400); // keep the pointer off it (hover pauses the timer)
+  await page.screenshot({ path: "test-results/save-toast-1280-light.png" });
+
+  // Saving again keeps one toast; Cmd/Ctrl+S counts as an explicit save.
+  await page.getByRole("button", { name: "저장", exact: true }).click();
+  await titleField.press("ControlOrMeta+s");
+  await expect(toast).toHaveCount(1);
+  await expect(toast).toHaveCount(0, { timeout: 5_000 });
+
+  await page.getByRole("radio", { name: "다크" }).click();
+  await page.getByRole("button", { name: "저장", exact: true }).click();
+  await expect(toast).toHaveCount(1);
+  await page.mouse.move(0, 400);
+  await page.screenshot({ path: "test-results/save-toast-1280-dark.png" });
+  await page.getByRole("radio", { name: "라이트" }).click();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await titleField.press("ControlOrMeta+s");
+  await expect(toast).toHaveCount(1);
+  await page.screenshot({ path: "test-results/save-toast-390.png" });
+
+  await deleteCurrentItem(page);
+});

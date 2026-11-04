@@ -22,56 +22,28 @@ const SAVE_LABEL: Record<SaveState, string> = {
   error: "저장 실패",
 };
 
-/**
- * Save state text for the header. `idle` after a save still reads "저장됨".
- * `confirmed`: the user just pressed 저장 and everything is stored — shown as a green
- * check pill for a moment, so the click gets a visible answer even when autosave had
- * already sent the changes.
- */
+/** Save state text for the header (`aria-live`). `idle` after a save still reads "저장됨". */
 export function SaveStatus({
   state,
   savedOnce = false,
-  confirmed = false,
 }: {
   state: SaveState;
   savedOnce?: boolean;
-  confirmed?: boolean;
 }) {
-  const label = confirmed
-    ? SAVE_LABEL.saved
-    : state === "idle" && savedOnce
-      ? SAVE_LABEL.saved
-      : SAVE_LABEL[state];
+  const label = state === "idle" && savedOnce ? SAVE_LABEL.saved : SAVE_LABEL[state];
   return (
     <span
       aria-live="polite"
-      data-state={confirmed ? "confirmed" : state}
+      data-state={state}
       className={cn(
         "inline-flex items-center gap-1 text-xs",
-        confirmed
-          ? "rounded-md bg-tone-green-bg px-2 py-0.5 font-medium text-tone-green-fg"
-          : state === "pending"
-            ? "text-tone-amber-fg"
-            : state === "error"
-              ? "text-danger"
-              : "text-muted",
+        state === "pending"
+          ? "text-tone-amber-fg"
+          : state === "error"
+            ? "text-danger"
+            : "text-muted",
       )}
     >
-      {confirmed ? (
-        <svg
-          aria-hidden
-          width="12"
-          height="12"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m3.5 8.5 3 3 6-7" />
-        </svg>
-      ) : null}
       <span>{label}</span>
     </span>
   );

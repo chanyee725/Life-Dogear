@@ -16,7 +16,7 @@ import { createNote } from "@/app/notes/actions";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { safeAction } from "@/components/links/safe-action";
 import { useModKey } from "@/components/shell/mod-key";
-import { Button, cn, controlClass, Input, Kbd, Spinner } from "@/components/ui";
+import { Button, cn, controlClass, Input, Kbd, Spinner, Toast } from "@/components/ui";
 import {
   autosizeHeight,
   draftToSave,
@@ -351,25 +351,12 @@ export function QuickCapture() {
  * paused while hovered or focused (6.4).
  */
 function SavedToast({ note, onDone }: { note?: string; onDone: () => void }) {
-  const [paused, setPaused] = useState(false);
-  useEffect(() => {
-    if (paused) return;
-    const timer = setTimeout(onDone, TOAST_MS);
-    return () => clearTimeout(timer);
-  }, [paused, onDone]);
   return (
-    <div
-      role="status"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
-      className="fixed right-4 bottom-4 z-50 rounded-lg border border-border bg-bg px-3 py-2 text-[13px] text-fg shadow-overlay"
-    >
+    <Toast ms={TOAST_MS} onDone={onDone}>
       {note ? "노트를 만들었습니다." : "수집함에 저장했습니다."}{" "}
       <Link href={note ? `/notes/${note}` : "/inbox"} onClick={onDone} className="underline">
         {note ? "열기" : "보기"}
       </Link>
-    </div>
+    </Toast>
   );
 }
