@@ -52,7 +52,7 @@ import {
 } from "./model";
 import { Popover } from "./Popover";
 import { TodayPanel } from "./TodayPanel";
-import { SourceDot, SourceIcon, sourceColor } from "./SourceIcon";
+import { SourceDot, SourceIcon, sourceColor, sourceTint } from "./SourceIcon";
 import { SOURCES, SOURCE_LABEL, noneChosen, visibleItems } from "./sources";
 import { useSources } from "./useSources";
 
@@ -578,7 +578,7 @@ export function CalendarView({
       </div>
 
       {/* 13.1: two columns from lg (calendar | panel); below lg the panel goes first. */}
-      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6">
+      <div className="mt-4 flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:items-start lg:gap-8">
         <div className="flex min-w-0 flex-col">
           {/* Messages (10절) and the period line (3.3) */}
           <div className="mb-2 flex flex-col gap-1 empty:hidden">
@@ -697,7 +697,7 @@ export function CalendarView({
           {narrow ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
         </div>
         <TodayPanel
-          className="order-first min-w-0 lg:order-none lg:rounded-lg lg:border lg:border-border lg:p-6"
+          className="order-first min-w-0 lg:order-none lg:pt-1"
           day={selected}
           today={today}
           now={now}
@@ -1030,8 +1030,7 @@ function Bar({ bar, days, top, ctx }: { bar: WeekBar; days: string[]; top: numbe
   const color = sourceColor(ctx.theme, item.source);
   const className = cn(
     "absolute z-10 flex h-5 min-w-0 items-center gap-1.5 overflow-hidden rounded-[4px] px-1.5 text-xs text-fg focus-visible:outline-offset-[-2px]",
-    item.source === "goal" ? "bg-tone-red-bg" : "bg-tone-gray-bg",
-    !bar.continuesBefore && "border-l-2",
+    !bar.continuesBefore && "border-l-[3px]",
     bar.continuesBefore && "rounded-l-none",
     bar.continuesAfter && "rounded-r-none",
   );
@@ -1040,10 +1039,10 @@ function Bar({ bar, days, top, ctx }: { bar: WeekBar; days: string[]; top: numbe
     left: `calc(${(bar.col / 7) * 100}% + 2px)`,
     width: `calc(${(bar.span / 7) * 100}% - 4px)`,
     borderLeftColor: bar.continuesBefore ? undefined : color,
+    background: sourceTint(ctx.theme, item.source, 16),
   };
   const body = (
     <>
-      {!bar.continuesBefore ? <SourceIcon source={item.source} theme={ctx.theme} /> : null}
       <span className="truncate">{item.title}</span>
     </>
   );
