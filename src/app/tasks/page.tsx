@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { CalendarView } from "@/components/calendar/CalendarView";
+import { gridRange, parseCalendarQuery, seoulDate } from "@/components/calendar/model";
+import { SegmentedLinks } from "@/components/calendar/Segmented";
 import { LinkTabs } from "@/components/list/Tabs";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { dayLabel, isoWeekRange } from "@/components/tasks/dates";
 import { localDate, parentHref } from "@/components/tasks/format";
 import { TaskList } from "@/components/tasks/TaskList";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { areas, goals, projects, tasks } from "@/lib/repo";
 import type { Task, TaskParentType } from "@/lib/repo/tasks";
 
@@ -23,7 +27,7 @@ type Tab = (typeof TABS)[number]["value"];
 
 const isTab = (v: unknown): v is Tab => TABS.some((t) => t.value === v);
 
-type Props = { searchParams: Promise<{ tab?: string | string[] }> };
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 const byDue = (a: Task, b: Task) => (a.dueDate ?? "").localeCompare(b.dueDate ?? "");
 
@@ -40,8 +44,51 @@ function Group({ title, count, children }: { title: string; count: number; child
   );
 }
 
+/** `[목록 | 달력]` in the header (calendar.md 1절). */
+function ViewSwitch({ view }: { view: "list" | "calendar" }) {
+  return (
+    <SegmentedLinks
+      ariaLabel="보기"
+      active={view}
+      options={[
+        { value: "list", label: "목록", href: "/tasks" },
+        { value: "calendar", label: "달력", href: "/tasks?view=calendar" },
+      ]}
+    />
+  );
+}
+
+/** Calendar view: one `getCalendar` call for the visible grid (papers always fetched; "표시" filters). */
+async function CalendarPage({ params }: { params: Record<string, string | string[] | undefined> }) {
+  const today = seoulDate();
+  const q = parseCalendarQuery(params, today);
+  let data: CalendarResult = { items: [], google: "off" };
+  let failed = false;
+  try {
+    data = await getCalendar(gridRange(q.range, q.date), { papers: true });
+  } catch (error) {
+    console.error("calendar: app data failed", error instanceof Error ? error.name : "unknown");
+    failed = true;
+  }
+  return (
+    <Page>
+      <PageHeader title="할 일" className="mb-0" actions={<ViewSwitch view="calendar" />} />
+      <CalendarView
+        range={q.range}
+        date={q.date}
+        today={today}
+        items={data.items}
+        google={data.google}
+        failed={failed}
+      />
+    </Page>
+  );
+}
+
 export default async function TasksPage({ searchParams }: Props) {
-  const raw = (await searchParams).tab;
+  const params = await searchParams;
+  if (parseCalendarQuery(params, "").view === "calendar") return <CalendarPage params={params} />;
+  const raw = params.tab;
   const tab: Tab = isTab(raw) ? raw : "today";
   const today = localDate();
   const week = isoWeekRange(today);
@@ -63,7 +110,7 @@ export default async function TasksPage({ searchParams }: Props) {
 
   return (
     <Page>
-      <PageHeader title="할 일" />
+      <PageHeader title="할 일" actions={<ViewSwitch view="list" />} />
       <LinkTabs
         ariaLabel="할 일 보기"
         active={tab}

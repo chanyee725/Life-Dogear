@@ -3,7 +3,7 @@
  * Dates are `YYYY-MM-DD` in Asia/Seoul. Weeks start on Monday (same as `isoWeekRange`).
  */
 import { addDays } from "@/components/tasks/format";
-import type { CalendarItem, CalendarSource } from "@/lib/calendar/types";
+import type { CalendarItem } from "@/lib/calendar/types";
 
 export const CALENDAR_TZ = "Asia/Seoul";
 
@@ -88,22 +88,33 @@ export function gridRange(kind: CalendarRangeKind, date: string): { from: string
 export const stepDate = (kind: CalendarRangeKind, date: string, dir: -1 | 1) =>
   kind === "week" ? addDays(date, 7 * dir) : addMonths(date, dir);
 
-/** Heading: `2026년 11월` or `2026년 11월 2일 – 8일` (week). */
+/** Heading: `2026년 11월`, or for a week `11월 2일 – 8일` / `10월 26일 – 11월 1일`. */
 export function rangeTitle(kind: CalendarRangeKind, date: string): string {
   const [y, m] = date.split("-").map(Number);
   if (kind === "month") return `${y}년 ${m}월`;
   const { from, to } = gridRange("week", date);
-  const [fy, fm, fd] = from.split("-").map(Number);
-  const [ty, tm, td] = to.split("-").map(Number);
-  if (fy !== ty) return `${fy}년 ${fm}월 ${fd}일 – ${ty}년 ${tm}월 ${td}일`;
-  if (fm !== tm) return `${fy}년 ${fm}월 ${fd}일 – ${tm}월 ${td}일`;
-  return `${fy}년 ${fm}월 ${fd}일 – ${td}일`;
+  const [, fm, fd] = from.split("-").map(Number);
+  const [, tm, td] = to.split("-").map(Number);
+  return fm === tm ? `${fm}월 ${fd}일 – ${td}일` : `${fm}월 ${fd}일 – ${tm}월 ${td}일`;
+}
+
+/** Days the page is "about": the month (1st..last) or the week; period-line test uses it. */
+export function visibleSpan(kind: CalendarRangeKind, date: string): { from: string; to: string } {
+  if (kind === "week") return gridRange("week", date);
+  const from = `${date.slice(0, 7)}-01`;
+  return { from, to: addDays(addMonths(from, 1), -1) };
 }
 
 /** Spoken date: `11월 4일 수요일`. */
 export function spokenDay(date: string): string {
   const [, m, d] = date.split("-").map(Number);
   return `${m}월 ${d}일 ${WEEKDAYS[weekdayIndex(date)]}요일`;
+}
+
+/** `11월 5일` (no weekday). */
+export function shortDay(date: string): string {
+  const [, m, d] = date.split("-").map(Number);
+  return `${m}월 ${d}일`;
 }
 
 // ---- query ----------------------------------------------------------------------------
@@ -113,7 +124,6 @@ export type CalendarQuery = {
   range: CalendarRangeKind;
   /** Anchor date (defaults to today). */
   date: string;
-  papers: boolean;
 };
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -127,25 +137,20 @@ export function parseCalendarQuery(
     view: one(params.view) === "calendar" ? "calendar" : "list",
     range: one(params.range) === "week" ? "week" : "month",
     date: isDate(date) ? date : today,
-    papers: one(params.papers) === "1",
   };
 }
 
-/** URL of a calendar page; defaults are left out (`range=month`, today, papers off). */
-export function calendarHref(
-  q: Partial<Omit<CalendarQuery, "view">>,
-  today?: string,
-): string {
+/** URL of a calendar page; defaults are left out (`range=month`, today). */
+export function calendarHref(q: { range?: CalendarRangeKind; date?: string }, today?: string) {
   const sp = new URLSearchParams({ view: "calendar" });
   if (q.range === "week") sp.set("range", "week");
   if (q.date && q.date !== today) sp.set("date", q.date);
-  if (q.papers) sp.set("papers", "1");
   return `/tasks?${sp}`;
 }
 
-// ---- layout ---------------------------------------------------------------------------
+// ---- ordering -------------------------------------------------------------------------
 
-/** Items with a later last day than first day are drawn as bars (띠). */
+/** Last day an item covers (inclusive). */
 export function lastDay(item: CalendarItem): string {
   const first = dayOf(item.start);
   if (!item.end) return first;
@@ -153,29 +158,69 @@ export function lastDay(item: CalendarItem): string {
   return end > first ? end : first;
 }
 
-export const isBar = (item: CalendarItem) => lastDay(item) !== dayOf(item.start);
+/** Can be dragged / moved with `[` `]`: open tasks only (calendar.md 5.1). */
+export const isMovable = (item: CalendarItem) => !!item.taskId && !item.done;
 
-/** Source order inside a day: deadlines first, reading last, Google after app items. */
-const SOURCE_ORDER: Record<CalendarSource, number> = {
-  task: 0,
-  project: 1,
-  seminar: 2,
-  goal: 3,
-  review: 4,
-  paper: 5,
-  google: 6,
-};
+/**
+ * Order inside a day (calendar.md 3.2): project → seminar → open task → (goal, review) →
+ * Google (all-day, then by time) → paper → done task; then title.
+ */
+export function rankOf(item: CalendarItem): number {
+  switch (item.source) {
+    case "project":
+      return 0;
+    case "seminar":
+      return 1;
+    case "task":
+      return item.done ? 7 : 2;
+    case "goal":
+      return 3;
+    case "review":
+      return 4;
+    case "google":
+      return 5;
+    case "paper":
+      return 6;
+  }
+}
 
 export function compareItems(a: CalendarItem, b: CalendarItem): number {
-  // All-day before timed, then by time, then source, then title.
-  if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
-  if (!a.allDay && a.start !== b.start) return a.start < b.start ? -1 : 1;
-  return (
-    SOURCE_ORDER[a.source] - SOURCE_ORDER[b.source] ||
-    Number(!!a.done) - Number(!!b.done) ||
-    a.title.localeCompare(b.title, "ko")
-  );
+  const r = rankOf(a) - rankOf(b);
+  if (r) return r;
+  if (a.source === "google") {
+    if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+    if (!a.allDay && a.start !== b.start) return a.start < b.start ? -1 : 1;
+  }
+  return a.title.localeCompare(b.title, "ko");
 }
+
+/** Items on `day` (bars included), sorted. */
+export function itemsOn(items: readonly CalendarItem[], day: string): CalendarItem[] {
+  return items.filter((it) => dayOf(it.start) <= day && day <= lastDay(it)).sort(compareItems);
+}
+
+// ---- layout ---------------------------------------------------------------------------
+
+/** Items covering the whole visible span go on the period line above the grid (3.3). */
+export function splitPeriodLine(
+  items: readonly CalendarItem[],
+  span: { from: string; to: string },
+): { line: CalendarItem[]; rest: CalendarItem[] } {
+  const line: CalendarItem[] = [];
+  const rest: CalendarItem[] = [];
+  for (const it of items) {
+    const multi = lastDay(it) !== dayOf(it.start);
+    if (multi && dayOf(it.start) <= span.from && lastDay(it) >= span.to) line.push(it);
+    else rest.push(it);
+  }
+  line.sort((a, b) => rankOf(a) - rankOf(b) || a.title.localeCompare(b.title, "ko"));
+  return { line, rest };
+}
+
+/** Bar lanes per week row (3.3: at most two; the rest count toward the day's "+n"). */
+export const MAX_LANES = 2;
+/** Month cell line budget (bars + items) before "+n" (3.2). */
+export const MONTH_LINES = 3;
 
 export type WeekBar = {
   item: CalendarItem;
@@ -188,76 +233,135 @@ export type WeekBar = {
   continuesAfter: boolean;
 };
 
-export type WeekLayout = {
-  days: string[];
-  bars: WeekBar[];
-  lanes: number;
-  /** Single-day items per day (same order as `days`), sorted. */
-  singles: CalendarItem[][];
+export type DayCell = {
+  day: string;
+  /** Single-day items shown in the cell. */
+  shown: CalendarItem[];
+  /** "+n" (0 = none): hidden items plus bars that did not get a lane. */
+  hidden: number;
+  /** Everything on the day (bars included), for the "+n" popover and labels. */
+  all: CalendarItem[];
 };
 
-/** Bars packed into lanes (longest first) and single-day items per day for one week. */
-export function layoutWeek(items: readonly CalendarItem[], days: readonly string[]): WeekLayout {
+export type WeekLayout = { days: string[]; bars: WeekBar[]; lanes: number; cells: DayCell[] };
+
+/**
+ * One week row: multi-day items packed into lanes (earliest, then longest first), at most
+ * `MAX_LANES`; single-day items per day. `budget` = lines per cell (null = show all).
+ */
+export function layoutWeek(
+  items: readonly CalendarItem[],
+  days: readonly string[],
+  budget: number | null,
+): WeekLayout {
   const from = days[0]!;
   const to = days.at(-1)!;
   const singles = days.map(() => [] as CalendarItem[]);
-  const barItems: { item: CalendarItem; first: string; last: string }[] = [];
+  const multi: { item: CalendarItem; first: string; last: string }[] = [];
   for (const item of items) {
     const first = dayOf(item.start);
     const last = lastDay(item);
     if (last < from || first > to) continue;
     if (first === last) singles[days.indexOf(first)]?.push(item);
-    else barItems.push({ item, first, last });
+    else multi.push({ item, first, last });
   }
-  barItems.sort(
+  multi.sort(
     (a, b) =>
       a.first.localeCompare(b.first) ||
       b.last.localeCompare(a.last) ||
       compareItems(a.item, b.item),
   );
   const laneEnds: number[] = [];
-  const bars: WeekBar[] = barItems.map(({ item, first, last }) => {
+  const bars: WeekBar[] = [];
+  const overflowBars = days.map(() => 0);
+  for (const { item, first, last } of multi) {
     const col = first < from ? 0 : days.indexOf(first);
     const end = last > to ? days.length - 1 : days.indexOf(last);
     let lane = laneEnds.findIndex((e) => e < col);
     if (lane < 0) lane = laneEnds.length;
+    if (lane >= MAX_LANES) {
+      for (let i = col; i <= end; i++) overflowBars[i]!++;
+      continue;
+    }
     laneEnds[lane] = end;
-    return {
+    bars.push({
       item,
       col,
       span: end - col + 1,
       lane,
       continuesBefore: first < from,
       continuesAfter: last > to,
-    };
-  });
-  for (const list of singles) list.sort(compareItems);
-  return { days: [...days], bars, lanes: laneEnds.length, singles };
-}
-
-/** First `max` items and how many are left over ("+n"). Shows all when only one would hide. */
-export function splitOverflow<T>(list: readonly T[], max: number): { shown: T[]; hidden: number } {
-  if (list.length <= max) return { shown: [...list], hidden: 0 };
-  const keep = Math.max(0, max - 1);
-  return { shown: list.slice(0, keep), hidden: list.length - keep };
-}
-
-/** Per-day counts for the home strip; bars count on every day they cover. */
-export function countByDay(
-  items: readonly CalendarItem[],
-  days: readonly string[],
-): Map<string, CalendarItem[]> {
-  const out = new Map(days.map((d) => [d, [] as CalendarItem[]]));
-  for (const item of items) {
-    const first = dayOf(item.start);
-    const last = lastDay(item);
-    for (const d of days) if (d >= first && d <= last) out.get(d)!.push(item);
+    });
   }
-  for (const list of out.values()) list.sort(compareItems);
+  const lanes = laneEnds.length;
+  const cells = days.map((day, i): DayCell => {
+    const list = singles[i]!.sort(compareItems);
+    const all = [
+      ...multi.filter((m) => m.first <= day && day <= m.last).map((m) => m.item),
+      ...list,
+    ].sort(compareItems);
+    if (budget === null) return { day, shown: list, hidden: 0, all };
+    const slots = Math.max(0, budget - lanes);
+    const total = list.length + overflowBars[i]!;
+    if (total <= slots) return { day, shown: list, hidden: 0, all };
+    const keep = Math.max(0, slots - 1);
+    return { day, shown: list.slice(0, keep), hidden: total - keep, all };
+  });
+  return { days: [...days], bars, lanes, cells };
+}
+
+/** Dots for a day (8절·9절): first three sources in cell order; tasks hollow if all done. */
+export function dayDots(
+  dayItems: readonly CalendarItem[],
+): { source: CalendarItem["source"]; hollow: boolean }[] {
+  const out: { source: CalendarItem["source"]; hollow: boolean }[] = [];
+  const sorted = [...dayItems].sort(compareItems);
+  for (const it of sorted) {
+    const seen = out.find((d) => d.source === it.source);
+    if (seen) {
+      if (it.source === "task" && !it.done) seen.hollow = false;
+      continue;
+    }
+    if (out.length === 3) continue;
+    out.push({ source: it.source, hollow: it.source === "task" && !!it.done });
+  }
   return out;
 }
 
-/** Moves a task item to `date` (optimistic drag/keyboard update). */
-export function moveItemTo(items: readonly CalendarItem[], id: string, date: string): CalendarItem[] {
+/** Moves an item to `date` (optimistic drag/keyboard update). */
+export function moveItemTo(
+  items: readonly CalendarItem[],
+  id: string,
+  date: string,
+): CalendarItem[] {
   return items.map((it) => (it.id === id ? { ...it, start: date, end: undefined } : it));
 }
+
+// ---- keyboard -------------------------------------------------------------------------
+
+/** Day a grid key moves to (calendar.md 5.2); null = key not handled. */
+export function navDay(kind: CalendarRangeKind, day: string, key: string): string | null {
+  switch (key) {
+    case "ArrowLeft":
+      return addDays(day, -1);
+    case "ArrowRight":
+      return addDays(day, 1);
+    case "ArrowUp":
+      return kind === "week" ? day : addDays(day, -7);
+    case "ArrowDown":
+      return kind === "week" ? day : addDays(day, 7);
+    case "Home":
+      return startOfWeek(day);
+    case "End":
+      return addDays(startOfWeek(day), 6);
+    case "PageUp":
+      return stepDate(kind, day, -1);
+    case "PageDown":
+      return stepDate(kind, day, 1);
+    default:
+      return null;
+  }
+}
+
+/** Monday after `today`. */
+export const nextMonday = (today: string) => addDays(startOfWeek(today), 7);
