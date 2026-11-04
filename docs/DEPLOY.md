@@ -1,6 +1,6 @@
 # 배포 체크리스트 (나만 쓰기)
 
-Research Brain을 Vercel에 올려 휴대폰·다른 PC에서도 쓰는 순서입니다. 모든 외부 계정 작업과 값 입력은 직접 합니다. 비밀값(토큰·시크릿)은 이 문서·저장소·채팅 어디에도 적지 말고 각 서비스 화면과 Vercel 환경변수에만 넣으세요.
+Life Dogear을 Vercel에 올려 휴대폰·다른 PC에서도 쓰는 순서입니다. 모든 외부 계정 작업과 값 입력은 직접 합니다. 비밀값(토큰·시크릿)은 이 문서·저장소·채팅 어디에도 적지 말고 각 서비스 화면과 Vercel 환경변수에만 넣으세요.
 
 구성: 웹 = Vercel Hobby(`https://<프로젝트>.vercel.app`), DB = Turso, 사진·PDF = Cloudflare R2, 로그인 = Google.
 
@@ -21,7 +21,7 @@ Vercel에서는 사진·PDF를 R2에 저장해야 합니다(`S3_*` 네 개). 비
 ## 1. Google 로그인 (OAuth 클라이언트)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → 프로젝트 만들기(또는 선택).
-2. **API 및 서비스 → OAuth 동의 화면**: 사용자 유형 "외부", 앱 이름 `Research Brain`. 게시 상태는 "테스트"로 두고 **테스트 사용자**에 본인 Google 계정만 추가합니다.
+2. **API 및 서비스 → OAuth 동의 화면**: 사용자 유형 "외부", 앱 이름 `Life Dogear`. 게시 상태는 "테스트"로 두고 **테스트 사용자**에 본인 Google 계정만 추가합니다.
 3. **사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**, 유형 "웹 애플리케이션".
 4. **승인된 리디렉션 URI**에 추가:
    - `https://<프로젝트>.vercel.app/api/auth/callback/google`

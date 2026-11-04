@@ -17,15 +17,8 @@ const pretendard = localFont({
   variable: "--font-pretendard",
 });
 
-const inter = localFont({
-  src: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
-  weight: "100 900",
-  display: "swap",
-  variable: "--font-inter",
-});
-
 export const metadata: Metadata = {
-  title: { default: "Research Brain", template: "%s · Research Brain" },
+  title: { default: "Life Dogear", template: "%s · Life Dogear" },
   description: "개인 연구 노트",
 };
 
@@ -33,7 +26,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // Signed out (or setup needed): no sidebar, search or capture, which read the notes.
   const showApp = await canShowApp();
   return (
-    <html lang="ko" className={`${pretendard.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="ko" className={pretendard.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

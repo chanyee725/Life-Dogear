@@ -12,7 +12,7 @@ type Props = { params: Promise<{ name: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = decodeTagParam((await params).name);
-  // The root layout's title template appends " · Research Brain".
+  // The root layout's title template appends " · Life Dogear".
   return { title: name ? `#${name}` : "주제" };
 }
 

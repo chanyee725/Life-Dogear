@@ -96,8 +96,8 @@
 /* ---------- Tailwind theme mapping ---------- */
 @theme inline {
   --font-sans:
-    var(--font-inter), var(--font-pretendard), ui-sans-serif, system-ui, -apple-system,
-    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    var(--font-pretendard), ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --color-bg: var(--rb-bg);

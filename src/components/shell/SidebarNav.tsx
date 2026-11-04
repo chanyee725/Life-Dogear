@@ -168,7 +168,7 @@ export function SidebarNav({
       >
         <div className="flex h-14 items-center justify-between pr-2 pl-5">
           <Link href="/" className="text-[15px] font-semibold tracking-tight">
-            Research Brain
+            Life Dogear
           </Link>
           <button
             type="button"
