@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
+import ICAL from "ical.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearIcsCache, loadGoogleItems } from "@/lib/calendar/ics";
+import { cachedRangeCount, clearIcsCache, loadGoogleItems } from "@/lib/calendar/ics";
 import { feedUrl, fetchIcs, MAX_ICS_BYTES } from "@/lib/calendar/ics/fetch";
 import {
   expandIcs,
+  fastForwardStart,
   MAX_ITEMS_PER_FEED,
-  MAX_ITERATIONS_PER_EVENT,
   parseIcs,
 } from "@/lib/calendar/ics/parse";
 import { msToZonedIso, wallToMs } from "@/lib/calendar/ics/zone";
@@ -20,7 +21,7 @@ const ics = (body: string) =>
   `BEGIN:VCALENDAR\r\nVERSION:2.0\r\n${body.trim().split("\n").join("\r\n")}\r\nEND:VCALENDAR\r\n`;
 
 describe("expandIcs", () => {
-  const items = expandIcs(parseIcs(SAMPLE), NOV);
+  const { items, complete } = expandIcs(parseIcs(SAMPLE), NOV);
   const byUid = (uid: string) => items.filter((i) => i.id.startsWith(`google:${uid}:`));
 
   it("reads all-day events with an inclusive end", () => {
@@ -94,31 +95,94 @@ describe("expandIcs", () => {
     expect(byUid("outside@google.com")).toEqual([]);
   });
 
-  it("caps iterations per event and items per feed", () => {
-    // Every minute since 2020: the iteration cap stops it long before the range.
-    const minutely = parseIcs(
-      ics(`
-BEGIN:VEVENT
-UID:m
-DTSTART:20200101T000000Z
-RRULE:FREQ=MINUTELY
-SUMMARY:m
-END:VEVENT`),
-    );
-    expect(expandIcs(minutely, NOV)).toEqual([]);
-    expect(MAX_ITERATIONS_PER_EVENT).toBeLessThanOrEqual(10_000);
+  it("expands the sample completely", () => {
+    expect(complete).toBe(true);
+  });
 
-    // Every minute inside the range: the item cap applies.
-    const dense = parseIcs(
-      ics(`
+  const event = (uid: string, rule: string, dtstart = "TZID=Asia/Seoul:20000103T090000") => `
 BEGIN:VEVENT
-UID:d
-DTSTART:20261101T000000Z
-RRULE:FREQ=MINUTELY
-SUMMARY:d
-END:VEVENT`),
-    );
-    expect(expandIcs(dense, NOV)).toHaveLength(MAX_ITEMS_PER_FEED);
+UID:${uid}
+DTSTART;${dtstart}
+DTEND;${dtstart.replace(/T(\d\d)/, (_, h: string) => `T${String(Number(h) + 1).padStart(2, "0")}`)}
+RRULE:${rule}
+SUMMARY:${uid}
+END:VEVENT`;
+
+  it("reaches the range for old daily events, quickly", () => {
+    const feed = parseIcs(ics(event("daily", "FREQ=DAILY", "TZID=Asia/Seoul:20100101T090000")));
+    const result = expandIcs(feed, NOV);
+    expect(result.complete).toBe(true);
+    expect(result.items).toHaveLength(30);
+    expect(result.items[0]!.start).toBe("2026-11-01T09:00:00+09:00");
+  });
+
+  it("stays bounded with many hourly events since 2000 and reports it", () => {
+    const body = Array.from({ length: 300 }, (_, i) => event(`h${i}`, "FREQ=HOURLY")).join("\n");
+    const feed = parseIcs(ics(body));
+    const t0 = performance.now();
+    const result = expandIcs(feed, NOV);
+    expect(performance.now() - t0).toBeLessThan(2000);
+    expect(result.complete).toBe(false);
+    expect(result.items.length).toBeLessThanOrEqual(MAX_ITEMS_PER_FEED);
+    expect(result.items.every((i) => i.start >= "2026-11-01")).toBe(true);
+  });
+
+  it("marks COUNT rules that cannot reach the range as incomplete", () => {
+    const feed = parseIcs(ics(event("c", "FREQ=DAILY;COUNT=100000")));
+    expect(expandIcs(feed, NOV)).toEqual({ items: [], complete: false });
+  });
+
+  it("spends at most one iteration budget per feed", () => {
+    // COUNT rules cannot be fast-forwarded; 300 of them would cost 300 × the per-event cap.
+    const body = Array.from({ length: 300 }, (_, i) =>
+      event(`c${i}`, "FREQ=MINUTELY;COUNT=1000000"),
+    ).join("\n");
+    const feed = parseIcs(ics(body));
+    const t0 = performance.now();
+    const result = expandIcs(feed, NOV);
+    expect(performance.now() - t0).toBeLessThan(2000);
+    expect(result).toEqual({ items: [], complete: false });
+  });
+
+  it("caps items per feed", () => {
+    const feed = parseIcs(ics(event("d", "FREQ=MINUTELY", "TZID=Asia/Seoul:20261101T000000")));
+    const result = expandIcs(feed, NOV);
+    expect(result.items).toHaveLength(MAX_ITEMS_PER_FEED);
+    expect(result.complete).toBe(false);
+  });
+
+  it("fast-forwards to the same occurrences as iterating from DTSTART", () => {
+    const rules = [
+      "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,TH",
+      "FREQ=DAILY;INTERVAL=3",
+      "FREQ=DAILY;BYDAY=MO,WE",
+      "FREQ=HOURLY;INTERVAL=5;BYHOUR=10,15",
+      "FREQ=WEEKLY;UNTIL=20261115T000000Z",
+    ];
+    for (const rule of rules) {
+      const comp = parseIcs(ics(event("f", rule, "TZID=Asia/Seoul:20200106T100000"))).events[0]!;
+      const ev = new ICAL.Event(comp);
+      const moved = fastForwardStart(ev, "2026-10-29");
+      expect(moved, rule).toBeDefined();
+      expect(moved!.toString() < "2026-10-29", rule).toBe(true);
+      const list = (it: ICAL.RecurExpansion) => {
+        const out: string[] = [];
+        for (let n = it.next(); n && n.toString() <= "2026-11-30T23"; n = it.next()) {
+          if (n.toString() >= "2026-11-01") out.push(n.toString());
+        }
+        return out;
+      };
+      expect(list(ev.iterator(moved)), rule).toEqual(list(ev.iterator()));
+    }
+    // COUNT and MONTHLY rules iterate from DTSTART.
+    const counted = new ICAL.Event(parseIcs(ics(event("c", "FREQ=DAILY;COUNT=9000"))).events[0]!);
+    expect(fastForwardStart(counted, "2026-10-29")).toBeUndefined();
+    const monthly = new ICAL.Event(parseIcs(ics(event("m", "FREQ=MONTHLY"))).events[0]!);
+    expect(fastForwardStart(monthly, "2026-10-29")).toBeUndefined();
+    expect(expandIcs(parseIcs(ics(event("m", "FREQ=MONTHLY"))), NOV)).toMatchObject({
+      complete: true,
+      items: [{ start: "2026-11-03T09:00:00+09:00" }],
+    });
   });
 
   it("rejects text that is not a calendar", () => {
@@ -186,6 +250,19 @@ describe("fetchIcs", () => {
   });
 });
 
+describe("fetchIcs redirects", () => {
+  it("refuses a redirect to plain http", async () => {
+    const downgrade: typeof fetch = async () => {
+      const res = new Response(SAMPLE);
+      Object.defineProperty(res, "url", { value: "http://calendar.example/x.ics" });
+      return res;
+    };
+    await expect(fetchIcs(new URL(FEED_A), { fetchImpl: downgrade })).rejects.toMatchObject({
+      code: "insecure_redirect",
+    });
+  });
+});
+
 describe("loadGoogleItems", () => {
   let warn: ReturnType<typeof vi.spyOn>;
   beforeEach(() => {
@@ -215,6 +292,33 @@ describe("loadGoogleItems", () => {
     const ids = result.items.map((i) => i.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain("google:allday-1@google.com:2026-11-05");
+  });
+
+  it("reuses the expansion of a range and says when a feed was cut short", async () => {
+    const fetchImpl = vi.fn(ok);
+    await loadGoogleItems(NOV, { env: env(FEED_A), fetchImpl });
+    await loadGoogleItems(NOV, { env: env(FEED_A), fetchImpl });
+    expect(cachedRangeCount()).toBe(1);
+    await loadGoogleItems(
+      { from: "2026-11-02", to: "2026-11-08" },
+      { env: env(FEED_A), fetchImpl },
+    );
+    expect(cachedRangeCount()).toBe(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    const dense = ics(`
+BEGIN:VEVENT
+UID:d
+DTSTART:20261101T000000Z
+RRULE:FREQ=MINUTELY
+SUMMARY:d
+END:VEVENT`);
+    const result = await loadGoogleItems(NOV, {
+      env: env(FEED_B),
+      fetchImpl: async () => new Response(dense),
+    });
+    expect(result.status).toBe("partial");
+    expect(JSON.stringify(warn.mock.calls)).toContain("#1 truncated");
   });
 
   it("caches each address, failures briefly, and never exposes the address", async () => {
