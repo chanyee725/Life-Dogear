@@ -22,9 +22,11 @@ function EnterInput({
   maxLength,
   overLimit,
   adornment,
+  autoFocus,
   save,
 }: {
   id?: string;
+  autoFocus?: boolean;
   label: string;
   placeholder: string;
   /** Hard cap on the input (`overLimit` unset) or the soft one past which it says so. */
@@ -62,6 +64,7 @@ function EnterInput({
       <div className="relative">
         <input
           id={id}
+          autoFocus={autoFocus}
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
@@ -105,10 +108,11 @@ function EnterInput({
 }
 
 /** 생각 추가: Enter saves the text as a thought (메모 · 씨앗) in the inbox. `/` focuses it. */
-export function QuickInput() {
+export function QuickInput({ autoFocus }: { autoFocus?: boolean }) {
   return (
     <EnterInput
       id={QUICK_INPUT_ID}
+      autoFocus={autoFocus}
       label="생각 추가 (Enter로 수집함에 저장)"
       placeholder="생각 추가"
       maxLength={10_000}
@@ -133,10 +137,19 @@ export function dueHint(day: string, today: string): string {
  * 할 일 추가: Enter creates a task with no parent, due on `day` (the day selected in the home
  * calendar). The action revalidates `/`, so the calendar and today panel pick it up.
  */
-export function TaskQuickInput({ day, today }: { day: string; today: string }) {
+export function TaskQuickInput({
+  day,
+  today,
+  autoFocus,
+}: {
+  day: string;
+  today: string;
+  autoFocus?: boolean;
+}) {
   const hint = dueHint(day, today);
   return (
     <EnterInput
+      autoFocus={autoFocus}
       // Label avoids "생각" so it never reads as the thought input.
       label={`할 일 추가 (Enter로 ${shortDay(day)} 마감)`}
       placeholder="할 일 추가"

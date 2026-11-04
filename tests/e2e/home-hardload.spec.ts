@@ -11,7 +11,7 @@ async function hardLoadSlow(page: Page, context: BrowserContext, baseURL: string
   await context.addCookies([{ name: "e2e-calendar-delay", value: "5000", url: baseURL }]);
   // "commit": the streamed response only finishes (and `load` fires) after the delay.
   await page.goto("/", { waitUntil: "commit" });
-  // Hydrated once the `/` shortcut moves focus (retry: key presses before hydration do nothing).
+  // Hydrated once `/` opens 빠른 추가 on 생각 추가 (retry: presses before hydration do nothing).
   const thought = page.getByRole("textbox", { name: /생각 추가/ });
   await expect(async () => {
     await page.keyboard.press("/");
@@ -65,7 +65,7 @@ test("하드 로드 중 '할 일 추가'에 입력하고 Enter 하면 로딩 후
 const GRID = (page: Page) => page.getByTestId("home-calendar-grid");
 const NEXT_COUNT = (page: Page) => page.getByTestId("next-count");
 
-test("로딩 중 입력칸('할 일 추가', `/` 검색)은 aria-busy 영역 밖에 있다", async ({
+test("로딩 중 빠른 추가 입력칸('할 일 추가', '생각 추가')은 aria-busy 영역 밖에 있다", async ({
   page,
   context,
   baseURL,

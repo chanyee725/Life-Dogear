@@ -209,6 +209,16 @@ describe("CalendarView (narrow)", () => {
     });
     expect(html).not.toContain('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"');
   });
+
+  it("puts toolbarEnd (home 빠른 추가) after 표시, before the grid", () => {
+    const html = render({
+      range: "3w",
+      toolbarEnd: createElement("button", { "aria-label": "빠른 추가" }),
+    });
+    const quick = html.indexOf('aria-label="빠른 추가"');
+    expect(quick).toBeGreaterThan(html.indexOf("표시"));
+    expect(quick).toBeLessThan(html.indexOf('role="grid"'));
+  });
 });
 
 describe("TodayPanel (13.3)", () => {
