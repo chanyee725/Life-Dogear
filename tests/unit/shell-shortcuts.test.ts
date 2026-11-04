@@ -32,6 +32,18 @@ describe("resolveShortcut", () => {
     });
   });
 
+  it("N on the notes list or a note opens a new note", () => {
+    expect(resolveShortcut(key("n"), "/notes", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/notes/new",
+    });
+    expect(resolveShortcut(key("n"), "/notes/abc", { typing: false })).toEqual({
+      kind: "navigate",
+      href: "/notes/new",
+    });
+    expect(resolveShortcut(key("n"), "/notes/new", { typing: false })).toBeNull();
+  });
+
   it("N falls back to a new thought outside item sections", () => {
     expect(resolveShortcut(key("n"), "/", { typing: false })).toEqual({
       kind: "navigate",

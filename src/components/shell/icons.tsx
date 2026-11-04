@@ -37,6 +37,13 @@ export const PaperIcon = () => (
     <path d="M9.5 1.5v3h3M5.5 8h5M5.5 10.5h5" />
   </Icon>
 );
+/** Open notebook: study notes (책·강의·영상 정리). */
+export const NoteIcon = () => (
+  <Icon>
+    <path d="M8 4c-1.5-1-3.5-1.5-5.75-1.5v10c2.25 0 4.25.5 5.75 1.5 1.5-1 3.5-1.5 5.75-1.5v-10C11.5 2.5 9.5 3 8 4Z" />
+    <path d="M8 4v10" />
+  </Icon>
+);
 export const SeminarIcon = () => (
   <Icon>
     <rect x="1.5" y="2.5" width="13" height="8.5" rx="1.5" />
