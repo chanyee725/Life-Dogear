@@ -34,7 +34,7 @@ export function HomeCalendarView({
   data,
   panelSlot,
   ...props
-}: Omit<CalendarViewProps, "onSelectDay" | "items" | "google" | "failed"> & {
+}: Omit<CalendarViewProps, "onSelectDay" | "items" | "google" | "googleWrite" | "failed"> & {
   data: Promise<HomeCalendarData>;
 }) {
   const { setDay } = useDay();
@@ -55,6 +55,7 @@ export function HomeCalendarView({
         {...props}
         items={current.items}
         google={current.google}
+        googleWrite={current.googleWrite}
         failed={current.failed}
         loading={!loaded}
         gridTestId="home-calendar-grid"
