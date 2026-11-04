@@ -8,7 +8,14 @@ export function LinkTabs({
   ariaLabel,
   className,
 }: {
-  tabs: readonly { value: string; label: string; href: string; count?: number }[];
+  tabs: readonly {
+    value: string;
+    label: string;
+    href: string;
+    count?: number;
+    /** Class for the count only (e.g. `text-tone-red-fg` for overdue); default muted. */
+    countClassName?: string;
+  }[];
   active: string;
   ariaLabel: string;
   className?: string;
@@ -31,7 +38,9 @@ export function LinkTabs({
           >
             {tab.label}
             {tab.count !== undefined ? (
-              <span className="text-xs text-muted tabular-nums">{tab.count}</span>
+              <span className={cn("text-xs tabular-nums", tab.countClassName ?? "text-muted")}>
+                {tab.count}
+              </span>
             ) : null}
           </Link>
         );

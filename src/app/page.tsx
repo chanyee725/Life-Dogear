@@ -16,7 +16,7 @@ import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
 import { WeeklyReviewLine } from "@/components/dashboard/WeeklyReviewLine";
 import { Page } from "@/components/shell";
 import { localDate } from "@/components/tasks/format";
-import { getCosmos } from "@/lib/cosmos/load";
+import { getCosmosScores } from "@/lib/cosmos/load";
 import { goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { periodOf, weeklyReviewDue } from "@/lib/reviews/period";
@@ -56,7 +56,7 @@ export default async function HomePage() {
     tasks.listToday(today),
     week ? tasks.listThisWeek(week.from, week.to) : Promise.resolve([]),
     goals.listTree(),
-    getCosmos({}, now),
+    getCosmosScores({}, now),
   ]);
   const reviewDue = dueWeek && !dueWritten.has(dueWeek) ? dueWeek : null;
   const goalNodes = quarterGoalNodes(goalTree, periodOf("quarter", now));

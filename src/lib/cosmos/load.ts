@@ -26,7 +26,7 @@ import {
   topImportant,
   type ScoreInput,
 } from "./score";
-import type { CosmosNodeInfo, CosmosResponse } from "./types";
+import type { CosmosNodeInfo, CosmosResponse, CosmosScore, CosmosScores } from "./types";
 
 type Signal = Omit<ScoreInput, "id" | "type" | "archived" | "starred">;
 
@@ -116,10 +116,8 @@ async function loadSignals(): Promise<{
   };
 }
 
-export async function getCosmos(
-  filter: GraphFilter = {},
-  now = new Date(),
-): Promise<CosmosResponse> {
+/** Graph + importance scores, shared by the cosmos view and the home screen. */
+async function loadScored(filter: GraphFilter, now: Date) {
   // Tasks never appear in the cosmos view (PLAN-TODAY 3절).
   const types = filter.types?.filter((t) => t !== "task");
   const [graph, { signals, starred, areaOrder }] = await Promise.all([
@@ -136,6 +134,38 @@ export async function getCosmos(
     ...signals.get(n.id),
   }));
   const scored = scoreGraph(inputs, graph.edges, now);
+  const scores = {} as Record<GraphNodeId, CosmosScore>;
+  for (const n of graph.nodes) {
+    const s = scored.get(n.id)!;
+    scores[n.id] = {
+      score: s.score,
+      direct: s.direct,
+      centrality: s.centrality,
+      recency: s.recency,
+      starred: starred.has(n.id),
+      lastActiveAt: s.lastActiveAt,
+    };
+  }
+  return { graph, scored, scores, areaOrder };
+}
+
+/**
+ * Home screen ("다시 볼 별"): the nodes and their importance scores only — the same
+ * values as `getCosmos`, without galaxies, suns or the side-panel lists.
+ */
+export async function getCosmosScores(
+  filter: GraphFilter = {},
+  now = new Date(),
+): Promise<CosmosScores> {
+  const { graph, scores } = await loadScored(filter, now);
+  return { nodes: graph.nodes, cosmos: scores };
+}
+
+export async function getCosmos(
+  filter: GraphFilter = {},
+  now = new Date(),
+): Promise<CosmosResponse> {
+  const { graph, scored, scores, areaOrder } = await loadScored(filter, now);
   const galaxies = assignGalaxies(
     graph.nodes,
     graph.edges,
@@ -144,20 +174,15 @@ export async function getCosmos(
 
   const cosmos = {} as Record<GraphNodeId, CosmosNodeInfo>;
   for (const n of graph.nodes) {
-    const s = scored.get(n.id)!;
+    const s = scores[n.id]!;
     cosmos[n.id] = {
-      score: s.score,
-      direct: s.direct,
-      centrality: s.centrality,
-      recency: s.recency,
-      starred: starred.has(n.id),
+      ...s,
       sun:
         n.type === "goal" &&
         n.horizon === "life" &&
-        s.status !== "achieved" &&
-        s.status !== "dropped",
+        scored.get(n.id)!.status !== "achieved" &&
+        scored.get(n.id)!.status !== "dropped",
       galaxy: galaxies.get(n.id) ?? null,
-      lastActiveAt: s.lastActiveAt,
     };
   }
   const used = new Set([...galaxies.values()].filter((g): g is string => g !== null));

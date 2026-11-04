@@ -100,6 +100,19 @@ export async function moveTask(id: unknown, direction: unknown): Promise<ActionR
   });
 }
 
+/** Drag and drop: right after `afterId` (null = first) among same-state siblings. */
+export async function moveTaskAfter(id: unknown, afterId: unknown): Promise<ActionResult<boolean>> {
+  return runAction(async () => {
+    const taskId = parseId(id);
+    const anchor = afterId === null ? null : parseId(afterId);
+    const moved = await tasks.moveAfter(taskId, anchor);
+    const task = await tasks.get(taskId);
+    if (!task) throw new RepoError("not_found", NOT_FOUND);
+    revalidateFor(task);
+    return moved;
+  });
+}
+
 /** Deletes the task; returns it so the client can offer 되돌리기 (re-create). */
 export async function deleteTask(id: unknown): Promise<ActionResult<null>> {
   return runAction(async () => {
@@ -111,22 +124,34 @@ export async function deleteTask(id: unknown): Promise<ActionResult<null>> {
   });
 }
 
-/** Undo for delete: puts the task back (new id, end of its parent's list, same state). */
+/**
+ * Undo for delete: puts the task back (new id) at its old place (`sortOrder`) with its old
+ * completion time (`doneAt`); without `sortOrder` at the end of its parent's list.
+ */
 export async function restoreTask(input: {
   title: unknown;
   parent?: unknown;
   dueDate?: unknown;
+  sortOrder?: unknown;
+  doneAt?: unknown;
+  /** Older callers: done without a known completion time (completed now). */
   done?: unknown;
 }): Promise<ActionResult<Task>> {
   return runAction(async () => {
     if (typeof input?.title !== "string") throw new RepoError("invalid", "할 일을 입력하세요.");
+    if (input.sortOrder !== undefined && typeof input.sortOrder !== "number") {
+      throw new RepoError("invalid", "순서가 올바르지 않습니다.");
+    }
     const parent = parseParent(input.parent);
-    let task = await tasks.create({
+    const task = await tasks.restore({
       title: input.title,
       parent,
       dueDate: parseOptionalString(input.dueDate, "마감일"),
+      sortOrder: input.sortOrder,
+      doneAt:
+        parseOptionalString(input.doneAt, "완료") ??
+        (input.done === true ? new Date().toISOString() : null),
     });
-    if (input.done === true) task = (await tasks.update(task.id, { done: true })) ?? task;
     revalidateFor(parent);
     return task;
   });
