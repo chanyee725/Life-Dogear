@@ -22,8 +22,11 @@ test("title typed before hydration is saved", async ({ page }) => {
   });
   const renamed = `${title} 수정`;
   await page.goto(url, { waitUntil: "commit" });
-  await page.getByLabel("제목", { exact: true }).fill(renamed);
-  release();
+  try {
+    await page.getByLabel("제목", { exact: true }).fill(renamed);
+  } finally {
+    release();
+  }
   await expect(page.locator('[data-state="saved"]')).toBeVisible({ timeout: 15_000 });
 
   await page.reload();
