@@ -9,7 +9,7 @@ import {
   RECENT_LIMIT,
   resourcesHref,
 } from "@/app/resources/resource-data";
-import { archive, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { archive, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 describe("parseTopicParam / findTopic / resourcesHref", () => {
@@ -93,6 +93,25 @@ describe("mergeResources", () => {
     expect(items.map((i) => i.id)).toEqual(["s", "a", "b"]);
     expect(items[0]!.meta).toBeUndefined();
   });
+
+  it("shows notes with their source, after papers on ties", () => {
+    const t = "2026-11-01T00:00:00.000Z";
+    const items = mergeResources(
+      [{ id: "p", title: "나", authors: [], year: null, readStatus: "to_read", updatedAt: t }],
+      [{ id: "s", title: "가", date: null, speaker: "", kind: "seminar", updatedAt: t }],
+      [],
+      [
+        { id: "n1", title: "가", sourceKind: "book", sourceTitle: "클린 코드", updatedAt: t },
+        { id: "n2", title: "나", sourceKind: null, sourceTitle: null, updatedAt: t },
+      ],
+    );
+    expect(items.map((i) => [i.id, i.href, i.meta])).toEqual([
+      ["p", "/papers/p", undefined],
+      ["n1", "/notes/n1", "책 · 클린 코드"],
+      ["n2", "/notes/n2", undefined],
+      ["s", "/seminars/s", undefined],
+    ]);
+  });
 });
 
 describe("loadResources", () => {
@@ -118,10 +137,13 @@ describe("loadResources", () => {
     expect((await loadResources("없는 주제")).recent).toEqual([]);
   });
 
-  it("collects the topic's papers, seminars and thoughts, without archived items or projects", async () => {
+  it("collects the topic's papers, notes, seminars and thoughts, without archived items or projects", async () => {
     const p = await papers.create({ title: "논문 A", tags: ["통계"] });
     await seminars.create({ title: "세미나 B", tags: ["통계"] });
     await thoughts.create({ title: "생각 C", tags: ["통계"] });
+    await notes.create({ title: "노트 D", tags: ["통계"] });
+    const goneNote = await notes.create({ title: "보관한 노트", tags: ["통계"] });
+    await archive.archive({ type: "note", id: goneNote.id });
     const gone = await thoughts.create({ title: "보관한 생각", tags: ["통계"] });
     await archive.archive({ type: "thought", id: gone.id });
     await projects.create({ title: "프로젝트", tags: ["통계"] });
@@ -129,7 +151,12 @@ describe("loadResources", () => {
 
     const data = await loadResources("통계");
     expect(data.topic).toBe("통계");
-    expect(data.items.map((i) => i.title).sort()).toEqual(["논문 A", "생각 C", "세미나 B"]);
+    expect(data.items.map((i) => i.title).sort()).toEqual([
+      "노트 D",
+      "논문 A",
+      "생각 C",
+      "세미나 B",
+    ]);
     expect(data.items.find((i) => i.id === p.id)?.type).toBe("paper");
   });
 
@@ -167,13 +194,15 @@ describe("loadResources", () => {
     await papers.create({ title: "논문 0", tags: ["통계"] });
     await seminars.create({ title: "세미나 0", tags: ["통계"] });
     await thoughts.create({ title: "생각 0", tags: ["통계"] });
+    await notes.create({ title: "노트 0", tags: ["통계"] });
     const small = await count();
-    expect(small).toBeLessThanOrEqual(6); // 3 × (list + tags)
+    expect(small).toBeLessThanOrEqual(8); // 4 × (list + tags)
     expect(await count(null)).toBe(small); // choosing a topic adds no queries
     for (let i = 1; i < 20; i++) {
       await papers.create({ title: `논문 ${i}`, tags: ["통계"] });
       await seminars.create({ title: `세미나 ${i}`, tags: ["통계"] });
       await thoughts.create({ title: `생각 ${i}`, tags: ["통계"] });
+      await notes.create({ title: `노트 ${i}`, tags: ["통계"] });
     }
     expect(await count()).toBe(small);
   });

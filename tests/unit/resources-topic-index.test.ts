@@ -138,7 +138,7 @@ describe("type and sort params", () => {
       { type: "paper" as const },
       { type: "thought" as const },
     ];
-    expect(countByType(items)).toEqual({ paper: 2, seminar: 0, thought: 1 });
+    expect(countByType(items)).toEqual({ paper: 2, note: 0, seminar: 0, thought: 1 });
     expect(filterByType(items, "thought")).toHaveLength(1);
     expect(filterByType(items, null)).toHaveLength(3);
   });
