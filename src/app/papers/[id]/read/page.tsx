@@ -52,7 +52,6 @@ export default async function ReadPaperPage({ params, searchParams }: Props) {
             </Link>
           }
           title="PDF가 없습니다"
-          description="이 논문에 PDF를 올리면 여기에서 바로 읽고, 다음에 읽던 곳부터 이어 읽을 수 있어요."
         />
         <PdfDropZone paperId={paper.id} />
       </Page>

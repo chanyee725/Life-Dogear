@@ -95,13 +95,6 @@ export default async function ProjectsPage({
   const empty = (
     <EmptyState
       title={filtered ? "조건에 맞는 프로젝트가 없습니다" : `아직 ${kindLabel} 프로젝트가 없습니다`}
-      description={
-        filtered
-          ? "필터를 바꾸거나 해제해 보세요."
-          : kind === "research"
-            ? "논문·학위 연구처럼 단계를 밟아 가는 프로젝트를 추가해 보세요."
-            : "연구 외에 끝이 있는 일(발표 준비, 장학금 신청 등)을 추가해 보세요."
-      }
       action={
         filtered ? (
           <Link href={buildHref(BASE, { kind }, {})} className={buttonClass("secondary", "sm")}>

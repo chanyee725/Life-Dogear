@@ -65,7 +65,7 @@ export function PdfDropZone({ paperId, className }: { paperId: string; className
     >
       {input}
       <p id={hintId} className="text-sm text-muted">
-        PDF를 끌어다 놓거나 파일을 선택하세요. 올린 PDF는 이 컴퓨터의 data/pdfs에 저장됩니다.
+        PDF를 끌어다 놓거나 파일을 선택하세요.
       </p>
       <Button variant="secondary" onClick={open} disabled={uploading} aria-describedby={hintId}>
         {uploading ? (
