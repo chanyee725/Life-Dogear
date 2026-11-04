@@ -40,9 +40,9 @@ describe("host guard", () => {
   it("middleware returns 403 for foreign hosts and passes local ones", async () => {
     const make = (host: string) =>
       new NextRequest("http://127.0.0.1:3000/_next/static/x.js", { headers: { host } });
-    const blocked = middleware(make("attacker.example:3000"));
+    const blocked = await middleware(make("attacker.example:3000"));
     expect(blocked.status).toBe(403);
     expect(await blocked.text()).toContain("허용되지 않은 주소");
-    expect(middleware(make("localhost:3000")).headers.get("x-middleware-next")).toBe("1");
+    expect((await middleware(make("localhost:3000"))).headers.get("x-middleware-next")).toBe("1");
   });
 });

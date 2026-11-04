@@ -100,11 +100,14 @@ export function SidebarNav({
   hasAreas,
   inboxCount,
   searchSlot,
+  footerSlot,
 }: {
   /** False when no areas exist at all: recommended areas are offered instead. */
   hasAreas: boolean;
   inboxCount: number;
   searchSlot?: ReactNode;
+  /** Under the theme toggle (the sign-out button in login mode). */
+  footerSlot?: ReactNode;
 }) {
   const pathname = usePathname() ?? "/";
   // Narrow screens: the sidebar is a drawer over the page, open until the next navigation.
@@ -229,6 +232,7 @@ export function SidebarNav({
             </span>
           </div>
           <ThemeToggle />
+          {footerSlot}
         </div>
       </aside>
     </>

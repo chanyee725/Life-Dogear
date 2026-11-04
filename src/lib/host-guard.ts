@@ -24,6 +24,13 @@ export function parseAllowedHosts(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+/** Whether `host[:port]` names this machine (localhost, 127.0.0.1, [::1]). */
+export function isLocalHost(host: string | null | undefined): boolean {
+  if (!host) return false;
+  const parsed = splitHost(host.trim());
+  return parsed !== null && LOCAL_HOSTNAMES.has(parsed.hostname);
+}
+
 export function isAllowedHost(host: string | null | undefined, extra: readonly string[] = []) {
   if (!host) return false;
   const parsed = splitHost(host.trim());
