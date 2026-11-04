@@ -22,8 +22,6 @@ export type AreaRow = {
   openTasks: number;
 };
 
-const DESCRIPTION = "끝나지 않고 꾸준히 돌봐야 하는 책임. 오래 손대지 않은 영역이 표시됩니다.";
-
 /**
  * Areas list: filter (title + 유지 기준, kept in `?q=`), sort (`?sort=`), and a 순서 바꾸기
  * mode that shows 위로/아래로 buttons for the area order. Each row ends with its care
@@ -60,7 +58,6 @@ export function AreasView({
     <>
       <PageHeader
         title="영역"
-        description={DESCRIPTION}
         actions={
           <>
             <Button
@@ -86,7 +83,7 @@ export function AreasView({
           <Toolbar sort={sort} query={query} onQuery={changeQuery} />
           {visible.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
-              ‘{query.trim()}’에 맞는 영역이 없습니다. 다른 말로 찾거나 검색어를 지워 보세요.
+              ‘{query.trim()}’에 맞는 영역이 없습니다.
             </p>
           ) : (
             <ul
@@ -265,7 +262,6 @@ function ReorderList({ areas }: { areas: AreaRow[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[13px] text-muted">위·아래 버튼으로 순서를 바꾸면 바로 저장됩니다.</p>
       <ul
         aria-label="영역 순서"
         className="flex flex-col divide-y divide-border rounded-lg border border-border"
