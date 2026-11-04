@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { cn } from "@/components/ui";
+import { buttonClass, cn } from "@/components/ui";
 
 /** Labelled region (`<section aria-labelledby>`) so each block is a named landmark. */
 export function DashboardSection({
@@ -33,11 +34,13 @@ export function DashboardSection({
   );
 }
 
-/** Quiet single-line empty message for dashboard blocks. */
-export function DashboardEmpty({ children }: { children: ReactNode }) {
+/** The only body of an empty dashboard block: one add button, no explanation. */
+export function DashboardAdd({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-[13px] text-muted">
-      {children}
-    </p>
+    <div className="flex">
+      <Link href={href} className={buttonClass("ghost", "sm", "-ml-2")}>
+        {children}
+      </Link>
+    </div>
   );
 }

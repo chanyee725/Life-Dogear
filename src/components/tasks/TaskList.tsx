@@ -48,10 +48,6 @@ export type TaskListProps = {
   showParent?: boolean;
   /** `overdue`: show the due date only when it has passed (date-grouped lists). */
   dueMode?: "all" | "overdue";
-  /** Line shown above the add line when there is nothing open. */
-  emptyText?: string;
-  /** Line shown when every task is done. */
-  allDoneText?: string;
   /** Show the folded 완료 group (default true). */
   showCompleted?: boolean;
   className?: string;
@@ -99,8 +95,6 @@ export function TaskList({
   reorderable = false,
   showParent = false,
   dueMode = "all",
-  emptyText,
-  allDoneText = "남은 할 일이 없습니다.",
   showCompleted = true,
   className,
 }: TaskListProps) {
@@ -392,9 +386,6 @@ export function TaskList({
         <span id={helpId} className="sr-only">
           위아래 화살표로 옮깁니다.
         </span>
-      ) : null}
-      {open.length === 0 && (done.length > 0 ? allDoneText : emptyText) ? (
-        <p className="py-1.5 text-[13px] text-muted">{done.length > 0 ? allDoneText : emptyText}</p>
       ) : null}
       {open.length > 0 ? (
         <ul ref={listRef} aria-label={label} className="relative flex flex-col">
