@@ -6,6 +6,7 @@ import { linkWith, removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   type ArchiveOptions,
+  assertItemRef,
   db,
   definedOnly,
   type Executor,
@@ -126,6 +127,7 @@ export async function list(options: NoteListOptions = {}): Promise<Note[]> {
  * direction) and, for an area, those whose `areaId` is it. Newest edit first, no repeats.
  */
 export async function listForItem(item: ItemRef): Promise<Note[]> {
+  assertItemRef(item);
   const rows = await db()
     .select()
     .from(links)

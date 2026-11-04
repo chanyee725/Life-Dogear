@@ -111,7 +111,7 @@ describe("areas.listMaterials", () => {
     expect((await areas.listMaterials(area.id)).map((m) => m.title)).toEqual(["논문", "세미나"]);
   });
 
-  it("includes notes that belong to the area and notes linked to it", async () => {
+  it("leaves out the area's own notes but keeps notes reached through its projects", async () => {
     const area = await areas.create({ title: "공부" });
     const other = await areas.create({ title: "다른" });
     const p = await projects.create({ title: "프로젝트", areaId: area.id });
@@ -119,6 +119,10 @@ describe("areas.listMaterials", () => {
     const both = await notes.create({ title: "소속+연결 노트", areaId: area.id });
     const linked = await notes.create({ title: "연결 노트", areaId: other.id });
     const gone = await notes.create({ title: "보관 노트", areaId: area.id });
+    const direct = await notes.create({ title: "직접 연결 노트" });
+    await links.link({ type: "area", id: area.id }, { type: "note", id: direct.id });
+    // Own note also linked to the area's project: still only in the 노트 section.
+    await links.link({ type: "note", id: own.id }, { type: "project", id: p.id });
     await archive.archive({ type: "note", id: gone.id });
     await links.link({ type: "area", id: area.id }, { type: "note", id: both.id });
     await links.link({ type: "note", id: linked.id }, { type: "project", id: p.id });
@@ -127,12 +131,11 @@ describe("areas.listMaterials", () => {
 
     expect((await areas.listMaterials(area.id)).map((m) => [m.ref.type, m.title, m.via])).toEqual([
       ["paper", "논문", [{ type: "area" }]],
-      ["note", "소속 노트", [{ type: "member" }]],
-      ["note", "소속+연결 노트", [{ type: "member" }, { type: "area" }]],
       ["note", "연결 노트", [{ type: "project", id: p.id, title: "프로젝트" }]],
     ]);
     expect(own.areaId).toBe(area.id);
-    expect((await areas.listMaterials(other.id)).map((m) => m.title)).toEqual(["연결 노트"]);
+    // 연결 노트 belongs to `other`, so there it is in the 노트 section, not 자료.
+    expect(await areas.listMaterials(other.id)).toEqual([]);
   });
 
   it("runs a fixed number of queries however many projects and links", async () => {
@@ -150,7 +153,8 @@ describe("areas.listMaterials", () => {
     }
     const [, smallMaterials] = await counted(() => areas.listMaterials(small.id));
     const [found, bigMaterials] = await counted(() => areas.listMaterials(big.id));
-    expect(found).toHaveLength(18);
+    // 6 papers + 6 thoughts; the area's own notes are in its 노트 section instead.
+    expect(found).toHaveLength(12);
     expect(bigMaterials).toBeLessThanOrEqual(smallMaterials + 3); // + one title query per type
     const [, smallGoals] = await counted(() => goals.listTreeForArea(small.id));
     const [, bigGoals] = await counted(() => goals.listTreeForArea(big.id));

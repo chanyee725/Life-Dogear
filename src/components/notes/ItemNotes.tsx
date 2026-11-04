@@ -24,7 +24,6 @@ export async function ItemNotes({
     <Section
       id="item-notes"
       title="노트"
-      className="gap-1"
       action={
         list.length && !archived ? (
           <LinkButton href={href} variant="ghost" size="sm">
