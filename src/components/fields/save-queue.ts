@@ -23,6 +23,8 @@ export type SaveQueue<P extends object> = {
   /**
    * Overwrites some baseline fields, keeping the rest, under the same rule as
    * `resetBaseline`: returns false and changes nothing while edits are pending or saving.
+   * The caller must make sure the values are still current: a value read before a later
+   * save of the same field would wind the baseline back past it.
    */
   rebase: (fields: Partial<P>) => boolean;
   pending: () => P;
@@ -112,7 +114,8 @@ export function createSaveQueue<P extends object>(
  * Offers a re-read baseline to `queue` (e.g. once an editor has normalised its content).
  * The queue refuses it while a save is running; then only `field` is held and put into
  * the baseline by `settle()` once the queue is idle, so the normalised value doesn't
- * go out with the next save. Call `settle()` after every flush.
+ * go out with the next save. Call `settle()` after every flush, and `drop()` once the
+ * queue carries a newer value for `field`: the held one is stale from then on.
  */
 export function createHeldBaseline<P extends object>(queue: SaveQueue<P>, field: keyof P) {
   let held: Partial<P> | null = null;
@@ -123,6 +126,9 @@ export function createHeldBaseline<P extends object>(queue: SaveQueue<P>, field:
     },
     settle() {
       if (held && queue.rebase(held)) held = null;
+    },
+    drop() {
+      held = null;
     },
   };
 }

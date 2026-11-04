@@ -228,6 +228,8 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     preHydrationOnlyRef.current = false;
     setUnread(false);
     queue.add(patch);
+    // The user's own body is queued: a held editor-ready body is older than it.
+    if ("body" in queue.pending()) readyBaseline.drop();
     void flushQueue();
   }
 
