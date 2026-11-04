@@ -9,7 +9,7 @@ import {
   RECENT_LIMIT,
   resourcesHref,
 } from "@/app/resources/resource-data";
-import { archive, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { archive, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 describe("parseTopicParam / findTopic / resourcesHref", () => {
@@ -118,19 +118,37 @@ describe("loadResources", () => {
     expect((await loadResources("없는 주제")).recent).toEqual([]);
   });
 
-  it("collects the topic's papers, seminars and thoughts, without archived items or projects", async () => {
+  it("collects the topic's papers, seminars, thoughts and notes, without archived items or projects", async () => {
     const p = await papers.create({ title: "논문 A", tags: ["통계"] });
     await seminars.create({ title: "세미나 B", tags: ["통계"] });
     await thoughts.create({ title: "생각 C", tags: ["통계"] });
+    const n = await notes.create({
+      title: "노트 D",
+      sourceKind: "book",
+      sourceTitle: "통계학 입문",
+      tags: ["통계"],
+    });
     const gone = await thoughts.create({ title: "보관한 생각", tags: ["통계"] });
     await archive.archive({ type: "thought", id: gone.id });
+    const goneNote = await notes.create({ title: "보관한 노트", tags: ["통계"] });
+    await archive.archive({ type: "note", id: goneNote.id });
     await projects.create({ title: "프로젝트", tags: ["통계"] });
     await papers.create({ title: "다른 주제", tags: ["설계"] });
 
     const data = await loadResources("통계");
     expect(data.topic).toBe("통계");
-    expect(data.items.map((i) => i.title).sort()).toEqual(["논문 A", "생각 C", "세미나 B"]);
+    expect(data.items.map((i) => i.title).sort()).toEqual([
+      "노트 D",
+      "논문 A",
+      "생각 C",
+      "세미나 B",
+    ]);
     expect(data.items.find((i) => i.id === p.id)?.type).toBe("paper");
+    expect(data.items.find((i) => i.id === n.id)).toMatchObject({
+      type: "note",
+      href: `/notes/${n.id}`,
+      meta: "책 · 통계학 입문",
+    });
   });
 
   it("matches the topic case-insensitively and reports unknown topics", async () => {
@@ -167,13 +185,15 @@ describe("loadResources", () => {
     await papers.create({ title: "논문 0", tags: ["통계"] });
     await seminars.create({ title: "세미나 0", tags: ["통계"] });
     await thoughts.create({ title: "생각 0", tags: ["통계"] });
+    await notes.create({ title: "노트 0", tags: ["통계"] });
     const small = await count();
-    expect(small).toBeLessThanOrEqual(6); // 3 × (list + tags)
+    expect(small).toBeLessThanOrEqual(8); // 4 × (list + tags)
     expect(await count(null)).toBe(small); // choosing a topic adds no queries
     for (let i = 1; i < 20; i++) {
       await papers.create({ title: `논문 ${i}`, tags: ["통계"] });
       await seminars.create({ title: `세미나 ${i}`, tags: ["통계"] });
       await thoughts.create({ title: `생각 ${i}`, tags: ["통계"] });
+      await notes.create({ title: `노트 ${i}`, tags: ["통계"] });
     }
     expect(await count()).toBe(small);
   });

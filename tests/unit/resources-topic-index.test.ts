@@ -113,6 +113,7 @@ describe("matchesTopic", () => {
 describe("type and sort params", () => {
   it("accepts only the three resource types", () => {
     expect(parseTypeParam("paper")).toBe("paper");
+    expect(parseTypeParam("note")).toBe("note");
     expect(parseTypeParam(["thought", "paper"])).toBe("thought");
     expect(parseTypeParam("project")).toBeNull();
     expect(parseTypeParam(undefined)).toBeNull();
@@ -138,7 +139,7 @@ describe("type and sort params", () => {
       { type: "paper" as const },
       { type: "thought" as const },
     ];
-    expect(countByType(items)).toEqual({ paper: 2, seminar: 0, thought: 1 });
+    expect(countByType(items)).toEqual({ paper: 2, seminar: 0, thought: 1, note: 0 });
     expect(filterByType(items, "thought")).toHaveLength(1);
     expect(filterByType(items, null)).toHaveLength(3);
   });
