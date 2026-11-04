@@ -21,6 +21,9 @@
 
   /* Single accent color */
   --rb-accent: #4f5bd5;
+  /* Calendar weekend day numbers (Saturday blue, Sunday red). */
+  --rb-sat: #2563eb;
+  --rb-sun: #dc2626;
   --rb-accent-hover: #434ec2;
   --rb-accent-fg: #ffffff;
   --rb-accent-soft: #eef0fc;
@@ -76,6 +79,8 @@
   --rb-faint: #66666e;
 
   --rb-accent: #8b94f0;
+  --rb-sat: #7aa7ff;
+  --rb-sun: #ff7b7b;
   --rb-accent-hover: #9ca4f3;
   --rb-accent-fg: #141416;
   --rb-accent-soft: #23253a;
@@ -122,6 +127,8 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --color-bg: var(--rb-bg);
+  --color-sat: var(--rb-sat);
+  --color-sun: var(--rb-sun);
   --color-surface: var(--rb-surface);
   --color-subtle: var(--rb-subtle);
   --color-hover: var(--rb-hover);
