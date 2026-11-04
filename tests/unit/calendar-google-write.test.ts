@@ -224,6 +224,16 @@ describe("insertEvent", () => {
     expect(calls[2].url).toBe(`${EVENTS}/again0001`);
   });
 
+  it("409 then a 404 on the existing event is invalid, not a setup problem", async () => {
+    const { impl } = mockFetch({ token: [tokenOk()], events: [json(409, {}), json(404, {})] });
+    expect(
+      await insertEvent(
+        { title: "x", date: "2026-11-05", clientId: "again0001" },
+        { env: ENV, fetchImpl: impl },
+      ).catch((e: { code: string }) => e.code),
+    ).toBe("invalid");
+  });
+
   it("409 on a deleted event is invalid", async () => {
     const { impl } = mockFetch({
       token: [tokenOk()],

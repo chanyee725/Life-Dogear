@@ -280,6 +280,8 @@ export async function insertEvent(
       if (existing.status === "cancelled") throw new GoogleWriteError("invalid");
       return toCalendarItem(existing, event, eventId);
     }
+    // Taken by an event this calendar cannot show (e.g. purged): the id is unusable.
+    if (res.status === 404) throw new GoogleWriteError("invalid");
   }
   if (res.status === 401 || res.status === 403) throw new GoogleWriteError("auth");
   // Unknown calendar id: a setup problem, not the user's input.
