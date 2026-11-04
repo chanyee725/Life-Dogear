@@ -62,17 +62,21 @@ export function addMonths(date: string, n: number): string {
   return first.toISOString().slice(0, 10);
 }
 
-/** `3w`: three weeks from the anchor's Monday (default view); `month`: whole weeks of the month. */
-export type CalendarRangeKind = "3w" | "month";
+/** `3w` / `4w`: three or four weeks from the anchor's Monday (home / 할 일); `month`: whole weeks. */
+export type CalendarRangeKind = "3w" | "4w" | "month";
 
+/** Weeks a fixed-length page shows. */
+export const WEEKS: Record<Exclude<CalendarRangeKind, "month">, number> = { "3w": 3, "4w": 4 };
 /** Days a 3-week page shows. */
 export const THREE_WEEKS = 21;
 
 /** The days a view shows: whole weeks covering the month, or three weeks from Monday. */
 export function gridWeeks(kind: CalendarRangeKind, date: string): string[][] {
-  if (kind === "3w") {
+  if (kind !== "month") {
     const from = startOfWeek(date);
-    return [0, 7, 14].map((o) => Array.from({ length: 7 }, (_, i) => addDays(from, o + i)));
+    return Array.from({ length: WEEKS[kind] }, (_, w) =>
+      Array.from({ length: 7 }, (_, i) => addDays(from, w * 7 + i)),
+    );
   }
   const first = `${date.slice(0, 7)}-01`;
   const last = addDays(addMonths(first, 1), -1);
@@ -104,7 +108,7 @@ export function gridRange(kind: CalendarRangeKind, date: string): { from: string
 
 /** Date of the previous/next page (`dir` = -1 or 1). */
 export const stepDate = (kind: CalendarRangeKind, date: string, dir: -1 | 1) =>
-  kind === "3w" ? addDays(date, THREE_WEEKS * dir) : addMonths(date, dir);
+  kind === "month" ? addMonths(date, dir) : addDays(date, WEEKS[kind] * 7 * dir);
 
 /** Heading: `2026년 11월`, or for three weeks `11월 2일 – 22일` / `10월 26일 – 11월 15일`. */
 export function rangeTitle(kind: CalendarRangeKind, date: string): string {
@@ -118,7 +122,7 @@ export function rangeTitle(kind: CalendarRangeKind, date: string): string {
 
 /** Days the page is "about": the month (1st..last) or the week; period-line test uses it. */
 export function visibleSpan(kind: CalendarRangeKind, date: string): { from: string; to: string } {
-  if (kind === "3w") return gridRange("3w", date);
+  if (kind !== "month") return gridRange(kind, date);
   const from = `${date.slice(0, 7)}-01`;
   return { from, to: addDays(addMonths(from, 1), -1) };
 }
@@ -157,7 +161,7 @@ export function parseCalendarQuery(
   const day = one(params.day);
   return {
     view: one(params.view) === "calendar" ? "calendar" : "list",
-    range: one(params.range) === "month" ? "month" : "3w",
+    range: one(params.range) === "month" ? "month" : one(params.range) === "4w" ? "4w" : "3w",
     date: isDate(date) ? date : today,
     day: isDate(day) ? day : today,
   };
@@ -169,7 +173,7 @@ export function calendarHref(
   today?: string,
 ) {
   const sp = new URLSearchParams({ view: "calendar" });
-  if (q.range === "month") sp.set("range", "month");
+  if (q.range && q.range !== "3w") sp.set("range", q.range);
   if (q.date && q.date !== today) sp.set("date", q.date);
   if (q.day && q.day !== today) sp.set("day", q.day);
   return `/tasks?${sp}`;

@@ -48,6 +48,8 @@ import {
   visibleSpan,
   type CalendarRangeKind,
   type WeekBar,
+  WEEKS,
+  weekdayIndex,
 } from "./model";
 import { Popover } from "./Popover";
 import { TodayPanel } from "./TodayPanel";
@@ -494,8 +496,9 @@ export function CalendarView({
     openDay,
   };
 
-  const prevLabel = range === "3w" ? "이전 3주" : "이전 달";
-  const nextLabel = range === "3w" ? "다음 3주" : "다음 달";
+  const weeksLabel = range === "month" ? null : `${WEEKS[range]}주`;
+  const prevLabel = weeksLabel ? `이전 ${weeksLabel}` : "이전 달";
+  const nextLabel = weeksLabel ? `다음 ${weeksLabel}` : "다음 달";
   const goToday = () => {
     setFocusDay(today);
     pendingFocus.current = { day: today };
@@ -548,12 +551,6 @@ export function CalendarView({
           {navPending ? <Spinner className="size-3 border sm:order-last" /> : null}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <RangeSwitch
-            range={range}
-            onPick={(r) =>
-              navigate({ range: r, date: gridDays.includes(focusDay) ? focusDay : date })
-            }
-          />
           <Button
             variant="ghost"
             size="sm"
@@ -664,7 +661,10 @@ export function CalendarView({
                 <div
                   key={w}
                   role="columnheader"
-                  className="grid h-8 place-items-center border-r border-b border-border text-xs text-muted"
+                  className={cn(
+                    "grid h-8 place-items-center border-r border-b border-border text-xs",
+                    w === "토" ? "text-sat" : w === "일" ? "text-sun" : "text-muted",
+                  )}
                 >
                   {w}
                 </div>
@@ -809,52 +809,6 @@ export function CalendarView({
 
 // ---- toolbar ------------------------------------------------------------------------------
 
-function RangeSwitch({
-  range,
-  onPick,
-}: {
-  range: CalendarRangeKind;
-  onPick: (r: CalendarRangeKind) => void;
-}) {
-  const options: { value: CalendarRangeKind; label: string }[] = [
-    { value: "3w", label: "3주" },
-    { value: "month", label: "월" },
-  ];
-  return (
-    <div
-      role="radiogroup"
-      aria-label="범위"
-      className="flex h-7 gap-0.5 rounded-lg bg-subtle p-0.5"
-    >
-      {options.map((o) => {
-        const active = o.value === range;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            tabIndex={active ? 0 : -1}
-            onClick={() => !active && onPick(o.value)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                e.preventDefault();
-                onPick(range === "month" ? "3w" : "month");
-              }
-            }}
-            className={cn(
-              "flex h-6 items-center rounded-md px-2.5 text-[13px] transition-colors",
-              active ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
-            )}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // ---- grid ---------------------------------------------------------------------------------
 
 type GridCtx = {
@@ -904,7 +858,16 @@ function DayNumber({
         "grid h-6 min-w-6 shrink-0 place-items-center self-start rounded-full text-xs tabular-nums",
         plain && "self-auto",
         text.length > 2 && "w-auto px-1",
-        isToday ? "bg-accent font-semibold text-accent-fg" : muted ? "text-muted" : "text-fg",
+        isToday
+          ? "bg-accent font-semibold text-accent-fg"
+          : cn(
+              weekdayIndex(day) === 5
+                ? "text-sat"
+                : weekdayIndex(day) === 6
+                  ? "text-sun"
+                  : "text-fg",
+              muted && "opacity-50",
+            ),
         selected && "ring-1 ring-border-strong",
         selected && isToday && "ring-offset-1 ring-offset-bg",
       )}

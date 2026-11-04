@@ -65,7 +65,8 @@ function ViewSwitch({ view }: { view: "list" | "calendar" }) {
  */
 async function CalendarPage({ params }: { params: Record<string, string | string[] | undefined> }) {
   const today = seoulDate();
-  const q = parseCalendarQuery(params, today);
+  // 할 일 → 달력 is always four weeks (no range switch).
+  const q = { ...parseCalendarQuery(params, today), range: "4w" as const };
   let data: CalendarResult = { items: [], google: "off" };
   let failed = false;
   try {
