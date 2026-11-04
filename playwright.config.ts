@@ -4,6 +4,17 @@ import { defineConfig, devices } from "@playwright/test";
 // instead of copying this file (a copy easily loses the web server env below, e.g. E2E_HOOKS).
 const PORT = process.env.E2E_PORT ?? "3000";
 const BASE_URL = `http://127.0.0.1:${PORT}`;
+// `E2E_GOOGLE_WRITE=1`: the web server gets dummy Google write keys so '일정 추가' is enabled
+// (tests/e2e/calendar-add-event.spec.ts). The tests answer POST /api/calendar/events
+// themselves, so nothing reaches Google. Off by default: googleWrite stays false.
+const GOOGLE_WRITE_ENV: Record<string, string> =
+  process.env.E2E_GOOGLE_WRITE === "1"
+    ? {
+        GOOGLE_OAUTH_CLIENT_ID: "test",
+        GOOGLE_OAUTH_CLIENT_SECRET: "test",
+        GOOGLE_OAUTH_REFRESH_TOKEN: "test",
+      }
+    : {};
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -36,6 +47,7 @@ export default defineConfig({
       BLOB_STORE: "local",
       // Test-only server hooks (e.g. the home calendar delay cookie).
       E2E_HOOKS: "1",
+      ...GOOGLE_WRITE_ENV,
     },
   },
 });

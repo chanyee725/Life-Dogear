@@ -91,6 +91,35 @@ describe("add-event helpers", () => {
     expect(mergeAdded(list, [ITEM])).toBe(list);
     expect(mergeAdded(list, [])).toBe(list);
   });
+
+  // The same event coming back through the ICS feed (e2e leaves this to unit tests).
+  it("mergeAdded keeps one copy when the ICS feed returns the item in UTC", () => {
+    const fromIcs: CalendarItem = {
+      ...ITEM,
+      id: "google:abc@google.com:2026-11-05T05:00:00Z",
+      start: "2026-11-05T05:00:00Z",
+      end: "2026-11-05T06:00:00Z",
+    };
+    // Feed caught up after the add: the fetched copy stays, the added one is dropped.
+    const list = [fromIcs];
+    expect(mergeAdded(list, [ITEM])).toBe(list);
+    // Added first, then the feed's list arrives and the added item is merged again.
+    expect(mergeAdded([fromIcs], mergeAdded([], [ITEM]))).toEqual([fromIcs]);
+  });
+
+  it("mergeAdded reads a uid with colons and falls back to the id on a bad start", () => {
+    const uid = "x:y@google.com";
+    const a: CalendarItem = { ...ITEM, id: `google:${uid}:${ITEM.start}` };
+    const b: CalendarItem = {
+      ...a,
+      id: `google:${uid}:2026-11-05T05:00:00Z`,
+      start: "2026-11-05T05:00:00Z",
+    };
+    expect(mergeAdded([b], [a])).toEqual([b]);
+    const bad: CalendarItem = { ...ITEM, id: "google:u:not-a-time", start: "not-a-time" };
+    expect(mergeAdded([bad], [{ ...bad }])).toEqual([bad]);
+    expect(mergeAdded([bad], [ITEM])).toEqual([bad, ITEM]);
+  });
 });
 
 describe("AddEventButton", () => {
