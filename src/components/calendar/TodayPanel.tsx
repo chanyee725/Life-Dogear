@@ -8,7 +8,7 @@ import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { itemLabel, titleClass } from "./CalendarItemRow";
 import { shortDay, spokenDay, timeOf } from "./model";
-import { sourceColor, sourceTint } from "./SourceIcon";
+import { sourceColor } from "./SourceIcon";
 import { groupHeading, originLabel, relativeDay, upcoming } from "./upcoming";
 
 /**
@@ -84,7 +84,7 @@ export function TodayPanel({
               >
                 {groupHeading(g.day, today)}
               </h4>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col">
                 {g.items.map((item) => (
                   <li key={item.id}>
                     <UpcomingRow item={item} today={today} theme={theme} />
@@ -115,16 +115,17 @@ function UpcomingRow({
   const origin = originLabel(item);
   const label = `${itemLabel(item, today)}${item.source === "task" && origin ? `, ${origin}` : ""}`;
   const className =
-    "flex min-h-9 items-center gap-2.5 rounded-md border-l-[3px] py-1.5 pr-2 pl-2.5 text-sm hover:brightness-95 dark:hover:brightness-125 max-sm:min-h-11";
-  const style = {
-    borderLeftColor: sourceColor(theme, item.source),
-    background: sourceTint(theme, item.source, item.done ? 5 : 10),
-  };
+    "-mx-2 flex h-9 items-center gap-2.5 rounded-md px-2 text-sm hover:bg-hover max-sm:h-11";
   const body = (
     <>
-      <span className="w-10 shrink-0 text-xs text-muted tabular-nums">{time ?? "종일"}</span>
+      <span
+        aria-hidden
+        className="size-2 shrink-0 rounded-full"
+        style={{ background: sourceColor(theme, item.source), opacity: item.done ? 0.45 : 1 }}
+      />
+      {time ? <span className="shrink-0 text-xs text-muted tabular-nums">{time}</span> : null}
       <span className={cn("min-w-0 flex-1 truncate", titleClass(item, today))}>{item.title}</span>
-      {origin ? (
+      {origin && item.source !== "google" ? (
         <span className="max-w-28 shrink-0 truncate text-xs text-muted max-sm:hidden">
           {origin}
         </span>
@@ -133,7 +134,7 @@ function UpcomingRow({
   );
   if (!item.href) {
     return (
-      <span aria-label={label} title={item.title} className={className} style={style}>
+      <span aria-label={label} title={item.title} className={className}>
         {body}
       </span>
     );
@@ -147,20 +148,13 @@ function UpcomingRow({
         aria-label={label}
         title={item.title}
         className={className}
-        style={style}
       >
         {body}
       </a>
     );
   }
   return (
-    <Link
-      href={item.href}
-      aria-label={label}
-      title={item.title}
-      className={className}
-      style={style}
-    >
+    <Link href={item.href} aria-label={label} title={item.title} className={className}>
       {body}
     </Link>
   );

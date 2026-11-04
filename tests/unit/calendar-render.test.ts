@@ -213,7 +213,7 @@ describe("TodayPanel (13.3)", () => {
     expect(panel.indexOf("연구실 회의")).toBeLessThan(panel.indexOf("투고 마감"));
     expect(panel).toContain(">14:00<");
     expect(panel).toContain(">마감<");
-    expect(panel).toContain(">Google<");
+    expect(panel).not.toContain(">Google<"); // the blue dot already says Google
     expect(panel).not.toContain("주간 회고");
     expect(panel).not.toContain("논문 2장");
     expect(panel).not.toContain("지난 일");
