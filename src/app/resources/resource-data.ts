@@ -46,7 +46,8 @@ export type ResourcesData = {
 /** How many resources "최근 자료" shows when no topic is chosen. */
 export const RECENT_LIMIT = 20;
 
-export const RESOURCE_TYPES = ["paper", "seminar", "thought", "note"] as const;
+/** Tab order follows the sidebar (노트 right after 논문). */
+export const RESOURCE_TYPES = ["paper", "note", "seminar", "thought"] as const;
 
 /** `?type=` value: paper | seminar | thought | note; anything else means all. */
 export function parseTypeParam(value: unknown): ResourceType | null {
@@ -204,7 +205,7 @@ export function mergeResources(
       updatedAt: n.updatedAt,
     })),
   ];
-  const order: Record<ResourceType, number> = { paper: 0, seminar: 1, thought: 2, note: 3 };
+  const order: Record<ResourceType, number> = { paper: 0, note: 1, seminar: 2, thought: 3 };
   return items.sort(
     (a, b) =>
       b.updatedAt.localeCompare(a.updatedAt) ||
