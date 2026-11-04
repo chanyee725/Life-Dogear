@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import { chipClass } from "@/components/ui/Chip";
+import { SearchInput } from "@/components/ui/SearchInput";
 
 export type TopicOption = { name: string; count: number; href: string };
 
@@ -84,14 +85,12 @@ export function TopicPicker({
           className="absolute top-full left-0 z-20 mt-1 flex w-64 flex-col rounded-lg border border-border bg-bg shadow-overlay"
         >
           <div className="border-b border-border p-2">
-            <input
+            <SearchInput
               ref={inputRef}
-              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={`주제 ${topics.length}개 중 찾기`}
               aria-label="주제 찾기"
-              className="h-8 w-full rounded-md border border-border bg-bg px-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <ul className="max-h-72 overflow-y-auto py-1">

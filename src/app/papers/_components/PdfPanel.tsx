@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
 import { useLatestProgress } from "@/components/pdf/useLatestProgress";
-import { Button, buttonClass, ConfirmDialog, Section } from "@/components/ui";
+import { Button, ConfirmDialog, Section } from "@/components/ui";
 import { removePaperPdf } from "./pdf-client";
 import { PdfDropZone, ReplacePdfButton } from "./PdfUploader";
+import { LinkButton } from "@/components/ui";
 
 type PdfPanelProps = {
   paperId: string;
@@ -42,9 +42,9 @@ export function PdfPanel({ paperId, hasPdf, lastPage, totalPages, lastReadAt }: 
     <Section title="PDF">
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Link href={`/papers/${paperId}/read`} className={buttonClass("primary")}>
+          <LinkButton href={`/papers/${paperId}/read`} variant="primary">
             {latest.page ? `이어 읽기 · ${latest.page}쪽` : "이어 읽기"}
-          </Link>
+          </LinkButton>
           <ProgressBar
             current={latest.page}
             total={latest.totalPages}

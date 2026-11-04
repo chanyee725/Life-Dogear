@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { startTransition, useActionState, useRef, useState } from "react";
 import { FillFromLink } from "@/components/metadata/FillFromLink";
 import { applyMetadataToForm } from "@/components/metadata/apply";
@@ -8,11 +7,12 @@ import { safeAction } from "@/components/links/safe-action";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { TagInput } from "@/components/fields/TagInput";
-import { Button, buttonClass, Field, Input } from "@/components/ui";
+import { Button, Field, Input } from "@/components/ui";
 import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
 import { TEMPLATES } from "@/lib/templates";
 import { createPaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
+import { LinkButton } from "@/components/ui";
 
 export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -112,9 +112,9 @@ export function NewPaperForm({ tagSuggestions }: { tagSuggestions: string[] }) {
             {state.error}
           </p>
         ) : null}
-        <Link href="/papers" className={buttonClass("ghost")}>
+        <LinkButton href="/papers" variant="ghost">
           취소
-        </Link>
+        </LinkButton>
         <Button type="submit" variant="primary" disabled={pending}>
           {pending ? "저장 중…" : "저장"}
         </Button>

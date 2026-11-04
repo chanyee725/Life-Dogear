@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate } from "@/components/ui/format";
 import { ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { archive } from "@/lib/repo";
+import { ListRow, RowList } from "@/components/ui";
 
 export const metadata: Metadata = { title: "보관함" };
 export const dynamic = "force-dynamic";
@@ -42,9 +43,9 @@ export default async function ArchivePage() {
               key={group.type}
               title={`${ITEM_TYPE.label(group.type)} ${group.items.length}`}
             >
-              <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+              <RowList>
                 {group.items.map((item) => (
-                  <li key={item.ref.id} className="flex items-center gap-3 px-3 py-2">
+                  <ListRow key={item.ref.id}>
                     <Link
                       href={itemPath(item.ref)}
                       className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
@@ -55,9 +56,9 @@ export default async function ArchivePage() {
                       보관 {formatDate(item.archivedAt)}
                     </span>
                     <ArchiveButton item={item.ref} archived />
-                  </li>
+                  </ListRow>
                 ))}
-              </ul>
+              </RowList>
             </Section>
           ))}
         </div>

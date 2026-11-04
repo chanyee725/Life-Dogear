@@ -1,5 +1,5 @@
 import type {
-  InputHTMLAttributes,
+  ComponentProps,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
@@ -12,7 +12,7 @@ export const controlClass =
 export type ControlSize = "sm" | "md";
 const controlSize: Record<ControlSize, string> = { sm: "h-8 text-[13px]", md: "h-9" };
 
-export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
+export type InputProps = Omit<ComponentProps<"input">, "size"> & {
   size?: ControlSize;
 };
 

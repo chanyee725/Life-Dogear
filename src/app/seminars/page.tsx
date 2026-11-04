@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ItemCards } from "@/components/list/ItemCards";
 import { ItemTable, type Column } from "@/components/list/ItemTable";
 import { groupByKey, groupByMonth, parseGroup, type ItemGroup } from "@/components/list/groups";
@@ -18,13 +17,13 @@ import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
-import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { seoulDate } from "@/components/calendar/model";
 import { formatDate } from "@/components/ui/format";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
 import type { Seminar, SeminarSort } from "@/lib/repo/seminars";
+import { LinkButton, NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "세미나" };
 export const dynamic = "force-dynamic";
@@ -93,13 +92,13 @@ export default async function SeminarsPage({
       title={filtered ? "조건에 맞는 세미나가 없습니다" : "아직 세미나 노트가 없습니다"}
       action={
         filtered ? (
-          <Link href="/seminars" className={buttonClass("secondary", "sm")}>
+          <LinkButton href="/seminars" size="sm">
             필터 해제
-          </Link>
+          </LinkButton>
         ) : (
-          <Link href="/seminars/new" className={buttonClass("primary", "sm")}>
+          <NewItemButton href="/seminars/new" size="sm">
             새 세미나
-          </Link>
+          </NewItemButton>
         )
       }
     />
@@ -109,16 +108,7 @@ export default async function SeminarsPage({
     <Page>
       <PageHeader
         title="세미나"
-        actions={
-          <Link
-            aria-keyshortcuts="N"
-            title="단축키 N"
-            href="/seminars/new"
-            className={buttonClass("primary")}
-          >
-            새 세미나
-          </Link>
-        }
+        actions={<NewItemButton href="/seminars/new">새 세미나</NewItemButton>}
       />
       <ListView
         storageKey="seminars"
