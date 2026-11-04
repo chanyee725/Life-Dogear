@@ -7,6 +7,7 @@ import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
+import { ItemNotes } from "@/components/notes/ItemNotes";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
@@ -155,6 +156,7 @@ export default async function AreaDetailPage({ params }: Props) {
           </RowList>
         </Section>
       )}
+      <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
       <TaskSection parent={ref} archived={Boolean(area.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>

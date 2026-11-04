@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { graphLayout, itemStars, links as linksTable } from "@/db/schema";
-import { archive, areas, items, links, notes, papers, tags } from "@/lib/repo";
+import { archive, areas, goals, items, links, notes, papers, projects, tags } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 let db: Awaited<ReturnType<typeof useFreshDb>>;
@@ -98,5 +98,48 @@ describe("notes repo", () => {
     expect(await db.select().from(graphLayout)).toEqual([]);
     expect((await tags.getTagsFor("note", [n.id])).get(n.id)).toEqual([]);
     expect(await tags.listAll()).toEqual([]);
+  });
+});
+
+describe("notes.listForItem / create linkTo", () => {
+  it("lists linked notes (and an area's own notes) once, without archived ones", async () => {
+    const area = await areas.create({ title: "공부 영역" });
+    const project = await projects.create({ title: "프로젝트 A" });
+    const linked = await notes.create({
+      title: "연결 노트",
+      linkTo: { type: "project", id: project.id },
+    });
+    expect(await links.listConnected({ type: "project", id: project.id })).toMatchObject([
+      { ref: { type: "note", id: linked.id } },
+    ]);
+    const owned = await notes.create({ title: "영역 노트", areaId: area.id });
+    const both = await notes.create({
+      title: "둘 다",
+      areaId: area.id,
+      linkTo: { type: "area", id: area.id },
+    });
+    const old = await notes.create({ title: "보관", linkTo: { type: "project", id: project.id } });
+    await archive.archive({ type: "note", id: old.id });
+    await notes.create({ title: "남" });
+
+    const ids = async (ref: Parameters<typeof notes.listForItem>[0]) =>
+      (await notes.listForItem(ref)).map((n) => n.id).sort();
+    expect(await ids({ type: "project", id: project.id })).toEqual([linked.id]);
+    expect(await ids({ type: "area", id: area.id })).toEqual([owned.id, both.id].sort());
+    // A note linked the other way round (note → project, e.g. by [[…]] in its body) counts too.
+    const fromBody = await notes.create({ title: "본문 링크", body: "[[프로젝트 A]]" });
+    expect(await ids({ type: "project", id: project.id })).toEqual([linked.id, fromBody.id].sort());
+    // Editing keeps the stored creation time.
+    const edited = await notes.update(linked.id, { title: "연결 노트 2" });
+    expect(edited?.createdAt).toBe(linked.createdAt);
+    const goal = await goals.create({ title: "목표 G", horizon: "life" });
+    expect(await notes.listForItem({ type: "goal", id: goal.id })).toEqual([]);
+  });
+
+  it("rolls back the note when the link target does not exist", async () => {
+    await expect(
+      notes.create({ title: "고아", linkTo: { type: "project", id: "seed-missing" } }),
+    ).rejects.toThrow();
+    expect(await notes.list()).toEqual([]);
   });
 });

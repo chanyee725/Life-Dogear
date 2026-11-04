@@ -15,8 +15,16 @@ import { FilterChips } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
+import { seoulDate } from "@/components/calendar/model";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
+import {
+  Badge,
+  EmptyState,
+  formatDate,
+  formatRelative,
+  LinkButton,
+  NewItemButton,
+} from "@/components/ui";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes } from "@/lib/repo";
 import type { Note, NoteSort } from "@/lib/repo/notes";
@@ -96,6 +104,13 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       header: "수정",
       className: "text-muted tabular-nums whitespace-nowrap",
       render: (n) => formatRelative(n.updatedAt),
+    },
+    {
+      key: "created",
+      header: "생성일",
+      hideBelow: "lg",
+      className: "text-muted tabular-nums whitespace-nowrap",
+      render: (n) => formatDate(seoulDate(n.createdAt)),
     },
   ];
 

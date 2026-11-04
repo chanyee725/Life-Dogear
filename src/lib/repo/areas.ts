@@ -293,11 +293,11 @@ export type AreaMaterial = {
 const typeOrder = (t: string) => MATERIAL_TYPES.indexOf(t);
 
 /**
- * Notes that belong to the area, plus papers, seminars, thoughts and notes linked to the
- * area, to its goals (own or inherited from the parent, see {@link effectiveAreas}), to its
+ * Papers, seminars, thoughts and notes linked to the area, to its goals (own or inherited from the parent, see {@link effectiveAreas}), to its
  * projects or to area-less projects working toward its goals (non-archived on both ends),
- * one entry per item with every path that reaches it. Fixed query count: goals, projects,
- * member notes, links, then one title query per material type.
+ * one entry per item with every path that reaches it. Notes of the area itself (`areaId`
+ * or a direct link) are left out: the area's 노트 section shows them. Fixed query count:
+ * goals, projects, links, member notes, then one title query per material type.
  */
 export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
   const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
@@ -336,13 +336,17 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
     );
 
   const found = new Map<string, { ref: AreaMaterial["ref"]; via: MaterialVia[] }>();
-  const member: MaterialVia = { type: "member" };
+  // Notes of the area itself (its own or linked to it) are in the area's 노트 section.
   const memberNotes = await db()
     .select({ id: notes.id })
     .from(notes)
-    .where(and(eq(notes.areaId, areaId), isNull(notes.archivedAt)));
-  for (const n of memberNotes) {
-    found.set(`note:${n.id}`, { ref: { type: "note", id: n.id }, via: [member] });
+    .where(eq(notes.areaId, areaId));
+  const inNotesSection = new Set(memberNotes.map((n) => `note:${n.id}`));
+  for (const l of rows) {
+    if (sources.get(`${l.sourceType}:${l.sourceId}`)?.type === "area" && l.targetType === "note")
+      inNotesSection.add(`note:${l.targetId}`);
+    if (sources.get(`${l.targetType}:${l.targetId}`)?.type === "area" && l.sourceType === "note")
+      inNotesSection.add(`note:${l.sourceId}`);
   }
   for (const l of rows) {
     const pairs: [string, ItemRef][] = [
@@ -351,7 +355,8 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
     ];
     for (const [sourceKey, other] of pairs) {
       const via = sources.get(sourceKey);
-      if (!via || !MATERIAL_TYPES.includes(other.type)) continue;
+      if (!via || !MATERIAL_TYPES.includes(other.type) || inNotesSection.has(refKey(other)))
+        continue;
       const entry = found.get(refKey(other)) ?? {
         ref: other as AreaMaterial["ref"],
         via: [],

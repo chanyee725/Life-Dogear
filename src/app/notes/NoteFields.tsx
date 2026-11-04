@@ -18,18 +18,24 @@ export type NoteFormValues = {
   tags: string[];
 };
 
-/** Fields shared by the new and detail pages. `editorKey` remounts the editor per item. */
+/**
+ * Fields shared by the new and detail pages. `editorKey` remounts the editor per item.
+ * `created` (detail only) is the stored creation date, shown read-only.
+ */
 export function NoteFields({
   values,
   tagSuggestions,
   areaOptions,
   editorKey,
+  created,
 }: {
   values: NoteFormValues;
   tagSuggestions: string[];
   /** Non-archived areas (plus the current one if it is archived). */
   areaOptions: { value: string; label: string }[];
   editorKey: string;
+  /** `YYYY.MM.DD` (Seoul) of `createdAt`. */
+  created?: string;
 }) {
   return (
     <>
@@ -92,6 +98,11 @@ export function NoteFields({
             suggestions={tagSuggestions}
           />
         </Property>
+        {created ? (
+          <Property label="생성일">
+            <span className="text-sm tabular-nums">{created}</span>
+          </Property>
+        ) : null}
       </Properties>
       <DetailBody>
         <MarkdownEditor
