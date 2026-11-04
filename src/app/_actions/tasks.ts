@@ -139,6 +139,19 @@ export async function moveTaskAfter(
   });
 }
 
+/**
+ * After a failed drop: revalidates the task's lists so the client reloads them in the
+ * server's current order (it may have been changed on another device).
+ */
+export async function reloadTasks(id: unknown): Promise<ActionResult<null>> {
+  return runAction(async () => {
+    const task = await tasks.get(parseId(id));
+    if (!task) throw new RepoError("not_found", NOT_FOUND);
+    revalidateFor(task);
+    return null;
+  });
+}
+
 /** Deletes the task; returns it so the client can offer 되돌리기 (re-create). */
 export async function deleteTask(id: unknown): Promise<ActionResult<null>> {
   return runAction(async () => {

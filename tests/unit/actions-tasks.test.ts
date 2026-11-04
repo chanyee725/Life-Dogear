@@ -7,6 +7,7 @@ import {
   deleteTask,
   moveTask,
   moveTaskAfter,
+  reloadTasks,
   restoreTask,
   updateTask,
 } from "@/app/_actions/tasks";
@@ -87,6 +88,11 @@ describe("task actions", () => {
     await tasks.remove(c);
     expect(await moveTaskAfter(a, b, c)).toMatchObject({ ok: false });
     expect(await order()).toEqual(["a", "d"]);
+    // The client then asks for a reload of that list.
+    vi.mocked(revalidatePath).mockClear();
+    expect(await reloadTasks(a)).toEqual({ ok: true, data: null });
+    expect(paths()).toContain(`/projects/${p.id}`);
+    expect(await reloadTasks("seed-x")).toMatchObject({ ok: false });
   });
 
   it("rejects bad input with Korean messages", async () => {

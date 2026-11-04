@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
@@ -16,6 +15,7 @@ import {
   deleteTask,
   moveTask,
   moveTaskAfter,
+  reloadTasks,
   restoreTask,
   updateTask,
 } from "@/app/_actions/tasks";
@@ -119,7 +119,6 @@ export function TaskList({
   const [showDone, setShowDone] = useState(false);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [, startTransition] = useTransition();
-  const router = useRouter();
   const listRef = useRef<HTMLUListElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const doneId = useId();
@@ -301,7 +300,7 @@ export function TaskList({
       () => {
         // The order may have changed elsewhere: show the server's order, not the old one.
         setItems(snapshot);
-        router.refresh();
+        void safeAction(() => reloadTasks(task.id));
       },
     );
   };
