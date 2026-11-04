@@ -174,6 +174,7 @@
   - 요일 `text-[11px] text-muted`, 날짜 `text-sm tabular-nums text-fg`, 점 줄(8절과 같은 4×4 점 최대 3개, 0개면 높이만 유지 `h-1`).
   - **오늘**: `bg-accent-soft`, 날짜 `font-semibold`, `aria-current="date"`. 대비: `text-muted` on accent-soft 4.65 / 5.6, `text-fg` 15.6 / 12.8.
   - 지난 날: 날짜 `text-muted`.
+- **점·개수에는 하루짜리 항목만 센다**(할 일·프로젝트 마감·세미나·논문·Google). 분기 목표·회고 같은 기간 항목은 뺀다 — 넣으면 매일 점이 찍혀 띠가 아무것도 말하지 않는다(8절 좁은 월 칸 점과 같은 규칙).
 - 개수는 글자로 보이지 않는다(점만, 조용하게). 대신 `aria-label="11월 5일 목요일, 항목 3개"`. 0개면 "항목 없음".
 - 이동: `/tasks?view=calendar&range=week&date=YYYY-MM-DD`.
 - 출처 선택(표시 팝오버)을 따른다. 데이터가 하나도 없어도 띠는 보인다(이번 주 길잡이).
