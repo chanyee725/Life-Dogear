@@ -5,7 +5,17 @@ import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { setDb } from "@/db/client";
 import * as schema from "@/db/schema";
-import { archive, areas, goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
+import {
+  archive,
+  areas,
+  goals,
+  notes,
+  papers,
+  projects,
+  seminars,
+  tasks,
+  thoughts,
+} from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { searchAll } from "@/lib/search";
 import {
@@ -457,17 +467,18 @@ describe("query count", () => {
     return queries;
   }
 
-  it("runs one query per source (7 item types + highlights + tasks), however many rows match", async () => {
-    expect(await countSearch("목표")).toBe(9);
+  it("runs one query per source (8 item types + highlights + tasks), however many rows match", async () => {
+    expect(await countSearch("목표")).toBe(10);
     for (let i = 0; i < 3; i++) {
       await goals.create({ title: `목표 ${i}`, horizon: "life" });
       await thoughts.create({ title: `목표 생각 ${i}` });
+      await notes.create({ title: `목표 노트 ${i}`, body: "목표" });
     }
     await reviews.open("week", "2026-W44");
     const g = await goals.create({ title: "할 일 목표", horizon: "life" });
     for (let i = 0; i < 3; i++)
       await tasks.create({ title: `목표 할 일 ${i}`, parent: { type: "goal", id: g.id } });
-    expect(await countSearch("목표")).toBe(9);
+    expect(await countSearch("목표")).toBe(10);
   });
 });
 
@@ -493,5 +504,27 @@ describe("task source", () => {
     await archive.archive({ type: "project", id: p.id });
     const after = await searchAll("초안 쓰기");
     expect(after[0]).toMatchObject({ type: "task", archived: true });
+  });
+});
+
+describe("note source", () => {
+  it("finds notes by title, source name and body", async () => {
+    const byTitle = await notes.create({ title: "선형대수 노트" });
+    const bySource = await notes.create({
+      title: "3장 정리",
+      sourceKind: "book",
+      sourceTitle: "선형대수와 그 응용",
+    });
+    const byBody = await notes.create({ title: "강의 2주차", body: "고유값과 선형대수의 관계" });
+    const hits = await searchAll("선형대수");
+    const find = (id: string) => hits.find((h) => h.id === id);
+    expect(find(byTitle.id)).toMatchObject({
+      type: "note",
+      field: "title",
+      href: `/notes/${byTitle.id}`,
+    });
+    expect(find(bySource.id)).toMatchObject({ type: "note", field: "meta" });
+    expect(find(byBody.id)).toMatchObject({ type: "note", field: "body" });
+    expect(find(bySource.id)?.snippet?.match).toBe("선형대수");
   });
 });

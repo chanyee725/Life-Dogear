@@ -4,7 +4,17 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import { setDb } from "@/db/client";
 import * as schema from "@/db/schema";
-import { archive, areas, goals, links, papers, projects, seminars, thoughts } from "@/lib/repo";
+import {
+  archive,
+  areas,
+  goals,
+  links,
+  notes,
+  papers,
+  projects,
+  seminars,
+  thoughts,
+} from "@/lib/repo";
 
 let queries = 0;
 beforeEach(async () => {
@@ -101,6 +111,30 @@ describe("areas.listMaterials", () => {
     expect((await areas.listMaterials(area.id)).map((m) => m.title)).toEqual(["논문", "세미나"]);
   });
 
+  it("includes notes that belong to the area and notes linked to it", async () => {
+    const area = await areas.create({ title: "공부" });
+    const other = await areas.create({ title: "다른" });
+    const p = await projects.create({ title: "프로젝트", areaId: area.id });
+    const own = await notes.create({ title: "소속 노트", areaId: area.id });
+    const both = await notes.create({ title: "소속+연결 노트", areaId: area.id });
+    const linked = await notes.create({ title: "연결 노트", areaId: other.id });
+    const gone = await notes.create({ title: "보관 노트", areaId: area.id });
+    await archive.archive({ type: "note", id: gone.id });
+    await links.link({ type: "area", id: area.id }, { type: "note", id: both.id });
+    await links.link({ type: "note", id: linked.id }, { type: "project", id: p.id });
+    const paper = await papers.create({ title: "논문" });
+    await links.link({ type: "area", id: area.id }, { type: "paper", id: paper.id });
+
+    expect((await areas.listMaterials(area.id)).map((m) => [m.ref.type, m.title, m.via])).toEqual([
+      ["paper", "논문", [{ type: "area" }]],
+      ["note", "소속 노트", [{ type: "member" }]],
+      ["note", "소속+연결 노트", [{ type: "member" }, { type: "area" }]],
+      ["note", "연결 노트", [{ type: "project", id: p.id, title: "프로젝트" }]],
+    ]);
+    expect(own.areaId).toBe(area.id);
+    expect((await areas.listMaterials(other.id)).map((m) => m.title)).toEqual(["연결 노트"]);
+  });
+
   it("runs a fixed number of queries however many projects and links", async () => {
     const small = await areas.create({ title: "작음" });
     await projects.create({ title: "p", areaId: small.id });
@@ -112,10 +146,11 @@ describe("areas.listMaterials", () => {
       await links.link({ type: "project", id: p.id }, { type: "paper", id: paper.id });
       await links.link({ type: "thought", id: t.id }, { type: "project", id: p.id });
       await goals.create({ title: `g${i}`, horizon: "life", areaId: big.id });
+      await notes.create({ title: `노트 ${i}`, areaId: big.id });
     }
     const [, smallMaterials] = await counted(() => areas.listMaterials(small.id));
     const [found, bigMaterials] = await counted(() => areas.listMaterials(big.id));
-    expect(found).toHaveLength(12);
+    expect(found).toHaveLength(18);
     expect(bigMaterials).toBeLessThanOrEqual(smallMaterials + 3); // + one title query per type
     const [, smallGoals] = await counted(() => goals.listTreeForArea(small.id));
     const [, bigGoals] = await counted(() => goals.listTreeForArea(big.id));

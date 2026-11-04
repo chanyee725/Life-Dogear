@@ -265,9 +265,7 @@ function ReorderList({ areas }: { areas: AreaRow[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[13px] text-muted">
-        위·아래 버튼으로 순서를 바꾸면 바로 저장됩니다.
-      </p>
+      <p className="text-[13px] text-muted">위·아래 버튼으로 순서를 바꾸면 바로 저장됩니다.</p>
       <ul
         aria-label="영역 순서"
         className="flex flex-col divide-y divide-border rounded-lg border border-border"

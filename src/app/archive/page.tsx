@@ -12,7 +12,16 @@ import { archive } from "@/lib/repo";
 export const metadata: Metadata = { title: "보관함" };
 export const dynamic = "force-dynamic";
 
-const ORDER: ItemType[] = ["goal", "project", "area", "paper", "seminar", "thought", "review"];
+const ORDER: ItemType[] = [
+  "goal",
+  "project",
+  "area",
+  "paper",
+  "note",
+  "seminar",
+  "thought",
+  "review",
+];
 
 export default async function ArchivePage() {
   const items = await archive.listArchived();

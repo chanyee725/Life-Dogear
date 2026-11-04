@@ -93,25 +93,6 @@ describe("mergeResources", () => {
     expect(items.map((i) => i.id)).toEqual(["s", "a", "b"]);
     expect(items[0]!.meta).toBeUndefined();
   });
-
-  it("shows notes with their source, after papers on ties", () => {
-    const t = "2026-11-01T00:00:00.000Z";
-    const items = mergeResources(
-      [{ id: "p", title: "나", authors: [], year: null, readStatus: "to_read", updatedAt: t }],
-      [{ id: "s", title: "가", date: null, speaker: "", kind: "seminar", updatedAt: t }],
-      [],
-      [
-        { id: "n1", title: "가", sourceKind: "book", sourceTitle: "클린 코드", updatedAt: t },
-        { id: "n2", title: "나", sourceKind: null, sourceTitle: null, updatedAt: t },
-      ],
-    );
-    expect(items.map((i) => [i.id, i.href, i.meta])).toEqual([
-      ["p", "/papers/p", undefined],
-      ["n1", "/notes/n1", "책 · 클린 코드"],
-      ["n2", "/notes/n2", undefined],
-      ["s", "/seminars/s", undefined],
-    ]);
-  });
 });
 
 describe("loadResources", () => {
@@ -137,15 +118,20 @@ describe("loadResources", () => {
     expect((await loadResources("없는 주제")).recent).toEqual([]);
   });
 
-  it("collects the topic's papers, notes, seminars and thoughts, without archived items or projects", async () => {
+  it("collects the topic's papers, seminars, thoughts and notes, without archived items or projects", async () => {
     const p = await papers.create({ title: "논문 A", tags: ["통계"] });
     await seminars.create({ title: "세미나 B", tags: ["통계"] });
     await thoughts.create({ title: "생각 C", tags: ["통계"] });
-    await notes.create({ title: "노트 D", tags: ["통계"] });
-    const goneNote = await notes.create({ title: "보관한 노트", tags: ["통계"] });
-    await archive.archive({ type: "note", id: goneNote.id });
+    const n = await notes.create({
+      title: "노트 D",
+      sourceKind: "book",
+      sourceTitle: "통계학 입문",
+      tags: ["통계"],
+    });
     const gone = await thoughts.create({ title: "보관한 생각", tags: ["통계"] });
     await archive.archive({ type: "thought", id: gone.id });
+    const goneNote = await notes.create({ title: "보관한 노트", tags: ["통계"] });
+    await archive.archive({ type: "note", id: goneNote.id });
     await projects.create({ title: "프로젝트", tags: ["통계"] });
     await papers.create({ title: "다른 주제", tags: ["설계"] });
 
@@ -158,6 +144,11 @@ describe("loadResources", () => {
       "세미나 B",
     ]);
     expect(data.items.find((i) => i.id === p.id)?.type).toBe("paper");
+    expect(data.items.find((i) => i.id === n.id)).toMatchObject({
+      type: "note",
+      href: `/notes/${n.id}`,
+      meta: "책 · 통계학 입문",
+    });
   });
 
   it("matches the topic case-insensitively and reports unknown topics", async () => {

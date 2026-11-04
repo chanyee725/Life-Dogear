@@ -1,6 +1,6 @@
 /**
  * Data for `/resources` (자료): topics first, then — for a chosen topic — its papers,
- * notes, seminars and thoughts in one list, most recently updated first; with no topic, the
+ * seminars, thoughts and notes in one list, most recently updated first; with no topic, the
  * most recently updated resources. Archived items are left out (repo default). Topics
  * come from those same items, so tags used only by projects, areas or goals do not show.
  * Fixed query count: four lists (each with its tags).
@@ -19,7 +19,7 @@ import type { TopicSort } from "./topic-index";
 
 export * from "./topic-index";
 
-export type ResourceType = "paper" | "note" | "seminar" | "thought";
+export type ResourceType = "paper" | "seminar" | "thought" | "note";
 
 export type ResourceItem = {
   type: ResourceType;
@@ -46,9 +46,10 @@ export type ResourcesData = {
 /** How many resources "최근 자료" shows when no topic is chosen. */
 export const RECENT_LIMIT = 20;
 
+/** Tab order follows the sidebar (노트 right after 논문). */
 export const RESOURCE_TYPES = ["paper", "note", "seminar", "thought"] as const;
 
-/** `?type=` value: paper | note | seminar | thought; anything else means all. */
+/** `?type=` value: paper | seminar | thought | note; anything else means all. */
 export function parseTypeParam(value: unknown): ResourceType | null {
   const raw = Array.isArray(value) ? value[0] : value;
   return (RESOURCE_TYPES as readonly unknown[]).includes(raw) ? (raw as ResourceType) : null;
@@ -58,7 +59,12 @@ export function parseTypeParam(value: unknown): ResourceType | null {
 export function countByType(
   items: readonly { type: ResourceType }[],
 ): Record<ResourceType, number> {
-  const counts: Record<ResourceType, number> = { paper: 0, note: 0, seminar: 0, thought: 0 };
+  const counts: Record<ResourceType, number> = {
+    paper: 0,
+    seminar: 0,
+    thought: 0,
+    note: 0,
+  };
   for (const item of items) counts[item.type] += 1;
   return counts;
 }
@@ -189,8 +195,11 @@ export function mergeResources(
       id: n.id,
       href: `${ITEM_ROUTE.note}/${n.id}`,
       title: n.title,
+      // e.g. "책 · 데이터 중심 애플리케이션 설계"
       meta: join(
-        NOTE_SOURCE_KIND.is(n.sourceKind) ? NOTE_SOURCE_KIND.label(n.sourceKind) : null,
+        n.sourceKind && NOTE_SOURCE_KIND.is(n.sourceKind)
+          ? NOTE_SOURCE_KIND.label(n.sourceKind)
+          : null,
         n.sourceTitle,
       ),
       updatedAt: n.updatedAt,
@@ -212,7 +221,7 @@ export async function loadResources(rawTopic: string | null): Promise<ResourcesD
     thoughts.list(),
     notes.list(),
   ]);
-  const topics = collectTopics([...paperRows, ...noteRows, ...seminarRows, ...thoughtRows]);
+  const topics = collectTopics([...paperRows, ...seminarRows, ...thoughtRows, ...noteRows]);
   const latest = () =>
     mergeResources(paperRows, seminarRows, thoughtRows, noteRows).slice(0, RECENT_LIMIT);
   if (!rawTopic) return { topics, topic: null, unknownTopic: false, items: [], recent: latest() };

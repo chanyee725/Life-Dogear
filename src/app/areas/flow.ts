@@ -5,9 +5,11 @@ import type { GoalNode } from "@/lib/repo/goals";
 export function viaLabel(via: readonly MaterialVia[]): string {
   return via
     .map((v) =>
-      v.type === "area"
-        ? "직접 연결"
-        : `${v.type === "project" ? "프로젝트" : "목표"} ${v.title} 경유`,
+      v.type === "member"
+        ? "영역 소속"
+        : v.type === "area"
+          ? "직접 연결"
+          : `${v.type === "project" ? "프로젝트" : "목표"} ${v.title} 경유`,
     )
     .join(" · ");
 }
