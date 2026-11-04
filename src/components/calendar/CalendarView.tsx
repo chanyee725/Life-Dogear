@@ -32,6 +32,7 @@ import {
   dayOf,
   gridWeeks,
   isMovable,
+  isOneDay,
   itemsOn,
   layoutWeek,
   moveItemTo,
@@ -199,9 +200,11 @@ export function CalendarView({
     else pendingFocus.current = { day };
   };
 
-  const goDay = (day: string) => {
+  /** `flip`: always open the target's own month (PageUp/PageDown), even onto a filler day. */
+  const goDay = (day: string, flip = false) => {
     if (narrow && range === "month") setSelected(day);
-    if (gridDays.includes(day)) focusCell(day);
+    const otherMonth = range === "month" && day.slice(0, 7) !== date.slice(0, 7);
+    if (gridDays.includes(day) && !(flip && otherMonth)) focusCell(day);
     else {
       setFocusDay(day);
       pendingFocus.current = { day };
@@ -247,6 +250,8 @@ export function CalendarView({
     const value = title.replace(/\s+/g, " ").trim();
     if (!value) return null;
     if (value.length > TITLE_MAX) return `${TITLE_MAX}자까지 쓸 수 있습니다.`;
+    // Adding a task while tasks are hidden would make it vanish: show them again.
+    if (!choice.task) setChoice({ ...choice, task: true });
     const tempId = `task:new-${Date.now()}`;
     setItems((list) => [
       ...list,
@@ -415,7 +420,7 @@ export function CalendarView({
       const to = navDay(range, cellDay, e.key);
       if (to) {
         e.preventDefault();
-        if (to !== cellDay) goDay(to);
+        if (to !== cellDay) goDay(to, e.key === "PageUp" || e.key === "PageDown");
         return;
       }
       if (e.key === "Enter" || e.key === " ") {
@@ -1205,7 +1210,7 @@ function NarrowMonthRow({
     <div role="row" className="grid grid-cols-7">
       {days.map((d) => {
         const on = itemsOn(items, d);
-        const singles = on.filter((i) => dayOf(i.start) === d && !i.end);
+        const singles = on.filter(isOneDay);
         const bar = on.find((i) => i.end && i.end !== i.start);
         const outside = d.slice(0, 7) !== monthKey;
         const isSelected = d === ctx.selected;

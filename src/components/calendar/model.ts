@@ -158,6 +158,9 @@ export function lastDay(item: CalendarItem): string {
   return end > first ? end : first;
 }
 
+/** Single-day item (not a period): the only kind counted in dots (8절·9절). */
+export const isOneDay = (item: CalendarItem) => lastDay(item) === dayOf(item.start);
+
 /** Can be dragged / moved with `[` `]`: open tasks only (calendar.md 5.1). */
 export const isMovable = (item: CalendarItem) => !!item.taskId && !item.done;
 

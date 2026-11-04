@@ -171,9 +171,10 @@ describe("WeekStrip", () => {
     );
     expect(html).toContain('<nav aria-label="이번 주">');
     expect(html).toContain('href="/tasks?view=calendar&amp;range=week&amp;date=2026-11-05"');
-    expect(html).toMatch(/aria-current="date" aria-label="11월 4일 수요일, 항목 \d+개"/);
-    // 11/5: task, project, google + goal + review (papers off)
-    expect(html).toContain('aria-label="11월 5일 목요일, 항목 5개"');
+    expect(html).toMatch(/aria-current="date" aria-label="11월 4일 수요일, 항목 없음"/);
+    // 11/5: task, project, google — the goal and review periods are not counted (9절)
+    expect(html).toContain('aria-label="11월 5일 목요일, 항목 3개"');
+    expect(html).toContain('aria-label="11월 3일 화요일, 항목 없음"');
     expect(html.match(/<li>/g)).toHaveLength(7);
   });
 });

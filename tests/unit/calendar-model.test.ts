@@ -8,6 +8,7 @@ import {
   gridRange,
   gridWeeks,
   isMovable,
+  isOneDay,
   itemsOn,
   layoutWeek,
   moveItemTo,
@@ -127,6 +128,16 @@ describe("order in a day (3.2)", () => {
       "paper",
       "done",
     ]);
+  });
+
+  it("tells single-day items from periods", () => {
+    expect(isOneDay(item("t", "2026-11-04"))).toBe(true);
+    expect(
+      isOneDay(
+        item("g", "2026-11-04T09:00:00+09:00", { allDay: false, end: "2026-11-04T10:00:00+09:00" }),
+      ),
+    ).toBe(true);
+    expect(isOneDay(item("r", "2026-11-02", { source: "review", end: "2026-11-08" }))).toBe(false);
   });
 
   it("only open tasks move", () => {

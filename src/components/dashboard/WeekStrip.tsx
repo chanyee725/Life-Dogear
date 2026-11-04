@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { calendarHref, dayDots, itemsOn, spokenDay, WEEKDAYS } from "@/components/calendar/model";
+import {
+  calendarHref,
+  dayDots,
+  isOneDay,
+  itemsOn,
+  spokenDay,
+  WEEKDAYS,
+} from "@/components/calendar/model";
 import { SourceDot } from "@/components/calendar/SourceIcon";
 import { visibleItems } from "@/components/calendar/sources";
 import { useSources } from "@/components/calendar/useSources";
@@ -31,7 +38,8 @@ export function WeekStrip({
     <nav aria-label="이번 주">
       <ol className="grid grid-cols-7 gap-1">
         {days.map((d, i) => {
-          const on = itemsOn(shown, d);
+          // Single-day items only: periods (goals, reviews) would dot every day (9절).
+          const on = itemsOn(shown, d).filter(isOneDay);
           const isToday = d === today;
           return (
             <li key={d}>
