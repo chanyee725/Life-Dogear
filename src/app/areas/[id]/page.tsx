@@ -8,7 +8,6 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
 import { ItemNotes } from "@/components/notes/ItemNotes";
-import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
 import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
@@ -84,60 +83,64 @@ export default async function AreaDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      <Section
-        title={`목표${countLabel(goalOrder(areaGoals).length)}`}
-        action={
-          areaGoals.length === 0 ? undefined : (
-            <LinkButton href={`/goals/new?area=${area.id}`} variant="ghost" size="sm">
-              새 목표
-            </LinkButton>
-          )
-        }
-      >
-        {areaGoals.length === 0 ? (
-          <EmptyAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
-        ) : (
-          <GoalTree nodes={areaGoals} />
-        )}
-      </Section>
-      <Section
-        title={`프로젝트${countLabel(areaProjects.length)}`}
-        action={
-          areaProjects.length === 0 ? undefined : (
-            <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
-              새 프로젝트
-            </LinkButton>
-          )
-        }
-      >
-        {areaProjects.length === 0 ? (
-          <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {projectGroups.map((group) => (
-              <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
-                {showGroupTitles ? (
-                  <h3 className="text-xs text-muted">
-                    {group.goalId ? (
-                      <>
-                        목표{" "}
-                        <Link href={`/goals/${group.goalId}`} className="text-fg hover:underline">
-                          {group.title}
-                        </Link>
-                      </>
-                    ) : (
-                      "목표 없음"
-                    )}
-                  </h3>
-                ) : null}
-                <ProjectList list={group.projects} />
-              </div>
-            ))}
-          </div>
-        )}
-      </Section>
+      {/* 목표 and 프로젝트 side by side on wide screens; items-start keeps an empty side short,
+          and both headers take the "새 …" button's height so titles line up when one is empty. */}
+      <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2 [&>section>div:first-child]:min-h-7">
+        <Section
+          title={`목표${countLabel(goalOrder(areaGoals).length)}`}
+          action={
+            areaGoals.length === 0 ? undefined : (
+              <LinkButton href={`/goals/new?area=${area.id}`} variant="ghost" size="sm">
+                새 목표
+              </LinkButton>
+            )
+          }
+        >
+          {areaGoals.length === 0 ? (
+            <EmptyAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
+          ) : (
+            <GoalTree nodes={areaGoals} />
+          )}
+        </Section>
+        <Section
+          title={`프로젝트${countLabel(areaProjects.length)}`}
+          action={
+            areaProjects.length === 0 ? undefined : (
+              <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
+                새 프로젝트
+              </LinkButton>
+            )
+          }
+        >
+          {areaProjects.length === 0 ? (
+            <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {projectGroups.map((group) => (
+                <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
+                  {showGroupTitles ? (
+                    <h3 className="text-xs text-muted">
+                      {group.goalId ? (
+                        <>
+                          목표{" "}
+                          <Link href={`/goals/${group.goalId}`} className="text-fg hover:underline">
+                            {group.title}
+                          </Link>
+                        </>
+                      ) : (
+                        "목표 없음"
+                      )}
+                    </h3>
+                  ) : null}
+                  <ProjectList list={group.projects} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      </div>
       {materials.length === 0 ? null : (
-        <Section title={`자료 ${materials.length}`}>
+        <Section title={`논문·세미나·생각 ${materials.length}`}>
           <RowList aria-label="연결된 자료">
             {materials.map((m) => (
               <li key={`${m.ref.type}:${m.ref.id}`}>
@@ -157,7 +160,6 @@ export default async function AreaDetailPage({ params }: Props) {
         </Section>
       )}
       <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
-      <TaskSection parent={ref} archived={Boolean(area.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>
   );

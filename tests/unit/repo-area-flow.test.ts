@@ -111,7 +111,7 @@ describe("areas.listMaterials", () => {
     expect((await areas.listMaterials(area.id)).map((m) => m.title)).toEqual(["논문", "세미나"]);
   });
 
-  it("leaves out the area's own notes but keeps notes reached through its projects", async () => {
+  it("leaves out notes, own or reached through its projects: the 노트 section has them", async () => {
     const area = await areas.create({ title: "공부" });
     const other = await areas.create({ title: "다른" });
     const p = await projects.create({ title: "프로젝트", areaId: area.id });
@@ -131,10 +131,8 @@ describe("areas.listMaterials", () => {
 
     expect((await areas.listMaterials(area.id)).map((m) => [m.ref.type, m.title, m.via])).toEqual([
       ["paper", "논문", [{ type: "area" }]],
-      ["note", "연결 노트", [{ type: "project", id: p.id, title: "프로젝트" }]],
     ]);
     expect(own.areaId).toBe(area.id);
-    // 연결 노트 belongs to `other`, so there it is in the 노트 section, not 자료.
     expect(await areas.listMaterials(other.id)).toEqual([]);
   });
 
@@ -153,9 +151,9 @@ describe("areas.listMaterials", () => {
     }
     const [, smallMaterials] = await counted(() => areas.listMaterials(small.id));
     const [found, bigMaterials] = await counted(() => areas.listMaterials(big.id));
-    // 6 papers + 6 thoughts; the area's own notes are in its 노트 section instead.
+    // 6 papers + 6 thoughts; notes are in the 노트 section instead.
     expect(found).toHaveLength(12);
-    expect(bigMaterials).toBeLessThanOrEqual(smallMaterials + 3); // + one title query per type
+    expect(bigMaterials).toBeLessThanOrEqual(smallMaterials + 2); // + one title query per type
     const [, smallGoals] = await counted(() => goals.listTreeForArea(small.id));
     const [, bigGoals] = await counted(() => goals.listTreeForArea(big.id));
     expect(bigGoals).toBeLessThanOrEqual(smallGoals + 3);
