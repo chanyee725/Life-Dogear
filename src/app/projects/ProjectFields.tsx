@@ -52,14 +52,8 @@ export function ProjectFields({
           status={values.status}
           onKindChange={onKindChange}
         />
-        <Property label="다음 할 일" htmlFor="project-next">
-          <Input
-            id="project-next"
-            name="nextAction"
-            defaultValue={values.nextAction}
-            placeholder="바로 다음에 할 한 가지"
-          />
-        </Property>
+        {/* No longer shown; kept hidden so saving leaves the stored value alone. */}
+        <input type="hidden" name="nextAction" value={values.nextAction} />
         <Property label="영역 · 목표" htmlFor="project-area">
           <div className="flex flex-wrap items-center gap-2">
             <EnumSelect

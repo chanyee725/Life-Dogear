@@ -60,7 +60,6 @@ export type ProjectRow = {
   status: string;
   stage: string;
   dueDate: string | null;
-  nextAction: string;
   researchQuestion: string;
   body: string;
   archivedAt: string | null;
@@ -109,11 +108,7 @@ export function projectPreview(p: ProjectRow): NodePreview {
         : prop("상태", label(PROJECT_STATUS, p.status))),
       ...prop("마감일", p.dueDate),
     ],
-    summary: nonEmpty(p.nextAction)
-      ? clip(`다음 할 일: ${p.nextAction}`)
-      : nonEmpty(p.researchQuestion)
-        ? clip(p.researchQuestion)
-        : firstParagraph(p.body),
+    summary: nonEmpty(p.researchQuestion) ? clip(p.researchQuestion) : firstParagraph(p.body),
   };
 }
 

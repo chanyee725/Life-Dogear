@@ -67,12 +67,6 @@ export default async function ProjectsPage({
       render: (p) => <ProgressBadge project={p} />,
     },
     {
-      key: "next",
-      header: "다음 할 일",
-      className: "max-w-64 truncate text-muted",
-      render: (p) => p.nextAction,
-    },
-    {
       key: "area",
       header: "영역",
       className: "text-muted whitespace-nowrap",
@@ -176,9 +170,7 @@ export default async function ProjectsPage({
                   <span className="font-medium">{p.title}</span>
                   <ProgressBadge project={p} />
                 </div>
-                {p.nextAction ? (
-                  <p className="line-clamp-2 text-[13px] text-muted">다음: {p.nextAction}</p>
-                ) : p.researchQuestion ? (
+                {p.researchQuestion ? (
                   <p className="line-clamp-2 text-[13px] text-muted">{p.researchQuestion}</p>
                 ) : null}
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-muted">

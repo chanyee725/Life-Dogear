@@ -82,7 +82,7 @@ const SOURCES: Source[] = [
     type: "project",
     table: projects,
     title: projects.title,
-    // `nextAction` is the one-line "다음 할 일" shown on lists, home and detail.
+    // `nextAction` ("다음 할 일") is no longer shown but older values stay searchable.
     meta: [projects.researchQuestion, projects.nextAction],
     body: projects.body,
     updatedAt: projects.updatedAt,

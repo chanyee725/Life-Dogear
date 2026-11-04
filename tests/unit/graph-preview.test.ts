@@ -32,13 +32,12 @@ describe("firstParagraph", () => {
 });
 
 describe("previews", () => {
-  it("project: stage for research, status for general, next action first", () => {
+  it("project: stage for research, status for general, question then body", () => {
     const base = {
       kind: "research",
       status: "active",
       stage: "drafting",
       dueDate: "2027-03-01",
-      nextAction: "",
       researchQuestion: "무엇을 묻나",
       body: "",
       archivedAt: null,
@@ -55,11 +54,12 @@ describe("previews", () => {
       ...base,
       kind: "general",
       dueDate: null,
-      nextAction: "메일 보내기",
+      researchQuestion: "",
+      body: "메일 보내기",
       archivedAt: "x",
     });
     expect(general.props).toEqual([{ label: "상태", value: "진행 중" }]);
-    expect(general.summary).toBe("다음 할 일: 메일 보내기");
+    expect(general.summary).toBe("메일 보내기");
     expect(general.archived).toBe(true);
   });
 
