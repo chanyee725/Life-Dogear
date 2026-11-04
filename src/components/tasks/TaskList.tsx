@@ -406,7 +406,7 @@ export function TaskList({
           ) : null}
         </ul>
       ) : null}
-      {addTo ? <AddLine onAdd={add} /> : null}
+      {addTo ? <AddLine onAdd={add} bare={open.length === 0} /> : null}
       {error ? (
         <p role="alert" className="py-1 text-xs text-danger">
           {error}
@@ -671,7 +671,15 @@ function TitleEditor({
   );
 }
 
-function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }) {
+/** `bare`: no task rows above, so the line lines up with other add buttons (`DashboardAdd`). */
+function AddLine({
+  onAdd,
+  bare,
+}: {
+  onAdd: (title: string) => Promise<string | null>;
+  bare: boolean;
+}) {
+  const indent = bare ? "-ml-2 pl-2" : "pl-[30px]";
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -687,7 +695,10 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
         type="button"
         data-task-add
         onClick={() => setEditing(true)}
-        className="flex h-9 w-full items-center rounded-md pl-[30px] text-left text-sm text-muted hover:bg-hover hover:text-fg"
+        className={cn(
+          "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
+          indent,
+        )}
       >
         ＋ 할 일 추가
       </button>
@@ -709,7 +720,7 @@ function AddLine({ onAdd }: { onAdd: (title: string) => Promise<string | null> }
   };
 
   return (
-    <div className="flex flex-col pl-[30px]">
+    <div className={cn("flex flex-col", indent)}>
       <input
         autoFocus
         data-task-add
