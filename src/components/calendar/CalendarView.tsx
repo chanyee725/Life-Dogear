@@ -298,8 +298,6 @@ export function CalendarView({
     const value = title.replace(/\s+/g, " ").trim();
     if (!value) return null;
     if (value.length > TITLE_MAX) return `${TITLE_MAX}자까지 쓸 수 있습니다.`;
-    // Adding a task while tasks are hidden would make it vanish: show them again.
-    if (!choice.task) setChoice({ ...choice, task: true });
     const tempId = `task:new-${Date.now()}`;
     setItems((list) => [
       ...list,
@@ -672,7 +670,7 @@ export function CalendarView({
             {announce}
           </p>
           <p id={helpId} className="sr-only">
-            화살표로 날짜 이동, Enter로 항목 보기, 할 일은 [ ] 로 하루씩 옮깁니다.
+            화살표로 날짜 이동, Enter로 항목 보기.
           </p>
 
           <div
