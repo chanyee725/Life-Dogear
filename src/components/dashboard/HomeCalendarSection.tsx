@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { Suspense, type ReactNode } from "react";
 import { fetchRange, weekDays } from "@/components/calendar/model";
 import { getCalendar, type CalendarResult } from "@/lib/calendar";
@@ -12,7 +13,8 @@ import { WeekStripPlaceholder } from "./WeekStripSection";
  * (오늘 할 일), 할 일 추가 (due on the selected day), 다음 일정. From `lg` the panel is held to
  * the left column's height and scrolls inside. Below `lg`: panel, grid, 생각 추가.
  * Streamed so a slow Google feed never holds up the rest of the home; the fallback keeps the
- * tasks and both inputs on screen meanwhile.
+ * tasks and both inputs on screen meanwhile, and their drafts (text, focus, caret) carry over
+ * to the loaded copies, so `/` and capture work while the calendar still loads.
  */
 export function HomeCalendarSection({
   today,
@@ -65,6 +67,7 @@ async function HomeCalendarData({
   panel: ReactNode;
   below: ReactNode;
 }) {
+  await e2eDelay();
   let data: CalendarResult = { items: [], google: "off" };
   let failed = false;
   try {
@@ -88,4 +91,14 @@ async function HomeCalendarData({
       fitPanel
     />
   );
+}
+
+/**
+ * e2e only (`E2E_HOOKS=1`, set by the Playwright web server): the `e2e-calendar-delay` cookie
+ * (ms, ≤ 10 s) holds the calendar back like a slow Google feed, to test the loading state.
+ */
+async function e2eDelay() {
+  if (process.env.E2E_HOOKS !== "1") return;
+  const ms = Number((await cookies()).get("e2e-calendar-delay")?.value);
+  if (ms > 0) await new Promise((r) => setTimeout(r, Math.min(ms, 10_000)));
 }

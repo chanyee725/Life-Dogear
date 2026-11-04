@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { CalendarView, type CalendarViewProps } from "@/components/calendar/CalendarView";
+import { DraftProvider } from "./drafts";
 import { TaskQuickInput } from "./QuickInput";
 
 /** The day selected in the home calendar, shared with the 할 일 추가 input in its panel. */
@@ -13,10 +14,14 @@ function useDay() {
   return ctx;
 }
 
-/** Holds the selected day (starts on today) for the home calendar block. */
+/** Holds the selected day (starts on today) and the inputs' drafts for the home calendar block. */
 export function HomeDayProvider({ today, children }: { today: string; children: ReactNode }) {
   const [day, setDay] = useState(today);
-  return <DayContext.Provider value={{ day, setDay }}>{children}</DayContext.Provider>;
+  return (
+    <DayContext.Provider value={{ day, setDay }}>
+      <DraftProvider>{children}</DraftProvider>
+    </DayContext.Provider>
+  );
 }
 
 /** The home calendar, reporting its selected day to the provider. */

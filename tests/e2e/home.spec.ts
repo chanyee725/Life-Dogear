@@ -184,3 +184,27 @@ test("홈 달력 블록: 오른쪽 패널에 오늘 할 일 → 할 일 추가 �
   expect(i2.y).toBeLessThan(g2.y);
   expect(g2.y).toBeLessThan(t2.y);
 });
+
+test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/tasks");
+  await context.addCookies([
+    { name: "e2e-calendar-delay", value: "3000", url: "http://127.0.0.1:3000" },
+  ]);
+  await page.keyboard.press("/");
+  const input = page.getByRole("textbox", { name: /생각 추가/ });
+  await expect(input).toBeFocused();
+  // Still loading: the grid is not there yet.
+  await expect(page.getByRole("region", { name: "달력" }).getByRole("grid")).toHaveCount(0);
+  await page.keyboard.type("느린 달력");
+  await expect(page.getByRole("region", { name: "달력" }).getByRole("grid")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(input).toHaveValue("느린 달력");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("!");
+  await expect(input).toHaveValue("느린 달력!");
+  await context.clearCookies({ name: "e2e-calendar-delay" });
+});

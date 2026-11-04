@@ -29,6 +29,8 @@ export default defineConfig({
       DATABASE_AUTH_TOKEN: "",
       // Never write test photos and PDFs to the shared bucket.
       BLOB_STORE: "local",
+      // Test-only server hooks (e.g. the home calendar delay cookie).
+      E2E_HOOKS: "1",
     },
   },
 });
