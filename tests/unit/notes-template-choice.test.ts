@@ -4,7 +4,7 @@ import {
   chooseTemplate,
   initialChoice,
   nextIndex,
-} from "@/app/notes/new/template-choice";
+} from "@/components/ui/template-choice";
 
 describe("canReplaceBody", () => {
   it("replaces an empty or whitespace-only body", () => {

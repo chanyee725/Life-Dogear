@@ -30,6 +30,7 @@ export function ProjectFields({
   areaOptions,
   goalOptions,
   editorKey,
+  onKindChange,
 }: {
   values: ProjectFormValues;
   tagSuggestions: string[];
@@ -38,12 +39,19 @@ export function ProjectFields({
   /** Non-archived goals (plus the current one if it is archived). */
   goalOptions: { value: string; label: string }[];
   editorKey: string;
+  /** Makes 종류 controlled by the parent (`values.kind` is then the current value). */
+  onKindChange?: (kind: ProjectKind) => void;
 }) {
   return (
     <>
       <TitleInput defaultValue={values.title} />
       <Properties>
-        <ProjectKindFields kind={values.kind} stage={values.stage} status={values.status} />
+        <ProjectKindFields
+          kind={values.kind}
+          stage={values.stage}
+          status={values.status}
+          onKindChange={onKindChange}
+        />
         <Property label="다음 할 일" htmlFor="project-next">
           <Input
             id="project-next"

@@ -15,17 +15,22 @@ import {
 /**
  * 종류 + its progress field: research projects move through stages (단계),
  * general projects only have a status (상태). Switching the kind swaps the field.
+ * With `onKindChange` the kind is controlled by the parent (new project: the template
+ * picker sets it too).
  */
 export function ProjectKindFields({
   kind: initialKind,
   stage,
   status,
+  onKindChange,
 }: {
   kind: ProjectKind;
   stage: ProjectStage;
   status: ProjectStatus;
+  onKindChange?: (kind: ProjectKind) => void;
 }) {
-  const [kind, setKind] = useState<ProjectKind>(initialKind);
+  const [ownKind, setOwnKind] = useState<ProjectKind>(initialKind);
+  const kind = onKindChange ? initialKind : ownKind;
   return (
     <>
       <Property label="종류" htmlFor="project-kind">
@@ -33,9 +38,9 @@ export function ProjectKindFields({
           id="project-kind"
           name="kind"
           options={PROJECT_KIND.options}
-          defaultValue={initialKind}
+          {...(onKindChange ? { value: kind } : { defaultValue: initialKind })}
           onChange={(value) => {
-            if (value) setKind(value);
+            if (value) (onKindChange ?? setOwnKind)(value);
           }}
           className="w-auto"
         />

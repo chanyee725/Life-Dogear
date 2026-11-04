@@ -25,3 +25,4 @@ export { DeleteItemButton } from "./DeleteItemButton";
 export { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
 export { confirmLeave, isInAppNavigation, UNSAVED_CHANGES_MESSAGE } from "./unsaved-guard";
 export { ArchiveButton, ArchivedNotice } from "./ArchiveButton";
+export { useTemplateBody } from "./useTemplateBody";

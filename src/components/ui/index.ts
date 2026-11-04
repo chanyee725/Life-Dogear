@@ -27,3 +27,12 @@ export { EmptyState } from "./EmptyState";
 export { Spinner } from "./Spinner";
 export { Kbd } from "./Kbd";
 export { formatDate, formatRelative } from "./format";
+export { TemplatePicker, type TemplateOption } from "./TemplatePicker";
+export {
+  canReplaceBody,
+  chooseTemplate,
+  initialChoice,
+  KEPT_BODY_NOTICE,
+  nextIndex,
+  type TemplateChoice,
+} from "./template-choice";
