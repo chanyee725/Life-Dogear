@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  applyDrop,
-  dragPosition,
-  dropSlot,
-  placeInOrder,
-  resolveAnchor,
-} from "@/components/tasks/reorder";
+import { applyDrop, dragPosition, dropSlot, placeInOrder } from "@/components/tasks/reorder";
+import { resolveAnchor } from "@/lib/tasks/order";
 
 describe("task drag ordering", () => {
   it("finds the slot from the other rows' middles", () => {
