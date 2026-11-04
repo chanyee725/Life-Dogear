@@ -4,7 +4,7 @@ import { firstParam, type QueryParams } from "@/components/list/query";
 import { LinkTabs } from "@/components/ui/Tabs";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatRelative } from "@/components/ui/format";
 import { REVIEW_KIND } from "@/lib/enums";
@@ -12,6 +12,7 @@ import * as reviews from "@/lib/repo/reviews";
 import { periodLabel, periodOf } from "@/lib/reviews/period";
 import { openReview } from "./actions";
 import { bodyPreview, CURRENT_PERIOD_LABEL, KIND_TAB_LABEL } from "./labels";
+import { LinkButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "회고" };
 export const dynamic = "force-dynamic";
@@ -36,9 +37,7 @@ export default async function ReviewsPage({
 
   // One review per period: write it when missing, otherwise open the existing one.
   const primary = current ? (
-    <Link href={`/reviews/${current.id}`} className={buttonClass("secondary")}>
-      {currentLabel} 열기
-    </Link>
+    <LinkButton href={`/reviews/${current.id}`}>{currentLabel} 열기</LinkButton>
   ) : (
     <form action={openReview}>
       <input type="hidden" name="kind" value={kind} />

@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { chipClass } from "@/components/ui/Chip";
-import { buttonClass } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
-import { Input, Select } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Input";
 import { GoalListRow } from "./GoalListRow";
 import {
   endedCounts,
@@ -18,6 +15,8 @@ import {
   type ListGoal,
   type PeriodFilter,
 } from "./list-view";
+import { Button, LinkButton } from "@/components/ui";
+import { ChipCount, ChipLink, SearchInput } from "@/components/ui";
 
 export type PeriodChip = {
   key: string;
@@ -64,17 +63,10 @@ export function GoalList({
         <nav aria-label="기간" className="flex flex-wrap items-center gap-1">
           <span className="mr-1 text-[13px] text-muted">기간</span>
           {periodChips.map((c) => (
-            <Link
-              key={c.key}
-              href={c.href}
-              aria-current={c.active ? "true" : undefined}
-              className={chipClass(c.active)}
-            >
+            <ChipLink key={c.key} href={c.href} active={c.active}>
               {c.label}
-              {c.sub ? (
-                <span className="text-xs font-normal text-muted tabular-nums">{c.sub}</span>
-              ) : null}
-            </Link>
+              {c.sub ? <ChipCount>{c.sub}</ChipCount> : null}
+            </ChipLink>
           ))}
         </nav>
         <div className="flex min-w-0 items-center gap-2">
@@ -97,13 +89,12 @@ export function GoalList({
             ))}
           </Select>
         </div>
-        <Input
-          type="search"
+        <SearchInput
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="목표 찾기…"
           aria-label="목표 찾기"
-          className="h-7 w-full text-[13px] sm:ml-auto sm:w-48"
+          className="w-full sm:ml-auto sm:w-48"
         />
       </div>
 
@@ -179,9 +170,9 @@ function NothingShown({
     return (
       <div className="mt-5 border-y border-border py-6 text-sm text-muted">
         <p>진행 중인 연·분기 목표가 없습니다.</p>
-        <Link href="/goals/new?horizon=year" className={cn(buttonClass("secondary", "sm"), "mt-3")}>
+        <LinkButton href="/goals/new?horizon=year" size="sm" className="mt-3">
           연 목표 만들기
-        </Link>
+        </LinkButton>
       </div>
     );
   }
@@ -192,13 +183,13 @@ function NothingShown({
         <span className="text-muted">에 해당하는 진행 중인 목표가 없습니다.</span>
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Link href={resetHref} onClick={onClearQuery} className={buttonClass("secondary", "sm")}>
+        <LinkButton href={resetHref} onClick={onClearQuery} size="sm">
           전체 보기
-        </Link>
+        </LinkButton>
         {onClearQuery ? (
-          <button type="button" onClick={onClearQuery} className={buttonClass("ghost", "sm")}>
+          <Button variant="ghost" size="sm" onClick={onClearQuery}>
             검색어 지우기
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

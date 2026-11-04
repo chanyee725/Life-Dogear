@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LinkTabs } from "@/components/ui/Tabs";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { areas, goals } from "@/lib/repo";
 import { GoalDirection } from "./GoalDirection";
@@ -20,6 +18,7 @@ import {
   periodParam,
   type PeriodFilter,
 } from "./list-view";
+import { NewItemButton } from "@/components/ui";
 
 export const metadata: Metadata = { title: "목표" };
 export const dynamic = "force-dynamic";
@@ -39,9 +38,9 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
       <PageHeader
         title="목표"
         actions={
-          <Link href="/goals/new" className={buttonClass("primary")}>
+          <NewItemButton href="/goals/new" shortcut={false}>
             새 목표
-          </Link>
+          </NewItemButton>
         }
       />
       <LinkTabs
@@ -57,9 +56,9 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
         <EmptyState
           title="아직 목표가 없습니다"
           action={
-            <Link href="/goals/new?horizon=life" className={buttonClass("primary", "sm")}>
+            <NewItemButton href="/goals/new?horizon=life" size="sm">
               인생 목표 만들기
-            </Link>
+            </NewItemButton>
           }
         />
       ) : view === "map" ? (

@@ -14,6 +14,7 @@ import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { areas, goals, projects, tasks } from "@/lib/repo";
 import { describeError } from "@/lib/storage/describe-error";
 import type { Task, TaskParentType } from "@/lib/repo/tasks";
+import { SectionHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "할 일" };
 export const dynamic = "force-dynamic";
@@ -243,7 +244,7 @@ async function ByParent({ open, today }: { open: Task[]; today: string }) {
         if (!ids.length) return null;
         return (
           <section key={type} className="flex flex-col gap-4">
-            <h2 className="text-[13px] font-semibold text-muted">{KIND_TITLE[type]}</h2>
+            <SectionHeader title={KIND_TITLE[type]} />
             {ids.map((id) => {
               const list = byParent.get(`${type}:${id}`)!;
               const count = counts[`${type}:${id}`];

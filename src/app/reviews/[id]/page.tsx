@@ -11,8 +11,6 @@ import { LocalGraph } from "@/components/graph/LocalGraph";
 import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
-import { buttonClass } from "@/components/ui/Button";
-import { cn } from "@/components/ui/cn";
 import { REVIEW_KIND } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { goals, projects, thoughts } from "@/lib/repo";
@@ -26,6 +24,7 @@ import { FocusPicker, type FocusOption } from "../FocusPicker";
 import { staleFocusOptions } from "../focus-options";
 import { KIND_TAB_LABEL } from "../labels";
 import { progressChange } from "../progress";
+import { LinkButton } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -111,9 +110,9 @@ export default async function ReviewDetailPage({ params }: Props) {
           })}
         </ul>
       ) : (
-        <Link href="/goals" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+        <LinkButton href="/goals" variant="ghost" size="sm" className="self-start">
           목표 보기
-        </Link>
+        </LinkButton>
       )}
     </Step>
   );
@@ -165,9 +164,9 @@ export default async function ReviewDetailPage({ params }: Props) {
                     </Link>
                   </p>
                 ) : (
-                  <Link href="/inbox" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+                  <LinkButton href="/inbox" variant="ghost" size="sm" className="self-start">
                     수집함 보기
-                  </Link>
+                  </LinkButton>
                 )}
               </Step>
               <Step n={2} title="프로젝트 점검">
@@ -191,9 +190,9 @@ export default async function ReviewDetailPage({ params }: Props) {
                     ))}
                   </ul>
                 ) : (
-                  <Link href="/projects" className={cn(buttonClass("ghost", "sm"), "self-start")}>
+                  <LinkButton href="/projects" variant="ghost" size="sm" className="self-start">
                     프로젝트 보기
-                  </Link>
+                  </LinkButton>
                 )}
               </Step>
               {goalCheck}
