@@ -47,10 +47,10 @@ describe("ConnectedItems", () => {
     expect(html).toContain(">보관됨<");
   });
 
-  it("shows an empty message when nothing is connected", async () => {
+  it("shows only the add button when nothing is connected", async () => {
     const paper = await papers.create({ title: "혼자인 논문" });
     const html = await render({ type: "paper", id: paper.id });
-    expect(html).toContain("아직 연결된 항목이 없습니다");
+    expect(html).not.toContain("<ul");
     expect(html).toContain("연결 추가");
   });
 });
