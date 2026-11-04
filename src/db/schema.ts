@@ -16,6 +16,7 @@ import {
   IMPORTANCE,
   ITEM_TYPE,
   LINK_VIA,
+  NOTE_SOURCE_KIND,
   PROJECT_KIND,
   PROJECT_STAGE,
   PROJECT_STATUS,
@@ -171,6 +172,26 @@ export const thoughts = sqliteTable(
     ...timestamps,
   },
   (t) => [index("thoughts_archived_idx").on(t.archivedAt)],
+);
+
+/** Study notes (노트): what was learned from a book, lecture, video or article. Migration 0007. */
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    /** Null = not said. */
+    sourceKind: text("source_kind", { enum: NOTE_SOURCE_KIND.values }),
+    sourceTitle: text("source_title"),
+    /** http(s) only (checked in the repo). */
+    sourceUrl: text("source_url"),
+    /** Area the note belongs to; projects are connected with links. */
+    areaId: text("area_id").references(() => areas.id, { onDelete: "set null" }),
+    archivedAt: archivedAt(),
+    ...timestamps,
+  },
+  (t) => [index("notes_archived_idx").on(t.archivedAt), index("notes_area_idx").on(t.areaId)],
 );
 
 export const tags = sqliteTable(

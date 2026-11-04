@@ -18,6 +18,7 @@ describe("weekly review draft digest", () => {
         { type: "thought", title: "  모델   크기 " },
         { type: "paper", title: "Attention" },
         { type: "thought", title: "두 번째 생각" },
+        { type: "note", title: "3장 노트" },
       ],
     });
     expect(md).toBe(
@@ -33,8 +34,9 @@ describe("weekly review draft digest", () => {
         "### 끝난 프로젝트 1",
         "- 데이터 정리",
         "",
-        "### 새로 만든 항목 4",
+        "### 새로 만든 항목 5",
         "- 논문 · Attention",
+        "- 노트 · 3장 노트",
         "- 생각 · 모델 크기",
         "- 생각 · 두 번째 생각",
         "- 목표 · 학위 1장",

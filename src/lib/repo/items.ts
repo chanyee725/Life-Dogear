@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
-import { areas, goals, papers, projects, reviews, seminars, thoughts } from "@/db/schema";
+import { areas, goals, notes, papers, projects, reviews, seminars, thoughts } from "@/db/schema";
 import { ITEM_TYPE } from "@/lib/enums";
 import { titleKey } from "@/lib/wikilinks";
 import { assertItemRef, db, type Executor, type ItemRef, type ItemType } from "./shared";
@@ -12,6 +12,7 @@ const TABLES = {
   paper: papers,
   seminar: seminars,
   thought: thoughts,
+  note: notes,
   area: areas,
   goal: goals,
   review: reviews,

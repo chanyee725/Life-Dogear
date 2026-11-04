@@ -4,6 +4,7 @@ import {
   goals,
   itemTags,
   links,
+  notes,
   papers,
   projects,
   reviews,
@@ -41,6 +42,7 @@ export async function loadGraphSource(
     paperRows,
     seminarRows,
     thoughtRows,
+    noteRows,
     reviewRows,
     linkRows,
   ] = await Promise.all([
@@ -76,6 +78,14 @@ export async function loadGraphSource(
     d
       .select({ id: thoughts.id, title: thoughts.title, archivedAt: thoughts.archivedAt })
       .from(thoughts),
+    d
+      .select({
+        id: notes.id,
+        title: notes.title,
+        archivedAt: notes.archivedAt,
+        areaId: notes.areaId,
+      })
+      .from(notes),
     d
       .select({
         id: reviews.id,
@@ -123,6 +133,7 @@ export async function loadGraphSource(
   push("paper", paperRows);
   push("seminar", seminarRows);
   push("thought", thoughtRows);
+  push("note", noteRows, (r) => ({ areaId: r.areaId }));
   push("review", reviewRows, (r) => ({ period: r.period }));
 
   const source: GraphSource = { items, links: linkRows };

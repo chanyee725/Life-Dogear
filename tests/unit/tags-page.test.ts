@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 import TagPage from "@/app/tags/[name]/page";
 import TagsPage from "@/app/tags/page";
 import { decodeTagParam, loadTagPage, sortTags, tagHref } from "@/app/tags/tag-data";
-import { archive, areas, papers, projects, seminars, thoughts } from "@/lib/repo";
+import { archive, areas, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
 beforeEach(async () => {
@@ -70,6 +70,32 @@ describe("loadTagPage", () => {
       ],
     });
     expect(await loadTagPage("없는태그")).toBeNull();
+  });
+
+  it("lists tagged notes right after papers, with source kind and name", async () => {
+    await papers.create({ title: "논문", tags: ["통계"] });
+    const n = await notes.create({
+      title: "회귀분석 노트",
+      sourceKind: "lecture",
+      sourceTitle: "통계학 강의",
+      tags: ["통계"],
+    });
+    await notes.create({ title: "출처 없는 노트", tags: ["통계"] });
+    const gone = await notes.create({ title: "보관 노트", tags: ["통계"] });
+    await archive.archive({ type: "note", id: gone.id });
+    await thoughts.create({ title: "생각", tags: ["통계"] });
+
+    const data = (await loadTagPage("통계"))!;
+    expect(data.groups.map((g) => g.type)).toEqual(["paper", "note", "thought"]);
+    expect(data.groups[1].label).toBe("노트");
+    const items = data.groups[1].items;
+    expect(items.map((i) => i.title).sort()).toEqual(["출처 없는 노트", "회귀분석 노트"]);
+    expect(items.find((i) => i.id === n.id)).toMatchObject({
+      href: `/notes/${n.id}`,
+      badges: [{ label: "강의", tone: "teal" }],
+      meta: "통계학 강의",
+    });
+    expect(items.find((i) => i.id !== n.id)?.badges).toEqual([]);
   });
 });
 

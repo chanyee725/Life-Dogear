@@ -24,6 +24,7 @@ export const DRAFT_LIST_LIMIT = 15;
 /** Order of the "새로 만든 항목" group by kind. */
 export const CREATED_KIND_ORDER: readonly ItemType[] = [
   "paper",
+  "note",
   "seminar",
   "thought",
   "project",

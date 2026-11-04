@@ -1,7 +1,7 @@
 import type { ItemType } from "@/lib/enums";
 
 /**
- * What a hit points at: an item (project, area, paper, seminar, thought, goal, review),
+ * What a hit points at: an item (project, area, paper, seminar, thought, note, goal, review),
  * a PDF highlight, or a task (opens its parent's page, or `/tasks` without one).
  */
 export type SearchHitType = ItemType | "highlight" | "task";

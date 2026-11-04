@@ -4,6 +4,7 @@ import {
   IMPORTANCE,
   ITEM_ROUTE,
   ITEM_TYPE,
+  NOTE_SOURCE_KIND,
   PROJECT_KIND,
   PROJECT_STAGE,
   PROJECT_STATUS,
@@ -14,7 +15,7 @@ import {
   type BadgeTone,
   type ItemType,
 } from "@/lib/enums";
-import { areas, goals, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
+import { areas, goals, notes, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 
 export type TagSort = "count" | "name";
@@ -72,14 +73,16 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
   );
   if (!tag) return null;
 
-  const [goalRows, projectRows, areaRows, paperRows, seminarRows, thoughtRows] = await Promise.all([
-    goals.list({ tag: tag.name }),
-    projects.list({ tag: tag.name, sort: "updated" }),
-    areas.list({ tag: tag.name }),
-    papers.list({ tag: tag.name, sort: "updated" }),
-    seminars.list({ tag: tag.name, sort: "date" }),
-    thoughts.list({ tag: tag.name, sort: "updated" }),
-  ]);
+  const [goalRows, projectRows, areaRows, paperRows, noteRows, seminarRows, thoughtRows] =
+    await Promise.all([
+      goals.list({ tag: tag.name }),
+      projects.list({ tag: tag.name, sort: "updated" }),
+      areas.list({ tag: tag.name }),
+      papers.list({ tag: tag.name, sort: "updated" }),
+      notes.list({ tag: tag.name, sort: "updated" }),
+      seminars.list({ tag: tag.name, sort: "date" }),
+      thoughts.list({ tag: tag.name, sort: "updated" }),
+    ]);
 
   const groups: TaggedGroup[] = [
     {
@@ -127,6 +130,17 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
         title: p.title,
         badges: [badge(READ_STATUS, p.readStatus), badge(IMPORTANCE, p.importance)],
         meta: [p.authors.join(", "), p.year ?? ""].filter(Boolean).join(" · ") || undefined,
+      })),
+    },
+    {
+      type: "note",
+      label: ITEM_TYPE.label("note"),
+      items: noteRows.map((n) => ({
+        id: n.id,
+        href: href("note", n.id),
+        title: n.title,
+        badges: n.sourceKind ? [badge(NOTE_SOURCE_KIND, n.sourceKind)] : [],
+        meta: n.sourceTitle ?? undefined,
       })),
     },
     {

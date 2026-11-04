@@ -12,34 +12,53 @@ import {
   type KeyboardEvent,
 } from "react";
 import { createQuickThought } from "@/app/_actions/quick-thought";
+import { createNote } from "@/app/notes/actions";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { safeAction } from "@/components/links/safe-action";
 import { useModKey } from "@/components/shell/mod-key";
 import { Button, cn, controlClass, Kbd, Spinner } from "@/components/ui";
 import {
   autosizeHeight,
-  draftToText,
+  draftToSave,
   EMPTY_DRAFT,
   ESC_CONFIRM_MS,
   hasContent,
   isBareUrl,
+  nextKind,
   OPEN_CAPTURE_EVENT,
   saveKey,
   TOAST_MS,
   type CaptureDraft,
+  type CaptureField,
+  type CaptureSave,
   THOUGHT_MIN_ROWS,
   type CaptureKind,
 } from "./capture";
 
 const DEFAULT_STATUS = "수집함에 저장됩니다.";
+const NOTE_STATUS = "새 노트로 저장됩니다.";
+const statusFor = (kind: CaptureKind) => (kind === "note" ? NOTE_STATUS : DEFAULT_STATUS);
 const KINDS: { value: CaptureKind; label: string }[] = [
   { value: "thought", label: "생각" },
   { value: "link", label: "링크" },
+  { value: "note", label: "노트" },
 ];
+
+/** What the toast after a save points to. */
+type Saved = { n: number; note?: string };
+
+async function saveCapture(item: CaptureSave) {
+  if (item.kind === "thought") return createQuickThought(item.text);
+  const form = new FormData();
+  form.set("title", item.title);
+  form.set("body", item.body);
+  return createNote(form);
+}
 
 /**
  * Quick capture (docs/design/today.md 6절), mounted once in the root layout. `C` or the
- * Cmd+K command opens it; a thought or a link goes to the inbox as a thought.
+ * Cmd+K command opens it; a thought or a link goes to the inbox as a thought, a 노트
+ * (title + body) becomes a new note.
  */
 export function QuickCapture() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -51,8 +70,9 @@ export function QuickCapture() {
     text: DEFAULT_STATUS,
   });
   /** Bumped per save so a new toast restarts its timer; 0 = none. */
-  const [toast, setToast] = useState(0);
-  const hideToast = useCallback(() => setToast(0), []);
+  const [toast, setToast] = useState<Saved>({ n: 0 });
+  const hideToast = useCallback(() => setToast({ n: 0 }), []);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   // Plain state, not useTransition: a transition stays pending through the server action's
   // revalidation refresh, which would lock the fields for ⇧⌘Enter "keep writing".
   const [pending, setPending] = useState(false);
@@ -116,12 +136,12 @@ export function QuickCapture() {
 
   function setKind(kind: CaptureKind) {
     setDraft((d) => ({ ...d, kind }));
-    setStatus({ text: DEFAULT_STATUS });
+    setStatus({ text: statusFor(kind) });
   }
 
   async function save(mode: "close" | "continue") {
     if (saving.current) return;
-    const result = draftToText(draft);
+    const result = draftToSave(draft);
     if ("error" in result) {
       setStatus({ text: result.error, error: true });
       return;
@@ -129,7 +149,7 @@ export function QuickCapture() {
     saving.current = true;
     setPending(true);
     try {
-      const saved = await safeAction(() => createQuickThought(result.text));
+      const saved = await safeAction(() => saveCapture(result));
       if (!saved.ok) {
         setStatus({ text: saved.error, error: true });
         return;
@@ -140,7 +160,10 @@ export function QuickCapture() {
         firstRef.current?.focus();
       } else {
         setOpen(false);
-        setToast((n) => n + 1);
+        setToast((t) => ({
+          n: t.n + 1,
+          note: result.kind === "note" ? saved.data.id : undefined,
+        }));
       }
     } finally {
       saving.current = false;
@@ -148,12 +171,16 @@ export function QuickCapture() {
     }
   }
 
-  function onKeyDown(field: "text" | "url" | "note") {
+  function onKeyDown(field: CaptureField) {
     return (e: KeyboardEvent<HTMLElement>) => {
-      const key = saveKey(
-        { ...e, isComposing: e.nativeEvent.isComposing, keyCode: e.keyCode },
-        field,
-      );
+      const composing = e.nativeEvent.isComposing || e.keyCode === 229;
+      const key = saveKey({ ...e, isComposing: composing, keyCode: e.keyCode }, field);
+      // Enter in the note title moves on to the body.
+      if (!key && field === "title" && e.key === "Enter" && !composing && !e.shiftKey) {
+        e.preventDefault();
+        bodyRef.current?.focus();
+        return;
+      }
       if (!key) return;
       e.preventDefault();
       void save(key);
@@ -171,7 +198,7 @@ export function QuickCapture() {
   function onKindKey(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
-    const next = draft.kind === "thought" ? "link" : "thought";
+    const next = nextKind(draft.kind, e.key === "ArrowRight" ? 1 : -1);
     setKind(next);
     requestAnimationFrame(() =>
       e.currentTarget.querySelector<HTMLElement>(`[data-kind="${next}"]`)?.focus(),
@@ -244,6 +271,32 @@ export function QuickCapture() {
                 onKeyDown={onKeyDown("text")}
                 className={cn(controlClass, "resize-none py-2 text-[15px] leading-normal")}
               />
+            ) : draft.kind === "note" ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={firstRef}
+                  type="text"
+                  aria-label="노트 제목"
+                  aria-describedby={statusId}
+                  placeholder="제목"
+                  value={draft.title}
+                  readOnly={pending}
+                  onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                  onKeyDown={onKeyDown("title")}
+                  className={cn(controlClass, "h-9")}
+                />
+                <textarea
+                  ref={bodyRef}
+                  rows={5}
+                  aria-label="노트 본문"
+                  placeholder="정리할 내용 (선택)"
+                  value={draft.body}
+                  readOnly={pending}
+                  onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
+                  onKeyDown={onKeyDown("body")}
+                  className={cn(controlClass, "resize-y py-2 text-[15px] leading-normal")}
+                />
+              </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <input
@@ -294,13 +347,16 @@ export function QuickCapture() {
           </div>
         ) : null}
       </dialog>
-      {toast ? <SavedToast key={toast} onDone={hideToast} /> : null}
+      {toast.n ? <SavedToast key={toast.n} note={toast.note} onDone={hideToast} /> : null}
     </>
   );
 }
 
-/** "수집함에 저장했습니다. 보기" for 3 s; paused while hovered or focused (6.4). */
-function SavedToast({ onDone }: { onDone: () => void }) {
+/**
+ * "수집함에 저장했습니다. 보기" (or "노트를 만들었습니다. 열기" for a note) for 3 s;
+ * paused while hovered or focused (6.4).
+ */
+function SavedToast({ note, onDone }: { note?: string; onDone: () => void }) {
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     if (paused) return;
@@ -316,9 +372,9 @@ function SavedToast({ onDone }: { onDone: () => void }) {
       onBlur={() => setPaused(false)}
       className="fixed right-4 bottom-4 z-50 rounded-lg border border-border bg-bg px-3 py-2 text-[13px] text-fg shadow-overlay"
     >
-      수집함에 저장했습니다.{" "}
-      <Link href="/inbox" onClick={onDone} className="underline">
-        보기
+      {note ? "노트를 만들었습니다." : "수집함에 저장했습니다."}{" "}
+      <Link href={note ? `/notes/${note}` : "/inbox"} onClick={onDone} className="underline">
+        {note ? "열기" : "보기"}
       </Link>
     </div>
   );

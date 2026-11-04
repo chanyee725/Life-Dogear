@@ -6,6 +6,7 @@ import {
   paperPreview,
   projectPreview,
   reviewPreview,
+  notePreview,
   seminarPreview,
   thoughtPreview,
 } from "@/app/graph/preview/build";
@@ -165,5 +166,28 @@ describe("goal and review previews", () => {
       label: "상태",
       value: "완료 2026-11-08",
     });
+  });
+});
+
+describe("notePreview", () => {
+  it("shows the source kind and name, then the body's first paragraph", () => {
+    expect(
+      notePreview({
+        sourceKind: "book",
+        sourceTitle: "클린 코드",
+        body: "# 1장\n\n의미 있는 이름을 쓴다.\n\n다음 문단",
+        archivedAt: null,
+      }),
+    ).toEqual({
+      archived: false,
+      props: [
+        { label: "출처 종류", value: "책" },
+        { label: "출처", value: "클린 코드" },
+      ],
+      summary: "의미 있는 이름을 쓴다.",
+    });
+    expect(
+      notePreview({ sourceKind: null, sourceTitle: null, body: "", archivedAt: "2026-11-01" }),
+    ).toEqual({ archived: true, props: [], summary: undefined });
   });
 });

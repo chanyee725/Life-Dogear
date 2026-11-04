@@ -93,6 +93,16 @@ export function traceShape(
       ctx.closePath();
       break;
     }
+    case "note": {
+      // Downward triangle: the seminar ▲ turned 180° (graph.md 2.1).
+      const R = 1.3 * r;
+      const dx = R * Math.cos(Math.PI / 6);
+      ctx.moveTo(x, y + R);
+      ctx.lineTo(x + dx, y - R / 2);
+      ctx.lineTo(x - dx, y - R / 2);
+      ctx.closePath();
+      break;
+    }
     default:
       ctx.arc(x, y, r, 0, 2 * Math.PI);
   }
@@ -107,12 +117,32 @@ export function shapeBottom(type: GraphNodeType, r: number): number {
       return 0.875 * r;
     case "project":
     case "tag":
+    case "note":
       return 1.3 * r;
     case "seminar":
       return 0.65 * r;
     default:
       return r;
   }
+}
+
+/** Shape extents from the centre (above, below, to each side), for label placement. */
+export function shapeExtents(
+  type: GraphNodeType,
+  r: number,
+): { top: number; bottom: number; side: number } {
+  const bottom = shapeBottom(type, r);
+  const triangle = type === "seminar" || type === "note";
+  const top = type === "seminar" ? 1.3 * r : type === "note" ? 0.65 * r : bottom;
+  const side =
+    type === "project" || type === "tag"
+      ? 1.3 * r
+      : triangle
+        ? 1.3 * r * Math.cos(Math.PI / 6)
+        : type === "area" || type === "review"
+          ? 0.875 * r
+          : r;
+  return { top, bottom, side };
 }
 
 /**

@@ -23,6 +23,7 @@ export const GRAPH_NODE_TYPE_ORDER = [
   "paper",
   "seminar",
   "thought",
+  "note",
   "review",
   "tag",
   "task",
@@ -41,6 +42,7 @@ export const DEFAULT_GRAPH_NODE_TYPES: readonly GraphNodeType[] = [
   "paper",
   "seminar",
   "thought",
+  "note",
 ];
 
 /** `"<type>:<id>"`. */
@@ -55,7 +57,7 @@ export type GraphNode = {
   /** Number of edges touching this node in the returned graph (degree). */
   size: number;
   archived: boolean;
-  /** Area the node belongs to (projects and goals), when set. */
+  /** Area the node belongs to (projects, goals and notes), when set. */
   areaId?: string;
   /** Goals only. */
   horizon?: GoalHorizon;
@@ -71,7 +73,7 @@ export type GraphNode = {
 
 /**
  * - `belongs`: membership (quarter → year → life goal, project → goal, project → area, goal → area,
- *   task → its project/goal/area);
+ *   note → area, task → its project/goal/area);
  *   source is the child, target the parent.
  * - `link`: a manual link (`links.via = 'manual'`).
  * - `body`: a `[[wikilink]]` in a body (`links.via = 'body'`).

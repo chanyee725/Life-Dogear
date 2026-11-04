@@ -50,6 +50,13 @@
       "when": 1793716116317,
       "tag": "0006_seminar_two_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793754355884,
+      "tag": "0007_notes",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import {
   areas,
   goals,
   highlights,
+  notes,
   papers,
   projects,
   reviews,
@@ -44,6 +45,7 @@ type Source = {
     | typeof papers
     | typeof seminars
     | typeof thoughts
+    | typeof notes
     | typeof goals
     | typeof reviews;
   title: SQLiteColumn;
@@ -122,6 +124,16 @@ const SOURCES: Source[] = [
     body: thoughts.body,
     updatedAt: thoughts.updatedAt,
     archivedAt: thoughts.archivedAt,
+  },
+  {
+    type: "note",
+    table: notes,
+    title: notes.title,
+    // 출처 이름 (book, lecture… title); null when not given.
+    meta: [notes.sourceTitle],
+    body: notes.body,
+    updatedAt: notes.updatedAt,
+    archivedAt: notes.archivedAt,
   },
   {
     type: "goal",

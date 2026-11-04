@@ -1,18 +1,25 @@
 /**
  * Data for `/resources` (자료): topics first, then — for a chosen topic — its papers,
- * seminars and thoughts in one list, most recently updated first; with no topic, the
+ * seminars, thoughts and notes in one list, most recently updated first; with no topic, the
  * most recently updated resources. Archived items are left out (repo default). Topics
  * come from those same items, so tags used only by projects, areas or goals do not show.
- * Fixed query count: three lists (each with its tags).
+ * Fixed query count: four lists (each with its tags).
  */
-import { ITEM_ROUTE, READ_STATUS, SEMINAR_KIND, THOUGHT_KIND, type BadgeTone } from "@/lib/enums";
-import { papers, seminars, thoughts } from "@/lib/repo";
+import {
+  ITEM_ROUTE,
+  NOTE_SOURCE_KIND,
+  READ_STATUS,
+  SEMINAR_KIND,
+  THOUGHT_KIND,
+  type BadgeTone,
+} from "@/lib/enums";
+import { notes, papers, seminars, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 import type { TopicSort } from "./topic-index";
 
 export * from "./topic-index";
 
-export type ResourceType = "paper" | "seminar" | "thought";
+export type ResourceType = "paper" | "seminar" | "thought" | "note";
 
 export type ResourceItem = {
   type: ResourceType;
@@ -39,9 +46,10 @@ export type ResourcesData = {
 /** How many resources "최근 자료" shows when no topic is chosen. */
 export const RECENT_LIMIT = 20;
 
-export const RESOURCE_TYPES = ["paper", "seminar", "thought"] as const;
+/** Tab order follows the sidebar (노트 right after 논문). */
+export const RESOURCE_TYPES = ["paper", "note", "seminar", "thought"] as const;
 
-/** `?type=` value: paper | seminar | thought; anything else means all. */
+/** `?type=` value: paper | seminar | thought | note; anything else means all. */
 export function parseTypeParam(value: unknown): ResourceType | null {
   const raw = Array.isArray(value) ? value[0] : value;
   return (RESOURCE_TYPES as readonly unknown[]).includes(raw) ? (raw as ResourceType) : null;
@@ -51,7 +59,12 @@ export function parseTypeParam(value: unknown): ResourceType | null {
 export function countByType(
   items: readonly { type: ResourceType }[],
 ): Record<ResourceType, number> {
-  const counts: Record<ResourceType, number> = { paper: 0, seminar: 0, thought: 0 };
+  const counts: Record<ResourceType, number> = {
+    paper: 0,
+    seminar: 0,
+    thought: 0,
+    note: 0,
+  };
   for (const item of items) counts[item.type] += 1;
   return counts;
 }
@@ -122,6 +135,13 @@ type SeminarLike = {
   updatedAt: string;
 };
 type ThoughtLike = { id: string; title: string; kind: string; updatedAt: string };
+type NoteLike = {
+  id: string;
+  title: string;
+  sourceKind: string | null;
+  sourceTitle: string | null;
+  updatedAt: string;
+};
 
 function authorsLine(authors: readonly string[]): string {
   if (authors.length <= 1) return authors[0] ?? "";
@@ -131,11 +151,12 @@ function authorsLine(authors: readonly string[]): string {
 const join = (...parts: (string | null | undefined)[]) =>
   parts.filter((p): p is string => !!p && p.trim() !== "").join(" · ") || undefined;
 
-/** One list of the three kinds, newest update first (ties: kind order, then title). */
+/** One list of the four kinds, newest update first (ties: kind order, then title). */
 export function mergeResources(
   paperRows: readonly PaperLike[],
   seminarRows: readonly SeminarLike[],
   thoughtRows: readonly ThoughtLike[],
+  noteRows: readonly NoteLike[] = [],
 ): ResourceItem[] {
   const items: ResourceItem[] = [
     ...paperRows.map((p) => ({
@@ -169,8 +190,22 @@ export function mergeResources(
       meta: THOUGHT_KIND.is(t.kind) ? THOUGHT_KIND.label(t.kind) : undefined,
       updatedAt: t.updatedAt,
     })),
+    ...noteRows.map((n) => ({
+      type: "note" as const,
+      id: n.id,
+      href: `${ITEM_ROUTE.note}/${n.id}`,
+      title: n.title,
+      // e.g. "책 · 데이터 중심 애플리케이션 설계"
+      meta: join(
+        n.sourceKind && NOTE_SOURCE_KIND.is(n.sourceKind)
+          ? NOTE_SOURCE_KIND.label(n.sourceKind)
+          : null,
+        n.sourceTitle,
+      ),
+      updatedAt: n.updatedAt,
+    })),
   ];
-  const order: Record<ResourceType, number> = { paper: 0, seminar: 1, thought: 2 };
+  const order: Record<ResourceType, number> = { paper: 0, note: 1, seminar: 2, thought: 3 };
   return items.sort(
     (a, b) =>
       b.updatedAt.localeCompare(a.updatedAt) ||
@@ -180,13 +215,15 @@ export function mergeResources(
 }
 
 export async function loadResources(rawTopic: string | null): Promise<ResourcesData> {
-  const [paperRows, seminarRows, thoughtRows] = await Promise.all([
+  const [paperRows, seminarRows, thoughtRows, noteRows] = await Promise.all([
     papers.list(),
     seminars.list(),
     thoughts.list(),
+    notes.list(),
   ]);
-  const topics = collectTopics([...paperRows, ...seminarRows, ...thoughtRows]);
-  const latest = () => mergeResources(paperRows, seminarRows, thoughtRows).slice(0, RECENT_LIMIT);
+  const topics = collectTopics([...paperRows, ...seminarRows, ...thoughtRows, ...noteRows]);
+  const latest = () =>
+    mergeResources(paperRows, seminarRows, thoughtRows, noteRows).slice(0, RECENT_LIMIT);
   if (!rawTopic) return { topics, topic: null, unknownTopic: false, items: [], recent: latest() };
   const found = findTopic(topics, rawTopic);
   if (!found) return { topics, topic: null, unknownTopic: true, items: [], recent: [] };
@@ -200,6 +237,7 @@ export async function loadResources(rawTopic: string | null): Promise<ResourcesD
       paperRows.filter((r) => hasTag(r, lower)),
       seminarRows.filter((r) => hasTag(r, lower)),
       thoughtRows.filter((r) => hasTag(r, lower)),
+      noteRows.filter((r) => hasTag(r, lower)),
     ),
   };
 }

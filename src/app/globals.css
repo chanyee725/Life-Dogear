@@ -46,6 +46,9 @@
   --rb-tone-teal-fg: #276b66;
   --rb-tone-rose-bg: #fbedf2;
   --rb-tone-rose-fg: #94385a;
+  /* Note item type (docs/design/graph.md 1.2.1). */
+  --rb-tone-orange-bg: #fbede6;
+  --rb-tone-orange-fg: #8d481a;
 }
 
 .dark {
@@ -86,6 +89,8 @@
   --rb-tone-teal-fg: #80c9c2;
   --rb-tone-rose-bg: #301d25;
   --rb-tone-rose-fg: #e69ab8;
+  --rb-tone-orange-bg: #2d1f18;
+  --rb-tone-orange-fg: #eca57d;
 }
 
 /* ---------- Tailwind theme mapping ---------- */
@@ -128,6 +133,8 @@
   --color-tone-teal-fg: var(--rb-tone-teal-fg);
   --color-tone-rose-bg: var(--rb-tone-rose-bg);
   --color-tone-rose-fg: var(--rb-tone-rose-fg);
+  --color-tone-orange-bg: var(--rb-tone-orange-bg);
+  --color-tone-orange-fg: var(--rb-tone-orange-fg);
 
   /* 8px corners everywhere by default */
   --radius-DEFAULT: 8px;

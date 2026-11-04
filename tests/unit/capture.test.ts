@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   autosizeHeight,
+  draftToSave,
   draftToText,
   EMPTY_DRAFT,
   hasContent,
   isBareUrl,
   linkThoughtText,
   linkTitle,
+  nextKind,
   saveKey,
 } from "@/components/capture/capture";
 
@@ -71,6 +73,70 @@ describe("quick capture", () => {
     expect(saveKey(enter({ metaKey: true, isComposing: true }), "text")).toBeNull();
     expect(saveKey(enter({ keyCode: 229 }), "url")).toBeNull();
     expect(saveKey({ ...enter(), key: "a", metaKey: true }, "text")).toBeNull();
+  });
+});
+
+describe("quick capture 노트", () => {
+  const note = { ...EMPTY_DRAFT, kind: "note" as const };
+
+  it("cycles 생각 → 링크 → 노트 with the arrow keys", () => {
+    expect(nextKind("thought", 1)).toBe("link");
+    expect(nextKind("link", 1)).toBe("note");
+    expect(nextKind("note", 1)).toBe("thought");
+    expect(nextKind("thought", -1)).toBe("note");
+  });
+
+  it("needs a title; the body is optional", () => {
+    expect(draftToSave(note)).toEqual({ error: "제목을 입력하세요." });
+    expect(draftToSave({ ...note, body: "본문만" })).toEqual({ error: "제목을 입력하세요." });
+    expect(draftToSave({ ...note, title: " 1장 정리 ", body: "\n핵심\n" })).toEqual({
+      kind: "note",
+      title: "1장 정리",
+      body: "\n핵심",
+    });
+    expect(draftToSave({ ...note, title: "제목만" })).toEqual({
+      kind: "note",
+      title: "제목만",
+      body: "",
+    });
+  });
+
+  it("keeps the body's leading indentation (Markdown code) and drops trailing blanks", () => {
+    expect(draftToSave({ ...note, title: "코드", body: "    code" })).toEqual({
+      kind: "note",
+      title: "코드",
+      body: "    code",
+    });
+    expect(draftToSave({ ...note, title: "코드", body: "    code\n\n  " })).toMatchObject({
+      body: "    code",
+    });
+    expect(draftToSave({ ...note, title: "빈 본문", body: " \n " })).toMatchObject({ body: "" });
+  });
+
+  it("keeps 생각 and 링크 saving as thoughts", () => {
+    expect(draftToSave({ ...EMPTY_DRAFT, text: "생각" })).toEqual({
+      kind: "thought",
+      text: "생각",
+    });
+    expect(draftToSave({ ...EMPTY_DRAFT, kind: "link", url: "https://a.com/x" })).toEqual({
+      kind: "thought",
+      text: "a.com/x\n\nhttps://a.com/x",
+    });
+  });
+
+  it("counts a title or a body as something to lose", () => {
+    expect(hasContent(note)).toBe(false);
+    expect(hasContent({ ...note, title: "제목" })).toBe(true);
+    expect(hasContent({ ...note, body: "본문" })).toBe(true);
+    // Text typed under another kind doesn't count while 노트 is shown.
+    expect(hasContent({ ...note, text: "생각" })).toBe(false);
+  });
+
+  it("saves the note only with ⌘/Ctrl+Enter (Enter in the title moves to the body)", () => {
+    expect(saveKey(enter(), "title")).toBeNull();
+    expect(saveKey(enter(), "body")).toBeNull();
+    expect(saveKey(enter({ metaKey: true }), "title")).toBe("close");
+    expect(saveKey(enter({ ctrlKey: true, shiftKey: true }), "body")).toBe("continue");
   });
 });
 
