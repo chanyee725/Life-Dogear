@@ -9,17 +9,26 @@ const MARGIN = 8;
 /**
  * Popover pinned to `anchor` with `position: fixed` (the grid clips with `overflow-hidden`).
  * Flips above when there is no room below. `Esc` and outside presses close it; the caller
- * puts focus back.
+ * puts focus back. `hidden` keeps it mounted but closed (its fields keep their state);
+ * showing it again re-places it and moves focus inside.
  */
 export function Popover({
   anchor,
   onClose,
   label,
   role = "dialog",
+  id,
+  align = "start",
+  hidden = false,
   className,
   children,
 }: {
   anchor: HTMLElement | null;
+  /** For the opener's `aria-controls`. */
+  id?: string;
+  /** Which edges line up: the left edges (`start`) or the right edges (`end`). */
+  align?: "start" | "end";
+  hidden?: boolean;
   /** `refocus`: closed with Esc (focus should go back to the opener). */
   onClose: (refocus: boolean) => void;
   label: string;
@@ -33,6 +42,7 @@ export function Popover({
   closeRef.current = onClose;
 
   useLayoutEffect(() => {
+    if (hidden) return;
     const place = () => {
       const el = ref.current;
       if (!anchor || !el) return;
@@ -45,7 +55,8 @@ export function Popover({
         below + height > vh - MARGIN && a.top - GAP - height > MARGIN
           ? a.top - GAP - height
           : below;
-      const left = Math.min(Math.max(MARGIN, a.left), Math.max(MARGIN, vw - width - MARGIN));
+      const want = align === "end" ? a.right - width : a.left;
+      const left = Math.min(Math.max(MARGIN, want), Math.max(MARGIN, vw - width - MARGIN));
       setPos({ top, left });
     };
     place();
@@ -55,16 +66,17 @@ export function Popover({
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
     };
-  }, [anchor]);
+  }, [anchor, hidden, align]);
 
   // Move focus inside unless a child already took it (autoFocus input, menu item).
   useEffect(() => {
     const el = ref.current;
-    if (!el || el.contains(document.activeElement)) return;
+    if (hidden || !el || el.contains(document.activeElement)) return;
     el.querySelector<HTMLElement>("a[href],button,input,[tabindex]")?.focus();
-  }, []);
+  }, [hidden]);
 
   useEffect(() => {
+    if (hidden) return;
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (ref.current?.contains(t) || anchor?.contains(t)) return;
@@ -72,11 +84,13 @@ export function Popover({
     };
     document.addEventListener("pointerdown", onDown);
     return () => document.removeEventListener("pointerdown", onDown);
-  }, [anchor]);
+  }, [anchor, hidden]);
 
   return (
     <div
       ref={ref}
+      id={id}
+      hidden={hidden}
       role={role}
       aria-label={label}
       onKeyDown={(e) => {

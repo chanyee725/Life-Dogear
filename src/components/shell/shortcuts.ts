@@ -1,4 +1,9 @@
 export const QUICK_INPUT_ID = "quick-input";
+/**
+ * Window event (cancelable) the home 빠른 추가 listens to: `/` opens its popover on the
+ * 생각 추가 input. The listener calls `preventDefault()` to say it handled it.
+ */
+export const QUICK_ADD_EVENT = "rb:quick-add";
 /** Window event the graph page listens to: `/` opens its node search there. */
 export const GRAPH_SEARCH_EVENT = "rb:graph-search";
 export const GRAPH_HREF = "/graph";

@@ -4,13 +4,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { OPEN_CAPTURE_EVENT } from "@/components/capture/capture";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { GRAPH_SEARCH_EVENT, isTypingTarget, QUICK_INPUT_ID, resolveShortcut } from "./shortcuts";
+import { GRAPH_SEARCH_EVENT, isTypingTarget, QUICK_ADD_EVENT, resolveShortcut } from "./shortcuts";
 
+/**
+ * Asks the home 빠른 추가 to open on 생각 추가 (`#quick-input`). Always the event, never a
+ * direct focus: the input stays in the DOM (hidden) after the popover closes.
+ */
 function focusQuickInput(): boolean {
-  const el = document.getElementById(QUICK_INPUT_ID);
-  if (!el) return false;
-  el.focus();
-  return true;
+  const event = new Event(QUICK_ADD_EVENT, { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
 }
 
 /**
@@ -18,7 +21,7 @@ function focusQuickInput(): boolean {
  * - `N`  → new item in the current section (`/<type>/new`; home and tags go to a new thought)
  * - `G`  → open the graph (`/graph`)
  * - `C`  → quick capture dialog (`OPEN_CAPTURE_EVENT`)
- * - `/`  → focus the home quick input (`#quick-input`), navigating home first if needed;
+ * - `/`  → open the home 빠른 추가 on 생각 추가 (`#quick-input`), navigating home first if needed;
  *          on the graph page it opens the node search (`GRAPH_SEARCH_EVENT`) instead
  * Ignored while typing (inputs, selects, the editor, IME composition), with modifier keys,
  * and while a modal dialog is open.

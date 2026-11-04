@@ -91,8 +91,10 @@ export type CalendarViewProps = {
   onSelectDay?: (day: string) => void;
   /** Home: shown in the today panel between the day and "다음 일정" (today's tasks + add). */
   panelSlot?: ReactNode;
-  /** Home: shown under the grid, in the grid's column (생각 추가). */
+  /** Home: shown under the grid, in the grid's column (inbox / weekly review lines). */
   belowGrid?: ReactNode;
+  /** Home: at the right end of the toolbar (빠른 추가). */
+  toolbarEnd?: ReactNode;
   /**
    * Home: from `lg` the panel takes the left column's height and scrolls inside ("다음 일정"
    * first), so a long panel never leaves a gap under the calendar.
@@ -151,6 +153,7 @@ export function CalendarView({
   onSelectDay,
   panelSlot,
   belowGrid,
+  toolbarEnd,
   fitPanel = false,
   loading = false,
   gridTestId,
@@ -592,7 +595,7 @@ export function CalendarView({
           </Button>
           {navPending ? <Spinner className="size-3 border sm:order-last" /> : null}
         </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <AddEventButton enabled={googleWrite} defaultDate={focusDay} onAdded={onEventAdded} />
           <Button
             variant="ghost"
@@ -605,6 +608,7 @@ export function CalendarView({
           >
             표시 <span aria-hidden="true">▾</span>
           </Button>
+          {toolbarEnd}
         </div>
       </div>
 
