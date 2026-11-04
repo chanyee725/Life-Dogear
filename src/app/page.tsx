@@ -1,3 +1,4 @@
+import { gridWeeks, seoulDate } from "@/components/calendar/model";
 import { ActiveGeneralProjects, ActiveResearch } from "@/components/dashboard/ActiveProjects";
 import { ContinueReading } from "@/components/dashboard/ContinueReading";
 import { InboxLine } from "@/components/dashboard/InboxLine";
@@ -13,9 +14,11 @@ import {
   todayHeading,
 } from "@/components/dashboard/today";
 import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
+import { WeekStrip } from "@/components/dashboard/WeekStrip";
 import { WeeklyReviewLine } from "@/components/dashboard/WeeklyReviewLine";
 import { Page } from "@/components/shell";
 import { localDate } from "@/components/tasks/format";
+import { getCalendar, type CalendarResult } from "@/lib/calendar";
 import { getCosmosScores } from "@/lib/cosmos/load";
 import { goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
@@ -32,6 +35,9 @@ export default async function HomePage() {
   const today = localDate(now);
   const week = restOfWeek(today);
   const dueWeek = weeklyReviewDue(now);
+  // 7-day strip (calendar.md 9절): this Seoul week, Monday first.
+  const stripToday = seoulDate(now);
+  const stripDays = gridWeeks("week", stripToday)[0]!;
   // Repo defaults leave archived items out of every list here.
   const [
     reading,
@@ -45,6 +51,7 @@ export default async function HomePage() {
     weekTasks,
     goalTree,
     cosmos,
+    strip,
   ] = await Promise.all([
     papers.listContinueReading(6),
     projects.listByStage(),
@@ -57,6 +64,11 @@ export default async function HomePage() {
     week ? tasks.listThisWeek(week.from, week.to) : Promise.resolve([]),
     goals.listTree(),
     getCosmosScores({}, now),
+    // Papers always come along; the strip filters by the "표시" choice. A failure only
+    // empties the strip.
+    getCalendar({ from: stripDays[0]!, to: stripDays[6]! }, { papers: true }).catch(
+      (): CalendarResult => ({ items: [], google: "off" }),
+    ),
   ]);
   const reviewDue = dueWeek && !dueWritten.has(dueWeek) ? dueWeek : null;
   const goalNodes = quarterGoalNodes(goalTree, periodOf("quarter", now));
@@ -74,6 +86,7 @@ export default async function HomePage() {
         <InboxLine count={inboxCount} />
         <WeeklyReviewLine period={reviewDue} today={now} />
       </div>
+      <WeekStrip days={stripDays} today={stripToday} items={strip.items} google={strip.google} />
       <TodayTasks overdue={todayTasks.overdue} dueToday={todayTasks.today} today={today} />
       <WeekTasks tasks={weekTasks} today={today} />
       {quarter.length || stars.length ? (
