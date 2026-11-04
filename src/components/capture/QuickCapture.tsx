@@ -35,9 +35,6 @@ import {
   type CaptureKind,
 } from "./capture";
 
-const DEFAULT_STATUS = "수집함에 저장됩니다.";
-const NOTE_STATUS = "새 노트로 저장됩니다.";
-const statusFor = (kind: CaptureKind) => (kind === "note" ? NOTE_STATUS : DEFAULT_STATUS);
 const KINDS: { value: CaptureKind; label: string }[] = [
   { value: "thought", label: "생각" },
   { value: "link", label: "링크" },
@@ -67,7 +64,7 @@ export function QuickCapture() {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<CaptureDraft>(EMPTY_DRAFT);
   const [status, setStatus] = useState<{ text: string; error?: boolean }>({
-    text: DEFAULT_STATUS,
+    text: "",
   });
   /** Bumped per save so a new toast restarts its timer; 0 = none. */
   const [toast, setToast] = useState<Saved>({ n: 0 });
@@ -103,7 +100,7 @@ export function QuickCapture() {
     const onOpen = () => {
       if (document.querySelector("dialog[open]")) return;
       setDraft(EMPTY_DRAFT); // always opens as 생각
-      setStatus({ text: DEFAULT_STATUS });
+      setStatus({ text: "" });
       escAt.current = 0;
       setOpen(true);
     };
@@ -136,7 +133,7 @@ export function QuickCapture() {
 
   function setKind(kind: CaptureKind) {
     setDraft((d) => ({ ...d, kind }));
-    setStatus({ text: statusFor(kind) });
+    setStatus({ text: "" });
   }
 
   async function save(mode: "close" | "continue") {
@@ -156,7 +153,7 @@ export function QuickCapture() {
       }
       setDraft((d) => ({ ...EMPTY_DRAFT, kind: d.kind }));
       if (mode === "continue") {
-        setStatus({ text: "저장했습니다. 이어서 적으세요." });
+        setStatus({ text: "저장했습니다." });
         firstRef.current?.focus();
       } else {
         setOpen(false);

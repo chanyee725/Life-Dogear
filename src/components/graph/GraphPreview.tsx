@@ -124,7 +124,7 @@ export function GraphPreview({
             size="icon"
             aria-pressed={cosmos.starred}
             aria-label={cosmos.starred ? "중요 표시 해제" : "중요 표시"}
-            title="중요 표시하면 우주 보기에서 더 밝게 보입니다"
+            title="중요 표시"
             disabled={cosmos.starBusy}
             onClick={cosmos.onToggleStar}
             className={cn("ml-auto h-7 w-7", cosmos.starred && "text-fg")}

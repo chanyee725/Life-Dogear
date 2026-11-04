@@ -639,7 +639,6 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       <EmptyState
         className="max-w-[360px] bg-bg"
         title="연결 없는 항목이 없습니다"
-        description="모든 항목이 어딘가에 이어져 있습니다."
         action={
           <Button
             variant="ghost"
@@ -654,7 +653,6 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       <EmptyState
         className="max-w-[360px] bg-bg"
         title="아직 그래프에 보일 항목이 없습니다"
-        description="목표·프로젝트·논문·생각을 만들고 서로 연결하면 여기에 지도처럼 그려집니다."
         action={
           <Link href="/goals" className={buttonClass("secondary", "sm")}>
             목표 세우기
@@ -665,7 +663,6 @@ export default function GraphView({ options }: { options: FilterOptions }) {
       <EmptyState
         className="max-w-[360px] bg-bg"
         title="조건에 맞는 항목이 없습니다"
-        description="종류나 영역 필터를 바꿔 보세요."
         action={
           <Button variant="ghost" size="sm" onClick={() => setFilter({})}>
             필터 초기화

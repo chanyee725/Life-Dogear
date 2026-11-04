@@ -319,10 +319,7 @@ function Toolbar({
         코드
       </Tool>
       <Divider />
-      <Tool
-        label="사진 넣기 (붙여넣기·끌어다 놓기도 됩니다)"
-        onClick={() => fileInput.current?.click()}
-      >
+      <Tool label="사진 넣기" onClick={() => fileInput.current?.click()}>
         사진
       </Tool>
       <input
