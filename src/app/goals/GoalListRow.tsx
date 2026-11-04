@@ -69,7 +69,7 @@ export function GoalListRow({
             valueClassName="w-9 text-right"
           />
         </span>
-        <span className="w-11 text-right tabular-nums">{due}</span>
+        <span className="min-w-11 shrink-0 text-right whitespace-nowrap tabular-nums">{due}</span>
       </span>
     </ListRow>
   );
