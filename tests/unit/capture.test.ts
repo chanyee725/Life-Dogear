@@ -92,13 +92,25 @@ describe("quick capture 노트", () => {
     expect(draftToSave({ ...note, title: " 1장 정리 ", body: "\n핵심\n" })).toEqual({
       kind: "note",
       title: "1장 정리",
-      body: "핵심",
+      body: "\n핵심",
     });
     expect(draftToSave({ ...note, title: "제목만" })).toEqual({
       kind: "note",
       title: "제목만",
       body: "",
     });
+  });
+
+  it("keeps the body's leading indentation (Markdown code) and drops trailing blanks", () => {
+    expect(draftToSave({ ...note, title: "코드", body: "    code" })).toEqual({
+      kind: "note",
+      title: "코드",
+      body: "    code",
+    });
+    expect(draftToSave({ ...note, title: "코드", body: "    code\n\n  " })).toMatchObject({
+      body: "    code",
+    });
+    expect(draftToSave({ ...note, title: "빈 본문", body: " \n " })).toMatchObject({ body: "" });
   });
 
   it("keeps 생각 and 링크 saving as thoughts", () => {

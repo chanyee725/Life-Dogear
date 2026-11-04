@@ -113,7 +113,8 @@ export function draftToSave(d: CaptureDraft): CaptureSave | { error: string } {
   if (d.kind === "note") {
     const title = d.title.trim();
     if (!title) return { error: "제목을 입력하세요." };
-    return { kind: "note", title, body: d.body.trim() };
+    // Keep leading indentation (an indented code block is Markdown); drop trailing blanks.
+    return { kind: "note", title, body: d.body.trim() ? d.body.trimEnd() : "" };
   }
   const result = draftToText(d);
   return "error" in result ? result : { kind: "thought", text: result.text };

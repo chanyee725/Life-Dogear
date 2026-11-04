@@ -95,7 +95,7 @@ export function LinkPicker({
         open={open}
         onClose={close}
         title="항목 연결"
-        description="제목으로 프로젝트·영역·논문·세미나·생각을 찾아 연결합니다. 보관한 항목은 나오지 않습니다."
+        description="제목으로 프로젝트·영역·논문·노트·세미나·생각을 찾아 연결합니다. 보관한 항목은 나오지 않습니다."
       >
         <div className="flex flex-col gap-3">
           <Input

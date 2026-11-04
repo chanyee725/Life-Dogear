@@ -28,8 +28,8 @@ export default async function TagsPage({
         title="주제"
         description={
           list.length
-            ? `주제 ${list.length}개 — 프로젝트·영역·논문·세미나·생각이 함께 씁니다.`
-            : "프로젝트·영역·논문·세미나·생각이 함께 쓰는 주제입니다."
+            ? `주제 ${list.length}개 — 프로젝트·영역·논문·노트·세미나·생각이 함께 씁니다.`
+            : "프로젝트·영역·논문·노트·세미나·생각이 함께 쓰는 주제입니다."
         }
         actions={
           list.length ? (
