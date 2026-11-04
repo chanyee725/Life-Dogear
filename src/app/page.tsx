@@ -14,7 +14,7 @@ import {
   todayHeading,
 } from "@/components/dashboard/today";
 import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
-import { WeekStripSection } from "@/components/dashboard/WeekStripSection";
+import { HomeCalendarSection } from "@/components/dashboard/HomeCalendarSection";
 import { WeeklyReviewLine } from "@/components/dashboard/WeeklyReviewLine";
 import { Page } from "@/components/shell";
 import { getCosmosScores } from "@/lib/cosmos/load";
@@ -69,14 +69,14 @@ export default async function HomePage() {
   const stars = revisitStars(cosmos, now);
 
   return (
-    <Page className="flex flex-col gap-10">
+    <Page className="flex max-w-6xl flex-col gap-10">
       <h1 className="text-base font-semibold tracking-tight">{todayHeading(today)}</h1>
       <div className="flex flex-col gap-1">
         <QuickInput />
         <InboxLine count={inboxCount} />
         <WeeklyReviewLine period={reviewDue} today={day} />
       </div>
-      <WeekStripSection today={today} />
+      <HomeCalendarSection today={today} />
       <TodayTasks overdue={todayTasks.overdue} dueToday={todayTasks.today} today={today} />
       <WeekTasks tasks={weekTasks} today={today} />
       {quarter.length || stars.length ? (
