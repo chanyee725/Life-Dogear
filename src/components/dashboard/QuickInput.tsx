@@ -115,7 +115,7 @@ export function QuickInput() {
       adornment={<Kbd>/</Kbd>}
       save={async (text) => {
         const result = await safeAction(() => createQuickThought(text));
-        return result.ok ? { ok: true, message: "생각으로 저장했습니다." } : result;
+        return result.ok ? { ok: true, message: "저장했습니다." } : result;
       }}
     />
   );
