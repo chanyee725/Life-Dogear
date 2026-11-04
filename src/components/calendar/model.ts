@@ -87,6 +87,16 @@ export function gridWeeks(kind: CalendarRangeKind, date: string): string[][] {
 export const weekDays = (date: string) =>
   Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
 
+/**
+ * Range the calendar page loads: from the grid's first day as far as one request may go
+ * (`MAX_RANGE_DAYS` = 93), so the today panel can look ahead past the grid without a second call.
+ */
+export function fetchRange(kind: CalendarRangeKind, date: string): { from: string; to: string } {
+  const from = gridRange(kind, date).from;
+  return { from, to: addDays(from, FETCH_DAYS - 1) };
+}
+export const FETCH_DAYS = 93;
+
 export function gridRange(kind: CalendarRangeKind, date: string): { from: string; to: string } {
   const weeks = gridWeeks(kind, date);
   return { from: weeks[0]![0]!, to: weeks.at(-1)![6]! };
@@ -241,6 +251,8 @@ export function splitPeriodLine(
 export const MAX_LANES = 2;
 /** Month cell line budget (bars + items) before "+n" (3.2). */
 export const MONTH_LINES = 3;
+/** 2-week cell line budget (13.2: five lines, else four + "+n"). */
+export const TWO_WEEK_LINES = 5;
 
 export type WeekBar = {
   item: CalendarItem;
