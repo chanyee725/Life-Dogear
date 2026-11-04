@@ -129,3 +129,35 @@ export async function gcImages(
   }
   return result;
 }
+
+/** Browser uploads are confirmed within minutes; older `pending/` objects were abandoned. */
+export const PENDING_MIN_AGE_MS = 60 * 60 * 1000;
+
+export type PendingGcResult = { total: number; stale: number; deleted: number; failed: number };
+
+/**
+ * Temporary upload objects (`pending/<uuid>`) left by uploads that were never confirmed.
+ * With `apply`, deletes the ones older than `minAgeMs` (default 1 hour: presigned uploads
+ * expire after 5 minutes). Objects without a known time are kept.
+ */
+export async function gcPending(
+  store: BlobStore,
+  options: { apply?: boolean; now?: Date; minAgeMs?: number } = {},
+): Promise<PendingGcResult> {
+  const now = (options.now ?? new Date()).getTime();
+  const minAge = options.minAgeMs ?? PENDING_MIN_AGE_MS;
+  const result: PendingGcResult = { total: 0, stale: 0, deleted: 0, failed: 0 };
+  for (const entry of await store.list("pending/")) {
+    result.total++;
+    const created = entry.lastModified?.getTime();
+    if (created === undefined || now - created < minAge) continue;
+    result.stale++;
+    if (!options.apply) continue;
+    try {
+      if (await store.delete(entry.key)) result.deleted++;
+    } catch {
+      result.failed++;
+    }
+  }
+  return result;
+}

@@ -2,6 +2,8 @@
  * Finds photos no body refers to and, with --apply, deletes the ones created more than
  * 24 hours ago (newer ones may sit in an unsaved draft). Default is a dry run.
  * Every text column of every table is searched, so any mention keeps the photo.
+ * Also removes temporary upload objects (`pending/`) older than an hour: browser uploads
+ * that were never confirmed. That part does not depend on the database.
  * Uses the same storage as the app (bucket + local folder when S3_* is set). Counts only.
  *
  *   npm run storage:gc-images            # dry run: count
@@ -12,7 +14,13 @@ import { createClient } from "@libsql/client";
 import { ensureLocalDir, resolveDbConfig } from "../src/db/config";
 import { loadEnvIfPresent } from "../src/db/env";
 import { blobStore, blobStoreKind } from "../src/lib/storage/blob";
-import { gcGuard, gcImages, referencedImages, type GcBlock } from "../src/lib/storage/maintenance";
+import {
+  gcGuard,
+  gcImages,
+  gcPending,
+  referencedImages,
+  type GcBlock,
+} from "../src/lib/storage/maintenance";
 
 async function allTextValues(): Promise<string[]> {
   const config = resolveDbConfig();
@@ -47,6 +55,12 @@ async function main() {
   // Kinds only: never the endpoint, bucket or database address.
   console.log(`저장소: ${storeKind} · DB: ${dbKind}${apply ? "" : " · dry-run"}`);
   const store = blobStore();
+  const pending = await gcPending(store, { apply });
+  console.log(
+    apply
+      ? `임시 업로드 ${pending.total}개 · 1시간 지난 ${pending.stale}개 중 ${pending.deleted}개 삭제 · 실패 ${pending.failed}개`
+      : `[dry-run] 임시 업로드 ${pending.total}개 · 지울 것 ${pending.stale}개`,
+  );
   if (apply && storeKind === "s3" && dbKind === "local") {
     console.error(BLOCKED.shared_store_local_db);
     process.exit(1);
@@ -69,7 +83,7 @@ async function main() {
         : `[dry-run] 지울 사진 ${result.unreferenced}개 (지우려면 -- --apply)`,
     ].join("\n"),
   );
-  if (result.failed > 0) process.exit(1);
+  if (result.failed > 0 || pending.failed > 0) process.exit(1);
 }
 
 main().catch((error: unknown) => {

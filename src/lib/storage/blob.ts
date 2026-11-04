@@ -8,12 +8,15 @@ import { describeError } from "./describe-error";
 import { rangeHeader, resolveRange, type ByteRange, type RangeSpec } from "./range";
 
 /**
- * Where uploaded files live. Keys are `images/<name>` and `pdfs/<id>.pdf`.
+ * Where uploaded files live. Keys are `images/<name>` and `pdfs/<id>.pdf`, plus
+ * `pending/<uuid>` for browser uploads to the bucket that are not confirmed yet.
  * - `local`: files under `DATA_DIR` (`<DATA_DIR>/images/<name>`, `<DATA_DIR>/pdfs/<id>.pdf`).
  * - `s3`: an S3-compatible bucket (Cloudflare R2), used when all four `S3_*` settings are
  *   present, so PCs sharing one Turso database also share the files. Reads fall back to the
  *   local folder for files uploaded before the bucket was set up.
- * Browsers never see the bucket: the API routes proxy the bytes.
+ * Local mode proxies the bytes through the API routes. In s3 mode browsers upload and read
+ * through short-lived presigned URLs ({@link S3BlobStore.presign}); credentials stay on the
+ * server.
  */
 export type BlobInfo = { size: number; lastModified: Date | null };
 export type BlobEntry = BlobInfo & { key: string };
@@ -39,7 +42,7 @@ export interface BlobStore {
   head(key: string): Promise<BlobInfo | null>;
   /** False when there was nothing to delete. */
   delete(key: string): Promise<boolean>;
-  /** Every file whose key starts with `prefix` (`images/` or `pdfs/`). */
+  /** Every file whose key starts with `prefix` (`images/`, `pdfs/` or `pending/`). */
   list(prefix: string): Promise<BlobEntry[]>;
 }
 
@@ -54,13 +57,35 @@ export class BlobStoreError extends Error {
   }
 }
 
-const KEY_RE = /^(images|pdfs)\/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
-const PREFIX_RE = /^(images|pdfs)\/$/;
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const KEY_RE = new RegExp(`^(?:(?:images|pdfs)/[A-Za-z0-9][A-Za-z0-9._-]{0,127}|pending/${UUID})$`);
+const PREFIX_RE = /^(images|pdfs|pending)\/$/;
+const PENDING_RE = new RegExp(`^pending/${UUID}$`);
 
 /** Keys this app creates; anything else is rejected before touching disk or network. */
 export function assertKey(key: string): void {
   if (!KEY_RE.test(key) || key.includes("..")) throw new BlobStoreError("invalid_key");
 }
+
+/** A fresh key for a browser upload that is not confirmed yet. */
+export const newPendingKey = (): string => `pending/${crypto.randomUUID()}`;
+export const isPendingKey = (key: unknown): key is string =>
+  typeof key === "string" && PENDING_RE.test(key);
+
+/** Presigned URLs live this long (seconds): enough to start an upload or a read. */
+export const PRESIGN_TTL_SECONDS = 300;
+
+export type PresignOptions = {
+  method: "GET" | "PUT";
+  expiresIn?: number;
+  /** PUT: signed, so the browser must send exactly this type and byte count. */
+  contentType?: string;
+  contentLength?: number;
+  /** GET: response headers the bucket must send (`response-content-type` and friends). */
+  response?: { contentType?: string; contentDisposition?: string; cacheControl?: string };
+  /** Signing time (tests). */
+  now?: Date;
+};
 function assertPrefix(prefix: string): void {
   if (!PREFIX_RE.test(prefix)) throw new BlobStoreError("invalid_prefix");
 }
@@ -193,6 +218,7 @@ export class S3BlobStore implements BlobStore {
   readonly kind = "s3";
   private readonly client: AwsClient;
   private readonly base: string;
+  private readonly bucket: string;
 
   constructor(
     config: S3Config,
@@ -210,6 +236,7 @@ export class S3BlobStore implements BlobStore {
     if (!/^[a-z0-9][a-z0-9.-]{1,62}$/.test(config.bucket)) {
       throw new BlobStoreError("invalid_bucket");
     }
+    this.bucket = config.bucket;
     this.base = `${url.origin}${url.pathname.replace(/\/+$/, "")}/${config.bucket}`;
     this.client = new AwsClient({
       accessKeyId: config.accessKeyId,
@@ -228,6 +255,62 @@ export class S3BlobStore implements BlobStore {
   private url(key: string): string {
     assertKey(key);
     return `${this.base}/${key}`;
+  }
+
+  /**
+   * A URL the browser can use for one method on one key until it expires
+   * ({@link PRESIGN_TTL_SECONDS} by default). It carries the access key id and a signature,
+   * never the secret. Do not log it.
+   */
+  async presign(key: string, options: PresignOptions): Promise<string> {
+    const url = new URL(this.url(key));
+    const expiresIn = options.expiresIn ?? PRESIGN_TTL_SECONDS;
+    if (!Number.isInteger(expiresIn) || expiresIn < 1 || expiresIn > 3600) {
+      throw new BlobStoreError("invalid_expiry");
+    }
+    url.searchParams.set("X-Amz-Expires", String(expiresIn));
+    const response = options.response ?? {};
+    if (response.contentType) url.searchParams.set("response-content-type", response.contentType);
+    if (response.contentDisposition) {
+      url.searchParams.set("response-content-disposition", response.contentDisposition);
+    }
+    if (response.cacheControl)
+      url.searchParams.set("response-cache-control", response.cacheControl);
+    const headers: Record<string, string> = {};
+    if (options.method === "PUT") {
+      if (!options.contentType || !options.contentLength) throw new BlobStoreError("invalid_put");
+      headers["content-type"] = options.contentType;
+      headers["content-length"] = String(options.contentLength);
+    }
+    const signed = await this.client.sign(url.toString(), {
+      method: options.method,
+      headers,
+      aws: {
+        signQuery: true,
+        // Sign Content-Type and Content-Length too (aws4fetch skips them by default).
+        allHeaders: true,
+        ...(options.now
+          ? { datetime: options.now.toISOString().replace(/[:-]|\.\d{3}/g, "") }
+          : {}),
+      },
+    });
+    return signed.url;
+  }
+
+  /** Server-side copy inside the bucket (no bytes pass through this server). */
+  async copy(from: string, to: string, contentType: string): Promise<void> {
+    assertKey(from);
+    const response = await this.send(this.url(to), {
+      method: "PUT",
+      headers: {
+        "x-amz-copy-source": `/${this.bucket}/${from}`,
+        "x-amz-metadata-directive": "REPLACE",
+        "Content-Type": contentType,
+      },
+    });
+    if (!response.ok) this.fail(response, "copy");
+    // CopyObject can answer 200 with an error document.
+    if ((await response.text()).includes("<Error>")) throw new BlobStoreError("s3_copy_error");
   }
 
   private fail(response: Response, op: string): never {
@@ -419,6 +502,12 @@ export function blobStore(options: StoreOptions = {}, env: Env = process.env): B
   const local = new LocalBlobStore(options.root);
   const config = s3ConfigFromEnv(env);
   return config ? new FallbackBlobStore(new S3BlobStore(config), local) : local;
+}
+
+/** The bucket itself (no local fallback) when s3 is configured, else null. */
+export function s3Store(env: Env = process.env): S3BlobStore | null {
+  const config = s3ConfigFromEnv(env);
+  return config ? new S3BlobStore(config) : null;
 }
 
 /** "s3" or "local" — the only storage detail ever shown or logged. */
