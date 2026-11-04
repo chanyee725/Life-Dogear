@@ -142,9 +142,9 @@ describe("CalendarView (month)", () => {
     expect(render({ items: [], failed: true })).toContain("달력을 불러오지 못했습니다.");
   });
 
-  it("shows the empty line when nothing is dated", () => {
-    expect(render({ items: [] })).toContain("이번 달에 표시할 날짜가 없습니다.");
-    expect(render({ items: [], range: "3w" })).toContain("이 3주에 표시할 날짜가 없습니다.");
+  it("shows no empty-period line when nothing is dated", () => {
+    expect(render({ items: [] })).not.toContain("표시할 날짜가 없습니다");
+    expect(render({ items: [], range: "3w" })).not.toContain("표시할 날짜가 없습니다");
   });
 });
 
@@ -219,9 +219,9 @@ describe("TodayPanel (13.3)", () => {
     expect(panel).not.toContain("지난 일");
   });
 
-  it("says when nothing is ahead and offers a quick add", () => {
+  it("offers only a quick add when nothing is ahead", () => {
     const html = render({ range: "3w", items: [] });
-    expect(html).toContain("11월 4일 이후 예정된 일정이 없습니다.");
+    expect(html).not.toContain("예정된 일정이 없습니다");
     expect(html).toContain("＋ 할 일 추가");
   });
 });
