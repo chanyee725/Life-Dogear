@@ -8,7 +8,10 @@ test("할 일: 추가 → 완료하면 포커스가 다음 행으로, 소속별 
   for (const name of ["첫 할 일", "둘째 할 일"]) {
     await input.fill(name);
     await input.press("Enter");
-    await expect(page.getByRole("checkbox", { name: `완료: ${name}` })).toBeVisible();
+    // Generous: on a fresh dev server the first add waits for the action to compile.
+    await expect(page.getByRole("checkbox", { name: `완료: ${name}` })).toBeVisible({
+      timeout: 20_000,
+    });
   }
 
   // Space on the first checkbox: the row moves to 완료 and focus goes to the next row.
