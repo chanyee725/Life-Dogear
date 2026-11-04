@@ -1,6 +1,7 @@
 /**
  * Quick capture (docs/design/today.md 6절). Pure helpers: no DOM, no network — a link is
- * saved as a thought with the URL in its body; nothing is fetched.
+ * saved as a thought with the URL in its body; nothing is fetched. 노트 (단계 N) saves a
+ * title and a body as a new note.
  */
 
 /** Window event that opens the capture dialog (shortcut `C`, the Cmd+K command). */
@@ -11,7 +12,17 @@ export const TOAST_MS = 3000;
 /** Second Esc within this window closes a capture that has text. */
 export const ESC_CONFIRM_MS = 2000;
 
-export type CaptureKind = "thought" | "link";
+export type CaptureKind = "thought" | "link" | "note";
+
+/** Order of the kind switch (← → move through it, wrapping). */
+export const CAPTURE_KINDS: readonly CaptureKind[] = ["thought", "link", "note"];
+
+/** The kind left (-1) or right (+1) of `kind`, wrapping around. */
+export function nextKind(kind: CaptureKind, step: 1 | -1): CaptureKind {
+  const i = CAPTURE_KINDS.indexOf(kind);
+  const n = CAPTURE_KINDS.length;
+  return CAPTURE_KINDS[(i + step + n) % n];
+}
 
 const MAX_URL = 2048;
 const LINK_TITLE_MAX = 60;
@@ -57,29 +68,67 @@ export function linkThoughtText(urlText: string, note: string): string | null {
   return [title, "", url.href, ...(restOfNote ? ["", restOfNote] : [])].join("\n");
 }
 
-export type CaptureDraft = { kind: CaptureKind; text: string; url: string; note: string };
+export type CaptureDraft = {
+  kind: CaptureKind;
+  text: string;
+  url: string;
+  note: string;
+  /** 노트 title and body. */
+  title: string;
+  body: string;
+};
 
-export const EMPTY_DRAFT: CaptureDraft = { kind: "thought", text: "", url: "", note: "" };
+export const EMPTY_DRAFT: CaptureDraft = {
+  kind: "thought",
+  text: "",
+  url: "",
+  note: "",
+  title: "",
+  body: "",
+};
 
 /** Something typed that closing would lose. */
-export const hasContent = (d: CaptureDraft): boolean =>
-  d.kind === "thought" ? d.text.trim() !== "" : d.url.trim() !== "" || d.note.trim() !== "";
+export function hasContent(d: CaptureDraft): boolean {
+  if (d.kind === "thought") return d.text.trim() !== "";
+  if (d.kind === "link") return d.url.trim() !== "" || d.note.trim() !== "";
+  return d.title.trim() !== "" || d.body.trim() !== "";
+}
 
-/** Text to save, or an error message. */
+/** Thought text to save (생각, 링크), or an error message. */
 export function draftToText(d: CaptureDraft): { text: string } | { error: string } {
   if (d.kind === "thought") {
     return d.text.trim() ? { text: d.text } : { error: "내용을 입력하세요." };
   }
+  if (d.kind === "note") return { error: "노트는 제목과 본문으로 저장합니다." };
   if (!d.url.trim()) return { error: "링크를 입력하세요." };
   const text = linkThoughtText(d.url, d.note);
   return text ? { text } : { error: "http:// 또는 https:// 링크를 입력하세요." };
 }
 
+export type CaptureSave =
+  | { kind: "thought"; text: string }
+  | { kind: "note"; title: string; body: string };
+
+/** What to save for the draft: a thought (생각, 링크) or a note, or an error message. */
+export function draftToSave(d: CaptureDraft): CaptureSave | { error: string } {
+  if (d.kind === "note") {
+    const title = d.title.trim();
+    if (!title) return { error: "제목을 입력하세요." };
+    return { kind: "note", title, body: d.body.trim() };
+  }
+  const result = draftToText(d);
+  return "error" in result ? result : { kind: "thought", text: result.text };
+}
+
 export type SaveKey = "close" | "continue" | null;
+
+/** Capture inputs: 생각 text, 링크 url + note, 노트 title + body. */
+export type CaptureField = "text" | "url" | "note" | "title" | "body";
 
 /**
  * ⌘/Ctrl+Enter saves and closes, ⇧⌘/Ctrl+Enter saves and keeps the dialog. In the link
- * field a plain Enter saves too. Never while the IME is composing.
+ * fields a plain Enter saves too; in the note title it moves to the body (the dialog
+ * handles that, not here). Never while the IME is composing.
  */
 export function saveKey(
   e: {
@@ -91,11 +140,11 @@ export function saveKey(
     isComposing?: boolean;
     keyCode?: number;
   },
-  field: "text" | "url" | "note",
+  field: CaptureField,
 ): SaveKey {
   if (e.key !== "Enter" || e.altKey || e.isComposing || e.keyCode === 229) return null;
   if (e.metaKey || e.ctrlKey) return e.shiftKey ? "continue" : "close";
-  if (field !== "text" && !e.shiftKey) return "close";
+  if ((field === "url" || field === "note") && !e.shiftKey) return "close";
   return null;
 }
 
