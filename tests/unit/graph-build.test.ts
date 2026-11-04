@@ -266,3 +266,32 @@ describe("buildLocalGraph", () => {
     });
   });
 });
+
+describe("note nodes", () => {
+  it("are shown by default and belong to their area", () => {
+    const g = buildGraph({
+      items: [
+        item("area", "A"),
+        item("note", "n", { areaId: "A" }),
+        item("note", "free"),
+        item("paper", "x"),
+      ],
+      links: [{ sourceType: "note", sourceId: "free", targetType: "paper", targetId: "x" }],
+    });
+    expect(ids(g)).toEqual(["area:A", "note:free", "note:n", "paper:x"]);
+    expect(edges(g)).toEqual(["note:free>paper:x:link", "note:n>area:A:belongs"]);
+    expect(g.nodes.find((n) => n.id === "note:n")?.areaId).toBe("A");
+    // Area filter keeps the area's notes.
+    expect(
+      ids(
+        buildGraph(
+          {
+            items: [item("area", "A"), item("note", "n", { areaId: "A" }), item("note", "free")],
+            links: [],
+          },
+          { area: "A" },
+        ),
+      ),
+    ).toEqual(["area:A", "note:n"]);
+  });
+});

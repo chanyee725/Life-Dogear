@@ -4,15 +4,7 @@
  */
 
 export type BadgeTone =
-  | "gray"
-  | "blue"
-  | "green"
-  | "amber"
-  | "red"
-  | "violet"
-  | "teal"
-  | "rose"
-  | "orange";
+  "gray" | "blue" | "green" | "amber" | "red" | "violet" | "teal" | "rose" | "orange";
 
 export type EnumOption<V extends string> = {
   readonly value: V;
