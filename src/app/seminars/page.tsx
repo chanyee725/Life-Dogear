@@ -20,7 +20,7 @@ import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { localDate } from "@/components/tasks/format";
+import { seoulDate } from "@/components/calendar/model";
 import { formatDate } from "@/components/ui/format";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
@@ -45,7 +45,7 @@ const GROUPS: { value: SeminarGroup; label: string }[] = [
 ];
 
 function groupSeminars(list: Seminar[], group: SeminarGroup): ItemGroup<Seminar>[] | undefined {
-  if (group === "month") return groupByMonth(list, (s) => s.date, localDate());
+  if (group === "month") return groupByMonth(list, (s) => s.date, seoulDate());
   if (group === "kind") return groupByKey(list, (s) => s.kind, SEMINAR_KIND.options);
   return undefined;
 }

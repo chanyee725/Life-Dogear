@@ -1,6 +1,10 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
+// Run every test in UTC (like Vercel), so code that leans on the server's zone fails here
+// instead of passing on a machine set to Asia/Seoul. Set before workers start.
+process.env.TZ = "UTC";
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -13,6 +17,7 @@ export default defineConfig({
   oxc: { jsx: { runtime: "automatic" } },
   test: {
     environment: "node",
+    env: { TZ: "UTC" },
     include: ["tests/unit/**/*.test.ts"],
     // next-auth imports `next/server` without an extension; bundling it lets Vite resolve that.
     server: { deps: { inline: ["next-auth"] } },

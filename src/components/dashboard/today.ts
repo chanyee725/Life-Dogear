@@ -2,6 +2,7 @@
  * Pure helpers for the home "오늘" screen (PLAN-TODAY 3절, docs/design/today.md 4절):
  * the rest of the week, this quarter's goals and the stars to revisit. No DB, no clock.
  */
+import { seoulDate, spokenDay } from "@/components/calendar/model";
 import { addDays } from "@/components/tasks/format";
 import { neglectedImportant, type ScoredNode } from "@/lib/cosmos/score";
 import type { CosmosScores } from "@/lib/cosmos/types";
@@ -122,8 +123,18 @@ export function revisitStars(data: CosmosScores, now: Date, limit = STARS_MAX): 
   return out;
 }
 
-/** "11월 3일 화요일" for the date line. */
-export function todayHeading(now: Date): string {
-  const days = ["일", "월", "화", "수", "목", "금", "토"];
-  return `${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+/** Date line for a Seoul day (`YYYY-MM-DD`), e.g. `11월 3일 화요일`. */
+export function todayHeading(today: string): string {
+  return spokenDay(today);
+}
+
+/**
+ * The home's "today" in Asia/Seoul, whatever the server's zone (Vercel runs in UTC, so a
+ * local date is a day behind from 00:00 to 09:00 KST). `day` is local midnight of that
+ * Seoul date, for helpers that read a `Date`'s local parts (review periods).
+ */
+export function seoulToday(now: Date): { today: string; day: Date } {
+  const today = seoulDate(now);
+  const [y, m, d] = today.split("-").map(Number);
+  return { today, day: new Date(y!, m! - 1, d!) };
 }
