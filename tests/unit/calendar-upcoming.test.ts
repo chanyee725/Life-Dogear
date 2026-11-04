@@ -46,10 +46,20 @@ describe("upcoming (다음 일정)", () => {
     expect(list).toMatchObject({ shown: 5, more: 0 });
   });
 
-  it("leaves out done tasks, periods, papers and goals", () => {
+  it("keeps a done task on the shown day only, struck through by the row", () => {
+    const items = [
+      item("doneToday", TODAY, { done: true }),
+      item("doneLater", "2026-11-10", { done: true }),
+    ];
+    expect(
+      upcoming(items, TODAY, TODAY, NOW).groups.flatMap((g) => g.items.map((i) => i.id)),
+    ).toEqual(["doneToday"]);
+  });
+
+  it("leaves out done tasks of later days, periods, papers and goals", () => {
     const list = upcoming(
       [
-        item("done", TODAY, { done: true }),
+        item("done", "2026-11-10", { done: true }),
         item("rev", "2026-11-02", { source: "review", end: "2026-11-08" }),
         item("rev1", "2026-11-05", { source: "review", end: "2026-11-05" }),
         item("goal", "2026-10-01", { source: "goal", end: "2026-12-31" }),

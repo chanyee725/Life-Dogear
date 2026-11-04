@@ -74,7 +74,12 @@ export default async function HomePage() {
         <InboxLine count={inboxCount} />
         <WeeklyReviewLine period={reviewDue} today={day} />
       </HomeCalendarSection>
-      <TodayTasks overdue={todayTasks.overdue} dueToday={todayTasks.today} today={today} />
+      <TodayTasks
+        overdue={todayTasks.overdue}
+        dueToday={todayTasks.today}
+        done={todayTasks.done}
+        today={today}
+      />
       <WeekTasks tasks={weekTasks} today={today} />
       {quarter.length || stars.length ? (
         // Two columns only when both have something (today.md 4.1).

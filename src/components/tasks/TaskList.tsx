@@ -49,6 +49,8 @@ export type TaskListProps = {
   dueMode?: "all" | "overdue";
   /** Show the folded 완료 group (default true). */
   showCompleted?: boolean;
+  /** Start with the done rows expanded (home: finished tasks stay visible, struck through). */
+  doneOpen?: boolean;
   className?: string;
 };
 
@@ -95,6 +97,7 @@ export function TaskList({
   showParent = false,
   dueMode = "all",
   showCompleted = true,
+  doneOpen = false,
   className,
 }: TaskListProps) {
   // Local copy for optimistic updates; reset whenever the server sends new tasks.
@@ -109,7 +112,7 @@ export function TaskList({
   const [announce, setAnnounce] = useState("");
   /** The just-deleted task and where it sat in `items`, for 되돌리기. */
   const [undo, setUndo] = useState<{ task: Task; index: number } | null>(null);
-  const [showDone, setShowDone] = useState(false);
+  const [showDone, setShowDone] = useState(doneOpen);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [, startTransition] = useTransition();
   const listRef = useRef<HTMLUListElement>(null);

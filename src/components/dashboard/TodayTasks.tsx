@@ -22,16 +22,19 @@ function More({ count, href }: { count: number; href: string }) {
 export function TodayTasks({
   overdue,
   dueToday,
+  done = [],
   today,
 }: {
   overdue: Task[];
   dueToday: Task[];
+  /** Today's tasks already finished: listed below, struck through. */
+  done?: Task[];
   today: string;
 }) {
   const all = [...overdue, ...dueToday];
   const href = "/tasks?tab=today";
   // Nothing due: the section stays out; new tasks go in through the calendar's input.
-  if (all.length === 0) return null;
+  if (all.length === 0 && done.length === 0) return null;
   return (
     <Section
       id="today"
@@ -59,12 +62,13 @@ export function TodayTasks({
     >
       <div className="flex flex-col">
         <TaskList
-          tasks={all.slice(0, TODAY_MAX)}
+          tasks={[...all.slice(0, TODAY_MAX), ...done]}
           today={today}
           label="오늘 할 일"
           showParent
           dueMode="overdue"
-          showCompleted={false}
+          showCompleted
+          doneOpen
         />
         <More count={all.length - TODAY_MAX} href={href} />
       </div>

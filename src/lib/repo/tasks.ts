@@ -156,12 +156,19 @@ export async function list(options: TaskListOptions = {}): Promise<Task[]> {
 }
 
 /** Open tasks due `today` and open tasks due before it (`YYYY-MM-DD`, local calendar). */
-export async function listToday(today: string): Promise<{ today: Task[]; overdue: Task[] }> {
+export async function listToday(
+  today: string,
+): Promise<{ today: Task[]; overdue: Task[]; done: Task[] }> {
   const day = optionalDate(today, "오늘") ?? "";
-  const rows = await query([isNull(tasks.doneAt), sql`${tasks.dueDate} <= ${day}`], dueOrder);
+  const [rows, done] = await Promise.all([
+    query([isNull(tasks.doneAt), sql`${tasks.dueDate} <= ${day}`], dueOrder),
+    // Done today-due tasks stay on the home list, struck through, until the day is over.
+    query([isNotNull(tasks.doneAt), eq(tasks.dueDate, day)], dueOrder),
+  ]);
   return {
     today: rows.filter((t) => t.dueDate === day),
     overdue: rows.filter((t) => t.dueDate! < day),
+    done,
   };
 }
 

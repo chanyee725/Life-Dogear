@@ -45,7 +45,8 @@ function isOver(item: CalendarItem, now: string): boolean {
 
 /**
  * What is left from `day` on: open single-day items in time order, grouped by day. On
- * `today` timed events that are already over are dropped ("그날 남은 것"); done tasks never count.
+ * `today` timed events that are already over are dropped ("그날 남은 것"); done tasks stay
+ * only on `day` itself (struck through), not on later days.
  */
 export function upcoming(
   items: readonly CalendarItem[],
@@ -58,7 +59,7 @@ export function upcoming(
       (it) =>
         UPCOMING_SOURCES.has(it.source) &&
         isOneDay(it) &&
-        !it.done &&
+        (!it.done || dayOf(it.start) === day) &&
         dayOf(it.start) >= day &&
         !(dayOf(it.start) === today && isOver(it, now)),
     )
