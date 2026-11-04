@@ -116,7 +116,6 @@ export default async function ReviewDetailPage({ params }: Props) {
           </Link>
         </p>
       )}
-      <p className="text-xs text-faint">진행률은 회고를 만들 때와 작성 완료할 때 저장됩니다.</p>
     </Step>
   );
 
@@ -223,7 +222,6 @@ export default async function ReviewDetailPage({ params }: Props) {
             targetLabel={`${periodLabel(target.horizon, target.period)} 목표`}
             parents={parents}
           />
-          <p className="text-xs text-faint">만든 목표는 이 회고와 연결됩니다.</p>
         </Step>
       ) : null}
       <ConnectedItems item={ref} />
