@@ -19,7 +19,7 @@ import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
 import { Button, cn, Input, Spinner } from "@/components/ui";
-import { mergeAdded } from "@/lib/calendar/dedupe";
+import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { revealAdded } from "./add-event";
 import { AddEventButton } from "./AddEventButton";
@@ -172,7 +172,10 @@ export function CalendarView({
   const [prevItems, setPrevItems] = useState(serverItems);
   if (prevItems !== serverItems) {
     setPrevItems(serverItems);
-    setItems(mergeAdded(serverItems, added));
+    // Drop added events the server list now carries, so `added` does not only grow.
+    const pending = pendingAdded(serverItems, added);
+    if (pending !== added) setAdded(pending);
+    setItems(mergeAdded(serverItems, pending));
   }
 
   const onEventAdded = (item: CalendarItem) => {

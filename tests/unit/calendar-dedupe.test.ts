@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeAdded, sameEventKey } from "@/lib/calendar/dedupe";
+import { mergeAdded, pendingAdded, sameEventKey } from "@/lib/calendar/dedupe";
 import { toCalendarItem } from "@/lib/calendar/google-write";
 import { expandIcs, parseIcs } from "@/lib/calendar/ics/parse";
 import type { CalendarItem } from "@/lib/calendar/types";
@@ -82,5 +82,16 @@ describe("mergeAdded on real reader and writer output", () => {
     expect(fromFeed.id).not.toBe(added.id);
     const list = [fromFeed];
     expect(mergeAdded(list, [added])).toBe(list);
+  });
+});
+
+describe("pendingAdded", () => {
+  it("drops added events the fetched list now has (any zone), keeps the rest", () => {
+    const a = google("a@google.com", "2026-11-05T14:00:00+09:00");
+    const b = google("b@google.com", "2026-11-06", true);
+    const added = [a, b];
+    expect(pendingAdded([], added)).toBe(added);
+    expect(pendingAdded([google("a@google.com", "2026-11-05T00:00:00-05:00")], added)).toEqual([b]);
+    expect(pendingAdded([a, b], added)).toEqual([]);
   });
 });

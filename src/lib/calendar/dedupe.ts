@@ -32,3 +32,14 @@ export function mergeAdded(items: CalendarItem[], added: CalendarItem[]): Calend
   });
   return extra.length ? [...items, ...extra] : items;
 }
+
+/**
+ * The `added` items the fetched list does not have yet; once the feed carries one it no
+ * longer needs keeping. Returns `added` itself when nothing dropped out.
+ */
+export function pendingAdded(items: CalendarItem[], added: CalendarItem[]): CalendarItem[] {
+  if (added.length === 0) return added;
+  const keys = new Set(items.map(sameEventKey));
+  const left = added.filter((a) => !keys.has(sameEventKey(a)));
+  return left.length === added.length ? added : left;
+}
