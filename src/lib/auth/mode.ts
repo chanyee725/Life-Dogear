@@ -54,8 +54,12 @@ export function resolveAuthMode(env: Env, host: string | null | undefined): Auth
   const missingAuth = AUTH_KEYS.filter((k) => !filled(env, k));
   const authComplete = missingAuth.length === 0;
   const authEmpty = missingAuth.length === AUTH_KEYS.length;
-  // A remote production server must not serve the notes without sign-in.
-  const exposed = isVercel(env) || (env.NODE_ENV === "production" && !isLocalHost(host));
+  // A production server reachable from elsewhere must not serve the notes without sign-in:
+  // a remote Host, or any ALLOWED_HOSTS entry (a localhost Host proves nothing then — a
+  // proxy or tunnel may forward it).
+  const exposed =
+    isVercel(env) ||
+    (env.NODE_ENV === "production" && (!isLocalHost(host) || filled(env, "ALLOWED_HOSTS")));
 
   if (!authComplete && (!authEmpty || exposed)) {
     reasons.push(authEmpty ? "auth-required" : "auth-incomplete");

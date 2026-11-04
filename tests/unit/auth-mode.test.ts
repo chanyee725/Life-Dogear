@@ -56,6 +56,19 @@ describe("resolveAuthMode", () => {
     }
   });
 
+  it("treats a production server with ALLOWED_HOSTS as exposed, even via localhost", () => {
+    const env = { NODE_ENV: "production", ALLOWED_HOSTS: "my-box.local" };
+    expect(resolveAuthMode(env, "localhost:3100").kind).toBe("setup");
+    expect(resolveAuthMode({ ...env, ALLOWED_HOSTS: " " }, "localhost:3100")).toEqual({
+      kind: "local",
+    });
+    expect(resolveAuthMode({ ...env, ...AUTH }, "localhost:3100")).toEqual({ kind: "login" });
+    // Dev server: unchanged.
+    expect(resolveAuthMode({ ...env, NODE_ENV: "development" }, "localhost:3000")).toEqual({
+      kind: "local",
+    });
+  });
+
   it("shows setup when auth settings are only partly filled, anywhere", () => {
     const partial = { ...AUTH, ALLOWED_EMAILS: "" };
     const mode = resolveAuthMode(partial, "127.0.0.1:3000");
