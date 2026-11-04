@@ -35,10 +35,11 @@ export function DashboardSection({
 }
 
 /** The only body of an empty dashboard block: one add button, no explanation. */
+/** Empty section: a dashed box holding only the add action (no explanatory copy). */
 export function DashboardAdd({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <div className="flex">
-      <Link href={href} className={buttonClass("ghost", "sm", "-ml-2")}>
+    <div className="flex items-center justify-center rounded-lg border border-dashed border-border px-4 py-5">
+      <Link href={href} className={buttonClass("ghost", "sm")}>
         {children}
       </Link>
     </div>
