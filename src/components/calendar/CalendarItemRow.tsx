@@ -66,6 +66,7 @@ export function CalendarItemRow({
   size,
   dragging = false,
   tabbable = false,
+  hideTime = false,
   handlers,
 }: {
   item: CalendarItem;
@@ -75,9 +76,11 @@ export function CalendarItemRow({
   dragging?: boolean;
   /** Outside the grid (narrow lists) items are ordinary tab stops. */
   tabbable?: boolean;
+  /** 2-week cells leave the "14:00" prefix to the panel (13.2). */
+  hideTime?: boolean;
   handlers: ItemHandlers;
 }) {
-  const time = timeOf(item);
+  const time = hideTime ? null : timeOf(item);
   const movable = isMovable(item);
   const className = cn(
     "flex min-w-0 items-center gap-1.5 rounded-[4px] px-1 hover:bg-hover focus-visible:outline-offset-[-2px]",
