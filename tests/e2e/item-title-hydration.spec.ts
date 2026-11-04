@@ -12,9 +12,18 @@ test("title typed before hydration is saved", async ({ page }) => {
   await expect(page).toHaveURL(/\/goals\/(?!new)[^/]+$/, { timeout: 20_000 });
   const url = page.url();
 
+  // Hold the JS chunks so the title is typed into the server-rendered form before React
+  // hydrates it, then let them through.
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/_next/static/chunks/**", async (route) => {
+    await held;
+    await route.continue();
+  });
   const renamed = `${title} 수정`;
-  await page.goto(url, { waitUntil: "domcontentloaded" });
+  await page.goto(url, { waitUntil: "commit" });
   await page.getByLabel("제목", { exact: true }).fill(renamed);
+  release();
   await expect(page.locator('[data-state="saved"]')).toBeVisible({ timeout: 15_000 });
 
   await page.reload();

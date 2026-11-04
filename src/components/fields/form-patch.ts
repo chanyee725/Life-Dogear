@@ -57,7 +57,15 @@ export const AUTOSAVE_READ_ATTR = "data-autosave-read";
 export const EDITOR_READY_EVENT = "rb-editor-ready";
 
 /** A text field as the page rendered it (`defaultValue`) and as it is now (`value`). */
-export type RenderedField = { name: string; value: string; defaultValue: string };
+export type RenderedField = {
+  name: string;
+  value: string;
+  defaultValue: string;
+  /** Single-line input: the browser strips line breaks from `value`, not `defaultValue`. */
+  singleLine?: boolean;
+};
+
+const stripLineBreaks = (text: string) => text.replace(/[\r\n]/g, "");
 
 /**
  * The server baseline from a form read on mount. Text typed before hydration is already
@@ -72,8 +80,9 @@ export function baselineFromRendered(
   const baseline: FormPatch = { ...patch };
   let edited = false;
   for (const f of fields) {
-    if (!f.name || f.value === f.defaultValue || typeof baseline[f.name] !== "string") continue;
-    baseline[f.name] = f.defaultValue;
+    const rendered = f.singleLine ? stripLineBreaks(f.defaultValue) : f.defaultValue;
+    if (!f.name || f.value === rendered || typeof baseline[f.name] !== "string") continue;
+    baseline[f.name] = rendered;
     edited = true;
   }
   return { baseline, edited };

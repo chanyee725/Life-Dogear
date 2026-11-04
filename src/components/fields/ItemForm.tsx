@@ -9,6 +9,7 @@ import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
   baselineFromRendered,
+  type RenderedField,
   EDITOR_READY_EVENT,
   formToPatch,
   patchToFormData,
@@ -152,30 +153,25 @@ function readForm(form: HTMLFormElement, autosave: boolean): FormPatch {
   }
 }
 
-/** Visible text inputs and textareas with their rendered (`defaultValue`) and current value. */
-function renderedFields(form: HTMLFormElement) {
-  return Array.from(form.elements).flatMap((el) =>
-    (el instanceof HTMLInputElement && TEXT_INPUT_TYPES.has(el.type)) ||
-    el instanceof HTMLTextAreaElement
-      ? [{ name: el.name, value: el.value, defaultValue: el.defaultValue }]
-      : [],
-  );
+/** Text inputs and textareas with their rendered (`defaultValue`) and current value. */
+function renderedFields(form: HTMLFormElement): RenderedField[] {
+  return Array.from(form.elements).flatMap((el): RenderedField[] => {
+    if (el instanceof HTMLTextAreaElement) {
+      return [{ name: el.name, value: el.value, defaultValue: el.defaultValue }];
+    }
+    if (el instanceof HTMLInputElement && TEXT_INPUT_TYPES.has(el.type)) {
+      return [{ name: el.name, value: el.value, defaultValue: el.defaultValue, singleLine: true }];
+    }
+    return [];
+  });
 }
 
-/** Input types whose `defaultValue` is the rendered value (not hidden, checkbox, file…). */
-const TEXT_INPUT_TYPES = new Set([
-  "text",
-  "search",
-  "url",
-  "email",
-  "tel",
-  "number",
-  "date",
-  "datetime-local",
-  "month",
-  "week",
-  "time",
-]);
+/**
+ * Input types compared with their `defaultValue`. Other types (url, email, date…) get a
+ * value the browser sanitises differently from the untouched `defaultValue`, so merely
+ * opening the page would look like an edit.
+ */
+const TEXT_INPUT_TYPES = new Set(["text", "search"]);
 
 function AutosaveForm({ action, basePath, backLabel, actions, children, className }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -196,6 +192,8 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   /** Edited since the form was last read into the queue. */
   const [unread, setUnread] = useState(false);
   const unreadRef = useRef(false);
+  /** The only unread edits are text typed before hydration (no edits since). */
+  const preHydrationOnlyRef = useRef(false);
   useEffect(() => {
     unreadRef.current = unread;
   }, [unread]);
@@ -224,6 +222,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     setTitleMissing(blank);
     if (blank) delete patch.title;
     unreadRef.current = false;
+    preHydrationOnlyRef.current = false;
     setUnread(false);
     queue.add(patch);
     void queue.flush();
@@ -243,13 +242,20 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     queue.resetBaseline(baseline);
     if (edited) {
       unreadRef.current = true;
+      preHydrationOnlyRef.current = true;
       setUnread(true);
       autosave();
     }
     // The editor mounts a bit later and may normalise the body; re-read the baseline
-    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
+    // then (only while nothing is unsaved — resetBaseline refuses otherwise). Text typed
+    // before hydration is still unread but not yet in the queue: re-read around it, so
+    // the re-serialised body doesn't go out with the title and overwrite a newer one.
     const onEditorReady = () => {
-      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
+      if (preHydrationOnlyRef.current) {
+        queue.resetBaseline(baselineFromRendered(readForm(form, true), renderedFields(form)).baseline);
+      } else if (!unreadRef.current) {
+        queue.resetBaseline(readForm(form, true));
+      }
     };
     form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
     return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
@@ -284,6 +290,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
 
   useFormEdits(formRef, () => {
     unreadRef.current = true;
+    preHydrationOnlyRef.current = false;
     setUnread(true);
     setConfirmed(false);
     autosave();
