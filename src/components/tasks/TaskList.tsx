@@ -22,8 +22,8 @@ import {
 import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
-import { Button } from "@/components/ui/Button";
-import { EmptyAdd } from "@/components/ui/EmptyAdd";
+import { Button, buttonClass } from "@/components/ui/Button";
+import { emptyAddBoxClass } from "@/components/ui/EmptyAdd";
 import { cn } from "@/components/ui/cn";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
@@ -672,7 +672,7 @@ function TitleEditor({
   );
 }
 
-/** `bare`: no task rows above, so the empty list shows the shared dashed `EmptyAdd` box. */
+/** `bare`: no task rows above, so the empty list shows the shared dashed `EmptyAdd` look. */
 function AddLine({
   onAdd,
   bare,
@@ -691,24 +691,26 @@ function AddLine({
   const tooLong = value.trim().length > TITLE_MAX;
 
   if (!editing) {
-    if (bare)
-      return (
-        <EmptyAdd data-task-add onClick={() => setEditing(true)}>
-          ＋ 할 일 추가
-        </EmptyAdd>
-      );
+    // Same <button> whether or not the list is empty (only the wrapper's look changes), so
+    // focus moved here when the last open task is completed survives the switch to `bare`.
     return (
-      <button
-        type="button"
-        data-task-add
-        onClick={() => setEditing(true)}
-        className={cn(
-          "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
-          indent,
-        )}
-      >
-        ＋ 할 일 추가
-      </button>
+      <div className={bare ? emptyAddBoxClass : undefined}>
+        <button
+          type="button"
+          data-task-add
+          onClick={() => setEditing(true)}
+          className={
+            bare
+              ? buttonClass("ghost", "sm")
+              : cn(
+                  "flex h-9 w-full items-center rounded-md text-left text-sm text-muted hover:bg-hover hover:text-fg",
+                  indent,
+                )
+          }
+        >
+          ＋ 할 일 추가
+        </button>
+      </div>
     );
   }
 

@@ -34,7 +34,7 @@
 | 조용한 버튼 | `h-7 px-2 text-[13px] text-muted`, hover `bg-hover` | `QuietButton` |
 | 탭 | 밑줄 `h-9 border-b-2`, 선택 `border-fg font-medium` | `LinkTabs` |
 | 세그먼트 | 트랙 `rounded-lg bg-subtle p-0.5`, 칸 `h-6 rounded-md px-2.5 text-[13px]`, 선택 `bg-bg text-fg shadow-sm`; 방향키 이동 | `Segmented`, `SegmentedLinks` |
-| 칩 | `h-7 rounded-lg border px-2.5 text-[13px]`, 선택 `border-accent/30 bg-accent-soft text-accent font-medium` | `chipClass`, `Chip` |
+| 칩 | `h-7 rounded-lg border px-2.5 text-[13px]`, 선택 `border-accent/30 bg-accent-soft text-accent font-medium` | `chipClass`, `ChipLink`, `ChipCount` |
 | 배지·태그 | `h-5 rounded-md px-1.5 text-xs` | `Badge`, `TagChip` |
 | 목록 행 | 틀 `divide-y rounded-lg border`, 행 `flex items-center gap-2.5 px-3 py-2` | `RowList`, `ListRow` |
 | 상세 헤더 | `← 뒤로`(13px muted) · 저장 상태 · 조용한 버튼들 | `DetailHeader` |

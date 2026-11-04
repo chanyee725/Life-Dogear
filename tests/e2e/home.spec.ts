@@ -106,6 +106,25 @@ test("다크 모드 토글", async ({ page }) => {
   await expect(html).not.toHaveClass(/dark/);
 });
 
+test("테마 토글: Tab으로 들어가 → 두 번이면 다크", async ({ page }) => {
+  await page.goto("/");
+  const html = page.locator("html");
+  const theme = page.getByRole("radiogroup", { name: "화면 테마" });
+  const system = theme.getByRole("radio", { name: "시스템 설정" });
+  await expect(system).toHaveAttribute("aria-checked", "true");
+  // Start just before the group, then one Tab lands on the checked option.
+  await system.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(system).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(theme.getByRole("radio", { name: "다크" })).toHaveAttribute("aria-checked", "true");
+  await expect(theme.getByRole("radio", { name: "다크" })).toBeFocused();
+  await expect(html).toHaveClass(/dark/);
+  await theme.getByRole("radio", { name: "라이트" }).click();
+});
+
 test("홈: 진행 중인 연구(칸반)와 프로젝트가 따로 보인다", async ({ page }) => {
   await page.goto("/");
   const research = page.getByRole("region", { name: "진행 중인 연구" });

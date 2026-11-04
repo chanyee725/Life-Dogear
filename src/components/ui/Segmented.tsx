@@ -13,8 +13,9 @@ export type SegmentedOption<T extends string> = {
 
 /**
  * Segmented radio group (`role="radiogroup"`). Icon options show the label as `title`.
- * ←/→ move and select; only the checked option (or the first, when none is) is in the Tab order.
- * `itemClassName` sizes the options (e.g. `h-7 w-8` for the list view toggle).
+ * Arrow keys (←/↑ previous, →/↓ next, wrapping) move and select; only the checked option
+ * (or the first, when none is) is in the Tab order. `size="md"` is the larger icon form
+ * (h-7 w-8, list view toggle); `fill` stretches the options across the track.
  */
 export function Segmented<T extends string>({
   options,
@@ -22,7 +23,8 @@ export function Segmented<T extends string>({
   onChange,
   ariaLabel,
   className,
-  itemClassName,
+  size = "sm",
+  fill = false,
 }: {
   options: readonly SegmentedOption<T>[];
   /** `null`: nothing checked yet (e.g. before a stored choice is read on mount). */
@@ -30,7 +32,8 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   ariaLabel: string;
   className?: string;
-  itemClassName?: string;
+  size?: "sm" | "md";
+  fill?: boolean;
 }) {
   return (
     <div
@@ -38,11 +41,18 @@ export function Segmented<T extends string>({
       aria-label={ariaLabel}
       className={cn(segTrack, className)}
       onKeyDown={(e) => {
-        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        const back = e.key === "ArrowLeft" || e.key === "ArrowUp";
+        if (!back && e.key !== "ArrowRight" && e.key !== "ArrowDown") return;
         e.preventDefault();
         const i = options.findIndex((o) => o.value === value);
-        const step = e.key === "ArrowRight" ? 1 : -1;
-        const next = options[(i + step + options.length) % options.length];
+        // Nothing checked: ← goes to the last option, → to the first.
+        const nextIndex =
+          i === -1
+            ? back
+              ? options.length - 1
+              : 0
+            : (i + (back ? -1 : 1) + options.length) % options.length;
+        const next = options[nextIndex];
         if (!next) return;
         onChange(next.value);
         e.currentTarget
@@ -64,7 +74,12 @@ export function Segmented<T extends string>({
             title={o.icon ? o.label : undefined}
             tabIndex={focusable ? 0 : -1}
             onClick={() => onChange(o.value)}
-            className={cn(segItem(active), o.icon ? "px-0" : undefined, itemClassName)}
+            className={cn(
+              segItem(active),
+              o.icon ? "px-0" : undefined,
+              size === "md" && "h-7 w-8",
+              fill && "flex-1",
+            )}
           >
             {o.icon ?? o.label}
           </button>

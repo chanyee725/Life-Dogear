@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { chipClass } from "@/components/ui/Chip";
+import { ChipCount, ChipLink } from "@/components/ui/Chip";
 import { cn } from "@/components/ui/cn";
 import { buildHref, type QueryParams } from "./query";
 
@@ -30,27 +29,20 @@ export function FilterChips({
 }) {
   return (
     <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1", className)}>
-      <Link
-        href={buildHref(basePath, params, { [param]: undefined })}
-        aria-current={!selected ? "true" : undefined}
-        className={chipClass(!selected)}
-      >
+      <ChipLink href={buildHref(basePath, params, { [param]: undefined })} active={!selected}>
         {allLabel}
-      </Link>
+      </ChipLink>
       {options.map((o) => {
         const active = selected === o.value;
         return (
-          <Link
+          <ChipLink
             key={o.value}
             href={buildHref(basePath, params, { [param]: active ? undefined : o.value })}
-            aria-current={active ? "true" : undefined}
-            className={chipClass(active)}
+            active={active}
           >
             {o.label}
-            {o.count !== undefined ? (
-              <span className="text-xs font-normal text-muted tabular-nums">{o.count}</span>
-            ) : null}
-          </Link>
+            {o.count !== undefined ? <ChipCount>{o.count}</ChipCount> : null}
+          </ChipLink>
         );
       })}
     </nav>

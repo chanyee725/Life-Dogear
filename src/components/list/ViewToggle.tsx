@@ -96,7 +96,7 @@ export function ViewToggle({
       value={value}
       onChange={onChange}
       className={className}
-      itemClassName="h-7 w-8"
+      size="md"
     />
   );
 }

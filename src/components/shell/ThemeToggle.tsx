@@ -46,7 +46,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       value={pref}
       onChange={choose}
       className={className}
-      itemClassName="flex-1"
+      fill
     />
   );
 }

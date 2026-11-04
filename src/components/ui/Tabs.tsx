@@ -63,7 +63,7 @@ export function SegmentedLinks({
   className?: string;
 }) {
   return (
-    <nav aria-label={ariaLabel} className={cn(segTrack, "h-7", className)}>
+    <nav aria-label={ariaLabel} className={cn(segTrack, className)}>
       {options.map((o) => {
         const current = o.value === active;
         return (

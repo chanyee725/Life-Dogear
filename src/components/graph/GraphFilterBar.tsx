@@ -49,13 +49,7 @@ export function ColorByToggle({
       <span aria-hidden className="text-[13px] text-muted">
         색
       </span>
-      <Segmented
-        ariaLabel="색 기준"
-        options={COLOR_BY_OPTIONS}
-        value={value}
-        onChange={onChange}
-        className="h-7"
-      />
+      <Segmented ariaLabel="색 기준" options={COLOR_BY_OPTIONS} value={value} onChange={onChange} />
     </span>
   );
 }
