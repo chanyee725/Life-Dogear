@@ -123,7 +123,6 @@ export function revisitStars(data: CosmosScores, now: Date, limit = STARS_MAX): 
   return out;
 }
 
-/** "11월 3일 화요일" for the date line. */
 /** Date line for a Seoul day (`YYYY-MM-DD`), e.g. `11월 3일 화요일`. */
 export function todayHeading(today: string): string {
   return spokenDay(today);

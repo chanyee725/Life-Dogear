@@ -24,6 +24,11 @@ afterEach(() => {
 });
 
 describe("today is the Seoul day", () => {
+  it("tests run in UTC (vitest.config)", () => {
+    expect(new Date(2026, 10, 4).getTimezoneOffset()).toBe(0);
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toMatch(/^(UTC|Etc\/UTC)$/);
+  });
+
   it("TaskSection: 2026-11-03 16:30 UTC is already the 4th in Seoul", async () => {
     const project = await projects.create({ title: "프로젝트" });
     await tasks.create({
