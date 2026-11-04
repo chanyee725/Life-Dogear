@@ -1,11 +1,12 @@
-import { and, asc, desc, eq, type SQL } from "drizzle-orm";
-import { notes } from "@/db/schema";
+import { and, asc, desc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
+import { links, notes } from "@/db/schema";
 import { NOTE_SOURCE_KIND, type NoteSourceKind } from "@/lib/enums";
 import { isAssignable } from "./areas";
-import { removeLinksFor, syncBodyLinks } from "./links";
+import { linkWith, removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
   type ArchiveOptions,
+  assertItemRef,
   db,
   definedOnly,
   type Executor,
@@ -17,6 +18,7 @@ import {
   requireEnum,
   requireTitle,
   trimText,
+  type ItemRef,
   withTx,
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
@@ -36,6 +38,8 @@ export type NoteInput = {
   tags?: string[];
 };
 export type NotePatch = Partial<NoteInput>;
+/** Create-only: an item the new note is linked to by hand, in the same transaction. */
+export type NoteCreateInput = NoteInput & { linkTo?: ItemRef };
 
 export type NoteSort = "updated" | "created" | "title";
 export type NoteListOptions = ArchiveOptions & {
@@ -118,12 +122,48 @@ export async function list(options: NoteListOptions = {}): Promise<Note[]> {
   return withTags(rows);
 }
 
+/**
+ * Non-archived notes of a project, goal, area or note: those linked to it (either
+ * direction) and, for an area, those whose `areaId` is it. Newest edit first, no repeats.
+ */
+export async function listForItem(item: ItemRef): Promise<Note[]> {
+  assertItemRef(item);
+  const rows = await db()
+    .select()
+    .from(links)
+    .where(
+      or(
+        and(
+          eq(links.sourceType, item.type),
+          eq(links.sourceId, item.id),
+          eq(links.targetType, "note"),
+        ),
+        and(
+          eq(links.targetType, item.type),
+          eq(links.targetId, item.id),
+          eq(links.sourceType, "note"),
+        ),
+      ),
+    );
+  const ids = rows.map((l) => (l.sourceType === "note" ? l.sourceId : l.targetId));
+  const match: (SQL | undefined)[] = [];
+  if (ids.length) match.push(inArray(notes.id, ids));
+  if (item.type === "area") match.push(eq(notes.areaId, item.id));
+  if (!match.length) return [];
+  const found = await db()
+    .select()
+    .from(notes)
+    .where(and(isNull(notes.archivedAt), or(...match)))
+    .orderBy(desc(notes.updatedAt));
+  return withTags(found.filter((n) => !(item.type === "note" && n.id === item.id)));
+}
+
 export async function get(id: string): Promise<Note | null> {
   const [row] = await db().select().from(notes).where(eq(notes.id, id));
   return row ? (await withTags([row]))[0] : null;
 }
 
-export async function create(input: NoteInput): Promise<Note> {
+export async function create(input: NoteCreateInput): Promise<Note> {
   const now = nowIso();
   const id = newId();
   await withTx(async (tx) => {
@@ -138,6 +178,7 @@ export async function create(input: NoteInput): Promise<Note> {
     });
     if (input.tags) await setTagsWith(tx, ref(id), input.tags);
     if (input.body) await syncBodyLinks(tx, ref(id), input.body);
+    if (input.linkTo) await linkWith(tx, input.linkTo, ref(id));
   });
   return (await get(id))!;
 }

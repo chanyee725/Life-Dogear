@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { seoulDate } from "@/components/calendar/model";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
+import { formatDate } from "@/components/ui";
 import { isValidItemId } from "@/lib/ids";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes, tags } from "@/lib/repo";
@@ -57,6 +59,7 @@ export default async function NoteDetailPage({ params }: Props) {
         >
           <NoteFields
             editorKey={note.id}
+            created={formatDate(seoulDate(note.createdAt))}
             tagSuggestions={allTags.map((t) => t.name)}
             areaOptions={areaOptionsFor(areaList, note.areaId)}
             values={{
