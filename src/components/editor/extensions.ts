@@ -46,7 +46,14 @@ export function createExtensions(placeholder: string) {
       underline: false,
       // Replaced by the highlighted code block below (same node name and Markdown).
       codeBlock: false,
-      link: { openOnClick: false, autolink: true, defaultProtocol: "https" },
+      // Pasted or typed URLs become links; a click opens them in a new tab.
+      link: {
+        openOnClick: true,
+        autolink: true,
+        linkOnPaste: true,
+        defaultProtocol: "https",
+        HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
+      },
     }),
     CodeBlock,
     TaskList,
