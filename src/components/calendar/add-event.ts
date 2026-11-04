@@ -35,9 +35,13 @@ export function eventPayload(input: AddEventInput) {
 export function checkEvent(input: AddEventInput): string | null {
   if (!input.title.trim()) return "제목을 입력하세요.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return "날짜를 고르세요.";
+  return timeProblem(input);
+}
+
+/** End at or before start (e.g. past midnight): the form blocks it before sending. */
+export function timeProblem(input: AddEventInput): string | null {
   const p = eventPayload(input);
-  if (p.end && p.start && p.end <= p.start) return "끝 시간이 시작보다 늦어야 합니다.";
-  return null;
+  return p.end && p.start && p.end <= p.start ? "끝은 시작보다 늦게(자정 전까지)." : null;
 }
 
 export type AddEventResult = { ok: true; item: CalendarItem } | { ok: false; message: string };

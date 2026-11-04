@@ -11,6 +11,7 @@ import {
   eventPayload,
   newClientId,
   postEvent,
+  timeProblem,
   type AddEventInput,
 } from "./add-event";
 
@@ -57,12 +58,13 @@ export function AddEventButton({
     setOpen(true);
   };
   const set = (patch: Partial<AddEventInput>) => setForm((f) => ({ ...f, ...patch }));
+  const timeError = timeProblem(form);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (pending) return;
     const problem = checkEvent(form);
-    if (problem) return setError(problem);
+    if (problem) return setError(problem === timeError ? null : problem);
     setError(null);
     setPending(true);
     const payload = JSON.stringify(eventPayload(form));
@@ -127,12 +129,19 @@ export function AddEventButton({
                 onChange={(e) => set({ start: e.target.value })}
               />
             </Field>
-            <Field label="끝" htmlFor={`${id}-end`} hint="비우면 1시간" className="flex-1">
+            <Field
+              label="끝"
+              htmlFor={`${id}-end`}
+              hint="비우면 1시간"
+              error={timeError ?? undefined}
+              className="flex-1"
+            >
               <Input
                 id={`${id}-end`}
                 type="time"
                 value={form.end}
                 disabled={!form.start}
+                aria-invalid={timeError ? true : undefined}
                 onChange={(e) => set({ end: e.target.value })}
               />
             </Field>
@@ -141,7 +150,7 @@ export function AddEventButton({
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               취소
             </Button>
-            <Button type="submit" variant="primary" disabled={pending}>
+            <Button type="submit" variant="primary" disabled={pending || !!timeError}>
               {pending ? "추가 중…" : "추가"}
             </Button>
           </div>

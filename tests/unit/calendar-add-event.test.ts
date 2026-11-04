@@ -46,7 +46,7 @@ describe("add-event helpers", () => {
     expect(checkEvent(base)).toBeNull();
     expect(checkEvent({ ...base, title: " " })).toBe("제목을 입력하세요.");
     expect(checkEvent({ ...base, date: "" })).toBe("날짜를 고르세요.");
-    expect(checkEvent({ ...base, start: "15:00", end: "14:00" })).toMatch(/끝 시간/);
+    expect(checkEvent({ ...base, start: "15:00", end: "14:00" })).toMatch(/자정/);
   });
 
   it("maps error codes to short notices", () => {
@@ -181,6 +181,27 @@ describe("AddEventButton", () => {
       addEventError("not_configured"),
     );
     expect(document.querySelector("form")).not.toBeNull();
+  });
+
+  it("blocks an end at or before the start before sending", async () => {
+    const fetchMock = vi.fn(async () => json(201, { item: ITEM }));
+    vi.stubGlobal("fetch", fetchMock);
+    await mount({ enabled: true, defaultDate: "2026-11-05" });
+    await act(async () => button().click());
+    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [start, end] = document.querySelectorAll<HTMLInputElement>("input[type=time]");
+    await act(async () => {
+      type(title, "회의");
+      type(start, "23:00");
+    });
+    await act(async () => type(end, "01:00"));
+    expect(document.querySelector("[role=alert]")?.textContent).toMatch(/자정/);
+    const submitButton = document.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    expect(submitButton.disabled).toBe(true);
+    await act(async () => {
+      document.querySelector("form")!.requestSubmit();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("a retry of the same form sends the same clientId; an edit gets a new one", async () => {
