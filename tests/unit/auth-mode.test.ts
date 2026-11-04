@@ -57,7 +57,7 @@ describe("resolveAuthMode", () => {
   });
 
   it("shows setup when auth settings are only partly filled, anywhere", () => {
-    const { ALLOWED_EMAILS: _omit, ...partial } = AUTH;
+    const partial = { ...AUTH, ALLOWED_EMAILS: "" };
     const mode = resolveAuthMode(partial, "127.0.0.1:3000");
     expect(mode).toEqual({
       kind: "setup",
@@ -72,7 +72,7 @@ describe("resolveAuthMode", () => {
       reasons: ["storage-required"],
       missing: [...S3_KEYS],
     });
-    const { S3_BUCKET: _omit, ...partialS3 } = S3;
+    const partialS3 = { ...S3, S3_BUCKET: undefined };
     expect(resolveAuthMode({ VERCEL: "1", ...partialS3 }, "app.vercel.app")).toEqual({
       kind: "setup",
       reasons: ["auth-required", "storage-required"],

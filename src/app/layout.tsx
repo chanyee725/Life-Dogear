@@ -6,6 +6,7 @@ import { SearchButton } from "@/components/search/SearchButton";
 import { Shortcuts } from "@/components/shell/Shortcuts";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { themeInitScript } from "@/components/shell/theme";
+import { canShowApp } from "@/lib/auth/server";
 import "./globals.css";
 
 // Self-hosted from node_modules: no requests to external font CDNs.
@@ -28,18 +29,24 @@ export const metadata: Metadata = {
   description: "개인 연구 노트",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Signed out (or setup needed): no sidebar, search or capture, which read the notes.
+  const showApp = await canShowApp();
   return (
     <html lang="ko" className={`${pretendard.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="flex min-h-dvh">
-        <Sidebar searchSlot={<SearchButton />} />
+        {showApp ? <Sidebar searchSlot={<SearchButton />} /> : null}
         <main className="min-w-0 flex-1">{children}</main>
-        <Shortcuts />
-        <CommandPalette />
-        <QuickCapture />
+        {showApp ? (
+          <>
+            <Shortcuts />
+            <CommandPalette />
+            <QuickCapture />
+          </>
+        ) : null}
       </body>
     </html>
   );
