@@ -15,7 +15,7 @@ import { WeekStripPlaceholder } from "./WeekStripSection";
 export function HomeCalendarSection({ today, children }: { today: string; children?: ReactNode }) {
   return (
     <HomeDayProvider today={today}>
-      <section aria-label="달력" className="flex flex-col gap-4">
+      <section aria-label="달력" className="mb-6 flex flex-col gap-6">
         <Suspense fallback={<WeekStripPlaceholder days={weekDays(today)} today={today} />}>
           <HomeCalendarData today={today} />
         </Suspense>

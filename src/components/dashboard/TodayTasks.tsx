@@ -30,6 +30,8 @@ export function TodayTasks({
 }) {
   const all = [...overdue, ...dueToday];
   const href = "/tasks?tab=today";
+  // Nothing due: the section stays out; new tasks go in through the calendar's input.
+  if (all.length === 0) return null;
   return (
     <Section
       id="today"
@@ -62,7 +64,6 @@ export function TodayTasks({
           label="오늘 할 일"
           showParent
           dueMode="overdue"
-          addTo={{ parent: null, dueDate: today }}
           showCompleted={false}
         />
         <More count={all.length - TODAY_MAX} href={href} />
