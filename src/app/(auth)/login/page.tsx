@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { signIn } from "@/auth";
-import { Button, Card } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { safeNextPath } from "@/lib/auth/access";
 import { currentAuthMode, hasAllowedSession } from "@/lib/auth/server";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 export const metadata: Metadata = { title: "로그인" };
 
@@ -19,11 +19,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   if (mode.kind === "local") redirect("/");
   if (await hasAllowedSession()) redirect(next);
 
-  async function signInWithGoogle() {
-    "use server";
-    await signIn("google", { redirectTo: next });
-  }
-
   // Auth.js puts an error code here when sign-in fails; show a plain message, not the code.
   const failed = Boolean(first(params.error));
 
@@ -38,11 +33,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           로그인하지 못했습니다. 다시 시도해 주세요.
         </p>
       ) : null}
-      <form action={signInWithGoogle}>
-        <Button type="submit" variant="primary" className="w-full">
-          Google로 로그인
-        </Button>
-      </form>
+      <GoogleSignInButton redirectTo={next} />
     </Card>
   );
 }

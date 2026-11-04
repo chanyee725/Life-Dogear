@@ -10,9 +10,9 @@ const LOGIN: AuthMode = { kind: "login" };
 const LOCAL: AuthMode = { kind: "local" };
 const SETUP: AuthMode = { kind: "setup", reasons: ["auth-required"], missing: ["AUTH_SECRET"] };
 
-const decide = (mode: AuthMode, path: string, signedIn = false) => {
+const decide = (mode: AuthMode, path: string, signedIn = false, method = "GET", dev = false) => {
   const url = new URL(path, "http://127.0.0.1:3000");
-  return decideAccess({ mode, pathname: url.pathname, search: url.search, signedIn });
+  return decideAccess({ mode, method, pathname: url.pathname, search: url.search, signedIn, dev });
 };
 
 /** Every page and route handler under src/app, as a concrete URL path. */
@@ -43,7 +43,9 @@ describe("decideAccess", () => {
     for (const mode of [LOGIN, LOCAL, SETUP]) {
       expect(decide(mode, "/_next/static/chunks/a.js")).toEqual({ type: "next" });
       expect(decide(mode, "/favicon.ico")).toEqual({ type: "next" });
+      expect(decide(mode, "/_next/webpack-hmr", false, "GET", true)).toEqual({ type: "next" });
     }
+    expect(decide(LOGIN, "/api/auth/signin/google", false, "POST")).toEqual({ type: "next" });
     expect(decide(LOGIN, "/api/auth/callback/google?code=1")).toEqual({ type: "next" });
     expect(decide(LOGIN, "/api/auth/session")).toEqual({ type: "next" });
   });
@@ -81,6 +83,42 @@ describe("decideAccess", () => {
     ]) {
       expect(decide(LOGIN, path).type, path).not.toBe("next");
     }
+  });
+
+  it("only /_next/static (and the dev HMR socket in dev) is open under /_next", () => {
+    for (const mode of [LOGIN, SETUP]) {
+      for (const path of ["/_next/image?url=/x", "/_next/data/b/x.json", "/_next/webpack-hmr"]) {
+        expect(decide(mode, path).type, path).not.toBe("next");
+      }
+    }
+  });
+
+  it("signed out / setup: no POST (server actions) to any page, asset or API", () => {
+    const action = (mode: AuthMode, path: string, method = "POST") =>
+      decide(mode, path, false, method);
+    for (const method of ["POST", "PUT", "PATCH", "DELETE", "OPTIONS"]) {
+      for (const path of [
+        "/login",
+        "/denied",
+        "/",
+        "/papers",
+        "/_next/static/a.js",
+        "/favicon.ico",
+      ]) {
+        expect(action(LOGIN, path, method), `${method} ${path}`).toMatchObject({
+          type: "json",
+          status: 403,
+        });
+      }
+      expect(action(LOGIN, "/api/search", method)).toMatchObject({ status: 401 });
+      expect(action(SETUP, "/setup", method)).toMatchObject({ type: "json", status: 403 });
+      expect(action(SETUP, "/_next/static/a.js", method)).toMatchObject({ status: 403 });
+      expect(action(SETUP, "/api/search", method)).toMatchObject({ status: 503 });
+    }
+    expect(decide(LOGIN, "/login", false, "HEAD")).toEqual({ type: "next" });
+    // Signed in: server actions work as before.
+    expect(decide(LOGIN, "/papers", true, "POST")).toEqual({ type: "next" });
+    expect(decide(LOCAL, "/papers", false, "POST")).toEqual({ type: "next" });
   });
 
   it("local mode: unchanged, no Auth.js endpoints or sign-in pages", () => {
@@ -246,6 +284,20 @@ describe("middleware", () => {
       salt: COOKIE,
     })}`;
     expect((await middleware(request("/api/search", forged))).status).toBe(401);
+  });
+
+  it("login mode: a server-action POST to /login while signed out is refused", async () => {
+    loginEnv();
+    const { middleware } = await import("@/middleware");
+    const res = await middleware(
+      new NextRequest("http://127.0.0.1:3000/login", {
+        method: "POST",
+        headers: { host: "127.0.0.1:3000", "next-action": "abc123", "x-forwarded-proto": "http" },
+        body: "[]",
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(res.headers.get("x-middleware-next")).toBeNull();
   });
 
   it("still rejects foreign hosts first", async () => {

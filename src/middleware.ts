@@ -20,7 +20,9 @@ function apply(access: Access, request: NextRequest): NextResponse {
 
 function gate(request: NextRequest, mode: AuthMode, signedIn: boolean): NextResponse {
   const { pathname, search } = request.nextUrl;
-  return apply(decideAccess({ mode, pathname, search, signedIn }), request);
+  const dev = process.env.NODE_ENV === "development";
+  const access = decideAccess({ mode, method: request.method, pathname, search, signedIn, dev });
+  return apply(access, request);
 }
 
 // Auth.js reads the session cookie and sets `request.auth`; used in login mode only.
