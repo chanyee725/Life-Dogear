@@ -8,6 +8,8 @@ import { Button, cn, DetailHeader, QuietButton } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
+  baselineFromRendered,
+  type RenderedField,
   EDITOR_READY_EVENT,
   formToPatch,
   patchToFormData,
@@ -151,6 +153,26 @@ function readForm(form: HTMLFormElement, autosave: boolean): FormPatch {
   }
 }
 
+/** Text inputs and textareas with their rendered (`defaultValue`) and current value. */
+function renderedFields(form: HTMLFormElement): RenderedField[] {
+  return Array.from(form.elements).flatMap((el): RenderedField[] => {
+    if (el instanceof HTMLTextAreaElement) {
+      return [{ name: el.name, value: el.value, defaultValue: el.defaultValue }];
+    }
+    if (el instanceof HTMLInputElement && TEXT_INPUT_TYPES.has(el.type)) {
+      return [{ name: el.name, value: el.value, defaultValue: el.defaultValue, singleLine: true }];
+    }
+    return [];
+  });
+}
+
+/**
+ * Input types compared with their `defaultValue`. Other types (url, email, date…) get a
+ * value the browser sanitises differently from the untouched `defaultValue`, so merely
+ * opening the page would look like an edit.
+ */
+const TEXT_INPUT_TYPES = new Set(["text", "search"]);
+
 function AutosaveForm({ action, basePath, backLabel, actions, children, className }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<SaveState>("idle");
@@ -170,6 +192,8 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   /** Edited since the form was last read into the queue. */
   const [unread, setUnread] = useState(false);
   const unreadRef = useRef(false);
+  /** The only unread edits are text typed before hydration (no edits since). */
+  const preHydrationOnlyRef = useRef(false);
   useEffect(() => {
     unreadRef.current = unread;
   }, [unread]);
@@ -190,21 +214,6 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     ),
   );
 
-  // Baseline = what the form shows on load (the server values), read once after mount,
-  // so opening the page never saves.
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-    queue.resetBaseline(readForm(form, true));
-    // The editor mounts a bit later and may normalise the body; re-read the baseline
-    // then (only while nothing is unsaved — resetBaseline refuses otherwise).
-    const onEditorReady = () => {
-      if (!unreadRef.current) queue.resetBaseline(readForm(form, true));
-    };
-    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
-    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
-  }, [queue]);
-
   function readIntoQueue(autosave: boolean, form: HTMLFormElement | null = formRef.current) {
     if (!form) return;
     const patch = readForm(form, autosave);
@@ -213,6 +222,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
     setTitleMissing(blank);
     if (blank) delete patch.title;
     unreadRef.current = false;
+    preHydrationOnlyRef.current = false;
     setUnread(false);
     queue.add(patch);
     void queue.flush();
@@ -221,6 +231,36 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
   // Not flushed by the debounce hook on unmount: React clears `formRef` before that
   // cleanup runs. The effect below keeps its own reference to the form instead.
   const autosave = useDebouncedCallback(() => readIntoQueue(true), AUTOSAVE_DELAY);
+
+  // Baseline = what the form shows on load (the server values), read once after mount,
+  // so opening the page never saves. Text typed before hydration is already in the DOM
+  // by now: those fields keep their rendered value in the baseline and get saved.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const { baseline, edited } = baselineFromRendered(readForm(form, true), renderedFields(form));
+    queue.resetBaseline(baseline);
+    if (edited) {
+      unreadRef.current = true;
+      preHydrationOnlyRef.current = true;
+      setUnread(true);
+      autosave();
+    }
+    // The editor mounts a bit later and may normalise the body; re-read the baseline
+    // then (only while nothing is unsaved — resetBaseline refuses otherwise). Text typed
+    // before hydration is still unread but not yet in the queue: re-read around it, so
+    // the re-serialised body doesn't go out with the title and overwrite a newer one.
+    const onEditorReady = () => {
+      if (preHydrationOnlyRef.current) {
+        queue.resetBaseline(baselineFromRendered(readForm(form, true), renderedFields(form)).baseline);
+      } else if (!unreadRef.current) {
+        queue.resetBaseline(readForm(form, true));
+      }
+    };
+    form.addEventListener(EDITOR_READY_EVENT, onEditorReady);
+    return () => form.removeEventListener(EDITOR_READY_EVENT, onEditorReady);
+    // `queue` and `autosave` are stable: this runs once per form.
+  }, [queue, autosave]);
 
   // Leaving the page (link, back button) within the debounce window must not lose the
   // last edits: read the still-existing form element and send what changed.
@@ -250,6 +290,7 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
 
   useFormEdits(formRef, () => {
     unreadRef.current = true;
+    preHydrationOnlyRef.current = false;
     setUnread(true);
     setConfirmed(false);
     autosave();
