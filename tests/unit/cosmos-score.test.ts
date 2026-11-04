@@ -108,6 +108,7 @@ describe("directValue (8.2)", () => {
     expect(d("thought:a", { maturity: "refined" })).toBe(0.6);
     expect(d("area:a")).toBe(0.6);
     expect(d("seminar:a")).toBe(0.4);
+    expect(d("note:a")).toBe(0.45);
     expect(d("review:a")).toBe(0.2);
     expect(d("tag:a")).toBe(0.15);
   });

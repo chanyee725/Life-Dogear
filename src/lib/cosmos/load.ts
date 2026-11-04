@@ -9,6 +9,7 @@ import {
   areas,
   goals,
   itemStars,
+  notes,
   papers,
   projects,
   reviews,
@@ -46,6 +47,7 @@ async function loadSignals(): Promise<{
     paperRows,
     seminarRows,
     thoughtRows,
+    noteRows,
     reviewRows,
     starRows,
   ] = await Promise.all([
@@ -81,6 +83,7 @@ async function loadSignals(): Promise<{
     d
       .select({ id: thoughts.id, maturity: thoughts.maturity, updatedAt: thoughts.updatedAt })
       .from(thoughts),
+    d.select({ id: notes.id, updatedAt: notes.updatedAt }).from(notes),
     d.select({ id: reviews.id, updatedAt: reviews.updatedAt }).from(reviews),
     d.select({ type: itemStars.itemType, id: itemStars.itemId }).from(itemStars),
   ]);
@@ -107,6 +110,7 @@ async function loadSignals(): Promise<{
   for (const r of seminarRows) signals.set(`seminar:${r.id}`, { lastActiveAt: r.updatedAt });
   for (const r of thoughtRows)
     signals.set(`thought:${r.id}`, { lastActiveAt: r.updatedAt, maturity: r.maturity });
+  for (const r of noteRows) signals.set(`note:${r.id}`, { lastActiveAt: r.updatedAt });
   for (const r of reviewRows) signals.set(`review:${r.id}`, { lastActiveAt: r.updatedAt });
 
   return {
