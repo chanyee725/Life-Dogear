@@ -1,5 +1,6 @@
 import { dataDir } from "@/lib/data-dir";
 import { blobStore, type StoreOptions } from "./blob";
+import { IMAGE_TYPES, sniffImage, type ImageExt } from "./image-type";
 
 /**
  * Photos pasted or dropped into a body: key `images/<uuid>.<ext>` in the {@link blobStore}
@@ -9,13 +10,7 @@ import { blobStore, type StoreOptions } from "./blob";
  */
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
-export const IMAGE_TYPES = {
-  jpg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  webp: "image/webp",
-} as const;
-export type ImageExt = keyof typeof IMAGE_TYPES;
+export { IMAGE_TYPES, sniffImage, type ImageExt } from "./image-type";
 
 /** Public URL prefix the image route serves. */
 export const IMAGE_URL_PREFIX = "/api/images/";
@@ -31,23 +26,6 @@ export class ImageStorageError extends Error {
     super(message);
     this.name = "ImageStorageError";
   }
-}
-
-const startsWith = (bytes: Uint8Array, magic: number[], offset = 0) =>
-  bytes.length >= offset + magic.length && magic.every((b, i) => bytes[offset + i] === b);
-const ascii = (s: string) => [...s].map((c) => c.charCodeAt(0));
-
-/** Image type from magic bytes; "heic" for iPhone HEIC/HEIF (not shown by most browsers). */
-export function sniffImage(bytes: Uint8Array): ImageExt | "heic" | null {
-  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "jpg";
-  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "png";
-  if (startsWith(bytes, ascii("GIF87a")) || startsWith(bytes, ascii("GIF89a"))) return "gif";
-  if (startsWith(bytes, ascii("RIFF")) && startsWith(bytes, ascii("WEBP"), 8)) return "webp";
-  if (startsWith(bytes, ascii("ftyp"), 4)) {
-    const brand = String.fromCharCode(...bytes.slice(8, 12));
-    if (/^(heic|heix|hevc|heim|heis|mif1|msf1)$/.test(brand)) return "heic";
-  }
-  return null;
 }
 
 /** True for names this module creates; anything else is never mapped to a path. */

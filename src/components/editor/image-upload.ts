@@ -1,8 +1,37 @@
 import type { Editor } from "@tiptap/core";
 import { directUpload } from "@/lib/storage/direct-upload";
+import { IMAGE_SNIFF_BYTES, IMAGE_TYPES, sniffImage } from "@/lib/storage/image-type";
 
-/** Browser-side check before uploading; the server checks the bytes again. */
-export const isImageFile = (file: File): boolean => file.type.startsWith("image/");
+const UNTYPED = new Set(["", "application/octet-stream"]);
+const IMAGE_NAME_RE = /\.(jpe?g|png|gif|webp|hei[cf])$/i;
+
+/**
+ * Browser-side check before uploading; the server checks the bytes again. Some pastes (and
+ * drops from a few apps) carry no type: those are taken when the name has no extension or
+ * a photo one, and {@link uploadImage} reads the bytes to tell the type.
+ */
+export const isImageFile = (file: File): boolean =>
+  file.type.startsWith("image/") ||
+  (UNTYPED.has(file.type) && (!/\.[^./]+$/.test(file.name) || IMAGE_NAME_RE.test(file.name)));
+
+const SIGNABLE: ReadonlySet<string> = new Set(Object.values(IMAGE_TYPES));
+
+/**
+ * The type to sign for a bucket upload: the browser's when it is one we store, otherwise
+ * the one the first bytes show (HEIC and anything else unknown are refused here, with the
+ * same messages the server uses).
+ */
+export async function imageUploadType(file: Blob): Promise<string> {
+  const declared = file.type.trim().toLowerCase();
+  if (SIGNABLE.has(declared)) return declared;
+  const head = new Uint8Array(await file.slice(0, IMAGE_SNIFF_BYTES).arrayBuffer());
+  const sniffed = sniffImage(head);
+  if (sniffed === "heic") {
+    throw new Error("HEIC 사진은 브라우저에서 보이지 않습니다. JPG로 바꿔서 올려 주세요.");
+  }
+  if (!sniffed) throw new Error("JPG·PNG·GIF·WebP 사진만 올릴 수 있습니다.");
+  return IMAGE_TYPES[sniffed];
+}
 
 /**
  * Uploads one photo; resolves to its URL or rejects with a message for the user.
@@ -10,7 +39,7 @@ export const isImageFile = (file: File): boolean => file.type.startsWith("image/
  */
 export async function uploadImage(file: File): Promise<string> {
   const direct = await directUpload(
-    { kind: "image", file, contentType: file.type },
+    { kind: "image", file, contentType: await imageUploadType(file) },
     "사진을 올리지 못했습니다.",
   );
   if (direct.mode === "s3") {
