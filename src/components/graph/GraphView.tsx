@@ -57,6 +57,8 @@ import { useElementSize } from "./use-element-size";
 
 const PANEL_OFFSET = 168; // (320 + 16) / 2: keeps the selected node clear of the preview.
 const NARROW = 900;
+/** Below this main width the one-row filter bar would wrap: it goes compact (chips + popover). */
+const FULL_FILTER_BAR = 1320;
 const LARGE_NOTICE_KEY = "rb-graph-large-notice";
 
 type Loaded = GraphLoad & Partial<Omit<CosmosResponse, keyof GraphLoad>>;
@@ -117,6 +119,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   const [rootRef, rootSize] = useElementSize<HTMLDivElement>();
   const [canvasRef, canvasSize] = useElementSize<HTMLDivElement>();
   const narrow = rootSize.width > 0 && rootSize.width < NARROW;
+  const compactFilters = rootSize.width > 0 && rootSize.width < FULL_FILTER_BAR;
   const [panelCollapsed, togglePanel] = useCosmosPanelCollapsed(narrow);
   /** Cosmos camera move to run after the render that opens the preview (insets change). */
   const pendingCamera = useRef<{ id: GraphNodeId; zoom?: number } | null>(null);
@@ -631,13 +634,16 @@ export default function GraphView({ options }: { options: FilterOptions }) {
   return (
     <div ref={rootRef} className="flex h-dvh min-h-0 flex-col bg-bg">
       {/* Top bar */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-5">
-        <h1 className="text-base font-semibold tracking-tight">그래프</h1>
-        <span className="ml-3 text-xs text-muted tabular-nums">{counts}</span>
+      {/* Narrow screens: room on the left for the fixed "사이드바 열기" button (ends at 44px). */}
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-5 max-md:pl-14">
+        <h1 className="shrink-0 text-base font-semibold tracking-tight">그래프</h1>
+        <span className="ml-3 shrink-0 text-xs text-muted tabular-nums max-sm:hidden">
+          {counts}
+        </span>
         {saveError ? (
           <span className="ml-2 text-xs text-danger">위치를 저장하지 못했습니다</span>
         ) : null}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-2 overflow-x-auto">
           {narrow ? (
             <Button
               size="sm"
@@ -675,12 +681,19 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           </div>
         ) : null
       ) : (
-        <div className="flex min-h-11 shrink-0 items-center overflow-x-auto border-b border-border bg-bg px-5 py-1.5">
+        // Compact: no overflow clipping, or the "필터" popover would be cut off.
+        <div
+          className={cn(
+            "relative z-20 flex min-h-11 shrink-0 items-center border-b border-border bg-bg px-5 py-1.5",
+            !compactFilters && "overflow-x-auto",
+          )}
+        >
           <GraphFilterControls
             filter={filter}
             onChange={setFilter}
             options={options}
             theme={theme}
+            compact={compactFilters}
           />
         </div>
       )}

@@ -4,7 +4,7 @@
  */
 import { addDays } from "@/components/tasks/format";
 import { neglectedImportant, type ScoredNode } from "@/lib/cosmos/score";
-import type { CosmosResponse } from "@/lib/cosmos/types";
+import type { CosmosScores } from "@/lib/cosmos/types";
 import { ITEM_ROUTE, ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { parseGraphNodeId } from "@/lib/graph/types";
 import type { GoalNode } from "@/lib/repo/goals";
@@ -85,11 +85,7 @@ export type RevisitStar = {
  * score ≥ `NEGLECTED_MIN_SCORE`, untouched for more than `NEGLECTED_MIN_DAYS`), but highest
  * score first and at most `STARS_MAX`.
  */
-export function revisitStars(
-  data: Pick<CosmosResponse, "nodes" | "cosmos">,
-  now: Date,
-  limit = STARS_MAX,
-): RevisitStar[] {
+export function revisitStars(data: CosmosScores, now: Date, limit = STARS_MAX): RevisitStar[] {
   const scored: ScoredNode[] = [];
   const byId = new Map(data.nodes.map((n) => [n.id, n]));
   for (const n of data.nodes) {

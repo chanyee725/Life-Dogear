@@ -113,6 +113,71 @@ describe("tasks repo: update, order, remove", () => {
     });
   });
 
+  it("drops a task after another of the same state, leaving the other state in place", async () => {
+    const p = await projects.create({ title: "p" });
+    const parent = { type: "project" as const, id: p.id };
+    const t: Record<string, string> = {};
+    for (const name of ["a", "b", "x", "c", "d"]) {
+      t[name] = (await tasks.create({ title: name, parent })).id;
+    }
+    await tasks.update(t.x!, { done: true });
+    const order = async () => (await tasks.list({ parent })).map((r) => r.title);
+
+    expect(await tasks.moveAfter(t.a!, t.c!)).toBe(true);
+    expect(await order()).toEqual(["b", "c", "x", "a", "d"]);
+    expect(await tasks.moveAfter(t.d!, null)).toBe(true);
+    expect(await order()).toEqual(["d", "b", "x", "c", "a"]);
+    // Already there / onto itself / missing: nothing to do.
+    expect(await tasks.moveAfter(t.b!, t.d!)).toBe(false);
+    expect(await tasks.moveAfter(t.b!, t.b!)).toBe(false);
+    expect(await tasks.moveAfter("missing", null)).toBe(false);
+    // The anchor must be an open sibling: a done task or another parent's task is refused.
+    await expect(tasks.moveAfter(t.b!, t.x!)).rejects.toMatchObject({ code: "invalid" });
+    const other = await tasks.create({ title: "inbox" });
+    await expect(tasks.moveAfter(t.b!, other.id)).rejects.toMatchObject({ code: "invalid" });
+    expect(await order()).toEqual(["d", "b", "x", "c", "a"]);
+  });
+
+  it("restores a deleted task at its old place with its completion time", async () => {
+    const p = await projects.create({ title: "p" });
+    const parent = { type: "project" as const, id: p.id };
+    const [a, b, c] = [
+      await tasks.create({ title: "a", parent }),
+      await tasks.create({ title: "b", parent, dueDate: "2026-11-05" }),
+      await tasks.create({ title: "c", parent }),
+    ];
+    const order = async () => (await tasks.list({ parent })).map((r) => r.title);
+    await tasks.remove(b!.id);
+    const back = await tasks.restore({
+      title: b!.title,
+      parent,
+      dueDate: b!.dueDate,
+      sortOrder: b!.sortOrder,
+    });
+    expect(back).toMatchObject({ title: "b", dueDate: "2026-11-05", doneAt: null });
+    expect(await order()).toEqual(["a", "b", "c"]);
+
+    await tasks.remove(a!.id);
+    const doneAt = "2026-10-01T03:00:00.000Z";
+    expect(
+      await tasks.restore({ title: "a", parent, sortOrder: a!.sortOrder, doneAt }),
+    ).toMatchObject({ doneAt });
+    expect(await order()).toEqual(["a", "b", "c"]);
+
+    // A stale order past the end, or none at all, appends.
+    await tasks.remove(c!.id);
+    await tasks.restore({ title: "c", parent, sortOrder: 99 });
+    await tasks.restore({ title: "d", parent });
+    expect(await order()).toEqual(["a", "b", "c", "d"]);
+
+    await expect(tasks.restore({ title: "x", sortOrder: -1 })).rejects.toMatchObject({
+      code: "invalid",
+    });
+    await expect(tasks.restore({ title: "x", doneAt: "어제" })).rejects.toMatchObject({
+      code: "invalid",
+    });
+  });
+
   it("removes a task, and a deleted parent takes its tasks along", async () => {
     const p = await projects.create({ title: "p" });
     const g = await goals.create({ title: "g" });

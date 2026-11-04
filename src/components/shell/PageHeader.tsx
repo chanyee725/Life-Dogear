@@ -1,9 +1,17 @@
 import type { ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 
-/** Standard page width + padding. Pages that need full width (e.g. the PDF viewer) can skip it. */
+/**
+ * Standard page width + padding. Pages that need full width (e.g. the PDF viewer) can skip it.
+ * Narrow screens: the fixed "사이드바 열기" button sits at the top-left (12px + 32px), so the page
+ * starts below it (64px) instead of under it.
+ */
 export function Page({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn("mx-auto w-full max-w-5xl px-10 py-10", className)}>{children}</div>;
+  return (
+    <div className={cn("mx-auto w-full max-w-5xl px-10 py-10 max-md:pt-16", className)}>
+      {children}
+    </div>
+  );
 }
 
 /** Page title row with optional eyebrow (e.g. back link), description and right-side actions. */

@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { revalidatePath } from "next/cache";
-import { createTask, deleteTask, moveTask, restoreTask, updateTask } from "@/app/_actions/tasks";
+import {
+  createTask,
+  deleteTask,
+  moveTask,
+  moveTaskAfter,
+  restoreTask,
+  updateTask,
+} from "@/app/_actions/tasks";
 import { projects, tasks } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
@@ -37,6 +44,29 @@ describe("task actions", () => {
     expect(await deleteTask(aId)).toMatchObject({ ok: false });
     const back = await restoreTask({ title: "a", parent, done: true });
     expect(back.ok && back.data.doneAt).toBeTruthy();
+  });
+
+  it("drops after a sibling and restores at the old place", async () => {
+    const p = await projects.create({ title: "p" });
+    const parent = { type: "project", id: p.id } as const;
+    const ids: string[] = [];
+    for (const title of ["a", "b", "c"]) {
+      const r = await createTask({ title, parent });
+      ids.push(r.ok ? r.data.id : "");
+    }
+    const order = async () => (await tasks.list({ parent })).map((t) => t.title);
+    expect(await moveTaskAfter(ids[0], ids[2])).toEqual({ ok: true, data: true });
+    expect(await order()).toEqual(["b", "c", "a"]);
+    expect(await moveTaskAfter(ids[0], "not an id")).toMatchObject({ ok: false });
+    expect(await moveTaskAfter("seed-x", null)).toMatchObject({ ok: false });
+
+    const b = (await tasks.get(ids[1]!))!;
+    await deleteTask(b.id);
+    const doneAt = "2026-10-01T00:00:00.000Z";
+    const back = await restoreTask({ title: "b", parent, sortOrder: b.sortOrder, doneAt });
+    expect(back.ok && back.data.doneAt).toBe(doneAt);
+    expect(await order()).toEqual(["b", "c", "a"]);
+    expect(await restoreTask({ title: "x", sortOrder: "1" })).toMatchObject({ ok: false });
   });
 
   it("rejects bad input with Korean messages", async () => {
