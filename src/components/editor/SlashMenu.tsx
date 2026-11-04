@@ -11,6 +11,8 @@ import type { ItemRef } from "@/lib/repo/shared";
 import {
   filterSlashCommands,
   findSlashTrigger,
+  isImeKey,
+  settleSlashTrigger,
   type SlashCommand,
   type SlashTrigger,
 } from "./slash-commands";
@@ -68,13 +70,33 @@ export function SlashMenu({
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const update = () => setTrigger(editor.isEditable ? findSlashTrigger(editor.state) : null);
+    const update = () => {
+      const found = editor.isEditable ? findSlashTrigger(editor.state) : null;
+      // Leaving the `/` forgets an Esc, so a `/` typed again at the same spot opens.
+      if (!found) setDismissedAt(null);
+      setTrigger((prev) => settleSlashTrigger(prev, found, editor.view.composing));
+    };
     const close = () => setTrigger(null);
+    // ProseMirror may not dispatch again once composition ends: apply the settled query.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      if (!editor.isFocused) return;
+      update();
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!editor.isDestroyed && editor.isFocused) update();
+      }, 30);
+    };
+    // On the document (bubbling): the editor view may not be mounted yet, and by the
+    // time the event gets here ProseMirror has already left its composing state.
     editor.on("transaction", update);
     editor.on("blur", close);
+    document.addEventListener("compositionend", settle);
     return () => {
+      clearTimeout(timer);
       editor.off("transaction", update);
       editor.off("blur", close);
+      document.removeEventListener("compositionend", settle);
     };
   }, [editor]);
 
@@ -100,7 +122,7 @@ export function SlashMenu({
 
   useEffect(() => {
     keyHandler.current = (event) => {
-      if (!open || event.isComposing) return false;
+      if (!open || isImeKey(event)) return false;
       switch (event.key) {
         case "ArrowDown":
           setActive((i) => (i + 1) % options.length);
@@ -244,7 +266,7 @@ function PageTitlePrompt({
           if (!pending) onClose();
         }}
         onKeyDown={(e) => {
-          if (e.nativeEvent.isComposing) return;
+          if (isImeKey(e.nativeEvent)) return;
           if (e.key === "Enter") {
             // Never submit the surrounding form.
             e.preventDefault();
