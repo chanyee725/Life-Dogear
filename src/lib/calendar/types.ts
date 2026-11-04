@@ -30,6 +30,11 @@ export type CalendarOptions = { papers?: boolean };
 /** `partial`: a feed hit an expansion cap, so some events in the range may be missing. */
 export type GoogleStatus = "ok" | "off" | "partial" | "error";
 
-export type CalendarResult = { items: CalendarItem[]; google: GoogleStatus };
+export type CalendarResult = {
+  items: CalendarItem[];
+  google: GoogleStatus;
+  /** Whether `POST /api/calendar/events` can add Google events (absent = false). */
+  googleWrite?: boolean;
+};
 
 export type GetCalendar = (range: CalendarRange, opts?: CalendarOptions) => Promise<CalendarResult>;

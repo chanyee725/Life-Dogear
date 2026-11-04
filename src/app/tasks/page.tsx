@@ -82,6 +82,7 @@ async function CalendarPage({ params }: { params: Record<string, string | string
         today={today}
         items={data.items}
         google={data.google}
+        googleWrite={data.googleWrite}
         failed={failed}
         day={q.day}
         now={new Date().toISOString()}
