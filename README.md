@@ -123,6 +123,7 @@ npm run storage:gc-images -- --apply # 실제 삭제
 | `npm run db:seed` | 샘플 데이터 다시 넣기 (개발 서버를 끈 뒤 실행) |
 | `npm run storage:push` | 로컬 PDF·사진을 R2 버킷으로 한 번 옮기기 (`-- --dry-run`으로 개수만 확인) |
 | `npm run storage:gc-images` | 안 쓰는 사진 찾기 (`-- --apply`로 실제 삭제) |
+| `npm run backup` | 지금 바로 백업 (DB·사진·PDF, 아래 [데이터 백업](#데이터-백업) 참고) |
 
 ## 단축키
 
@@ -225,9 +226,31 @@ npm run storage:gc-images -- --apply # 실제 삭제
 
 ## 데이터 백업
 
-로컬 데이터는 `DATA_DIR`(기본 `data/`) 폴더에 있습니다 (`local.db`, `pdfs/`). 백업하려면:
+로컬 모드에서는 서버가 알아서 백업합니다.
 
-1. 개발 서버를 끕니다 (`Ctrl+C`).
-2. 데이터 폴더 전체를 다른 위치에 복사합니다.
+- **무엇을**: DB(`local.db`, SQLite `VACUUM INTO`로 일관된 사본을 만들고 검사), `DATA_DIR`의 `images/`·`pdfs/`.
+- **어디에**: `BACKUP_DIR`(기본 `<DATA_DIR>/backups`, 즉 `data/backups/` — gitignore됨) 아래 `YYYY-MM-DD/` 폴더(서울 날짜). 같은 날 두 번째 백업은 `YYYY-MM-DD-HHmm/`. 각 폴더에 만든 시각을 적은 `backup.json`이 있습니다.
+- **언제**: 서버(`npm run dev`·`npm run start`)가 뜨고 30초 뒤 마지막 백업이 24시간 넘었으면 한 번, 그 뒤로 서버가 켜져 있는 동안 하루 한 번. 두 백업이 동시에 돌지 않게 잠급니다.
+- **보관**: 최근 14개만 남기고 오래된 것부터 지웁니다. 위 이름 형식이고 `backup.json`이 있는 폴더만 지우고, `BACKUP_DIR` 안의 다른 파일·폴더는 건드리지 않습니다.
+- **용량**: 14개 모두 전체 사본이라 PDF·사진이 많으면 디스크를 많이 씁니다(대략 데이터 크기 × 14). 여유가 적으면 `BACKUP_DIR`을 큰 디스크로 옮기세요.
+- **Turso 모드**: DB는 건너뜁니다(Turso 대시보드의 시점 복구를 쓰세요). `DATA_DIR`의 파일만 백업합니다. R2 버킷의 파일은 백업하지 않습니다.
+- **Vercel**: 아무것도 하지 않습니다.
+- 백업이 실패해도 앱은 그대로 동작하고, 서버 로그에 `백업 실패(단계)`만 남깁니다.
 
-DB를 쓰는 중에 복사하면 일부만 담길 수 있으므로 서버를 끈 뒤에 복사하세요. Turso 모드에서는 데이터가 원격 DB에, 공유 저장소를 쓰면 PDF·사진이 R2 버킷에 있으므로 이 방법으로는 백업되지 않습니다.
+### 지금 백업하기
+
+```bash
+npm run backup
+```
+
+서버가 켜져 있어도 됩니다. 결과로 폴더 이름과 파일 개수만 출력합니다.
+
+### 복원하기
+
+1. 서버를 끕니다 (`Ctrl+C`). 켜 둔 채로 바꾸면 DB가 깨질 수 있습니다.
+2. 지금 데이터를 혹시 몰라 다른 곳에 옮겨 둡니다(예: `data/local.db` → `data/local.db.before-restore`, `-wal`·`-shm` 파일이 있으면 함께).
+3. 되돌릴 백업 폴더(예: `data/backups/2026-11-04/`)에서
+   - `local.db`를 DB 위치(`<DATA_DIR>/local.db`, `DATABASE_URL`이 `file:`이면 그 경로)로 복사합니다.
+   - `images/`·`pdfs/` 폴더를 `DATA_DIR` 아래로 복사해 기존 폴더를 바꿉니다.
+4. 서버를 다시 켭니다.
+

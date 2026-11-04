@@ -11,3 +11,5 @@ next-env.d.ts
 *.tsbuildinfo
 test-results/
 playwright-report/
+# Automatic backups (default BACKUP_DIR); data/ above already covers it.
+data/backups/
