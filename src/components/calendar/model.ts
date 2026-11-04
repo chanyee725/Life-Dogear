@@ -365,3 +365,15 @@ export function navDay(kind: CalendarRangeKind, day: string, key: string): strin
 
 /** Monday after `today`. */
 export const nextMonday = (today: string) => addDays(startOfWeek(today), 7);
+
+/**
+ * Undo one failed save: puts back only the fields that change (`start`, `end`, `done`) of
+ * `original`, leaving other items (and later changes to them) alone.
+ */
+export function revertItem(items: readonly CalendarItem[], original: CalendarItem): CalendarItem[] {
+  return items.map((it) =>
+    it.id === original.id
+      ? { ...it, start: original.start, end: original.end, done: original.done }
+      : it,
+  );
+}

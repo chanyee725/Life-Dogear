@@ -36,6 +36,7 @@ import {
   layoutWeek,
   moveItemTo,
   navDay,
+  revertItem,
   nextMonday,
   rangeTitle,
   shortDay,
@@ -210,14 +211,14 @@ export function CalendarView({
 
   // ---- saving ----
   const moveTask = (item: CalendarItem, to: string, focus = false) => {
+    // Temp quick-add rows (taskId "") are not movable until saved.
     if (!isMovable(item) || to === dayOf(item.start)) return;
-    const before = items;
-    setItems(moveItemTo(items, item.id, to));
+    setItems((list) => moveItemTo(list, item.id, to));
     if (focus) pendingFocus.current = { item: item.id };
     startSave(async () => {
       const result = await safeAction(() => updateTask(item.taskId, { dueDate: to }));
       if (!result.ok) {
-        setItems(before);
+        setItems((list) => revertItem(list, item));
         setError("마감일을 바꾸지 못했습니다.");
         setAnnounce(`${item.title}, 마감일을 바꾸지 못했습니다`);
       } else {
@@ -229,12 +230,11 @@ export function CalendarView({
 
   const completeTask = (item: CalendarItem) => {
     if (!item.taskId) return;
-    const before = items;
-    setItems(items.map((i) => (i.id === item.id ? { ...i, done: true } : i)));
+    setItems((list) => list.map((i) => (i.id === item.id ? { ...i, done: true } : i)));
     startSave(async () => {
       const result = await safeAction(() => updateTask(item.taskId, { done: true }));
       if (!result.ok) {
-        setItems(before);
+        setItems((list) => revertItem(list, item));
         setError(result.error);
       } else {
         setAnnounce(`${item.title}, 완료`);

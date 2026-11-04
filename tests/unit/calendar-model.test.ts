@@ -15,6 +15,7 @@ import {
   nextMonday,
   parseCalendarQuery,
   rangeTitle,
+  revertItem,
   seoulDate,
   splitPeriodLine,
   stepDate,
@@ -132,6 +133,8 @@ describe("order in a day (3.2)", () => {
     expect(isMovable(item("a", "2026-11-04", { taskId: "1" }))).toBe(true);
     expect(isMovable(item("a", "2026-11-04", { taskId: "1", done: true }))).toBe(false);
     expect(isMovable(item("p", "2026-11-04", { source: "project" }))).toBe(false);
+    // Unsaved quick-add rows carry taskId "" and must not move yet.
+    expect(isMovable(item("task:new-1", "2026-11-04", { taskId: "" }))).toBe(false);
   });
 });
 
@@ -236,6 +239,21 @@ describe("helpers", () => {
     expect(dayDots([item("d", "x", { done: true }), item("o", "x")])).toEqual([
       { source: "task", hollow: false },
     ]);
+  });
+
+  it("reverts only the failed item's date and done state", () => {
+    const a = item("a", "2026-11-04", { taskId: "1" });
+    const b = item("b", "2026-11-05", { taskId: "2" });
+    // a moved (save pending), meanwhile b moved and got a new title from the server.
+    let list = moveItemTo([a, b], "a", "2026-11-09");
+    list = moveItemTo(list, "b", "2026-11-12").map((i) =>
+      i.id === "b" ? { ...i, title: "B" } : i,
+    );
+    const reverted = revertItem(list, a);
+    expect(reverted[0]).toMatchObject({ start: "2026-11-04", done: undefined });
+    expect(reverted[1]).toMatchObject({ start: "2026-11-12", title: "B" });
+    const done = revertItem([{ ...a, done: true }], a);
+    expect(done[0]!.done).toBeUndefined();
   });
 
   it("moves an item to another day", () => {
