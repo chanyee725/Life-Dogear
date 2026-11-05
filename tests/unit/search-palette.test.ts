@@ -123,7 +123,7 @@ describe("SearchButton", () => {
   it("renders a Korean label with the shortcut hint", () => {
     const html = renderToStaticMarkup(createElement(SearchButton));
     expect(html).toContain("검색");
-    expect(html).toContain('aria-label="단축키 Ctrl K"');
+    expect(html).toContain('aria-label="단축키 Ctrl /"');
   });
 });
 
