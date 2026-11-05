@@ -1,9 +1,16 @@
+import { itemPath } from "@/lib/item-path";
+
 /** `?page=12&scroll=0.25` links into the reader (from the highlight list). */
 
-export function readerHref(paperId: string, page: number, scroll = 0): string {
+export function readerHref(
+  paperId: string,
+  page: number,
+  scroll = 0,
+  paperTitle?: string | null,
+): string {
   const params = new URLSearchParams({ page: String(page) });
   if (scroll > 0) params.set("scroll", String(scroll));
-  return `/papers/${paperId}/read?${params}`;
+  return `${itemPath("papers", paperId, paperTitle)}/read?${params}`;
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;

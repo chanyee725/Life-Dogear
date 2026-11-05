@@ -18,6 +18,7 @@ import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
 import { papers, RepoError } from "@/lib/repo";
 import type { PaperPatch } from "@/lib/repo/papers";
 import { deletePdf } from "@/lib/storage/pdf";
+import { itemPath } from "@/lib/item-path";
 
 const MAX_AUTHORS = 200;
 
@@ -79,9 +80,9 @@ export async function createPaper(
     const tags = optionalStringList(form.getAll("tags"), "태그") ?? [];
     const paper = await papers.create({ ...patch, title: patch.title ?? "", tags });
     revalidatePaper();
-    return { id: paper.id };
+    return { id: paper.id, title: paper.title };
   });
-  if (result.ok) redirect(`/papers/${result.data.id}`);
+  if (result.ok) redirect(itemPath("papers", result.data.id, result.data.title));
   return result;
 }
 

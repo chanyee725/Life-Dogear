@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { itemPath } from "@/app/_actions/parse";
 import { ArchiveButton } from "@/components/fields/ArchiveButton";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { EmptyLine, formatDate, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { archive } from "@/lib/repo";
+import { itemHref } from "@/lib/item-href";
 
 export const metadata: Metadata = { title: "보관함" };
 export const dynamic = "force-dynamic";
@@ -44,7 +44,7 @@ export default async function ArchivePage() {
                 {group.items.map((item) => (
                   <ListRow key={item.ref.id}>
                     <Link
-                      href={itemPath(item.ref)}
+                      href={itemHref(item.ref.type, item.ref.id, item.title)}
                       className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
                     >
                       {item.title}

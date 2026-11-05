@@ -182,7 +182,7 @@ describe("searchAll", () => {
       field: "highlight",
       paperId: p.id,
       page: 3,
-      href: `/papers/${p.id}/read?page=3`,
+      href: `${itemPath("papers", p.id, p.title)}/read?page=3`,
     });
     // Highlight text outranks a note-only match.
     expect(hits.findIndex((h) => h.id === h1)).toBeLessThan(hits.findIndex((h) => h.id === h2));
@@ -274,10 +274,12 @@ describe("searchAll", () => {
     ]);
     await addHighlight(p.id, 4, "정확한 위치로 이동", "", rects);
     const [hit] = await searchAll("정확한 위치");
-    expect(hit.href).toBe(`/papers/${p.id}/read?page=4&scroll=0.4`);
+    expect(hit.href).toBe(`${itemPath("papers", p.id, p.title)}/read?page=4&scroll=0.4`);
     // Broken stored rects fall back to the top of the page.
     await addHighlight(p.id, 6, "깨진 좌표 하이라이트", "", "not json");
-    expect((await searchAll("깨진 좌표"))[0].href).toBe(`/papers/${p.id}/read?page=6`);
+    expect((await searchAll("깨진 좌표"))[0].href).toBe(
+      `${itemPath("papers", p.id, p.title)}/read?page=6`,
+    );
   });
 
   it("finds authors by quote and backslash characters inside their names", async () => {

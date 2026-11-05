@@ -11,6 +11,7 @@ import * as reviews from "@/lib/repo/reviews";
 import { periodOf } from "@/lib/reviews/period";
 import { parseReviewForm } from "./form";
 import { nextGoalTarget } from "./next-goal";
+import { itemPath } from "@/lib/item-path";
 
 function revalidate(id?: string) {
   // Home shows the "이번 주 회고" line.
@@ -33,7 +34,7 @@ export async function openReview(form: FormData): Promise<void> {
     return review.id;
   });
   // `redirect` throws, so it stays outside runAction.
-  redirect(result.ok ? `/reviews/${result.data}` : `/reviews?kind=${kind}`);
+  redirect(result.ok ? itemPath("reviews", result.data) : `/reviews?kind=${kind}`);
 }
 
 export async function updateReview(

@@ -7,9 +7,12 @@ import { useLatestProgress } from "@/components/pdf/useLatestProgress";
 import { Button, ConfirmDialog, LinkButton, Section } from "@/components/ui";
 import { removePaperPdf } from "./pdf-client";
 import { PdfDropZone, ReplacePdfButton } from "./PdfUploader";
+import { itemPath } from "@/lib/item-path";
 
 type PdfPanelProps = {
   paperId: string;
+  /** Slug for the reader link; optional, the short id alone also resolves. */
+  paperTitle?: string | null;
   hasPdf: boolean;
   lastPage: number | null;
   totalPages: number | null;
@@ -17,7 +20,14 @@ type PdfPanelProps = {
 };
 
 /** PDF block on the paper page: continue reading, progress, replace/remove, or upload. */
-export function PdfPanel({ paperId, hasPdf, lastPage, totalPages, lastReadAt }: PdfPanelProps) {
+export function PdfPanel({
+  paperId,
+  paperTitle,
+  hasPdf,
+  lastPage,
+  totalPages,
+  lastReadAt,
+}: PdfPanelProps) {
   const router = useRouter();
   // The page may be shown from the router cache after reading; catch up with the server.
   const latest = useLatestProgress(hasPdf ? `/api/papers/${paperId}/progress` : null, {
@@ -41,7 +51,7 @@ export function PdfPanel({ paperId, hasPdf, lastPage, totalPages, lastReadAt }: 
     <Section title="PDF">
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <LinkButton href={`/papers/${paperId}/read`} variant="primary">
+          <LinkButton href={`${itemPath("papers", paperId, paperTitle)}/read`} variant="primary">
             {latest.page ? `이어 읽기 · ${latest.page}쪽` : "이어 읽기"}
           </LinkButton>
           <ProgressBar

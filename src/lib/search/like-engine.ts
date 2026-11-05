@@ -287,7 +287,7 @@ async function searchHighlights(query: string, patterns: string[]) {
       snippet: makeSnippet(inText ? r.text : r.note, query),
       field,
       // Straight to the highlighted spot, not just the top of its page.
-      href: readerHref(r.paperId, r.page, scrollTargetFor(parseStoredRects(r.rects))),
+      href: readerHref(r.paperId, r.page, scrollTargetFor(parseStoredRects(r.rects)), r.paperTitle),
       paperId: r.paperId,
       page: r.page,
       score: FIELD_SCORE[field],
