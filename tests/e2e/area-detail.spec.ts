@@ -20,7 +20,8 @@ test("영역 상세: 상태별 프로젝트 칸반 4열(빈 열 포함), 넓은 
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto("/areas");
   await page.locator("main a[href^='/areas/']", { hasText: AREA }).first().click();
-  await expect(page).toHaveURL(/\/areas\/[^/]+$/);
+  // Generous: the first visit compiles the area detail page (and its id resolver) on the dev server.
+  await expect(page).toHaveURL(/\/areas\/[^/]+$/, { timeout: 30_000 });
 
   const board = page.getByRole("list", { name: "상태별 프로젝트" });
   const columns = board.locator(":scope > li");
