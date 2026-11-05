@@ -5,16 +5,19 @@ import { cn } from "./cn";
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "icon";
 
+// shadcn/ui button shape. Keyboard focus keeps the global opaque accent outline
+// (globals.css :focus-visible) because the translucent --ring halo alone is under 3:1.
 const base =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap transition-colors select-none disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0";
 
 const variants: Record<ButtonVariant, string> = {
   // A <Kbd> hint inside a primary button switches to an on-accent style so it stays legible.
   primary:
-    "bg-accent text-accent-fg hover:bg-accent-hover [&_kbd]:border-transparent [&_kbd]:bg-accent-fg/15 [&_kbd]:text-accent-fg",
-  secondary: "border border-border bg-bg text-fg hover:bg-hover",
-  ghost: "text-muted hover:bg-hover hover:text-fg",
-  danger: "bg-danger text-white hover:bg-danger-hover dark:text-bg",
+    "bg-primary text-primary-foreground shadow-xs hover:bg-accent-hover [&_kbd]:border-transparent [&_kbd]:bg-accent-fg/15 [&_kbd]:text-accent-fg",
+  secondary:
+    "border border-input bg-background text-foreground shadow-xs hover:border-border-strong hover:bg-hover",
+  ghost: "text-muted-foreground hover:bg-hover hover:text-foreground",
+  danger: "bg-destructive text-white shadow-xs hover:bg-danger-hover dark:text-bg",
 };
 
 const sizes: Record<ButtonSize, string> = {
