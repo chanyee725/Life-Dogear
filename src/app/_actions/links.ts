@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { links, type ItemRef } from "@/lib/repo";
-import { itemPath, parseItemRef } from "./parse";
+import { itemRoute, parseItemRef } from "./parse";
 import { runAction, type ActionResult } from "./result";
 
 function revalidateBoth(a: ItemRef, b: ItemRef) {
-  revalidatePath(itemPath(a));
-  revalidatePath(itemPath(b));
+  revalidatePath(itemRoute(a), "page");
+  revalidatePath(itemRoute(b), "page");
   // Linking files a thought out of the inbox; the sidebar count lives in the layout.
   if (a.type === "thought" || b.type === "thought") revalidatePath("/", "layout");
 }

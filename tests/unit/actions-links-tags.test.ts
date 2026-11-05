@@ -22,8 +22,8 @@ describe("linkItems / unlinkItems", () => {
   it("links, revalidates both detail pages and unlinks", async () => {
     expect(await linkItems(P, R)).toEqual({ ok: true, data: undefined });
     expect(vi.mocked(revalidatePath).mock.calls.map((c) => c[0])).toEqual([
-      `/papers/${P.id}`,
-      `/projects/${R.id}`,
+      "/papers/[id]",
+      "/projects/[id]",
     ]);
     expect(await links.listConnected(P)).toHaveLength(1);
     expect(await unlinkItems(R, P)).toEqual({ ok: true, data: undefined });
@@ -60,7 +60,7 @@ describe("tags actions", () => {
       data: ["NLP", "요약"],
     });
     expect(await setItemTags(R, "nlp, 방법론")).toEqual({ ok: true, data: ["NLP", "방법론"] });
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith(`/projects/${R.id}`);
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/projects/[id]", "page");
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/projects");
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/tags");
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");

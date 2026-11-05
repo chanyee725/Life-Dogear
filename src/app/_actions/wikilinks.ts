@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { items, links, RepoError, type ItemRef } from "@/lib/repo";
 import type { ItemSummary } from "@/lib/repo/items";
 import { cleanTitle, titleKey } from "@/lib/wikilinks";
-import { itemPath, MAX_TITLE, optionalStringList, parseItemRef, parseText } from "./parse";
+import { itemRoute, MAX_TITLE, optionalStringList, parseItemRef, parseText } from "./parse";
 import { runAction, type ActionResult } from "./result";
 
 const MAX_TITLES = 200;
@@ -37,7 +37,7 @@ export async function createThoughtForTitle(
     const wanted = requireWikiTitle(title);
     const from = source == null ? undefined : parseItemRef(source, "출처");
     const ref = await links.ensureTitledThought(wanted, from);
-    if (from) revalidatePath(itemPath(from));
+    if (from) revalidatePath(itemRoute(from), "page");
     revalidatePath("/thoughts");
     // The inbox count in the sidebar.
     revalidatePath("/", "layout");
@@ -75,7 +75,7 @@ export async function renameWikiMentions(
       );
     }
     const changed = await links.renameTitleMentions(ref, from, saved);
-    for (const r of changed) revalidatePath(itemPath(r));
+    for (const r of changed) revalidatePath(itemRoute(r), "page");
     return { count: changed.length };
   });
 }

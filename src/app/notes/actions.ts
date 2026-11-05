@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { formText, parseId, parseItemRef } from "@/app/_actions/parse";
 import { runAction, type ActionResult } from "@/app/_actions/result";
-import { ITEM_ROUTE } from "@/lib/enums";
 import { notes, RepoError, type ItemRef } from "@/lib/repo";
 import { parseNoteForm } from "./form";
+import { itemRoutePattern } from "@/lib/item-href";
 
 const NOT_FOUND = "노트를 찾을 수 없습니다.";
 
@@ -15,7 +15,7 @@ function revalidate(id?: string) {
   revalidatePath("/resources");
   revalidatePath("/areas", "layout");
   revalidatePath("/tags", "layout");
-  if (id) revalidatePath(`/notes/${id}`);
+  if (id) revalidatePath("/notes/[id]", "page");
 }
 
 export async function createNote(form: FormData): Promise<ActionResult<{ id: string }>> {
@@ -28,7 +28,7 @@ export async function createNote(form: FormData): Promise<ActionResult<{ id: str
       linkTo,
     });
     revalidate();
-    if (linkTo) revalidatePath(`${ITEM_ROUTE[linkTo.type]}/${linkTo.id}`);
+    if (linkTo) revalidatePath(itemRoutePattern(linkTo.type), "page");
     return { id: note.id };
   });
 }

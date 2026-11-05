@@ -14,7 +14,7 @@ function revalidate(id?: string) {
   revalidatePath("/areas", "layout");
   // Goal pages list their projects and progress.
   revalidatePath("/goals", "layout");
-  if (id) revalidatePath(`/projects/${id}`);
+  if (id) revalidatePath("/projects/[id]", "page");
 }
 
 export async function createProject(form: FormData): Promise<ActionResult<{ id: string }>> {

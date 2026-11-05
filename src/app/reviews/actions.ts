@@ -17,7 +17,7 @@ function revalidate(id?: string) {
   // Home shows the "이번 주 회고" line.
   revalidatePath("/");
   revalidatePath("/reviews");
-  if (id) revalidatePath(`/reviews/${id}`);
+  if (id) revalidatePath("/reviews/[id]", "page");
 }
 
 /**

@@ -25,7 +25,7 @@ const MAX_AUTHORS = 200;
 function revalidatePaper(id?: string) {
   revalidatePath("/papers");
   revalidatePath("/");
-  if (id) revalidatePath(`/papers/${id}`);
+  if (id) revalidatePath("/papers/[id]", "page");
 }
 
 /** Authors come one per form field (or as an array); commas inside a name are kept. */

@@ -39,7 +39,7 @@ export async function addLinerMemo(
         : new RepoError("invalid", "본문이 너무 길어 저장할 수 없습니다.");
     }
     const { body } = saved;
-    revalidatePath(`/papers/${id}`);
+    revalidatePath("/papers/[id]", "page");
     revalidatePath("/papers");
     return { body };
   });
