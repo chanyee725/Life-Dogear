@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/components/ui/cn";
+import { Tooltip } from "@/components/ui/Tooltip";
 import {
   applyAccent,
   readAccentPreference,
@@ -33,31 +34,30 @@ export function AccentSwitcher({ className }: { className?: string }) {
   }
 
   return (
-    <div role="group" aria-label="포인트 컬러" className={cn("flex items-center gap-1", className)}>
-      <span className="mr-auto text-xs text-muted">포인트 컬러</span>
+    <div role="group" aria-label="포인트 컬러" className={cn("flex items-center", className)}>
       {OPTIONS.map((o) => {
         const pressed = pref === o.value;
         return (
-          <button
-            key={o.value}
-            type="button"
-            aria-label={`포인트 컬러: ${o.label}`}
-            aria-pressed={pressed}
-            title={o.label}
-            onClick={() => choose(o.value)}
-            className="grid size-6 place-items-center rounded-full"
-          >
-            <span
-              aria-hidden
-              style={{ backgroundColor: o.swatch }}
-              className={cn(
-                "size-3.5 rounded-full transition-shadow",
-                // Near-black ink dot would vanish on the dark sidebar without an edge.
-                o.value === "mono" && "dark:outline dark:outline-1 dark:outline-faint",
-                pressed && "ring-2 ring-fg ring-offset-2 ring-offset-surface",
-              )}
-            />
-          </button>
+          <Tooltip key={o.value} content={`포인트 컬러: ${o.label}`}>
+            <button
+              type="button"
+              aria-label={`포인트 컬러: ${o.label}`}
+              aria-pressed={pressed}
+              onClick={() => choose(o.value)}
+              className="grid size-6 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+            >
+              <span
+                aria-hidden
+                style={{ backgroundColor: o.swatch }}
+                className={cn(
+                  "size-3.5 rounded-full transition-shadow",
+                  // Near-black ink dot would vanish on the dark sidebar without an edge.
+                  o.value === "mono" && "dark:outline dark:outline-1 dark:outline-faint",
+                  pressed && "ring-2 ring-fg ring-offset-2 ring-offset-surface",
+                )}
+              />
+            </button>
+          </Tooltip>
         );
       })}
     </div>

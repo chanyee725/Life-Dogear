@@ -211,7 +211,7 @@ export function SidebarNav({
         {searchSlot ? <div className="px-3 pb-2">{searchSlot}</div> : null}
         <nav
           aria-label="주 메뉴"
-          className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pt-1 pb-3"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pt-1 pb-3 *:shrink-0"
         >
           {item(NAV_SECTIONS.top[0])}
           {item(
@@ -244,11 +244,12 @@ export function SidebarNav({
           <div className="mt-6 shrink-0" />
           {NAV_SECTIONS.bottom.map((entry) => item(entry))}
         </nav>
-        <div className="flex flex-col gap-3 px-4 pb-4">
+        {/* Never shrinks: the menu above scrolls instead of sliding under this block. */}
+        <div className="flex shrink-0 flex-col gap-2 border-t border-border px-4 pt-2 pb-3">
           <div className="-mx-2 flex flex-col">{item(SETTINGS_ENTRY)}</div>
-          <div className="flex flex-col gap-1.5">
-            <ThemeToggle />
-            <AccentSwitcher className="px-1" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="min-w-0 flex-1" />
+            <AccentSwitcher className="shrink-0" />
           </div>
           {footerSlot}
         </div>
