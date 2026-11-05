@@ -57,7 +57,7 @@ export function Dialog({
         // shadcn DialogContent look; entry fades/zooms in via @starting-style (no keyframes needed).
         "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-background p-0 text-foreground shadow-lg",
         "transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
-        "backdrop:bg-black/50 backdrop:transition-opacity backdrop:duration-150 starting:backdrop:opacity-0",
+        "backdrop:bg-black/50 backdrop:transition-opacity backdrop:duration-150 starting:backdrop:opacity-0 motion-reduce:backdrop:transition-none",
         className,
       )}
     >

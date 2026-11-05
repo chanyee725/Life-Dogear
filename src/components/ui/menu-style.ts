@@ -8,6 +8,8 @@ export const menuPanelClass =
 export function menuItemClass(danger = false, className?: string): string {
   return cn(
     "flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-sm outline-none select-none transition-colors",
+    // bg-hover alone is too faint to show keyboard focus; keep a ring for it.
+    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
     danger
       ? "text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
       : "text-foreground hover:bg-hover focus:bg-hover",
