@@ -10,7 +10,7 @@ import type { CalendarItem } from "@/lib/calendar/types";
 
 const item = (id: string, start: string, extra: Partial<CalendarItem> = {}): CalendarItem => ({
   id,
-  source: "project",
+  source: "seminar",
   title: id,
   start,
   allDay: !start.includes("T"),
@@ -25,7 +25,7 @@ describe("upcoming (다음 일정)", () => {
     const list = upcoming(
       [
         item("later", "2026-11-06", { source: "seminar" }),
-        item("task", TODAY, { source: "task" }), // under "오늘 할 일", not here
+        item("task", TODAY, { source: "task" }), // not a calendar item
         item("g15", "2026-11-04T15:00:00+09:00", { source: "google" }),
         item("g9", "2026-11-04T09:00:00+09:00", { source: "google" }), // over
         item("g13", "2026-11-04T13:00:00+09:00", {
@@ -109,7 +109,6 @@ describe("headings and origin", () => {
       "학위 논문",
     );
     expect(originLabel(item("a", TODAY, { source: "task" }))).toBe("");
-    expect(originLabel(item("p", TODAY))).toBe("마감");
     expect(originLabel(item("s", TODAY, { source: "seminar" }))).toBe("세미나");
     expect(originLabel(item("g", TODAY, { source: "google" }))).toBe("Google");
   });

@@ -12,8 +12,9 @@ import {
 
 /**
  * Home calendar block, 7:3 like 할 일 → 달력: left the three-week grid (then `children`: the
- * inbox / weekly review lines); right the today panel — the day, `tasks` (오늘 할 일), 다음 일정.
- * 할 일 추가 and 생각 추가 live in the 빠른 추가 popover at the right end of the toolbar.
+ * inbox / weekly review lines); right the today panel — the day, 다음 일정. At the right end of
+ * the toolbar: `todo` (the Todo button and its 오늘 할 일 popover), then 빠른 추가 (할 일 추가 and
+ * 생각 추가).
  * From `lg` the panel is held to the left column's height and scrolls inside. Below `lg`:
  * panel, then grid.
  * The calendar data is not awaited: its promise streams to the client, which draws the grid
@@ -22,11 +23,11 @@ import {
  */
 export function HomeCalendarSection({
   today,
-  tasks,
+  todo,
   children,
 }: {
   today: string;
-  tasks?: ReactNode;
+  todo?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -38,8 +39,12 @@ export function HomeCalendarSection({
         today={today}
         data={loadCalendar(today)}
         now={new Date().toISOString()}
-        toolbarEnd={<HomeQuickAdd today={today} />}
-        panelSlot={tasks}
+        toolbarEnd={
+          <>
+            {todo}
+            <HomeQuickAdd today={today} />
+          </>
+        }
         belowGrid={children ? <div className="mt-4 flex flex-col gap-1">{children}</div> : null}
         fitPanel
       />

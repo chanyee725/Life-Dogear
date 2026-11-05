@@ -83,7 +83,7 @@ async function seed() {
 }
 
 describe("getCalendar (app dates)", () => {
-  it("collects each source with routes, leaving archived items out", async () => {
+  it("collects each source with routes, leaving archived items, tasks and projects out", async () => {
     await seed();
     const { items, google } = await getCalendar(NOV);
     expect(google).toBe("off");
@@ -91,26 +91,12 @@ describe("getCalendar (app dates)", () => {
     expect(Object.keys(byId).sort()).toEqual(
       [
         "goal:q4",
-        "project:p1",
         "review:rm",
         "review:rw",
         "review:rw0", // W44 runs 10-26..11-01 and touches the range
         "seminar:s1",
-        "task:t1",
-        "task:t2",
-        "task:t5",
       ].sort(),
     );
-    expect(byId["task:t1"]).toMatchObject({
-      start: "2026-11-05",
-      allDay: true,
-      href: "/tasks",
-      done: false,
-      taskId: "t1",
-    });
-    expect(byId["task:t2"]).toMatchObject({ href: "/projects/p1", done: true });
-    expect(byId["task:t5"]!.href).toBe("/areas/a1");
-    expect(byId["project:p1"]).toMatchObject({ start: "2026-11-20", href: "/projects/p1" });
     expect(byId["seminar:s1"]).toMatchObject({ start: "2026-11-12", href: "/seminars/s1" });
     expect(byId["review:rw"]).toMatchObject({
       start: "2026-11-02",
@@ -159,14 +145,14 @@ describe("getCalendar (app dates)", () => {
       return execute.mock.calls.length;
     };
     const empty = await count();
-    expect(empty).toBe(6);
+    expect(empty).toBe(4);
     await seed();
-    await db.insert(tasks).values(
+    await db.insert(seminars).values(
       Array.from({ length: 40 }, (_, i) => ({
         id: `bulk${i}`,
-        title: `할 일 ${i}`,
-        dueDate: `2026-11-${String((i % 28) + 1).padStart(2, "0")}`,
-        ...tts,
+        title: `세미나 ${i}`,
+        date: `2026-11-${String((i % 28) + 1).padStart(2, "0")}`,
+        ...ts,
       })),
     );
     expect(await count()).toBe(empty);

@@ -196,13 +196,11 @@ export const isOneDay = (item: CalendarItem) => lastDay(item) === dayOf(item.sta
 export const isMovable = (item: CalendarItem) => !!item.taskId && !item.done;
 
 /**
- * Order inside a day (calendar.md 3.2): project → seminar → open task → (goal, review) →
+ * Order inside a day (calendar.md 3.2): seminar → open task → (goal, review) →
  * Google (all-day, then by time) → paper → done task; then title.
  */
 export function rankOf(item: CalendarItem): number {
   switch (item.source) {
-    case "project":
-      return 0;
     case "seminar":
       return 1;
     case "task":

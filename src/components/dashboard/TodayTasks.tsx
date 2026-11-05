@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { Task } from "@/lib/repo/tasks";
+import { TodayTaskList } from "./HomeTodo";
 import { Section, SectionHeader } from "@/components/ui";
 import { TODAY_MAX, WEEK_MAX } from "./today";
 
@@ -16,9 +17,9 @@ function More({ count, href }: { count: number; href: string }) {
 }
 
 /**
- * "오늘 할 일" in the home today panel (today.md 4.2): overdue first (with their due date),
+ * "오늘 할 일" in the home Todo popover (today.md 4.2): overdue first (with their due date),
  * then today's, then the finished ones struck through — the shared task rows (check, edit,
- * menu). The add input follows it in the panel. Always shown, so the input keeps its heading.
+ * menu). Always shown; says so when there is nothing.
  */
 export function TodayTasks({
   overdue,
@@ -64,8 +65,9 @@ export function TodayTasks({
       />
       {all.length || done.length ? (
         <div className="flex flex-col">
-          <TaskList
+          <TodayTaskList
             tasks={[...all.slice(0, TODAY_MAX), ...done]}
+            hidden={Math.max(0, all.length - TODAY_MAX)}
             today={today}
             label="오늘 할 일"
             showParent
@@ -75,7 +77,9 @@ export function TodayTasks({
           />
           <More count={all.length - TODAY_MAX} href={href} />
         </div>
-      ) : null}
+      ) : (
+        <p className="px-1.5 text-xs text-muted">오늘 할 일이 없습니다.</p>
+      )}
     </section>
   );
 }
@@ -105,5 +109,40 @@ export function WeekTasks({ tasks, today }: { tasks: Task[]; today: string }) {
         <More count={tasks.length - WEEK_MAX} href={href} />
       </div>
     </Section>
+  );
+}
+
+/** "이번 주" under 오늘 할 일 in the home Todo popover: due tomorrow through Sunday. */
+export function UpcomingTasks({ tasks, today }: { tasks: Task[]; today: string }) {
+  if (!tasks.length) return null;
+  const href = "/tasks?tab=week";
+  return (
+    <section aria-labelledby="upcoming-heading" className="flex flex-col gap-1">
+      <SectionHeader
+        as="h3"
+        id="upcoming-heading"
+        title={
+          <>
+            이번 주<span className="ml-2 text-xs font-normal tabular-nums">{tasks.length}</span>
+          </>
+        }
+        action={
+          <Link href={href} className={actionClass}>
+            모두 보기
+          </Link>
+        }
+        className="h-8"
+      />
+      <div className="flex flex-col">
+        <TaskList
+          tasks={tasks.slice(0, WEEK_MAX)}
+          today={today}
+          label="이번 주 할 일"
+          showParent
+          showCompleted={false}
+        />
+        <More count={tasks.length - WEEK_MAX} href={href} />
+      </div>
+    </section>
   );
 }

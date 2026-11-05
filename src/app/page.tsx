@@ -11,7 +11,8 @@ import {
   revisitStars,
   seoulToday,
 } from "@/components/dashboard/today";
-import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
+import { HomeTodo } from "@/components/dashboard/HomeTodo";
+import { TodayTasks, UpcomingTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
 import { HomeCalendarSection } from "@/components/dashboard/HomeCalendarSection";
 import { WeeklyReviewLine } from "@/components/dashboard/WeeklyReviewLine";
 import { Page } from "@/components/shell";
@@ -72,12 +73,18 @@ export default async function HomePage() {
       <h1 className="sr-only">홈</h1>
       <HomeCalendarSection
         today={today}
-        tasks={
-          <TodayTasks
-            overdue={todayTasks.overdue}
-            dueToday={todayTasks.today}
-            done={todayTasks.done}
-            today={today}
+        todo={
+          <HomeTodo
+            count={todayTasks.overdue.length + todayTasks.today.length}
+            today={
+              <TodayTasks
+                overdue={todayTasks.overdue}
+                dueToday={todayTasks.today}
+                done={todayTasks.done}
+                today={today}
+              />
+            }
+            upcoming={<UpcomingTasks tasks={weekTasks} today={today} />}
           />
         }
       >

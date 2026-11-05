@@ -42,6 +42,9 @@ async function mountHome(data: HomeCalendarData) {
   root = createRoot(host);
   await act(async () => {
     root!.render(
+      // children must be a prop here: HomeDayProvider requires it in its props type
+      // (TS2769 otherwise), and vitest only picks up .ts tests, so JSX is not an option.
+      // eslint-disable-next-line react/no-children-prop
       createElement(HomeDayProvider, {
         today: "2026-11-05",
         children: createElement(HomeCalendarView, {
