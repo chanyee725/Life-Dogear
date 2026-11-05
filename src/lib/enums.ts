@@ -27,7 +27,7 @@ function defineEnum<const V extends string>(options: readonly EnumOption<V>[]) {
 export const ITEM_TYPE = defineEnum([
   { value: "project", label: "프로젝트", tone: "violet" },
   { value: "paper", label: "논문", tone: "blue" },
-  { value: "seminar", label: "세미나", tone: "teal" },
+  { value: "seminar", label: "활동", tone: "teal" },
   { value: "thought", label: "생각", tone: "amber" },
   // Every other tone is taken (highlights use green); see docs/design/graph.md 1.2.1.
   { value: "note", label: "노트", tone: "orange" },
@@ -131,10 +131,10 @@ export const IMPORTANCE = defineEnum([
 ] as const);
 export type Importance = (typeof IMPORTANCE.values)[number];
 
-/** 세미나 = one you attended (talks, lectures, webinars); 발표 = one you gave. Migration 0006. */
+/** 들은 것 = attended (세미나·학회·특강); 한 것 = given (강연·발표). Migration 0006. */
 export const SEMINAR_KIND = defineEnum([
-  { value: "seminar", label: "세미나", tone: "teal" },
-  { value: "talk", label: "발표", tone: "violet" },
+  { value: "seminar", label: "들은 것", tone: "teal" },
+  { value: "talk", label: "한 것", tone: "violet" },
 ] as const);
 export type SeminarKind = (typeof SEMINAR_KIND.values)[number];
 

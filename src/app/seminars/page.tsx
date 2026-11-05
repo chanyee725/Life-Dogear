@@ -22,7 +22,7 @@ import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
 import type { Seminar, SeminarSort } from "@/lib/repo/seminars";
 
-export const metadata: Metadata = { title: "세미나" };
+export const metadata: Metadata = { title: "활동" };
 export const dynamic = "force-dynamic";
 
 const SORTS: { value: SeminarSort; label: string }[] = [
@@ -64,7 +64,7 @@ const columns: Column<Seminar>[] = [
   },
   {
     key: "speaker",
-    header: "연사",
+    header: "사람",
     className: "text-muted",
     render: (s) =>
       s.speaker ? <span className="block max-w-[12rem] truncate">{s.speaker}</span> : "",
@@ -99,7 +99,7 @@ export default async function SeminarsPage({
     <ListEmpty
       filtered={filtered}
       addHref="/seminars/new"
-      addLabel="＋ 새 세미나"
+      addLabel="＋ 새 활동"
       clearHref="/seminars"
     />
   );
@@ -107,8 +107,8 @@ export default async function SeminarsPage({
   return (
     <Page>
       <PageHeader
-        title="세미나"
-        actions={<NewItemButton href="/seminars/new">새 세미나</NewItemButton>}
+        title="활동"
+        actions={<NewItemButton href="/seminars/new">새 활동</NewItemButton>}
       />
       <ListView
         storageKey="seminars"
@@ -120,7 +120,7 @@ export default async function SeminarsPage({
               basePath="/seminars"
               params={params}
               selected={kind}
-              allLabel="모든 종류"
+              allLabel="전체"
               options={SEMINAR_KIND.options}
             />
           </>

@@ -96,7 +96,7 @@ export function mockGraph(total = 120, seed = 7): MockGraph {
     const r = rand();
     const type: GraphNodeType =
       r < 0.45 ? "paper" : r < 0.6 ? "seminar" : r < 0.95 ? "thought" : "review";
-    const label = { paper: "논문", seminar: "세미나", thought: "생각", review: "회고" }[
+    const label = { paper: "논문", seminar: "활동", thought: "생각", review: "회고" }[
       type as "paper"
     ];
     const node = make(type, i, `${label} ${i + 1}`, { archived: rand() < 0.05 });

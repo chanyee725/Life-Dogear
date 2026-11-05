@@ -51,12 +51,12 @@ export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
   return (
     <Section
       id="recent-seminars"
-      title="최근 세미나"
+      title="최근 활동"
       action={seminars.length ? moreLink("/seminars") : undefined}
     >
       {seminars.length === 0 ? (
         <EmptyAdd compact href="/seminars/new">
-          ＋ 새 세미나
+          ＋ 새 활동
         </EmptyAdd>
       ) : (
         <ul className="-mx-3 flex flex-col">

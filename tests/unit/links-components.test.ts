@@ -28,7 +28,7 @@ describe("ConnectedItems", () => {
     expect(html).toMatch(/연결된 항목<span[^>]*>2<\/span>/);
     expect(html).toContain(`href="/seminars/${seminar.id}"`);
     expect(html).toContain(`href="/thoughts/${thought.id}"`);
-    expect(html).toContain(">세미나<");
+    expect(html).toContain(">활동<");
     expect(html).toContain(">생각<");
     expect(html).toContain("생각 &lt;b&gt;X&lt;/b&gt;");
     expect(html.match(/연결 해제/g)?.length).toBeGreaterThanOrEqual(2);

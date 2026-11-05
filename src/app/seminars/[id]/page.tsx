@@ -17,7 +17,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const seminar = isValidItemId(id) ? await seminars.get(id) : null;
-  return { title: seminar?.title ?? "세미나" };
+  return { title: seminar?.title ?? "활동" };
 }
 
 export default async function SeminarDetailPage({ params }: Props) {
@@ -34,7 +34,7 @@ export default async function SeminarDetailPage({ params }: Props) {
           mode="edit"
           action={updateSeminar.bind(null, seminar.id)}
           basePath="/seminars"
-          backLabel="세미나"
+          backLabel="활동"
           actions={
             <>
               <DetailMoreMenu
@@ -42,7 +42,7 @@ export default async function SeminarDetailPage({ params }: Props) {
                 archived={Boolean(seminar.archivedAt)}
                 redirectTo={"/seminars"}
                 deleteAction={deleteSeminar.bind(null, seminar.id)}
-                itemLabel="이 세미나"
+                itemLabel="이 활동"
               />
             </>
           }

@@ -91,7 +91,7 @@ describe("previews", () => {
     });
     expect(s).toEqual({
       archived: false,
-      badge: "발표",
+      badge: "한 것",
       props: [{ label: "날짜", value: "2026-11-01" }],
       summary: "첫 문단",
     });
