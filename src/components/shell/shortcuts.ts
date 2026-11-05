@@ -10,10 +10,15 @@ export const GRAPH_HREF = "/graph";
 /**
  * Matches any open modal: native `<dialog open>` plus Radix Dialog / AlertDialog content
  * (Radix renders a `<div role=dialog>`, not `<dialog>`). Not `[role=dialog]`: that also
- * matches non-modal popovers such as the calendar date picker.
+ * matches non-modal popovers such as the calendar date picker. Open Radix Select lists and
+ * dropdown menus count too: their keys (type-ahead included) must not fire shortcuts.
  */
 export const OPEN_MODAL_SELECTOR =
-  "dialog[open], [data-slot=dialog-content], [data-slot=alert-dialog-content]";
+  "dialog[open], [data-slot=dialog-content], [data-slot=alert-dialog-content], [data-slot=select-content], [data-slot=dropdown-menu-content]";
+
+/** Radix Select / DropdownMenu parts: keys there drive the widget (type-ahead, arrows). */
+const WIDGET_ROLE_SELECTOR =
+  "[role=combobox], [role=listbox], [role=option], [role=menu], [role=menuitem]";
 
 const SECTIONS = ["projects", "areas", "papers", "notes", "seminars", "thoughts"] as const;
 /** Where `N` goes outside the item sections (home, inbox, tags, archive). */
@@ -82,11 +87,12 @@ export function resolveShortcut(
   return null;
 }
 
-/** True when keystrokes belong to a text field, select or rich-text editor. */
+/** True when keystrokes belong to a text field, select, menu or rich-text editor. */
 export function isTypingTarget(target: EventTarget | null): boolean {
   if (!target || typeof (target as HTMLElement).tagName !== "string") return false;
   const el = target as HTMLElement;
   if (el.isContentEditable) return true;
+  if (typeof el.closest === "function" && el.closest(WIDGET_ROLE_SELECTOR)) return true;
   const tag = el.tagName;
   if (tag === "TEXTAREA" || tag === "SELECT") return true;
   if (tag === "INPUT") {

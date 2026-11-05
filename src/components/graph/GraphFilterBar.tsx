@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Button, cn, Segmented, type SegmentedOption } from "@/components/ui";
+import { Button, cn, Segmented, Select, type SegmentedOption } from "@/components/ui";
 import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
@@ -21,8 +21,7 @@ export type FilterOptions = {
 
 const Divider = () => <span aria-hidden className="h-4 w-px shrink-0 bg-border" />;
 
-const selectClass =
-  "rb-select h-7 max-w-44 cursor-pointer rounded-md border border-border bg-bg pr-7 pl-2 text-[13px] text-fg hover:border-border-strong focus:border-accent focus:ring-2 focus:ring-ring focus:outline-none";
+const selectClass = "h-7 w-auto max-w-44 pl-2 text-[13px]";
 
 /** Conditions kept behind the compact bar's "필터" button (area, topic, archived, orphans). */
 export function hiddenFilterCount(filter: GraphFilter): number {
@@ -154,7 +153,7 @@ export function GraphFilterControls({
         <label htmlFor={`${id}-area`} className="text-[13px] text-muted">
           영역
         </label>
-        <select
+        <Select
           id={`${id}-area`}
           className={selectClass}
           value={filter.area ?? ""}
@@ -166,13 +165,13 @@ export function GraphFilterControls({
               {a.title}
             </option>
           ))}
-        </select>
+        </Select>
       </span>
       <span className="inline-flex items-center gap-1.5">
         <label htmlFor={`${id}-tag`} className="text-[13px] text-muted">
           주제
         </label>
-        <select
+        <Select
           id={`${id}-tag`}
           className={selectClass}
           value={filter.tag ?? ""}
@@ -187,7 +186,7 @@ export function GraphFilterControls({
               {t}
             </option>
           ))}
-        </select>
+        </Select>
       </span>
     </div>
   );

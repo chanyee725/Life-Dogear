@@ -1,13 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { deleteCurrentItem, uniqueTitle } from "./helpers";
+import { deleteCurrentItem, pickOption, uniqueTitle } from "./helpers";
 
 const AREA = "연구 분야";
 
 async function createGoal(page: Page, title: string, status: "진행 중" | "달성") {
   await page.goto("/goals/new?horizon=year");
   await page.getByLabel("제목", { exact: true }).fill(title);
-  await page.locator("#goal-area").selectOption({ label: AREA });
-  await page.locator("#goal-status").selectOption({ label: status });
+  await pickOption(page, page.locator("#goal-area"), AREA);
+  await pickOption(page, page.locator("#goal-status"), status);
   await page.getByRole("button", { name: "저장" }).click();
   await expect(page).toHaveURL(/\/goals\/(?!new)[^/]+$/, { timeout: 20_000 });
   return page.url();

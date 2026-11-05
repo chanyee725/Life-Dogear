@@ -25,7 +25,8 @@ describe("graph filter chip icons (legend, graph.md 1.4)", () => {
         theme: GRAPH_THEME_LIGHT,
         colorBy,
       }),
-    );
+      // The Select chevrons (lucide) are not chip icons.
+    ).replace(/<svg[^>]*class="lucide[^"]*"[^>]*>.*?<\/svg>/g, "");
 
   it("draws canvas-matching dots on the 2D graph, never ■◆▲▼ shapes", () => {
     for (const colorBy of ["kind", "area"] as const) {

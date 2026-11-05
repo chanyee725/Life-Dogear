@@ -23,7 +23,7 @@ import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
 import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
-import { menuItemClass, menuPanelClass } from "@/components/ui/menu-style";
+import { Menu, MenuContent, MenuItem, MenuTrigger, type MenuAction } from "@/components/ui/Menu";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";
@@ -902,35 +902,10 @@ function TaskMenu({
   onRemove: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
+  // A picked item moves focus itself (due editor, next row); only Esc/outside returns it.
+  const picked = useRef(false);
 
-  useEffect(() => {
-    if (!open) return;
-    menuRef.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus();
-    const onDown = (e: MouseEvent) => {
-      if (
-        !menuRef.current?.contains(e.target as Node) &&
-        !triggerRef.current?.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
-
-  const close = (focusTrigger = true) => {
-    setOpen(false);
-    if (focusTrigger) triggerRef.current?.focus();
-  };
-  const pick = (fn: () => void) => () => {
-    close(false);
-    fn();
-  };
-
-  const items: { label: string; run: () => void; danger?: boolean }[] = [
+  const items: MenuAction[] = [
     { label: "마감일 정하기", run: onDue },
     ...(onClearDue ? [{ label: "마감일 지우기", run: onClearDue }] : []),
     ...(canMove
@@ -944,60 +919,46 @@ function TaskMenu({
 
   return (
     <div className="relative shrink-0">
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-label={`할 일 메뉴: ${task.title}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "grid size-7 place-items-center rounded-lg text-muted hover:bg-hover hover:text-fg",
-          open ? "opacity-100" : "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-        )}
+      <Menu
+        open={open}
+        onOpenChange={(next) => {
+          if (next) picked.current = false;
+          setOpen(next);
+        }}
       >
-        <span aria-hidden>⋯</span>
-      </button>
-      {open ? (
-        <div
-          ref={menuRef}
-          id={menuId}
-          role="menu"
+        <MenuTrigger asChild>
+          <button
+            type="button"
+            aria-label={`할 일 메뉴: ${task.title}`}
+            className={cn(
+              "grid size-7 place-items-center rounded-lg text-muted hover:bg-hover hover:text-fg",
+              open ? "opacity-100" : "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+            )}
+          >
+            <span aria-hidden>⋯</span>
+          </button>
+        </MenuTrigger>
+        <MenuContent
+          align="end"
           aria-label={`할 일 메뉴: ${task.title}`}
-          onKeyDown={(e) => {
-            const buttons = [
-              ...(menuRef.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? []),
-            ];
-            const i = buttons.indexOf(document.activeElement as HTMLElement);
-            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-              e.preventDefault();
-              const step = e.key === "ArrowDown" ? 1 : -1;
-              buttons[(i + step + buttons.length) % buttons.length]?.focus();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              e.stopPropagation();
-              close();
-            } else if (e.key === "Tab") {
-              close(false);
-            }
+          onCloseAutoFocus={(e) => {
+            if (picked.current) e.preventDefault();
           }}
-          className={cn("absolute top-full right-0 z-20 mt-1 flex min-w-36 flex-col", menuPanelClass)}
         >
           {items.map((item) => (
-            <button
+            <MenuItem
               key={item.label}
-              type="button"
-              role="menuitem"
-              tabIndex={-1}
-              onClick={pick(item.run)}
-              className={menuItemClass(item.danger)}
+              danger={item.danger}
+              onSelect={() => {
+                picked.current = true;
+                item.run();
+              }}
             >
               {item.label}
-            </button>
+            </MenuItem>
           ))}
-        </div>
-      ) : null}
+        </MenuContent>
+      </Menu>
     </div>
   );
 }

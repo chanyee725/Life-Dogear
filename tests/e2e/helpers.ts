@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 export type Section = "projects" | "papers" | "seminars" | "thoughts";
 
@@ -32,4 +32,15 @@ export async function openQuickAdd(page: Page) {
   const popover = page.getByRole("dialog", { name: "빠른 추가" });
   await expect(popover).toBeVisible();
   return popover;
+}
+
+/**
+ * Picks `label` in a shadcn (Radix) Select. The trigger is a `combobox` button, not a
+ * native `<select>`, so `selectOption` does not apply: open it from the keyboard, then click.
+ */
+export async function pickOption(page: Page, trigger: Locator, label: string) {
+  await trigger.focus();
+  await trigger.press("Enter");
+  await page.getByRole("option", { name: label, exact: true }).click();
+  await expect(trigger).toHaveText(label);
 }

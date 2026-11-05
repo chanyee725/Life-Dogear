@@ -1,7 +1,6 @@
 import type {
   ComponentProps,
   ReactNode,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
 import { cn } from "./cn";
@@ -13,12 +12,8 @@ import { cn } from "./cn";
 export const controlClass =
   "w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs placeholder:text-faint transition-[color,border-color,box-shadow] hover:border-border-strong focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Select keeps its previous look until the Select pass restyles it.
-const selectControlClass =
-  "w-full rounded-lg border border-border bg-bg px-3 text-sm text-fg placeholder:text-faint transition-colors hover:border-border-strong focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60";
-
 export type ControlSize = "sm" | "md";
-const controlSize: Record<ControlSize, string> = { sm: "h-8 text-[13px]", md: "h-9" };
+export const controlSize: Record<ControlSize, string> = { sm: "h-8 text-[13px]", md: "h-9" };
 
 export type InputProps = Omit<ComponentProps<"input">, "size"> & {
   size?: ControlSize;
@@ -43,21 +38,7 @@ export function Textarea({
   );
 }
 
-export function Select({
-  className,
-  children,
-  size = "md",
-  ...props
-}: Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & { size?: ControlSize }) {
-  return (
-    <select
-      className={cn(selectControlClass, "rb-select cursor-pointer pr-8", controlSize[size], className)}
-      {...props}
-    >
-      {children}
-    </select>
-  );
-}
+export { Select, type SelectProps } from "./Select";
 
 /** Label + control + optional hint/error, stacked. */
 export function Field({

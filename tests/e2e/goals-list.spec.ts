@@ -43,7 +43,8 @@ test("goals list: life card, filter bar, goal row with level badge and days left
   const laterUrl = page.url();
 
   await page.goto("/goals");
-  await page.getByRole("combobox", { name: "다른 연도" }).selectOption(nextYear);
+  await page.getByRole("combobox", { name: "다른 연도" }).click();
+  await page.getByRole("option", { name: `${nextYear}년`, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`period=${nextYear}`));
   await expect(page.getByRole("listitem").filter({ hasText: later })).toBeVisible();
 
