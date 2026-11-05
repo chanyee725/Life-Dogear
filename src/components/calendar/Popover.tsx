@@ -101,7 +101,11 @@ export function Popover({
         }
       }}
       style={{ top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
-      className={cn("fixed z-50 rounded-lg border border-border bg-bg shadow-overlay", className)}
+      className={cn(
+        "fixed z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none",
+        "transition-[opacity,scale] duration-100 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
+        className,
+      )}
     >
       {children}
     </div>
