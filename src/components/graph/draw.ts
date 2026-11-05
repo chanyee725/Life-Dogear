@@ -161,7 +161,8 @@ export function drawNodeShape(
   quarterFill: string = theme.goalSoft,
 ): void {
   const { type } = node;
-  traceShape(ctx, type, x, y, r);
+  // Obsidian-style: every kind is a small dot; the kind shows as color (hollow = open item).
+  traceShape(ctx, "paper", x, y, r);
   const outline = (fill: string, width: number) => {
     ctx.fillStyle = fill;
     ctx.fill();
@@ -172,7 +173,7 @@ export function drawNodeShape(
   switch (type) {
     case "goal":
       if (node.horizon === "quarter") {
-        outline(quarterFill, 1.5);
+        outline(quarterFill, 1.25);
         return;
       }
       ctx.fillStyle = color;
@@ -180,16 +181,16 @@ export function drawNodeShape(
       if (node.horizon === "life") {
         ctx.beginPath();
         ctx.arc(x, y, r + 2, 0, 2 * Math.PI);
-        ctx.lineWidth = 1.5 / k;
+        ctx.lineWidth = 1 / k;
         ctx.strokeStyle = color;
         ctx.stroke();
       }
       return;
     case "thought":
-      outline(theme.canvasBg, 2);
+      outline(theme.canvasBg, 1.25);
       return;
     case "tag":
-      outline(theme.canvasBg, 1.25);
+      outline(theme.canvasBg, 1);
       return;
     case "task":
       // Open: an empty check box. Done: filled, faded (today.md 7절).
@@ -219,10 +220,25 @@ export function drawRing(
   k: number,
   theme: GraphTheme,
 ): void {
-  traceShape(ctx, type === "goal" ? "paper" : type, x, y, r + 3 / k + (type === "goal" ? 2 : 0));
-  ctx.lineWidth = 2 / k;
+  traceShape(ctx, "paper", x, y, r + 2.5 / k + (type === "goal" ? 2 : 0));
+  ctx.lineWidth = 1.5 / k;
   ctx.strokeStyle = theme.labelStrong;
   ctx.stroke();
+}
+
+/** Label font size in screen px. */
+const LABEL_PX = 12;
+
+/**
+ * Sets the label font at a fixed 12px. Drawing small `12/k` px text and letting the canvas
+ * transform scale it makes Chrome round glyph advances at the tiny size ("Ro b o tics");
+ * labels are therefore measured and drawn at 12px under `scale(1/k)`.
+ */
+function setLabelFont(ctx: CanvasRenderingContext2D, weight: number, theme: GraphTheme): void {
+  ctx.font = `${weight} ${LABEL_PX}px ${theme.fontFamily}`;
+  ctx.letterSpacing = "0px";
+  ctx.fontKerning = "normal";
+  ctx.textRendering = "geometricPrecision";
 }
 
 /** Label under the node: 12s text with a 3s background halo. Returns its box in graph units. */
@@ -236,18 +252,21 @@ export function drawLabel(
   weight: number,
   theme: GraphTheme,
 ): { x0: number; y0: number; x1: number; y1: number } {
-  const size = 12 / k;
-  ctx.font = `${weight} ${size}px ${theme.fontFamily}`;
+  ctx.save();
+  ctx.translate(x, top);
+  ctx.scale(1 / k, 1 / k);
+  setLabelFont(ctx, weight, theme);
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.lineJoin = "round";
-  ctx.lineWidth = 3 / k;
+  ctx.lineWidth = 3;
   ctx.strokeStyle = theme.canvasBg;
-  ctx.strokeText(text, x, top);
+  ctx.strokeText(text, 0, 0);
   ctx.fillStyle = color;
-  ctx.fillText(text, x, top);
-  const w = ctx.measureText(text).width;
-  return { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + size * 1.25 };
+  ctx.fillText(text, 0, 0);
+  const w = ctx.measureText(text).width / k;
+  ctx.restore();
+  return { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + (LABEL_PX * 1.25) / k };
 }
 
 /** Measures a label box without drawing (for overlap checks). */
@@ -260,10 +279,11 @@ export function measureLabel(
   weight: number,
   theme: GraphTheme,
 ): { x0: number; y0: number; x1: number; y1: number } {
-  const size = 12 / k;
-  ctx.font = `${weight} ${size}px ${theme.fontFamily}`;
-  const w = ctx.measureText(text).width;
-  return { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + size * 1.25 };
+  ctx.save();
+  setLabelFont(ctx, weight, theme);
+  const w = ctx.measureText(text).width / k;
+  ctx.restore();
+  return { x0: x - w / 2, y0: top, x1: x + w / 2, y1: top + (LABEL_PX * 1.25) / k };
 }
 
 let measureCanvas: CanvasRenderingContext2D | null = null;
