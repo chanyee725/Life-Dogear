@@ -23,6 +23,7 @@ import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
 import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
+import { menuItemClass, menuPanelClass } from "@/components/ui/menu-style";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";
@@ -981,7 +982,7 @@ function TaskMenu({
               close(false);
             }
           }}
-          className="absolute top-full right-0 z-20 mt-1 flex min-w-36 flex-col rounded-lg border border-border bg-bg p-1 shadow-overlay"
+          className={cn("absolute top-full right-0 z-20 mt-1 flex min-w-36 flex-col", menuPanelClass)}
         >
           {items.map((item) => (
             <button
@@ -990,10 +991,7 @@ function TaskMenu({
               role="menuitem"
               tabIndex={-1}
               onClick={pick(item.run)}
-              className={cn(
-                "flex h-8 items-center rounded-md px-2 text-left text-[13px] hover:bg-hover focus:bg-hover",
-                item.danger ? "text-danger" : "text-fg",
-              )}
+              className={menuItemClass(item.danger)}
             >
               {item.label}
             </button>

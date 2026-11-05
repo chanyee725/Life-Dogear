@@ -54,22 +54,25 @@ export function Dialog({
         if (e.target === e.currentTarget) onClose();
       }}
       className={cn(
-        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-bg p-0 text-fg shadow-overlay backdrop:bg-black/30",
+        // shadcn DialogContent look; entry fades/zooms in via @starting-style (no keyframes needed).
+        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-background p-0 text-foreground shadow-lg",
+        "transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
+        "backdrop:bg-black/50 backdrop:transition-opacity backdrop:duration-150 starting:backdrop:opacity-0",
         className,
       )}
     >
       {open ? (
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-4 p-6">
+          <div className="flex flex-col gap-1.5">
             {named ? (
-              <h2 id={titleId} className="text-base font-semibold">
+              <h2 id={titleId} className="text-lg leading-none font-semibold tracking-tight">
                 {title}
               </h2>
             ) : null}
-            {description ? <p className="text-sm text-muted">{description}</p> : null}
+            {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
           </div>
           {children}
-          {footer ? <div className="flex justify-end gap-2">{footer}</div> : null}
+          {footer ? <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div> : null}
         </div>
       ) : null}
     </dialog>

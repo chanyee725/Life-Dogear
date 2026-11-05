@@ -6,8 +6,8 @@ import { cn } from "./cn";
 export type ToastPlace = "top-right" | "bottom-right";
 
 const PLACE: Record<ToastPlace, string> = {
-  "top-right": "top-4 right-4",
-  "bottom-right": "right-4 bottom-4",
+  "top-right": "top-4 right-4 starting:-translate-y-2",
+  "bottom-right": "right-4 bottom-4 starting:translate-y-2",
 };
 
 /**
@@ -41,7 +41,9 @@ export function Toast({
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       className={cn(
-        "fixed z-50 rounded-lg border border-border bg-bg px-3 py-2 text-[13px] text-fg shadow-overlay",
+        // sonner-like card; slides in from its edge via @starting-style.
+        "fixed z-50 rounded-md border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-lg",
+        "transition-[opacity,translate] duration-200 ease-out starting:opacity-0 motion-reduce:transition-none",
         PLACE[place],
         className,
       )}
