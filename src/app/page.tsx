@@ -105,7 +105,7 @@ export default async function HomePage() {
       ) : null}
       <ContinueReading papers={reading} />
       <ActiveResearch stages={stages} />
-      <ActiveGeneralProjects projects={general} />
+      <ActiveGeneralProjects projects={general} today={today} />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <RecentThoughts thoughts={recentThoughts} />
         <RecentSeminars seminars={recentSeminars} />

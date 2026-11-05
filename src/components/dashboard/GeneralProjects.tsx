@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge, EmptyAdd } from "@/components/ui";
-import { formatDue, localDate } from "@/components/tasks/format";
+import { formatDue } from "@/components/tasks/format";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
 
@@ -9,11 +9,10 @@ const rowClass =
   "flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /** Active general (non-research) projects for the home "프로젝트" section, soonest due first. */
-export function GeneralProjects({ projects }: { projects: Project[] }) {
+export function GeneralProjects({ projects, today }: { projects: Project[]; today: string }) {
   if (projects.length === 0) {
     return <EmptyAdd href="/projects/new?kind=general">＋ 새 프로젝트</EmptyAdd>;
   }
-  const today = localDate();
   return (
     <ul className="-mx-3 flex flex-col">
       {projects.map((p) => {
@@ -24,8 +23,11 @@ export function GeneralProjects({ projects }: { projects: Project[] }) {
               <span className="flex items-baseline justify-between gap-3">
                 <span className="line-clamp-1 text-sm text-fg">{p.title}</span>
                 {due ? (
-                  <span className={due.className} aria-label={due.label}>
-                    {due.tone === "muted" ? `마감 ${due.text}` : due.text}
+                  <span className={due.className}>
+                    <span aria-hidden="true">
+                      {due.tone === "muted" ? `마감 ${due.text}` : due.text}
+                    </span>
+                    <span className="sr-only">{due.label}</span>
                   </span>
                 ) : null}
               </span>

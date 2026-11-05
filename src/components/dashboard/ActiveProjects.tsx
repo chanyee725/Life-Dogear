@@ -20,10 +20,10 @@ export function ActiveResearch({ stages }: { stages: StageColumn[] }) {
 }
 
 /** Home "프로젝트": active general (non-research) projects, soonest due first. */
-export function ActiveGeneralProjects({ projects }: { projects: Project[] }) {
+export function ActiveGeneralProjects({ projects, today }: { projects: Project[]; today: string }) {
   return (
     <Section id="active-projects" title="프로젝트" action={allLink("/projects?kind=general")}>
-      <GeneralProjects projects={projects} />
+      <GeneralProjects projects={projects} today={today} />
     </Section>
   );
 }
