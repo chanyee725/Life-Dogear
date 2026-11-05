@@ -5,6 +5,7 @@ import { MAX_RANGE_DAYS, parseRange } from "./dates";
 import { googleWriteEnabled } from "./google-write";
 import { loadGoogleItems } from "./ics";
 import { describeError } from "@/lib/storage/describe-error";
+import { settingsEnv } from "@/lib/settings";
 import type { CalendarItem, CalendarOptions, CalendarRange, CalendarResult } from "./types";
 
 export type * from "./types";
@@ -19,7 +20,8 @@ const compare = (a: CalendarItem, b: CalendarItem) =>
 
 /**
  * Everything dated in `range` (inclusive `YYYY-MM-DD`, at most `MAX_RANGE_DAYS`): app dates
- * plus Google Calendar events when `GOOGLE_CALENDAR_ICS_URLS` is set. Google failures never
+ * plus Google Calendar events when `GOOGLE_CALENDAR_ICS_URLS` is set (saved in `/settings` or
+ * in the env; the saved value wins). Google failures never
  * throw; they show up as `google: "error"`.
  */
 export async function getCalendar(
@@ -30,9 +32,10 @@ export async function getCalendar(
   if (!valid) {
     throw new RepoError("invalid", `날짜 범위가 올바르지 않습니다(최대 ${MAX_RANGE_DAYS}일).`);
   }
+  const env = await settingsEnv();
   const [app, google] = await Promise.all([
     collectAppItems(valid, opts),
-    loadGoogleItems(valid).catch((error: unknown) => {
+    loadGoogleItems(valid, { env }).catch((error: unknown) => {
       console.warn("[calendar] Google calendar failed:", describeError(error));
       return { items: [], status: "error" as const };
     }),
@@ -40,6 +43,6 @@ export async function getCalendar(
   return {
     items: [...app, ...google.items].sort(compare),
     google: google.status,
-    googleWrite: googleWriteEnabled(),
+    googleWrite: googleWriteEnabled(env),
   };
 }

@@ -145,7 +145,8 @@ describe("getCalendar (app dates)", () => {
       return execute.mock.calls.length;
     };
     const empty = await count();
-    expect(empty).toBe(4);
+    // 4 app-date queries + 1 read of the saved settings (app_settings).
+    expect(empty).toBe(5);
     await seed();
     await db.insert(seminars).values(
       Array.from({ length: 40 }, (_, i) => ({
