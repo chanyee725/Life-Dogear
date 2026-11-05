@@ -32,14 +32,8 @@ export async function ItemNotes({
   return (
     <Section
       id="item-notes"
-      title={
-        <span className="flex items-baseline gap-2">
-          노트
-          {list.length ? (
-            <span className="text-xs font-normal text-muted tabular-nums">{list.length}</span>
-          ) : null}
-        </span>
-      }
+      title="노트"
+      count={list.length || undefined}
       action={
         archived || (!list.length && taskCount > 0) ? null : (
           // -mr-2: the last button's text lines up with the list's right edge.
@@ -59,12 +53,12 @@ export async function ItemNotes({
           {list.map((note) => (
             <ListRow
               key={note.id}
-              className="relative gap-4 py-2.5 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-hover has-[a:focus-visible]:bg-hover"
+              className="relative gap-3 py-2.5 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-hover has-[a:focus-visible]:bg-hover"
             >
               {/* after:inset-0 stretches the link over the whole row (bigger hit area, one tab stop). */}
               <Link
                 href={`/notes/${note.id}`}
-                className="min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-accent"
+                className="min-w-0 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-accent"
               >
                 {note.title}
               </Link>
@@ -76,7 +70,9 @@ export async function ItemNotes({
           ))}
         </RowList>
       ) : archived ? null : (
-        <EmptyAdd compact href={href}>＋ 새 노트</EmptyAdd>
+        <EmptyAdd compact href={href}>
+          ＋ 새 노트
+        </EmptyAdd>
       )}
     </Section>
   );

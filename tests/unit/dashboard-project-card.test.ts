@@ -13,15 +13,19 @@ describe("home project card helpers", () => {
   it("formats the due chip as D-n with tone by urgency", () => {
     expect(dueChip(null, today)).toBeNull();
     expect(dueChip("2026-11-29", today)).toEqual({
-      text: "D-24",
+      text: "D-24 · 11.29",
       label: "마감 2026년 11월 29일",
       tone: "gray",
     });
-    expect(dueChip("2026-11-08", today)).toMatchObject({ text: "D-3", tone: "orange" });
-    expect(dueChip("2026-11-09", today)).toMatchObject({ text: "D-4", tone: "gray" });
-    expect(dueChip(today, today)).toEqual({ text: "D-day", label: "마감 오늘", tone: "orange" });
+    expect(dueChip("2026-11-08", today)).toMatchObject({ text: "D-3 · 11.08", tone: "orange" });
+    expect(dueChip("2026-11-09", today)).toMatchObject({ text: "D-4 · 11.09", tone: "gray" });
+    expect(dueChip(today, today)).toEqual({
+      text: "D-day · " + today.slice(5).replace("-", "."),
+      label: "마감 오늘",
+      tone: "orange",
+    });
     expect(dueChip("2026-11-02", today)).toEqual({
-      text: "D+3",
+      text: "D+3 · 11.02",
       label: "마감 지남, 2026년 11월 2일",
       tone: "red",
     });

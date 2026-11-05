@@ -8,7 +8,7 @@ import { formatDue } from "@/components/tasks/format";
 export const DUE_SOON_DAYS = 3;
 
 export type DueChip = {
-  /** Visible text: `D-24`, `D-day` or `D+3`. */
+  /** Visible text: `D-24 · 11.29`, `D-day · 11.05` or `D+3 · 11.02`. */
   text: string;
   /** Spoken label from `formatDue`, e.g. `마감 지남, 2026년 11월 1일`. */
   label: string;
@@ -30,7 +30,8 @@ export function dueChip(dueDate: string | null | undefined, today: string): DueC
   const due = formatDue(dueDate, today);
   if (!due || !dueDate) return null;
   const left = daysBetween(today, dueDate);
-  const text = left > 0 ? `D-${left}` : left === 0 ? "D-day" : `D+${-left}`;
+  const days = left > 0 ? `D-${left}` : left === 0 ? "D-day" : `D+${-left}`;
+  const text = `${days} · ${dueDate.slice(5, 7)}.${dueDate.slice(8, 10)}`;
   const tone = due.tone === "red" ? "red" : left <= DUE_SOON_DAYS ? "orange" : "gray";
   return { text, label: due.label, tone };
 }

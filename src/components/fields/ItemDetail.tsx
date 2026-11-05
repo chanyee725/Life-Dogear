@@ -11,8 +11,8 @@ import type { SaveState } from "./save-queue";
  *   <DetailBody>{editor}</DetailBody>      // thin divider above the body
  *   …then <ConnectedItems/> below the form.
  *
- * Archive/delete live in `actions` as quiet text buttons (`QuietButton`, `DeleteItemButton`).
- * `DetailHeader` and `QuietButton` come from `@/components/ui`.
+ * Archive/delete live in `actions` in the `DetailMoreMenu` (⋯).
+ * `DetailHeader` comes from `@/components/ui`.
  */
 const SAVE_LABEL: Record<SaveState, string> = {
   idle: "",

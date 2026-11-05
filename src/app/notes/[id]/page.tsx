@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { seoulDate } from "@/components/calendar/model";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
@@ -46,12 +46,11 @@ export default async function NoteDetailPage({ params }: Props) {
           backLabel="노트"
           actions={
             <>
-              {note.archivedAt ? null : (
-                <ArchiveButton item={ref} archived={false} redirectTo="/notes" />
-              )}
-              <DeleteItemButton
-                action={deleteNote.bind(null, note.id)}
-                redirectTo="/notes"
+              <DetailMoreMenu
+                item={ref}
+                archived={Boolean(note.archivedAt)}
+                redirectTo={"/notes"}
+                deleteAction={deleteNote.bind(null, note.id)}
                 itemLabel="이 노트"
               />
             </>

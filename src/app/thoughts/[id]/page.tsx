@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isValidItemId } from "@/lib/ids";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
@@ -37,16 +37,11 @@ export default async function ThoughtDetailPage({ params }: Props) {
           backLabel="생각"
           actions={
             <>
-              {thought.archivedAt ? null : (
-                <ArchiveButton
-                  item={{ type: "thought", id: thought.id }}
-                  archived={false}
-                  redirectTo="/thoughts"
-                />
-              )}
-              <DeleteItemButton
-                action={deleteThought.bind(null, thought.id)}
-                redirectTo="/thoughts"
+              <DetailMoreMenu
+                item={{ type: "thought", id: thought.id }}
+                archived={Boolean(thought.archivedAt)}
+                redirectTo={"/thoughts"}
+                deleteAction={deleteThought.bind(null, thought.id)}
                 itemLabel="이 생각"
               />
             </>

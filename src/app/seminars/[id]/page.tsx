@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isValidItemId } from "@/lib/ids";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
@@ -37,16 +37,11 @@ export default async function SeminarDetailPage({ params }: Props) {
           backLabel="세미나"
           actions={
             <>
-              {seminar.archivedAt ? null : (
-                <ArchiveButton
-                  item={{ type: "seminar", id: seminar.id }}
-                  archived={false}
-                  redirectTo="/seminars"
-                />
-              )}
-              <DeleteItemButton
-                action={deleteSeminar.bind(null, seminar.id)}
-                redirectTo="/seminars"
+              <DetailMoreMenu
+                item={{ type: "seminar", id: seminar.id }}
+                archived={Boolean(seminar.archivedAt)}
+                redirectTo={"/seminars"}
+                deleteAction={deleteSeminar.bind(null, seminar.id)}
                 itemLabel="이 세미나"
               />
             </>

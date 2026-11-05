@@ -18,10 +18,9 @@ import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import { appendLinerMemoEntry } from "@/lib/liner";
 import { IMPORTANCE, READ_STATUS, type Importance, type ReadStatus } from "@/lib/enums";
 import type { Paper } from "@/lib/repo/papers";
-import { updatePaper } from "../actions";
-import { ArchivePaperButton } from "./ArchivePaperButton";
+import { deletePaper, updatePaper } from "../actions";
 import { AuthorsField } from "./AuthorsField";
-import { DeletePaperButton } from "./DeletePaperButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import {
   createLatestSender,
   createSaveQueue,
@@ -176,8 +175,15 @@ export function PaperEditor({
                   return null;
                 }}
               />
-              <ArchivePaperButton paperId={paper.id} archived={Boolean(paper.archivedAt)} />
-              <DeletePaperButton paperId={paper.id} title={paper.title} />
+              <DetailMoreMenu
+                item={{ type: "paper", id: paper.id }}
+                archived={Boolean(paper.archivedAt)}
+                redirectTo="/papers"
+                stayAfterArchive
+                deleteAction={deletePaper.bind(null, paper.id)}
+                itemLabel="이 논문"
+                deleteDescription={`“${paper.title}”과 PDF, 연결, 태그가 함께 삭제되며 되돌릴 수 없습니다.`}
+              />
               <Button variant="primary" size="sm" onClick={saveNow} className="ml-1">
                 저장
               </Button>

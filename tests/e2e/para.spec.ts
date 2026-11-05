@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createItem, uniqueTitle } from "./helpers";
+import { createItem, deleteCurrentItem, uniqueTitle } from "./helpers";
 
 const sidebar = (page: Page) => page.getByRole("navigation", { name: "주 메뉴" });
 
@@ -11,8 +11,7 @@ test("영역이 없으면 추천 영역을 골라 만든다", async ({ page }) =
     const first = page.locator("main ul a[href^='/areas/']").first();
     if ((await first.count()) === 0) break;
     await first.click();
-    await page.getByRole("button", { name: "삭제", exact: true }).first().click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "삭제" }).click();
+    await deleteCurrentItem(page);
     await expect(page).toHaveURL(/\/areas$/);
   }
 
@@ -34,7 +33,8 @@ test("보관 → 보관함 → 보관 해제", async ({ page }) => {
   const title = uniqueTitle("E2E archive");
   await createItem(page, "thoughts", title);
 
-  await page.getByRole("button", { name: "보관", exact: true }).click();
+  await page.getByRole("button", { name: "더보기" }).click();
+  await page.getByRole("menuitem", { name: "보관", exact: true }).click();
   await expect(page).toHaveURL(/\/thoughts$/);
   await expect(page.getByText(title)).toHaveCount(0);
 

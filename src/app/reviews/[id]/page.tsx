@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { DetailBody } from "@/components/fields/ItemDetail";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { LocalGraph } from "@/components/graph/LocalGraph";
@@ -128,12 +128,11 @@ export default async function ReviewDetailPage({ params }: Props) {
           actions={
             <>
               <CompleteButton id={review.id} completed={review.completedAt !== null} />
-              {review.archivedAt ? null : (
-                <ArchiveButton item={ref} archived={false} redirectTo={backHref} />
-              )}
-              <DeleteItemButton
-                action={deleteReview.bind(null, review.id)}
+              <DetailMoreMenu
+                item={ref}
+                archived={Boolean(review.archivedAt)}
                 redirectTo={backHref}
+                deleteAction={deleteReview.bind(null, review.id)}
                 itemLabel="이 회고"
               />
             </>
