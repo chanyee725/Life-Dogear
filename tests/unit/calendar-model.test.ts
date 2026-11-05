@@ -304,6 +304,7 @@ describe("sources (표시)", () => {
   it("defaults: papers off, others on; tasks have no choice", () => {
     expect(SOURCES.filter((s) => !DEFAULT_SOURCES[s])).toEqual(["paper"]);
     expect(SOURCES).not.toContain("task");
+    expect(SOURCES).not.toContain("project");
   });
 
   it("parses stored choices defensively", () => {
@@ -313,23 +314,24 @@ describe("sources (표시)", () => {
       paper: true,
       seminar: true,
     });
-    // An old stored `task: true` is ignored.
+    // An old stored `task: true` / `project: true` is ignored.
     expect(parseSources('{"task":true}').task).toBe(false);
+    expect(parseSources('{"project":true}').project).toBe(false);
   });
 
-  it("filters items; never tasks; Google only when set up", () => {
+  it("filters items; never tasks or projects; Google only when set up", () => {
     const list = [
       item("t", "2026-11-04"),
+      item("pj", "2026-11-04", { source: "project" }),
       item("s", "2026-11-04", { source: "seminar" }),
       item("p", "2026-11-04", { source: "paper" }),
       item("g", "2026-11-04", { source: "google" }),
     ];
     expect(visibleItems(list, DEFAULT_SOURCES, "ok").map((i) => i.id)).toEqual(["s", "g"]);
     expect(visibleItems(list, DEFAULT_SOURCES, "off").map((i) => i.id)).toEqual(["s"]);
-    expect(visibleItems(list, { ...DEFAULT_SOURCES, task: true }, "ok").map((i) => i.id)).toEqual([
-      "s",
-      "g",
-    ]);
+    expect(
+      visibleItems(list, { ...DEFAULT_SOURCES, task: true, project: true }, "ok").map((i) => i.id),
+    ).toEqual(["s", "g"]);
     const none = Object.fromEntries(
       SOURCES.map((s) => [s, s === "google"]),
     ) as typeof DEFAULT_SOURCES;

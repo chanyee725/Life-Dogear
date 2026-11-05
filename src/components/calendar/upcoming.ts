@@ -11,9 +11,9 @@ export const UPCOMING_MAX = 10;
 
 /**
  * Single-day sources the list draws from (goals, reviews are periods; papers are past reads;
- * tasks are listed under "오늘 할 일", not here).
+ * tasks and project deadlines are not calendar items).
  */
-const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set(["project", "seminar", "google"]);
+const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set(["seminar", "google"]);
 
 export type UpcomingGroup = { day: string; items: CalendarItem[] };
 

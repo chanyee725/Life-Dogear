@@ -16,26 +16,19 @@ export const SOURCE_LABEL: Readonly<Record<CalendarSource, string>> = {
 };
 
 /**
- * Popover order (= the table in 2절). Tasks are not drawn on the calendar (they live in the
- * task list and "오늘 할 일"), so they have no "표시" choice.
+ * Popover order (= the table in 2절). Tasks and project deadlines are not drawn on the calendar
+ * (they live in the task and project lists), so they have no "표시" choice.
  */
-export const SOURCES: readonly CalendarSource[] = [
-  "project",
-  "seminar",
-  "goal",
-  "review",
-  "paper",
-  "google",
-];
+export const SOURCES: readonly CalendarSource[] = ["seminar", "goal", "review", "paper", "google"];
 
 export const SOURCES_KEY = "rb-calendar-sources";
 
 export type SourceChoice = Readonly<Record<CalendarSource, boolean>>;
 
-/** Papers (last read day) start off; everything else on. Tasks are always off (see `SOURCES`). */
+/** Papers (last read day) start off; everything else on. Tasks and projects are always off. */
 export const DEFAULT_SOURCES: SourceChoice = {
   task: false,
-  project: true,
+  project: false,
   seminar: true,
   goal: true,
   review: true,
@@ -45,7 +38,7 @@ export const DEFAULT_SOURCES: SourceChoice = {
 
 /**
  * Stored JSON → choice; unknown or broken values fall back to the defaults per key. Keys outside
- * `SOURCES` (an old `task: true`) are ignored.
+ * `SOURCES` (an old `task: true` or `project: true`) are ignored.
  */
 export function parseSources(raw: string | null): SourceChoice {
   if (!raw) return DEFAULT_SOURCES;
@@ -63,7 +56,7 @@ export function parseSources(raw: string | null): SourceChoice {
   }
 }
 
-/** Items the user chose to see (never tasks; Google only when it is set up). */
+/** Items the user chose to see (never tasks or projects; Google only when it is set up). */
 export function visibleItems(
   items: readonly CalendarItem[],
   choice: SourceChoice,
@@ -71,7 +64,9 @@ export function visibleItems(
 ): CalendarItem[] {
   return items.filter(
     (it) =>
-      it.source !== "task" && choice[it.source] && (it.source !== "google" || google !== "off"),
+      SOURCES.includes(it.source) &&
+      choice[it.source] &&
+      (it.source !== "google" || google !== "off"),
   );
 }
 

@@ -10,7 +10,7 @@ import type { CalendarItem } from "@/lib/calendar/types";
 
 const item = (id: string, start: string, extra: Partial<CalendarItem> = {}): CalendarItem => ({
   id,
-  source: "project",
+  source: "seminar",
   title: id,
   start,
   allDay: !start.includes("T"),
@@ -25,7 +25,8 @@ describe("upcoming (다음 일정)", () => {
     const list = upcoming(
       [
         item("later", "2026-11-06", { source: "seminar" }),
-        item("task", TODAY, { source: "task" }), // under "오늘 할 일", not here
+        item("task", TODAY, { source: "task" }), // not a calendar item
+        item("deadline", "2026-11-05", { source: "project" }), // not a calendar item
         item("g15", "2026-11-04T15:00:00+09:00", { source: "google" }),
         item("g9", "2026-11-04T09:00:00+09:00", { source: "google" }), // over
         item("g13", "2026-11-04T13:00:00+09:00", {
@@ -56,11 +57,12 @@ describe("upcoming (다음 일정)", () => {
     ).toEqual(["doneToday"]);
   });
 
-  it("leaves out tasks, done items of later days, periods, papers and goals", () => {
+  it("leaves out tasks, projects, done items of later days, periods, papers and goals", () => {
     const list = upcoming(
       [
         item("done", "2026-11-10", { done: true }),
         item("task", "2026-11-05", { source: "task" }),
+        item("proj", "2026-11-05", { source: "project" }),
         item("rev", "2026-11-02", { source: "review", end: "2026-11-08" }),
         item("rev1", "2026-11-05", { source: "review", end: "2026-11-05" }),
         item("goal", "2026-10-01", { source: "goal", end: "2026-12-31" }),
@@ -109,7 +111,7 @@ describe("headings and origin", () => {
       "학위 논문",
     );
     expect(originLabel(item("a", TODAY, { source: "task" }))).toBe("");
-    expect(originLabel(item("p", TODAY))).toBe("마감");
+    expect(originLabel(item("p", TODAY, { source: "project" }))).toBe("마감");
     expect(originLabel(item("s", TODAY, { source: "seminar" }))).toBe("세미나");
     expect(originLabel(item("g", TODAY, { source: "google" }))).toBe("Google");
   });
