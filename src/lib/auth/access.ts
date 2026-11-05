@@ -5,7 +5,7 @@ import type { AuthMode } from "./mode";
  *
  * Every path goes through the middleware. Without sign-in only these stay reachable:
  * `/_next/static/**` (build assets; in dev also `/_next/webpack-hmr`), `/favicon.ico`,
- * `/robots.txt`, `/api/auth/**` (Auth.js), and the sign-in, refusal and setup pages.
+ * `/icon.svg`, `/apple-icon`, `/robots.txt`, `/api/auth/**` (Auth.js), and the sign-in, refusal and setup pages.
  * Pages redirect, `/api/**` answers JSON.
  *
  * Signed out (or in setup mode) only GET/HEAD reach pages and assets: any other method is
@@ -17,7 +17,8 @@ export const LOGIN_PATH = "/login";
 export const DENIED_PATH = "/denied";
 export const SETUP_PATH = "/setup";
 const AUTH_PAGES = new Set([LOGIN_PATH, DENIED_PATH, SETUP_PATH]);
-const STATIC_FILES = new Set(["/favicon.ico", "/robots.txt"]);
+// Exact pathnames only (the query string, e.g. Next's `?<hash>`, is not part of pathname).
+const STATIC_FILES = new Set(["/favicon.ico", "/robots.txt", "/icon.svg", "/apple-icon"]);
 
 export type Access =
   | { type: "next" }

@@ -25,6 +25,7 @@ import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
+import { BrandMark } from "@/components/brand-mark";
 import { Tooltip } from "@/components/ui/Tooltip";
 
 const ICONS: Record<NavIcon, () => ReactNode> = {
@@ -188,7 +189,8 @@ export function SidebarNav({
         )}
       >
         <div className="flex h-14 items-center justify-between pr-2 pl-5">
-          <Link href="/" className="text-base font-semibold tracking-tight">
+          <Link href="/" className="flex items-center gap-2 text-base font-semibold tracking-tight">
+            <BrandMark className="text-accent" />
             Life Dogear
           </Link>
           <Tooltip content="사이드바 접기" side="right">
