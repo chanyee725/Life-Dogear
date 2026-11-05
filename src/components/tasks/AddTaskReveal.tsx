@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@/components/ui";
 
 // Module-level flag (not an event): a click before the section hydrates is not lost.
@@ -31,7 +31,10 @@ export function AddTaskButton() {
  */
 export function RevealOnAddTask({ hidden, children }: { hidden: boolean; children: ReactNode }) {
   const revealedNow = useSyncExternalStore(subscribe, () => revealed, () => false);
+  // Latch: a section that had tasks on first render stays mounted when the last one is
+  // deleted, so TaskList keeps its 되돌리기 toast and any half-typed add input.
+  const [hadTasks] = useState(!hidden);
   // Leaving the page forgets the reveal, so the next project starts hidden again.
   useEffect(() => () => void (revealed = false), []);
-  return !hidden || revealedNow ? <>{children}</> : null;
+  return hadTasks || !hidden || revealedNow ? <>{children}</> : null;
 }
