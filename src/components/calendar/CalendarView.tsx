@@ -18,7 +18,7 @@ import { DateField } from "@/components/fields/DateField";
 import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
-import { Button, cn, Input, Spinner } from "@/components/ui";
+import { Button, Checkbox, cn, Input, Spinner } from "@/components/ui";
 import { AnchoredMenu } from "@/components/ui/Menu";
 import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
@@ -791,11 +791,10 @@ export function CalendarView({
                       off && "opacity-60",
                     )}
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={choice[s] && !off}
                       disabled={off}
-                      onChange={(e) => setChoice({ ...choice, [s]: e.target.checked })}
+                      onCheckedChange={(checked) => setChoice({ ...choice, [s]: checked })}
                     />
                     <SourceIcon source={s} theme={theme} />
                     <span className="text-sm text-fg">{SOURCE_LABEL[s]}</span>

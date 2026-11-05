@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActionResult } from "@/app/_actions/result";
 import { AUTOSAVE_DELAY, ItemForm, SAVED_TOAST_MS } from "@/components/fields/ItemForm";
+import { AppToaster } from "@/components/ui/Toast";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), back: vi.fn() }),
@@ -36,11 +37,17 @@ async function setup(ok = true) {
   document.body.append(host);
   root = createRoot(host);
   await act(async () => {
+    // Toasts render into sonner's viewport, mounted first as in the root layout.
     root!.render(
       createElement(
-        Form,
-        { mode: "edit", action, basePath: "/notes", backLabel: "노트" },
-        createElement("input", { name: "title", defaultValue: "옛 제목" }),
+        "div",
+        null,
+        createElement(AppToaster),
+        createElement(
+          Form,
+          { mode: "edit", action, basePath: "/notes", backLabel: "노트" },
+          createElement("input", { name: "title", defaultValue: "옛 제목" }),
+        ),
       ),
     );
   });
@@ -63,15 +70,30 @@ async function setup(ok = true) {
         await vi.advanceTimersByTimeAsync(ms);
       });
     },
+    /** Let sonner finish removing a dismissed toast (several steps, each its own act). */
+    async settle() {
+      for (let i = 0; i < 3; i++) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(250);
+        });
+      }
+    },
     async clickSave() {
       await act(async () => {
         host!.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      // sonner adds the toast on a 0 ms timer after the save commits.
+      await act(async () => {
         await vi.advanceTimersByTimeAsync(0);
       });
     },
     async pressModS() {
       await act(async () => {
         window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", metaKey: true }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      await act(async () => {
         await vi.advanceTimersByTimeAsync(0);
       });
     },
@@ -86,11 +108,12 @@ describe("ItemForm saved toast", () => {
     expect(f.action).toHaveBeenCalledTimes(1);
     const [toast] = f.toasts();
     expect(toast).toBeDefined();
-    expect(toast!.className).toContain("top-4");
-    expect(toast!.className).toContain("md:top-20");
-    expect(toast!.className).toContain("right-4");
-    expect(toast!.className).toContain("z-50");
+    // Top right of the viewport (AppToaster's top offset clears the header's buttons).
+    const item = toast!.closest("[data-sonner-toast]");
+    expect(item?.getAttribute("data-y-position")).toBe("top");
+    expect(item?.getAttribute("data-x-position")).toBe("right");
     await f.wait(SAVED_TOAST_MS + 10);
+    await f.settle();
     expect(f.toasts()).toHaveLength(0);
   });
 
@@ -123,6 +146,7 @@ describe("ItemForm saved toast", () => {
     await f.wait(SAVED_TOAST_MS - 500); // past the first timer
     expect(f.toasts()).toHaveLength(1);
     await f.wait(600);
+    await f.settle();
     expect(f.toasts()).toHaveLength(0);
   });
 

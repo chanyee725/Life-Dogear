@@ -90,10 +90,14 @@ test("저장 토스트: 저장·Cmd+S면 오른쪽 위에 하나만, 자동 저�
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole("button", { name: "저장", exact: true }).click();
   await expect(toast).toHaveCount(1);
+  // sonner slides it in from above: measure once it has settled.
+  const save = (await page.getByRole("button", { name: "저장", exact: true }).boundingBox())!;
+  await expect
+    .poll(async () => (await toast.boundingBox())!.y)
+    .toBeGreaterThanOrEqual(save.y + save.height);
   const box = (await toast.boundingBox())!;
   expect(1280 - (box.x + box.width)).toBeLessThan(40);
   // Below the header's buttons (저장 sits in the top right corner).
-  const save = (await page.getByRole("button", { name: "저장", exact: true }).boundingBox())!;
   expect(box.y).toBeGreaterThanOrEqual(save.y + save.height);
   expect(box.y).toBeLessThan(100);
   await page.mouse.move(0, 400); // keep the pointer off it (hover pauses the timer)

@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { cn } from "./cn";
+import { RadioGroup } from "./primitives/radio-group";
 import { segItem, segmentedNextIndex, segTrack } from "./segmented-style";
 
 export type SegmentedOption<T extends string> = {
@@ -12,10 +14,10 @@ export type SegmentedOption<T extends string> = {
 };
 
 /**
- * Segmented radio group (`role="radiogroup"`). Icon options show the label as `title`.
- * Arrow keys (←/↑ previous, →/↓ next, wrapping) move and select; only the checked option
- * (or the first, when none is) is in the Tab order. `size="md"` is the larger icon form
- * (h-7 w-8, list view toggle); `fill` stretches the options across the track.
+ * Segmented radio group (Radix RadioGroup: `role="radiogroup"`). Icon options show the
+ * label as `title`. Arrow keys (←/↑ previous, →/↓ next, wrapping) move and select; only the
+ * checked option is in the Tab order (Radix roving tabindex). `size="md"` is the larger icon form (h-7 w-8, list
+ * view toggle); `fill` stretches the options across the track.
  */
 export function Segmented<T extends string>({
   options,
@@ -36,40 +38,36 @@ export function Segmented<T extends string>({
   fill?: boolean;
 }) {
   return (
-    <div
-      role="radiogroup"
+    <RadioGroup
       aria-label={ariaLabel}
+      // "" checks nothing (Radix needs a controlled string).
+      value={value ?? ""}
+      onValueChange={(next) => onChange(next as T)}
+      loop
       className={cn(segTrack, className)}
-      onKeyDown={(e) => {
-        const nextIndex = segmentedNextIndex(
-          options.findIndex((o) => o.value === value),
-          options.length,
-          e.key,
-        );
-        if (nextIndex === null) return;
-        e.preventDefault();
-        const next = options[nextIndex];
-        if (!next) return;
-        onChange(next.value);
-        e.currentTarget
-          .querySelector<HTMLElement>(`[data-value="${CSS.escape(next.value)}"]`)
-          ?.focus();
-      }}
     >
-      {options.map((o, i) => {
+      {options.map((o, index) => {
         const active = o.value === value;
-        const focusable = value === null ? i === 0 : active;
         return (
-          <button
+          <RadioGroupPrimitive.Item
             key={o.value}
-            type="button"
-            role="radio"
+            value={o.value}
             data-value={o.value}
-            aria-checked={active}
             aria-label={o.icon ? o.label : undefined}
             title={o.icon ? o.label : undefined}
-            tabIndex={focusable ? 0 : -1}
-            onClick={() => onChange(o.value)}
+            // Arrows move and select at once (Radix's roving focus waits a 0 ms timer, so a
+            // fast second press would start from the old option); preventDefault skips it.
+            onKeyDown={(e) => {
+              // From the focused option, not `value`: it may not have re-rendered yet.
+              const i = segmentedNextIndex(index, options.length, e.key);
+              const next = i === null ? undefined : options[i];
+              if (!next) return;
+              e.preventDefault();
+              onChange(next.value);
+              e.currentTarget.parentElement
+                ?.querySelector<HTMLElement>(`[data-value="${CSS.escape(next.value)}"]`)
+                ?.focus();
+            }}
             className={cn(
               segItem(active),
               o.icon ? "px-0" : undefined,
@@ -78,9 +76,9 @@ export function Segmented<T extends string>({
             )}
           >
             {o.icon ?? o.label}
-          </button>
+          </RadioGroupPrimitive.Item>
         );
       })}
-    </div>
+    </RadioGroup>
   );
 }

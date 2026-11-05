@@ -22,7 +22,7 @@ import {
 import type { ActionResult } from "@/app/_actions/result";
 import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
-import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
+import { Button, buttonClass, Checkbox, cn, emptyAddBoxClass } from "@/components/ui";
 import { Menu, MenuContent, MenuItem, MenuTrigger, type MenuAction } from "@/components/ui/Menu";
 import {
   Popover as PopoverRoot,
@@ -181,7 +181,7 @@ export function TaskList({
     const row = root?.querySelector<HTMLElement>(`[data-task-row="${taskId}"]`);
     if (!root || !row || !row.contains(document.activeElement)) return;
     const target =
-      row.nextElementSibling?.querySelector<HTMLElement>("input[type=checkbox]") ??
+      row.nextElementSibling?.querySelector<HTMLElement>("[role=checkbox]") ??
       root.querySelector<HTMLElement>("[data-task-add]") ??
       root.closest("section")?.querySelector<HTMLElement>("h2") ??
       root;
@@ -587,11 +587,9 @@ function TaskRow({
         )
       ) : null}
       <label className="grid size-6 shrink-0 place-items-center">
-        <input
-          type="checkbox"
-          className="size-4"
+        <Checkbox
           checked={isDone}
-          onChange={(e) => onToggle(task, e.target.checked)}
+          onCheckedChange={(checked) => onToggle(task, checked)}
           aria-label={`완료: ${task.title}`}
         />
       </label>

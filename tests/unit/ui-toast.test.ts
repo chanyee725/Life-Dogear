@@ -2,11 +2,14 @@
 import { act, createElement, useState, type ComponentProps, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Toast } from "@/components/ui/Toast";
+import { AppToaster, Toast } from "@/components/ui/Toast";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const MS = 2500;
+// sonner adds a toast on a 0 ms timer; after onDone it removes it in steps (dismiss →
+// exit animation → unmount), each committed only when an act ends, so `settle` uses several.
+const EXIT_STEPS = 3;
 // Toast with optional children, so they can go to createElement as arguments.
 const T = Toast as (
   props: Omit<ComponentProps<typeof Toast>, "children"> & { children?: ReactNode },
@@ -24,9 +27,13 @@ afterEach(() => {
 
 function Host() {
   const [shown, setShown] = useState(true);
-  return shown
-    ? createElement(T, { ms: MS, onDone: () => setShown(false) }, "저장되었습니다")
-    : null;
+  // The toast renders into sonner's viewport (subscribed first), as in the root layout.
+  return createElement(
+    "div",
+    null,
+    createElement(AppToaster),
+    shown ? createElement(T, { ms: MS, onDone: () => setShown(false) }, "저장되었습니다") : null,
+  );
 }
 
 async function setup() {
@@ -34,7 +41,8 @@ async function setup() {
   document.body.append(host);
   root = createRoot(host);
   await act(async () => root!.render(createElement(Host)));
-  const toast = () => host!.querySelector<HTMLElement>('[role="status"]');
+  await act(async () => void (await vi.advanceTimersByTimeAsync(0)));
+  const toast = () => document.querySelector<HTMLElement>('[role="status"]');
   const wait = (ms: number) => act(async () => void (await vi.advanceTimersByTimeAsync(ms)));
   // React listens for mouseover/mouseout (mouseenter/leave are derived from them).
   const fire = (type: string, target: Element | null = toast(), related: Element | null = null) =>
@@ -44,7 +52,10 @@ async function setup() {
         type.startsWith("focus") ? new FocusEvent(type, init) : new MouseEvent(type, init),
       );
     });
-  return { toast, wait, fire };
+  const settle = async () => {
+    for (let i = 0; i < EXIT_STEPS; i++) await wait(250);
+  };
+  return { toast, wait, fire, settle };
 }
 
 describe("Toast", () => {
@@ -57,6 +68,7 @@ describe("Toast", () => {
     await t.wait(MS - 100);
     expect(t.toast()).not.toBeNull();
     await t.wait(200);
+    await t.settle();
     expect(t.toast()).toBeNull();
   });
 
@@ -67,6 +79,7 @@ describe("Toast", () => {
     expect(t.toast()).not.toBeNull();
     await t.fire("focusout");
     await t.wait(MS + 10);
+    await t.settle();
     expect(t.toast()).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AddEventButton } from "@/components/calendar/AddEventButton";
+import { AppToaster } from "@/components/ui/Toast";
 import {
   ADDED,
   addEventError,
@@ -147,10 +148,20 @@ describe("AddEventButton", () => {
     host = document.createElement("div");
     document.body.append(host);
     root = createRoot(host);
-    await act(async () => root!.render(createElement(AddEventButton, props)));
+    // Toasts render into sonner's viewport, mounted first as in the root layout.
+    await act(async () =>
+      root!.render(
+        createElement("div", null, createElement(AppToaster), createElement(AddEventButton, props)),
+      ),
+    );
     return host;
   }
   const button = () => document.querySelector<HTMLButtonElement>("[data-testid=add-event]")!;
+  /** The toast's text once sonner has added it (on a 0 ms timer). */
+  const toastText = async () => {
+    await act(async () => void (await new Promise((r) => setTimeout(r, 0))));
+    return document.querySelector("[role=status]")?.textContent;
+  };
   const type = (el: HTMLInputElement, value: string) => {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
     setter.call(el, value);
@@ -192,7 +203,7 @@ describe("AddEventButton", () => {
       clientId: expect.stringMatching(/^[0-9a-f]{32}$/),
     });
     expect(onAdded).toHaveBeenCalledWith(ITEM);
-    expect(document.querySelector("[role=status]")?.textContent).toBe(ADDED);
+    expect(await toastText()).toBe(ADDED);
   });
 
   it("shows the mapped notice on failure and keeps the form", async () => {
@@ -209,9 +220,7 @@ describe("AddEventButton", () => {
       document.querySelector("form")!.requestSubmit();
     });
     expect(onAdded).not.toHaveBeenCalled();
-    expect(document.querySelector("[role=status]")?.textContent).toBe(
-      addEventError("not_configured"),
-    );
+    expect(await toastText()).toBe(addEventError("not_configured"));
     expect(document.querySelector("form")).not.toBeNull();
   });
 

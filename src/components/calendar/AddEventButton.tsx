@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useCallback, useId, useRef, useState, type FormEvent } from "react";
 import { DateField } from "@/components/fields/DateField";
-import { Button, Dialog, Field, Input, type ButtonSize } from "@/components/ui";
+import { Button, Dialog, Field, Input, Toast, type ButtonSize } from "@/components/ui";
 import type { CalendarItem } from "@/lib/calendar/types";
 import {
   ADDED,
@@ -157,22 +157,11 @@ export function AddEventButton({
           </div>
         </form>
       </Dialog>
-      {toast.n ? <Toast key={toast.n} text={toast.text} onDone={hideToast} /> : null}
+      {toast.n ? (
+        <Toast key={toast.n} ms={TOAST_MS} onDone={hideToast}>
+          {toast.text}
+        </Toast>
+      ) : null}
     </>
-  );
-}
-
-function Toast({ text, onDone }: { text: string; onDone: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onDone, TOAST_MS);
-    return () => clearTimeout(timer);
-  }, [onDone]);
-  return (
-    <div
-      role="status"
-      className="fixed right-4 bottom-4 z-50 rounded-lg border border-border bg-bg px-3 py-2 text-[13px] text-fg shadow-overlay"
-    >
-      {text}
-    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { cn } from "@/components/ui/cn";
 import { FOCUS_FIELD } from "./focus-field";
 
@@ -69,12 +70,11 @@ export function FocusPicker({
                     (o.stale || o.gone) && "text-muted",
                   )}
                 >
-                  <input
+                  <Checkbox
                     id={id}
-                    type="checkbox"
                     checked={checked}
                     disabled={!checked && (full || o.gone)}
-                    onChange={() => toggle(o.key)}
+                    onCheckedChange={() => toggle(o.key)}
                     // Not a form field itself: the hidden input carries the value.
                     form="__none"
                   />
