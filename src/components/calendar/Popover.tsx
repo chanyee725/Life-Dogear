@@ -2,19 +2,15 @@
 
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
-import {
-  Popover as PopoverRoot,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/primitives/popover";
+import { Popover as PopoverPrimitive } from "radix-ui";
+import { Popover as PopoverRoot, PopoverAnchor } from "@/components/ui/primitives/popover";
 
 const GAP = 4;
 const MARGIN = 8;
 
 /**
  * Radix popover pinned to `anchor` (a virtual anchor: callers keep their own opener).
- * Radix places it (flips above when there is no room below) and portals it to `body`,
- * so grid `overflow-hidden` does not clip it. `Esc` and outside presses close it; the
+ * Radix places it (flips above when there is no room below). `Esc` and outside presses close it; the
  * caller puts focus back. `hidden` keeps it mounted but closed (its fields keep their
  * state); showing it again moves focus inside.
  *
@@ -63,7 +59,10 @@ export function Popover({
   return (
     <PopoverRoot open={!hidden}>
       {anchor ? <PopoverAnchor virtualRef={virtualRef as { current: HTMLElement }} /> : null}
-      <PopoverContent
+      {/* Content without the primitive's Portal: PopoverPortal unmounts when closed, which
+          would drop `hidden`'s kept state. Radix places it `position: fixed`, so the grid's
+          `overflow-hidden` still does not clip it. */}
+      <PopoverPrimitive.Content
         ref={ref}
         forceMount
         id={id}
@@ -93,13 +92,13 @@ export function Popover({
           }
         }}
         className={cn(
-          "w-auto rounded-md border border-border bg-popover p-0 text-popover-foreground shadow-md outline-none",
+          "z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none",
           "origin-(--radix-popover-content-transform-origin) transition-[opacity,scale] duration-100 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
           className,
         )}
       >
         {children}
-      </PopoverContent>
+      </PopoverPrimitive.Content>
     </PopoverRoot>
   );
 }
