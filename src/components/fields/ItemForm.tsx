@@ -26,6 +26,7 @@ import {
 import { SaveStatus } from "./ItemDetail";
 import { createHeldBaseline, createSaveQueue, type SaveState } from "./save-queue";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
+import { itemPath, type ItemPathKind } from "@/lib/item-path";
 
 export type ItemFormAction = (form: FormData) => Promise<ActionResult<{ id: string }>>;
 
@@ -49,7 +50,7 @@ type Props = {
 
 /**
  * Item form with the shared detail header.
- * - `create`: explicit 저장 (button or Cmd/Ctrl+S), then navigates to `${basePath}/${id}`.
+ * - `create`: explicit 저장 (button or Cmd/Ctrl+S), then navigates to the new item's `itemPath`.
  * - `edit`: autosaves about a second after edits stop; Cmd/Ctrl+S or 저장 saves now.
  *   Only fields that differ from the last saved values are sent; failed fields are kept
  *   and retried. Unsaved edits show "저장 안 됨" and guard leaving the page.
@@ -129,7 +130,14 @@ function CreateForm({ action, basePath, backLabel, actions, children, className 
         return;
       }
       setDirty(false);
-      router.push(`${basePath}/${result.data.id}`);
+      const title = data.get("title");
+      router.push(
+        itemPath(
+          basePath.slice(1) as ItemPathKind,
+          result.data.id,
+          typeof title === "string" ? title : null,
+        ),
+      );
     });
   }
 

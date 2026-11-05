@@ -24,6 +24,7 @@ import { Badge, ListEmpty, NewItemButton, TagChip } from "@/components/ui";
 import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
 import { papers } from "@/lib/repo";
 import type { Paper, PaperSort } from "@/lib/repo/papers";
+import { itemPath } from "@/lib/item-path";
 
 export const metadata: Metadata = { title: "논문" };
 export const dynamic = "force-dynamic";
@@ -230,7 +231,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
             groups={groups}
             columns={columns}
             getKey={(p) => p.id}
-            getHref={(p) => `/papers/${p.id}`}
+            getHref={(p) => itemPath("papers", p.id, p.title)}
             empty={empty}
           />
         }
@@ -239,7 +240,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
             items={list}
             groups={groups}
             getKey={(p) => p.id}
-            getHref={(p) => `/papers/${p.id}`}
+            getHref={(p) => itemPath("papers", p.id, p.title)}
             renderCard={(p) => <PaperCard paper={p} />}
             empty={empty}
           />

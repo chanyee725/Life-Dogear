@@ -6,9 +6,10 @@
  * Convention: `undefined` means "field not sent" and is passed through so patch
  * updates leave the column alone.
  */
-import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
+import { ITEM_TYPE } from "@/lib/enums";
 import { isValidItemId } from "@/lib/ids";
 import { RepoError, type ItemRef } from "@/lib/repo";
+import { itemRoutePattern } from "@/lib/item-href";
 
 const invalid = (field: string) => new RepoError("invalid", `${field} 값이 올바르지 않습니다.`);
 
@@ -117,5 +118,8 @@ export function formText(form: FormData, key: string): string | undefined {
   return value;
 }
 
-/** Detail page path of an item, e.g. `/papers/<id>`. */
-export const itemPath = (ref: ItemRef): string => `${ITEM_ROUTE[ref.type]}/${ref.id}`;
+/**
+ * Detail route pattern of an item, e.g. `/papers/[id]`, for `revalidatePath(…, "page")`.
+ * Detail URLs carry a slug (`itemPath`), so a literal `/papers/<id>` would miss them.
+ */
+export const itemRoute = (ref: Pick<ItemRef, "type">): string => itemRoutePattern(ref.type);

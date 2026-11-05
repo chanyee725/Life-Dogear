@@ -20,6 +20,7 @@ import { Badge, ListEmpty, formatRelative, NewItemButton } from "@/components/ui
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import { thoughts } from "@/lib/repo";
 import type { Thought, ThoughtSort } from "@/lib/repo/thoughts";
+import { itemPath } from "@/lib/item-path";
 
 export const metadata: Metadata = { title: "생각" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ function groupThoughts(list: Thought[], group: ThoughtGroup): ItemGroup<Thought>
 }
 
 const BASE = "/thoughts";
-const href = (t: Thought) => `/thoughts/${t.id}`;
+const href = (t: Thought) => itemPath("thoughts", t.id, t.title);
 
 const kindBadge = (t: Thought) => (
   <Badge tone={THOUGHT_KIND.tone(t.kind)}>{THOUGHT_KIND.label(t.kind)}</Badge>

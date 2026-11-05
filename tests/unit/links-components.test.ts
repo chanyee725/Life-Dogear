@@ -6,6 +6,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 import { ConnectedItems } from "@/components/links";
 import { archive, areas, links, papers, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 beforeEach(async () => {
   await useFreshDb();
@@ -26,8 +27,8 @@ describe("ConnectedItems", () => {
     const html = await render(P);
     expect(html).toContain('role="region" aria-label="연결된 항목"');
     expect(html).toMatch(/연결된 항목<span[^>]*>2<\/span>/);
-    expect(html).toContain(`href="/seminars/${seminar.id}"`);
-    expect(html).toContain(`href="/thoughts/${thought.id}"`);
+    expect(html).toContain(`href="${itemPath("seminars", seminar.id, seminar.title)}"`);
+    expect(html).toContain(`href="${itemPath("thoughts", thought.id, thought.title)}"`);
     expect(html).toContain(">세미나<");
     expect(html).toContain(">생각<");
     expect(html).toContain("생각 &lt;b&gt;X&lt;/b&gt;");
@@ -42,7 +43,7 @@ describe("ConnectedItems", () => {
     await links.link(P, { type: "area", id: area.id });
     await archive.archive({ type: "area", id: area.id });
     const html = await render(P);
-    expect(html).toContain(`href="/areas/${area.id}"`);
+    expect(html).toContain(`href="${itemPath("areas", area.id, area.title)}"`);
     expect(html).toContain(">영역<");
     expect(html).toContain(">보관됨<");
   });
@@ -72,13 +73,15 @@ describe("ConnectedItems indirect (area)", () => {
     await links.link({ type: "paper", id: direct.id }, { type: "project", id: other.id });
 
     const html = renderToStaticMarkup(await ConnectedItems({ item: A, indirect: true }));
-    expect(html).toContain(`href="/notes/${note.id}"`);
+    expect(html).toContain(`href="${itemPath("notes", note.id, note.title)}"`);
     expect(html).toContain(">MoveIt2<");
-    expect(html).toContain(`href="/projects/${other.id}"`);
+    expect(html).toContain(`href="${itemPath("projects", other.id, other.title)}"`);
     expect(html).toContain(">직접 논문<");
     // direct paper once (direct row only), area project not listed as indirect
-    expect(html.match(new RegExp(`href="/papers/${direct.id}"`, "g"))?.length).toBe(1);
-    expect(html).not.toContain(`href="/projects/${project.id}"`);
+    expect(
+      html.match(new RegExp(`href="${itemPath("papers", direct.id, direct.title)}"`, "g"))?.length,
+    ).toBe(1);
+    expect(html).not.toContain(`href="${itemPath("projects", project.id, project.title)}"`);
     const plain = renderToStaticMarkup(await ConnectedItems({ item: A }));
     expect(plain).not.toContain("경유");
     // unlink buttons only on the single direct row

@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ITEM_ROUTE } from "@/lib/enums";
 import { LIST_CHANGED, resolveAnchor } from "@/lib/tasks/order";
 import { RepoError, tasks } from "@/lib/repo";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { parseId } from "./parse";
 import { runAction, type ActionResult } from "./result";
+import { itemRoutePattern } from "@/lib/item-href";
 
 const NOT_FOUND = "할 일을 찾을 수 없습니다.";
 const PARENT_TYPES = new Set(["project", "goal", "area"]);
@@ -40,7 +40,7 @@ function revalidateFor(
         ? { type: parent.parentType, id: parent.parentId }
         : null
       : parent;
-  if (p) revalidatePath(`${ITEM_ROUTE[p.type as "project"]}/${p.id}`);
+  if (p) revalidatePath(itemRoutePattern(p.type as "project"), "page");
 }
 
 export async function createTask(input: {

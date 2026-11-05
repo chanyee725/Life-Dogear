@@ -6,9 +6,10 @@ import { seoulDate, spokenDay } from "@/components/calendar/model";
 import { addDays } from "@/components/tasks/format";
 import { neglectedImportant, type ScoredNode } from "@/lib/cosmos/score";
 import type { CosmosScores } from "@/lib/cosmos/types";
-import { ITEM_ROUTE, ITEM_TYPE, type ItemType } from "@/lib/enums";
+import { ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { parseGraphNodeId } from "@/lib/graph/types";
 import type { GoalNode } from "@/lib/repo/goals";
+import { itemHref } from "@/lib/item-href";
 
 /** Section caps (4.1). */
 export const TODAY_MAX = 8;
@@ -115,7 +116,7 @@ export function revisitStars(data: CosmosScores, now: Date, limit = STARS_MAX): 
       type: ref.type,
       id: ref.id,
       title: byId.get(s.id)!.title,
-      href: `${ITEM_ROUTE[ref.type]}/${encodeURIComponent(ref.id)}`,
+      href: itemHref(ref.type, ref.id, byId.get(s.id)!.title),
       lastActiveAt: s.lastActiveAt,
     });
     if (out.length >= limit) break;

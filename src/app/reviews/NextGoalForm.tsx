@@ -7,6 +7,7 @@ import { safeAction } from "@/components/links/safe-action";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
 import { createGoalFromReview } from "./actions";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * Creates the next period's goal straight from a quarter/year review and links it.
@@ -82,7 +83,7 @@ export function NextGoalForm({
         <ul className="flex flex-col gap-0.5 text-[13px]" aria-label="만든 목표">
           {created.map((g) => (
             <li key={g.id}>
-              <Link href={`/goals/${g.id}`} className="text-muted hover:text-fg">
+              <Link href={itemPath("goals", g.id, g.title)} className="text-muted hover:text-fg">
                 ✓ {g.title} →
               </Link>
             </li>

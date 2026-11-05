@@ -3,6 +3,7 @@ import type { Paper } from "@/lib/repo/papers";
 import { Section, cardClass, cardLinkClass, cn } from "@/components/ui";
 import { paperByline } from "./format";
 import { LatestReading } from "./LatestReading";
+import { itemPath } from "@/lib/item-path";
 
 /** Papers being read, most recent first, each opening the viewer at the saved spot. */
 export function ContinueReading({ papers }: { papers: Paper[] }) {
@@ -24,7 +25,7 @@ export function ContinueReading({ papers }: { papers: Paper[] }) {
           return (
             <li key={paper.id}>
               <Link
-                href={paper.pdfPath ? `/papers/${paper.id}/read` : `/papers/${paper.id}`}
+                href={`${itemPath("papers", paper.id, paper.title)}${paper.pdfPath ? "/read" : ""}`}
                 className={cn(cardClass, cardLinkClass, "flex h-full flex-col gap-2")}
               >
                 <span className="line-clamp-2 font-medium text-fg">{paper.title}</span>

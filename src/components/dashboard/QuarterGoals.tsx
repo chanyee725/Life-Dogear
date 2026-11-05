@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Section } from "@/components/ui";
 import { GOALS_MAX, type QuarterGoal } from "./today";
+import { itemPath } from "@/lib/item-path";
 
 /** Home "분기 목표" (4.3): active quarter goals with a thin progress bar. Hidden when empty. */
 export function QuarterGoals({ goals }: { goals: QuarterGoal[] }) {
@@ -21,7 +22,7 @@ export function QuarterGoals({ goals }: { goals: QuarterGoal[] }) {
             <li key={g.id} className="flex flex-col gap-1.5 py-1.5">
               <div className="flex items-baseline gap-2">
                 <Link
-                  href={`/goals/${encodeURIComponent(g.id)}`}
+                  href={itemPath("goals", g.id, g.title)}
                   className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
                 >
                   {g.title}

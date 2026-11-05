@@ -8,6 +8,7 @@ import { isValidItemId } from "@/lib/ids";
 import type { ItemRef } from "@/lib/repo/shared";
 import type { ItemSummary } from "@/lib/repo/items";
 import { titleKey } from "@/lib/wikilinks";
+import { itemHref as detailHref } from "@/lib/item-href";
 
 /**
  * Client cache for `[[title]]` → item. Wiki-link node views ask for their title; asks
@@ -67,7 +68,8 @@ export function useWikiTarget(title: string): Entry {
 }
 
 /** Detail page path of an item. */
-export const itemHref = (ref: ItemRef) => `${ITEM_ROUTE[ref.type]}/${encodeURIComponent(ref.id)}`;
+export const itemHref = (ref: ItemRef, title?: string | null) =>
+  detailHref(ref.type, ref.id, title);
 
 /** The item whose detail page `pathname` is (`/papers/<id>`), else null (lists, new pages). */
 export function itemFromPath(pathname: string | null): ItemRef | null {

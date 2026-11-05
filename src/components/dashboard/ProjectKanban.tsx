@@ -5,6 +5,7 @@ import { PROJECT_STAGE } from "@/lib/enums";
 import type { Project, StageColumn } from "@/lib/repo/projects";
 import { seoulToday } from "./today";
 import { dueChip } from "./project-card";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * Research projects by stage (submitted excluded); used inside the home
@@ -113,7 +114,7 @@ export function KanbanCard({
   const tags = project.tags.filter((t) => t !== hideTag);
   return (
     <Link
-      href={`/projects/${project.id}`}
+      href={itemPath("projects", project.id, project.title)}
       className="flex flex-col gap-1.5 rounded-md border border-border bg-bg p-3 text-sm transition-colors hover:border-border-strong"
     >
       <span className="line-clamp-2 font-medium text-fg">{project.title}</span>

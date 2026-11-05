@@ -3,14 +3,13 @@
  * `today` is the local date (`YYYY-MM-DD`) decided once on the server.
  */
 import { formatDate } from "@/components/ui/format";
-import { ITEM_ROUTE } from "@/lib/enums";
+import { itemHref } from "@/lib/item-href";
 
 /** Page of a task's parent, or null for inbox tasks. */
 export const parentHref = (t: {
   parentType: "project" | "goal" | "area" | null;
   parentId: string | null;
-}): string | null =>
-  t.parentType && t.parentId ? `${ITEM_ROUTE[t.parentType]}/${t.parentId}` : null;
+}): string | null => (t.parentType && t.parentId ? itemHref(t.parentType, t.parentId) : null);
 
 export type DueTone = "muted" | "amber" | "red";
 

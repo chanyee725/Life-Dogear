@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formText,
-  itemPath,
+  itemRoute,
   optionalEnum,
   optionalInt,
   optionalNullableText,
@@ -33,7 +33,7 @@ describe("action input parsers", () => {
     ]) {
       expect(() => parseItemRef(bad)).toThrow(RepoError);
     }
-    expect(itemPath({ type: "seminar", id: "s1" })).toBe("/seminars/s1");
+    expect(itemRoute({ type: "seminar" })).toBe("/seminars/[id]");
   });
 
   it("passes undefined through and normalizes null", () => {

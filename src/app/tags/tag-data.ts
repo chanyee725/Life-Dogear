@@ -2,7 +2,6 @@ import {
   GOAL_HORIZON,
   GOAL_STATUS,
   IMPORTANCE,
-  ITEM_ROUTE,
   ITEM_TYPE,
   NOTE_SOURCE_KIND,
   PROJECT_KIND,
@@ -18,6 +17,8 @@ import {
 import { formatDate } from "@/components/ui/format";
 import { areas, goals, notes, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
+import { itemHref } from "@/lib/item-href";
+import { tagPath } from "@/lib/item-path";
 
 export type TagSort = "count" | "name";
 
@@ -29,7 +30,7 @@ export function sortTags(list: readonly TagCount[], sort: TagSort): TagCount[] {
   return [...list].sort(sort === "name" ? byName : (a, b) => b.count - a.count || byName(a, b));
 }
 
-export const tagHref = (name: string) => `/tags/${encodeURIComponent(name)}`;
+export const tagHref = tagPath;
 
 /**
  * Decodes the `[name]` segment; null when it is not valid percent-encoding.
@@ -61,7 +62,7 @@ const badge = <V extends string>(
   value: V,
 ): TaggedBadge => ({ label: e.label(value), tone: e.tone(value) });
 
-const href = (type: ItemType, id: string) => `${ITEM_ROUTE[type]}/${id}`;
+const href = (type: ItemType, id: string, title: string) => itemHref(type, id, title);
 
 /**
  * Items carrying the tag, grouped by type in sidebar order; empty groups are
@@ -91,7 +92,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("goal"),
       items: goalRows.map((g) => ({
         id: g.id,
-        href: href("goal", g.id),
+        href: href("goal", g.id, g.title),
         title: g.title,
         badges: [badge(GOAL_HORIZON, g.horizon), badge(GOAL_STATUS, g.status)],
         meta: g.period ?? undefined,
@@ -102,7 +103,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("project"),
       items: projectRows.map((p) => ({
         id: p.id,
-        href: href("project", p.id),
+        href: href("project", p.id, p.title),
         title: p.title,
         badges:
           p.kind === "research"
@@ -116,7 +117,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("area"),
       items: areaRows.map((a) => ({
         id: a.id,
-        href: href("area", a.id),
+        href: href("area", a.id, a.title),
         title: a.title,
         badges: [],
         meta: a.standard || undefined,
@@ -127,7 +128,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("paper"),
       items: paperRows.map((p) => ({
         id: p.id,
-        href: href("paper", p.id),
+        href: href("paper", p.id, p.title),
         title: p.title,
         badges: [badge(READ_STATUS, p.readStatus), badge(IMPORTANCE, p.importance)],
         meta: [p.authors.join(", "), p.year ?? ""].filter(Boolean).join(" · ") || undefined,
@@ -138,7 +139,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("note"),
       items: noteRows.map((n) => ({
         id: n.id,
-        href: href("note", n.id),
+        href: href("note", n.id, n.title),
         title: n.title,
         badges: n.sourceKind ? [badge(NOTE_SOURCE_KIND, n.sourceKind)] : [],
         meta: n.sourceTitle ?? undefined,
@@ -149,7 +150,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("seminar"),
       items: seminarRows.map((s) => ({
         id: s.id,
-        href: href("seminar", s.id),
+        href: href("seminar", s.id, s.title),
         title: s.title,
         badges: [badge(SEMINAR_KIND, s.kind)],
         meta: [formatDate(s.date), s.speaker].filter(Boolean).join(" · ") || undefined,
@@ -160,7 +161,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
       label: ITEM_TYPE.label("thought"),
       items: thoughtRows.map((t) => ({
         id: t.id,
-        href: href("thought", t.id),
+        href: href("thought", t.id, t.title),
         title: t.title,
         badges: [badge(THOUGHT_KIND, t.kind), badge(THOUGHT_MATURITY, t.maturity)],
       })),

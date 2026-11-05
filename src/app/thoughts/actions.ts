@@ -11,7 +11,7 @@ function revalidate(id?: string) {
   revalidatePath("/", "layout");
   revalidatePath("/thoughts");
   revalidatePath("/tags", "layout");
-  if (id) revalidatePath(`/thoughts/${id}`);
+  if (id) revalidatePath("/thoughts/[id]", "page");
 }
 
 export async function createThought(form: FormData): Promise<ActionResult<{ id: string }>> {

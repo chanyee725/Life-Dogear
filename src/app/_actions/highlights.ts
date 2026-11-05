@@ -9,9 +9,9 @@ import type { Highlight } from "@/lib/repo/highlights";
 
 const NOT_FOUND = "하이라이트를 찾을 수 없습니다.";
 
-function revalidatePaper(paperId: string) {
-  revalidatePath(`/papers/${paperId}`);
-  revalidatePath(`/papers/${paperId}/read`);
+function revalidatePaper() {
+  revalidatePath("/papers/[id]", "page");
+  revalidatePath("/papers/[id]/read", "page");
 }
 
 const asObject = (v: unknown): Record<string, unknown> =>
@@ -30,7 +30,7 @@ export async function createHighlight(input: unknown): Promise<ActionResult<High
       note: v.note as string | undefined,
       rects: v.rects as highlights.HighlightInput["rects"],
     });
-    revalidatePaper(paperId);
+    revalidatePaper();
     return created;
   });
 }
@@ -48,7 +48,7 @@ export async function updateHighlight(
       color: v.color as highlights.HighlightPatch["color"],
     });
     if (!updated) throw new RepoError("not_found", NOT_FOUND);
-    revalidatePaper(updated.paperId);
+    revalidatePaper();
     return updated;
   });
 }
@@ -60,7 +60,7 @@ export async function deleteHighlight(id: unknown): Promise<ActionResult> {
     if (!found || !(await highlights.remove(highlightId))) {
       throw new RepoError("not_found", NOT_FOUND);
     }
-    revalidatePaper(found.paperId);
+    revalidatePaper();
     return undefined;
   });
 }
@@ -75,7 +75,7 @@ export async function createThoughtFromHighlight(
     if (!found) throw new RepoError("not_found", NOT_FOUND);
     const created = await highlights.createThought(highlightId);
     if (!created) throw new RepoError("not_found", NOT_FOUND);
-    revalidatePaper(found.paperId);
+    revalidatePaper();
     revalidatePath("/thoughts");
     revalidatePath("/");
     return created;

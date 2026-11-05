@@ -3,6 +3,7 @@ import { Badge, EmptyAdd, cardClass, cardLinkClass, cn } from "@/components/ui";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
 import { dueChip, progressPercent } from "./project-card";
+import { itemPath } from "@/lib/item-path";
 
 export type ProjectProgress = { done: number; total: number };
 
@@ -72,7 +73,7 @@ function ProjectCard({
 }) {
   const due = dueChip(p.dueDate, today);
   return (
-    <Link href={`/projects/${p.id}`} className={cardLink}>
+    <Link href={itemPath("projects", p.id, p.title)} className={cardLink}>
       <span className="line-clamp-2 font-semibold text-fg">{p.title}</span>
       <span className="flex flex-wrap items-center gap-1.5">
         <Badge tone={PROJECT_STATUS.tone(p.status)}>{PROJECT_STATUS.label(p.status)}</Badge>

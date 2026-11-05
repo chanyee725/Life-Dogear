@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { GoalNode } from "@/lib/repo/goals";
 import { goalLevelLabel } from "./period";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * 목표 지도: the same structure as the graph, as plain text —
@@ -20,7 +21,7 @@ function MapNode({ node }: { node: GoalNode }) {
   return (
     <li>
       <Link
-        href={`/goals/${node.goal.id}`}
+        href={itemPath("goals", node.goal.id, node.goal.title)}
         className="font-sans text-sm font-medium hover:underline"
       >
         {node.goal.title}
@@ -40,7 +41,7 @@ function MapNode({ node }: { node: GoalNode }) {
                 ◇
               </span>
               <Link
-                href={`/projects/${p.id}`}
+                href={itemPath("projects", p.id, p.title)}
                 className={p.done ? "text-muted line-through hover:text-fg" : "hover:underline"}
               >
                 {p.title}

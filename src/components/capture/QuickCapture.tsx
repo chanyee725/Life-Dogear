@@ -35,6 +35,7 @@ import {
   THOUGHT_MIN_ROWS,
   type CaptureKind,
 } from "./capture";
+import { itemPath } from "@/lib/item-path";
 
 const KINDS: { value: CaptureKind; label: string }[] = [
   { value: "thought", label: "생각" },
@@ -43,6 +44,7 @@ const KINDS: { value: CaptureKind; label: string }[] = [
 ];
 
 /** What the toast after a save points to. */
+/** `note`: detail path of the note just made. */
 type Saved = { n: number; note?: string };
 
 async function saveCapture(item: CaptureSave) {
@@ -160,7 +162,7 @@ export function QuickCapture() {
         setOpen(false);
         setToast((t) => ({
           n: t.n + 1,
-          note: result.kind === "note" ? saved.data.id : undefined,
+          note: result.kind === "note" ? itemPath("notes", saved.data.id, result.title) : undefined,
         }));
       }
     } finally {
@@ -355,7 +357,7 @@ function SavedToast({ note, onDone }: { note?: string; onDone: () => void }) {
   return (
     <Toast ms={TOAST_MS} onDone={onDone}>
       {note ? "노트를 만들었습니다." : "수집함에 저장했습니다."}{" "}
-      <Link href={note ? `/notes/${note}` : "/inbox"} onClick={onDone} className="underline">
+      <Link href={note ?? "/inbox"} onClick={onDone} className="underline">
         {note ? "열기" : "보기"}
       </Link>
     </Toast>

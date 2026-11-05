@@ -6,6 +6,7 @@ import { createPaper, deletePaper, updatePaper } from "@/app/papers/actions";
 import { papers } from "@/lib/repo";
 import { pdfExists, writePdf } from "@/lib/storage/pdf";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -49,8 +50,10 @@ describe("paper actions", () => {
     ]);
     const error = await createPaper(null, data).catch((e: Error) => e);
     expect(error).toBeInstanceOf(Error);
-    const id = (error as Error).message.replace("REDIRECT:/papers/", "");
-    const paper = await papers.get(id);
+    const paper = (await papers.list()).find((p) => p.title === "주의 집중 연구");
+    expect((error as Error).message).toBe(
+      `REDIRECT:${itemPath("papers", paper!.id, paper!.title)}`,
+    );
     expect(paper).toMatchObject({
       title: "주의 집중 연구",
       authors: ["Kim, J.", "Lee, S."],

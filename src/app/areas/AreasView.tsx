@@ -24,6 +24,7 @@ import {
   sortAreas,
   type AreaSort,
 } from "./list";
+import { itemPath } from "@/lib/item-path";
 
 export type AreaRow = {
   id: string;
@@ -188,12 +189,10 @@ function AreaCard({ area, now }: { area: AreaRow; now: Date }) {
   const signal = careSignal(area.lastActivity, now);
   const counts = areaCountParts(area);
   return (
-    <Link href={`/areas/${area.id}`} className={cardLink}>
+    <Link href={itemPath("areas", area.id, area.title)} className={cardLink}>
       <span className="line-clamp-1 text-base font-semibold text-fg">{area.title}</span>
       {area.standard ? (
-        <span className="line-clamp-2 text-[13px] leading-relaxed text-muted">
-          {area.standard}
-        </span>
+        <span className="line-clamp-2 text-[13px] leading-relaxed text-muted">{area.standard}</span>
       ) : null}
       <span className="mt-auto flex items-center gap-3 pt-2 text-xs tabular-nums">
         {counts.map(([label, n]) => (

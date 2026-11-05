@@ -7,10 +7,10 @@ import "server-only";
  */
 import { and, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { goals, papers, reviews, seminars } from "@/db/schema";
-import { ITEM_ROUTE } from "@/lib/enums";
 import { db } from "@/lib/repo/shared";
 import { addDays, dayInZone, overlaps, periodDays, periodsIn } from "./dates";
 import type { CalendarItem, CalendarOptions, CalendarRange } from "./types";
+import { itemHref } from "@/lib/item-href";
 
 export async function collectAppItems(
   range: CalendarRange,
@@ -76,7 +76,7 @@ export async function collectAppItems(
       title: s.title,
       start: s.date!,
       allDay: true,
-      href: `${ITEM_ROUTE.seminar}/${s.id}`,
+      href: itemHref("seminar", s.id, s.title),
     });
   }
   for (const r of reviewRows) {
@@ -89,7 +89,7 @@ export async function collectAppItems(
       start,
       end,
       allDay: true,
-      href: `${ITEM_ROUTE.review}/${r.id}`,
+      href: itemHref("review", r.id),
     });
   }
   for (const g of goalRows) {
@@ -101,7 +101,7 @@ export async function collectAppItems(
       start,
       end,
       allDay: true,
-      href: `${ITEM_ROUTE.goal}/${g.id}`,
+      href: itemHref("goal", g.id, g.title),
     });
   }
   for (const p of paperRows) {
@@ -113,7 +113,7 @@ export async function collectAppItems(
       title: p.title,
       start: day,
       allDay: true,
-      href: `${ITEM_ROUTE.paper}/${p.id}`,
+      href: itemHref("paper", p.id, p.title),
     });
   }
   return items;
