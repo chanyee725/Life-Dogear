@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round">
+  <title>Life Dogear — candidate 2: page with bookmark ribbon</title>
+  <style>svg{color:#2f2e2a}@media (prefers-color-scheme:dark){svg{color:#e6e5e3}}</style>
+  <!-- Page outline with the top-right corner folded -->
+  <path d="M8.5 4H18L25 11V26.5A1.5 1.5 0 0 1 23.5 28H8.5A1.5 1.5 0 0 1 7 26.5V5.5A1.5 1.5 0 0 1 8.5 4Z"/>
+  <!-- Fold: filled flap -->
+  <path d="M18 4V11H25Z" fill="currentColor"/>
+  <!-- Bookmark ribbon hanging from the top edge -->
+  <path d="M11 4V17L13.5 14.75L16 17V4" fill="currentColor"/>
+</svg>

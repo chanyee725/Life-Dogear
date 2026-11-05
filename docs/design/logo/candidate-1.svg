@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="currentColor">
+  <title>Life Dogear — candidate 1: two-tone fold</title>
+  <style>svg{color:#2f2e2a}@media (prefers-color-scheme:dark){svg{color:#e6e5e3}}</style>
+  <!-- Page body: solid sheet with the fold area carved out, leaving a 1.5-unit gap that reads as the crease shadow -->
+  <path d="M8.5 3H15.5V12.5H25.5V27A2 2 0 0 1 23.5 29H8.5A2 2 0 0 1 6.5 27V5A2 2 0 0 1 8.5 3Z"/>
+  <!-- Flap: the paper's back side, lighter tone -->
+  <path d="M17 3L25.5 11.5H18A1 1 0 0 1 17 10.5Z" opacity=".45"/>
+</svg>
