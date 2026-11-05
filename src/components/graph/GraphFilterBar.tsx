@@ -12,7 +12,7 @@ import {
   OPT_IN_TYPES,
   shownTypes,
 } from "./model";
-import { ShapeIcon } from "./ShapeIcon";
+import { DotIcon, ShapeIcon } from "./ShapeIcon";
 
 export type FilterOptions = {
   areas: readonly { id: string; title: string }[];
@@ -73,8 +73,9 @@ export function GraphFilterControls({
   options: FilterOptions;
   theme: GraphTheme;
   /**
-   * Basic graph: shows the color toggle and paints chip icons by it (1.4 — kind colors,
-   * or achromatic `label` when colored by area). Absent (cosmos view): legacy icons.
+   * Basic graph: shows the color toggle and chip icons are canvas-matching dots painted by it
+   * (1.4 — kind colors, or achromatic `label` when colored by area). Absent (cosmos view):
+   * legacy shape icons.
    */
   colorBy?: GraphColorBy;
   onColorByChange?: (next: GraphColorBy) => void;
@@ -106,15 +107,21 @@ export function GraphFilterControls({
             : "border-border bg-transparent text-muted hover:text-fg",
         )}
       >
-        <ShapeIcon
-          type={type}
-          horizon={type === "goal" ? "year" : undefined}
-          theme={theme}
-          color={
-            colorBy === "kind" ? theme.kind[type] : colorBy === "area" ? theme.label : undefined
-          }
-          className={on ? "" : "opacity-35"}
-        />
+        {colorBy ? (
+          <DotIcon
+            type={type}
+            horizon={type === "goal" ? "year" : undefined}
+            color={colorBy === "kind" ? theme.kind[type] : theme.label}
+            className={on ? "" : "opacity-35"}
+          />
+        ) : (
+          <ShapeIcon
+            type={type}
+            horizon={type === "goal" ? "year" : undefined}
+            theme={theme}
+            className={on ? "" : "opacity-35"}
+          />
+        )}
         {GRAPH_TYPE_LABEL[type]}
       </button>
     );
