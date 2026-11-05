@@ -17,10 +17,16 @@ export type PaletteKeyEvent = {
   shiftKey: boolean;
 };
 
-/** Cmd+K (macOS) or Ctrl+K (elsewhere). Works while typing, unlike single-key shortcuts. */
+/**
+ * Cmd+K / Cmd+/ (macOS) or Ctrl+K / Ctrl+/ (elsewhere). Works while typing (also in the
+ * editor), unlike single-key shortcuts; a bare "/" stays the home quick-input shortcut.
+ */
 export function isPaletteShortcut(e: PaletteKeyEvent): boolean {
-  if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return false;
-  return e.key === "k" || e.key === "K" || e.code === "KeyK";
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return false;
+  // "/" needs Shift on some layouts (e.g. German Shift+7), so allow Shift when key is "/".
+  if (e.key === "/") return true;
+  if (e.shiftKey) return false;
+  return e.key === "k" || e.key === "K" || e.code === "KeyK" || e.code === "Slash";
 }
 
 export function typeLabel(type: SearchHitType): string {

@@ -24,7 +24,7 @@ import {
 type Status = "idle" | "loading" | "done" | "error";
 
 /**
- * Global search (mounted once in the root layout). Cmd/Ctrl+K toggles it, Esc closes,
+ * Global search (mounted once in the root layout). Cmd/Ctrl+/ or Cmd/Ctrl+K toggles it, Esc closes,
  * ↑/↓ move, Enter opens the active result. Searches titles, bodies and highlights.
  */
 export function CommandPalette() {

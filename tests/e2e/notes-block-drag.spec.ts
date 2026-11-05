@@ -1,0 +1,37 @@
+import { expect, test } from "@playwright/test";
+
+test("노트: 블록 핸들을 끌어 문단 순서를 바꾼다", async ({ page }) => {
+  await page.goto("/notes/new");
+  const editor = page.getByRole("textbox", { name: "본문" });
+  await editor.click();
+  await editor.evaluate((el) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "첫째 문단\n\n둘째 문단\n\n셋째 문단");
+    el.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+    );
+  });
+  const order = () =>
+    editor.evaluate((el) =>
+      [...el.children].map((c) => c.textContent?.trim()).filter(Boolean),
+    );
+  await expect.poll(order).toEqual(["첫째 문단", "둘째 문단", "셋째 문단"]);
+
+  // Hover the first paragraph, then drag its grip below the third one.
+  await editor.getByText("첫째 문단", { exact: true }).hover();
+  const handle = page.getByRole("button", { name: "블록 이동" });
+  await expect(handle).toBeVisible();
+  const grip = (await handle.boundingBox())!;
+  const third = (await editor.getByText("셋째 문단", { exact: true }).boundingBox())!;
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(third.x + 10, third.y + third.height / 2, { steps: 4 });
+  await page.mouse.move(third.x + 10, third.y + third.height - 2, { steps: 2 });
+  await expect(page.locator(".rb-drop-line")).toBeVisible();
+  await page.mouse.up();
+
+  await expect.poll(order).toEqual(["둘째 문단", "셋째 문단", "첫째 문단"]);
+  await expect(page.locator('input[type="hidden"][name="body"]')).toHaveValue(
+    "둘째 문단\n\n셋째 문단\n\n첫째 문단",
+  );
+});

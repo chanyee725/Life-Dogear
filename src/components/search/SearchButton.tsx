@@ -25,9 +25,9 @@ export function SearchButton({ className }: { className?: string }) {
     >
       <span aria-hidden>⌕</span>
       <span className="flex-1 text-left">검색</span>
-      <span className="flex items-center gap-0.5" aria-label={`단축키 ${mod} K`}>
+      <span className="flex items-center gap-0.5" aria-label={`단축키 ${mod} /`}>
         <Kbd>{mod}</Kbd>
-        <Kbd>K</Kbd>
+        <Kbd>/</Kbd>
       </span>
     </button>
   );
