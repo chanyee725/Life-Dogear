@@ -10,7 +10,7 @@ const ALLOWED: { file: string; text: string }[] = [
   // Recommended area standard: an example sentence, not a list of item kinds.
   { file: join("src", "lib", "enums.ts"), text: "관심 분야의 새 논문·세미나를 꾸준히 따라간다." },
   // The area detail page shows notes in a separate section, so its materials title leaves notes out.
-  { file: join("src", "app", "areas", "[id]", "page.tsx"), text: "논문·세미나·생각" },
+  { file: join("src", "app", "areas", "[id]", "page.tsx"), text: "논문·활동·생각" },
 ];
 
 function walk(dir: string, out: string[] = []): string[] {

@@ -7,7 +7,7 @@ import type { CalendarItem, CalendarSource, GoogleStatus } from "@/lib/calendar/
 
 export const SOURCE_LABEL: Readonly<Record<CalendarSource, string>> = {
   task: "할 일",
-  seminar: "세미나",
+  seminar: "활동",
   goal: "분기 목표",
   review: "회고",
   paper: "논문",
