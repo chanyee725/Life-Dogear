@@ -208,14 +208,12 @@ describe("CalendarView (narrow)", () => {
     expect(list).toContain('aria-label="11월 5일 마감 할 일 추가"');
   });
 
-  it("drops the day list under the grid on home (panelSlot)", () => {
-    const html = render({
-      range: "3w",
-      day: "2026-11-05",
-      forceNarrow: true,
-      panelSlot: createElement("p", null, "slot"),
-    });
-    expect(html).not.toContain('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"');
+  it("drops the day list under the grid with dayList off (home), whatever the panel slot", () => {
+    const dayList = '<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"';
+    const base = { range: "3w" as const, day: "2026-11-05", forceNarrow: true };
+    expect(render({ ...base, dayList: false })).not.toContain(dayList);
+    // A panel slot alone no longer turns it off; the default keeps it.
+    expect(render({ ...base, panelSlot: createElement("p", null, "slot") })).toContain(dayList);
   });
 
   it("puts toolbarEnd (home 빠른 추가) after 표시, before the grid", () => {
