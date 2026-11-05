@@ -724,3 +724,47 @@
   white-space: pre;
   overflow-wrap: normal;
 }
+
+/* ---------- Editor block handle (drag-handle.ts) ---------- */
+@layer components {
+  .rb-drag-handle {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    color: var(--rb-faint);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    transition: background-color 120ms, color 120ms;
+  }
+  .rb-drag-handle[hidden],
+  .rb-drop-line[hidden] {
+    display: none;
+  }
+  .rb-drag-handle:hover {
+    background: var(--rb-hover);
+    color: var(--rb-muted);
+  }
+  .rb-drop-line {
+    position: absolute;
+    z-index: 5;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--rb-muted);
+    pointer-events: none;
+  }
+  .rb-prose .rb-dragging {
+    opacity: 0.4;
+  }
+  body.rb-block-dragging,
+  body.rb-block-dragging * {
+    cursor: grabbing !important;
+  }
+}
