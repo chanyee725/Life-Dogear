@@ -206,7 +206,7 @@ export function SidebarNav({
             </button>
           </Tooltip>
         </div>
-        {/* 2팀: "검색 ⌘K" button goes here. */}
+        {/* 2팀: "검색 ⌘/" button goes here. */}
         {searchSlot ? <div className="px-3 pb-2">{searchSlot}</div> : null}
         <nav
           aria-label="주 메뉴"
