@@ -31,13 +31,15 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 const byDue = (a: Task, b: Task) => (a.dueDate ?? "").localeCompare(b.dueDate ?? "");
 
 /** Date heading + task list (today/week tabs). */
-function Group({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+function Group({ title, count, children }: { title: string | null; count: number; children: ReactNode }) {
   return (
     <section className="flex flex-col">
-      <h2 className="flex h-8 items-baseline gap-2">
-        <span className="text-[13px] font-semibold text-muted">{title}</span>
-        <span className="text-xs text-muted tabular-nums">{count}</span>
-      </h2>
+      {title ? (
+        <h2 className="flex h-8 items-baseline gap-2">
+          <span className="text-[13px] font-semibold text-muted">{title}</span>
+          <span className="text-xs text-muted tabular-nums">{count}</span>
+        </h2>
+      ) : null}
       {children}
     </section>
   );
@@ -74,7 +76,7 @@ async function CalendarPage({ params }: { params: Record<string, string | string
     failed = true;
   }
   return (
-    <Page className="max-w-[1600px]">
+    <Page className="max-w-6xl">
       <PageHeader title="할 일" className="mb-0" actions={<ViewSwitch view="calendar" />} />
       <CalendarView
         range={q.range}
@@ -116,7 +118,7 @@ export default async function TasksPage({ searchParams }: Props) {
   };
 
   return (
-    <Page>
+    <Page className="max-w-6xl">
       <PageHeader title="할 일" actions={<ViewSwitch view="list" />} />
       <LinkTabs
         ariaLabel="할 일 보기"
@@ -140,7 +142,7 @@ export default async function TasksPage({ searchParams }: Props) {
               </Group>
             ) : null}
             {dueToday.length || !overdue.length ? (
-              <Group title="오늘" count={dueToday.length}>
+              <Group title={overdue.length ? "오늘" : null} count={dueToday.length}>
                 <TaskList
                   tasks={dueToday}
                   today={today}

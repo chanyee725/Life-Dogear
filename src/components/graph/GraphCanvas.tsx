@@ -266,6 +266,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       link?.distance?.((l: SimLink) => (l.kind === "belongs" ? 40 : 60));
       link?.strength?.(0.05);
       fg.d3Force("center", null);
+      fg.d3Force("pullX", null);
+      fg.d3Force("pullY", null);
       fg.d3Force(
         "paraX",
         forceAxis<SimNode>(
@@ -306,6 +308,9 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         );
       });
       if (centerForce.current) fg.d3Force("center", centerForce.current as never);
+      // Weak pull to the middle: without it the layout hollows out and drifts to the edges.
+      fg.d3Force("pullX", local ? null : forceAxis<SimNode>("x", () => 0, () => 0.06));
+      fg.d3Force("pullY", local ? null : forceAxis<SimNode>("y", () => 0, () => 0.06));
       fg.d3Force("paraX", null);
       fg.d3Force("paraY", null);
       fg.d3Force(
@@ -596,7 +601,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         else show = k >= labelZoom(n, L.count);
         if (!show) continue;
         // Labels fade in over 0.5 of zoom after their threshold (clearer as you zoom in).
-        const zoomFade = L.local ? 1 : Math.min(1, 0.25 + (k - labelZoom(n, L.count)) / 0.5);
+        const zoomFade = L.local ? 1 : Math.min(1, 0.5 + (k - labelZoom(n, L.count)) / 0.5);
         tryDraw(n, false, zoomFade);
         budget--;
       }
@@ -631,6 +636,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     return items;
   }, [graphData, theme.fontFamily]);
   const fitPad = local ? 12 : 32;
+  const bottomGap = local ? 0 : 40;
 
   const fitView = useCallback(
     (duration: number) => {
@@ -638,16 +644,17 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       if (!fg) return;
       const t = fitTransform(fitItems(), {
         width,
-        height,
+        height: height - bottomGap,
         pad: fitPad,
         minZoom: 0.2,
         maxZoom: local ? 2 : 2.5,
       });
       if (!t) return;
       fg.zoom(t.k, duration);
-      fg.centerAt(t.cx, t.cy, duration);
+      // The view centre sits half the gap lower, so the spare room ends up below the drawing.
+      fg.centerAt(t.cx, t.cy + bottomGap / 2 / t.k, duration);
     },
-    [fitItems, fitPad, local, width, height],
+    [fitItems, fitPad, local, width, height, bottomGap],
   );
 
   /** True when part of the drawing is off screen at the current zoom and centre. */
@@ -674,8 +681,12 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     pendingFit.current = true;
     earlyBox.current = null;
     // Waits for data newer than what is on screen now.
-    earlyFit.current = loadedOnce.current ? { data: graphDataRef.current, ticks: -1 } : null;
-  }, [fitKey, mode]);
+    earlyFit.current = loadedOnce.current
+      ? { data: graphDataRef.current, ticks: -1 }
+      : local
+        ? { data: graphDataRef.current, ticks: 0 } // local: no cropped first frames
+        : null;
+  }, [fitKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
   const onEngineTick = () => {
     const early = earlyFit.current;
     if (!early) return;

@@ -23,6 +23,8 @@ export function TodayPanel({
   theme,
   onToday,
   onAdd,
+  gridEnd,
+  onGoto,
   fit = false,
   loading = false,
   className,
@@ -36,6 +38,9 @@ export function TodayPanel({
   theme: GraphTheme;
   onToday: () => void;
   onAdd: (anchor: HTMLElement) => void;
+  /** Last day the grid shows; groups after it get a "달력에서 보기" jump (with `onGoto`). */
+  gridEnd?: string;
+  onGoto?: (day: string) => void;
   /** Fill the parent's height; "다음 일정" scrolls in what is left. */
   fit?: boolean;
   /** Items not here yet: "…" stands in for the count (never 0), no empty line. */
@@ -110,6 +115,15 @@ export function TodayPanel({
                 )}
               >
                 {groupHeading(g.day, today)}
+                {gridEnd && onGoto && g.day > gridEnd ? (
+                  <button
+                    type="button"
+                    onClick={() => onGoto(g.day)}
+                    className="ml-2 rounded-sm font-normal text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  >
+                    달력에서 보기
+                  </button>
+                ) : null}
               </h4>
               <ul className="flex flex-col">
                 {g.items.map((item) => (

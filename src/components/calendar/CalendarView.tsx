@@ -23,6 +23,7 @@ import { AnchoredMenu } from "@/components/ui/Menu";
 import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { revealAdded } from "./add-event";
+import { ChevronDownIcon } from "lucide-react";
 import { AddEventButton } from "./AddEventButton";
 import { CalendarItemRow, itemLabel, type ItemHandlers } from "./CalendarItemRow";
 import {
@@ -613,7 +614,7 @@ export function CalendarView({
               setPop(pop?.kind === "sources" ? null : { kind: "sources", anchor: e.currentTarget })
             }
           >
-            표시 <span aria-hidden="true">▾</span>
+            표시 <ChevronDownIcon aria-hidden="true" className="size-3.5" />
           </Button>
           {toolbarEnd}
         </div>
@@ -760,6 +761,8 @@ export function CalendarView({
             theme={theme}
             onToday={goToday}
             onAdd={(anchor) => openAdd(selected, anchor)}
+            gridEnd={gridDays.at(-1)}
+            onGoto={(d) => goDay(d)}
             fit={fitPanel}
             loading={loading}
           >
