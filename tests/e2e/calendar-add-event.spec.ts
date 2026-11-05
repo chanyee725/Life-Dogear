@@ -67,7 +67,7 @@ test.describe("달력 일정 추가: 쓰기 설정 없음", () => {
   test("버튼이 비활성이고 '설정 필요'가 보인다", async ({ page }) => {
     await page.goto(CALENDAR);
     await expect(addButton(page)).toBeDisabled();
-    await expect(addButton(page)).toHaveAccessibleDescription("설정 필요");
+    await expect(addButton(page)).toHaveAccessibleDescription(/설정 필요/);
   });
 });
 

@@ -17,6 +17,9 @@ import {
 
 const TOAST_MS = 4000;
 
+const OFF_HINT =
+  "설정 필요: Google 캘린더 쓰기 키를 서버에 등록하면 켜집니다 (docs/DEPLOY.md).";
+
 export type AddEventButtonProps = {
   /** `googleWrite` from `/api/calendar`; absent or false → disabled with "설정 필요". */
   enabled?: boolean;
@@ -84,7 +87,10 @@ export function AddEventButton({
 
   return (
     <>
-      <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-flex items-center"
+        title={enabled ? undefined : OFF_HINT}
+      >
         <Button
           variant="secondary"
           size={size}
@@ -97,8 +103,8 @@ export function AddEventButton({
           일정 추가
         </Button>
         {enabled ? null : (
-          <span id={`${id}-off`} className="text-[13px] text-faint">
-            설정 필요
+          <span id={`${id}-off`} className="sr-only">
+            {OFF_HINT}
           </span>
         )}
       </span>
