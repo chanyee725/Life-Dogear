@@ -30,7 +30,8 @@ test("영역 상세: 상태별 프로젝트 칸반 4열(빈 열 포함), 넓은 
   await expect(columns.first().getByRole("link", { name: title })).toBeVisible();
 
   const goals = page.getByRole("heading", { name: /^목표/ }).first();
-  const notes = page.getByRole("heading", { name: "노트", exact: true });
+  // The heading carries a count ("노트 1") once the area has notes.
+  const notes = page.getByRole("heading", { name: /^노트( \d+)?$/ });
   const [g, n, b] = await Promise.all([
     goals.boundingBox(),
     notes.boundingBox(),
