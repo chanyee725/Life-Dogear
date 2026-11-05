@@ -14,12 +14,15 @@ test("calendar '설정 필요' opens settings; a saved iCal address shows masked
   ).toBeVisible();
 
   const read = page.getByRole("region", { name: "Google 캘린더 읽기" });
+  // Settings show labels and values only: no long guides, env names or doc paths.
+  await expect(page.locator("main")).not.toContainText(/DEPLOY\.md|\.env\.example|iCal 형식의 비공개 주소/);
   await expect(read.getByText("연결 안 됨")).toBeVisible();
   await read.getByLabel("iCal 비공개 주소", { exact: true }).fill(FEED);
   await read.getByRole("button", { name: "저장" }).click();
 
   await expect(read.getByText("https://calendar.example/••••••")).toBeVisible();
   await expect(read.getByText("현재: 앱에 저장됨")).toBeVisible();
+  await expect(read.getByRole("img", { name: "값은 일부만 가려서 보여 줍니다." })).toBeVisible();
   await expect(read.getByLabel("iCal 비공개 주소", { exact: true })).toHaveValue("");
   await page.reload();
   expect(await page.content()).not.toContain("e2e-secret-token");
