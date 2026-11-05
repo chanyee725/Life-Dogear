@@ -68,9 +68,9 @@ describe("home calendar: 일정 추가", () => {
     expect(button.disabled).toBe(false);
   });
 
-  it("stays disabled with '설정 필요' when it is off", async () => {
+  it("stays disabled with 'Google 캘린더 연결이 필요해요' when it is off", async () => {
     const button = await mountHome({ items: [], google: "off", googleWrite: false, failed: false });
     expect(button.disabled).toBe(true);
-    expect(host!.textContent).toContain("설정 필요");
+    expect(host!.textContent).toContain("Google 캘린더 연결이 필요해요");
   });
 });

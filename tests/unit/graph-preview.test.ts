@@ -189,5 +189,9 @@ describe("notePreview", () => {
     expect(
       notePreview({ sourceKind: null, sourceTitle: null, body: "", archivedAt: "2026-11-01" }),
     ).toEqual({ archived: true, props: [], summary: undefined });
+    // Legacy 기타 (other) reads as no kind.
+    expect(
+      notePreview({ sourceKind: "other", sourceTitle: null, body: "", archivedAt: null }).props,
+    ).toEqual([]);
   });
 });

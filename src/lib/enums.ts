@@ -160,9 +160,19 @@ export const NOTE_SOURCE_KIND = defineEnum([
   { value: "lecture", label: "강의", tone: "teal" },
   { value: "video", label: "영상", tone: "red" },
   { value: "article", label: "글", tone: "violet" },
-  { value: "other", label: "기타", tone: "gray" },
 ] as const);
 export type NoteSourceKind = (typeof NOTE_SOURCE_KIND.values)[number];
+
+/**
+ * Values the `source_kind` column may hold. `other` (기타) is legacy: it meant the same
+ * as no kind (없음), so it is no longer offered and reads back as null.
+ */
+export const NOTE_SOURCE_KIND_STORED = [...NOTE_SOURCE_KIND.values, "other"] as const;
+
+/** Stored source kind → one shown in the app; legacy `other` and unknowns become null. */
+export function noteSourceKind(value: unknown): NoteSourceKind | null {
+  return NOTE_SOURCE_KIND.is(value) ? value : null;
+}
 
 /** Areas offered when the user has none yet (created only when chosen). */
 export const RECOMMENDED_AREAS = [

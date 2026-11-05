@@ -8,6 +8,7 @@ import {
   GOAL_HORIZON,
   GOAL_STATUS,
   NOTE_SOURCE_KIND,
+  noteSourceKind,
   PROJECT_STAGE,
   REVIEW_KIND,
   PROJECT_STATUS,
@@ -139,10 +140,11 @@ export function seminarPreview(s: SeminarRow): NodePreview {
 
 /** Note: 출처 종류 and 출처 이름, then the body's first paragraph (the title is the node's). */
 export function notePreview(n: NoteRow): NodePreview {
+  const kind = noteSourceKind(n.sourceKind);
   return {
     archived: !!n.archivedAt,
     props: [
-      ...prop("출처 종류", n.sourceKind ? label(NOTE_SOURCE_KIND, n.sourceKind) : null),
+      ...prop("출처 종류", kind && NOTE_SOURCE_KIND.label(kind)),
       ...prop("출처", n.sourceTitle),
     ],
     summary: firstParagraph(n.body),

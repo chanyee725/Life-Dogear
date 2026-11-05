@@ -17,11 +17,13 @@ import {
 
 const TOAST_MS = 4000;
 
-const OFF_HINT =
-  "설정 필요: Google 캘린더 쓰기 키를 서버에 등록하면 켜집니다 (docs/DEPLOY.md).";
+/** What the user reads (screen readers get it as the button's description). */
+const OFF_HINT = "Google 캘린더 연결이 필요해요";
+/** The setup detail, kept in the tooltip for whoever runs the server. */
+const OFF_DETAIL = "설정 필요: Google 캘린더 쓰기 키를 서버에 등록하면 켜집니다 (docs/DEPLOY.md).";
 
 export type AddEventButtonProps = {
-  /** `googleWrite` from `/api/calendar`; absent or false → disabled with "설정 필요". */
+  /** `googleWrite` from `/api/calendar`; absent or false → disabled with "Google 캘린더 연결이 필요해요". */
   enabled?: boolean;
   /** Day the form starts on (the selected day). */
   defaultDate: string;
@@ -87,10 +89,7 @@ export function AddEventButton({
 
   return (
     <>
-      <span
-        className="inline-flex items-center"
-        title={enabled ? undefined : OFF_HINT}
-      >
+      <span className="inline-flex items-center" title={enabled ? undefined : OFF_DETAIL}>
         <Button
           variant="secondary"
           size={size}

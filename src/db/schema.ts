@@ -16,7 +16,7 @@ import {
   IMPORTANCE,
   ITEM_TYPE,
   LINK_VIA,
-  NOTE_SOURCE_KIND,
+  NOTE_SOURCE_KIND_STORED,
   PROJECT_KIND,
   PROJECT_STAGE,
   PROJECT_STATUS,
@@ -181,8 +181,8 @@ export const notes = sqliteTable(
     id: text("id").primaryKey(),
     title: text("title").notNull(),
     body: text("body").notNull().default(""),
-    /** Null = not said. */
-    sourceKind: text("source_kind", { enum: NOTE_SOURCE_KIND.values }),
+    /** Null = not said. Legacy `other` reads as null (see `noteSourceKind`). */
+    sourceKind: text("source_kind", { enum: NOTE_SOURCE_KIND_STORED }),
     sourceTitle: text("source_title"),
     /** http(s) only (checked in the repo). */
     sourceUrl: text("source_url"),
