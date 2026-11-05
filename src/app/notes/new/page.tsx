@@ -47,7 +47,6 @@ export default async function NewNotePage({
           values={{
             title: "",
             sourceKind: NOTE_SOURCE_KIND.is(sourceParam) ? sourceParam : null,
-            sourceTitle: "",
             sourceUrl: "",
             areaId: areaList.some((a) => a.id === areaParam) ? areaParam! : null,
             tags: [],

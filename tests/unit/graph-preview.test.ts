@@ -170,7 +170,7 @@ describe("goal and review previews", () => {
 });
 
 describe("notePreview", () => {
-  it("shows the source kind and name, then the body's first paragraph", () => {
+  it("shows the source kind (not the source name), then the body's first paragraph", () => {
     expect(
       notePreview({
         sourceKind: "book",
@@ -180,10 +180,7 @@ describe("notePreview", () => {
       }),
     ).toEqual({
       archived: false,
-      props: [
-        { label: "출처 종류", value: "책" },
-        { label: "출처", value: "클린 코드" },
-      ],
+      props: [{ label: "출처 종류", value: "책" }],
       summary: "의미 있는 이름을 쓴다.",
     });
     expect(

@@ -12,7 +12,6 @@ import { isHttpUrl } from "./source";
 export type NoteFormValues = {
   title: string;
   sourceKind: NoteSourceKind | null;
-  sourceTitle: string;
   sourceUrl: string;
   areaId: string | null;
   body: string;
@@ -50,14 +49,6 @@ export function NoteFields({
             emptyLabel="없음"
             defaultValue={values.sourceKind ?? ""}
             className="w-auto"
-          />
-        </Property>
-        <Property label="출처 이름" htmlFor="note-source-title">
-          <Input
-            id="note-source-title"
-            name="sourceTitle"
-            defaultValue={values.sourceTitle}
-            placeholder="책 제목, 강의 이름…"
           />
         </Property>
         <Property label="출처 링크" htmlFor="note-source-url">
