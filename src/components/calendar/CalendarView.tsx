@@ -801,7 +801,14 @@ export function CalendarView({
                     />
                     <SourceIcon source={s} theme={theme} />
                     <span className="text-sm text-fg">{SOURCE_LABEL[s]}</span>
-                    {off ? <span className="ml-auto text-xs text-muted">설정 안 됨</span> : null}
+                    {off ? (
+                      <Link
+                        href="/settings#calendar"
+                        className="ml-auto text-xs text-muted underline-offset-2 hover:text-fg hover:underline"
+                      >
+                        설정하기
+                      </Link>
+                    ) : null}
                   </label>
                 </li>
               );

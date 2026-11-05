@@ -16,12 +16,13 @@ import {
   ProjectIcon,
   ReviewIcon,
   SeminarIcon,
+  SettingsIcon,
   SidebarIcon,
   TagIcon,
   TaskIcon,
   ThoughtIcon,
 } from "./icons";
-import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
+import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, SETTINGS_ENTRY, type NavIcon } from "./nav";
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
@@ -42,6 +43,7 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   area: AreaIcon,
   graph: GraphIcon,
   task: TaskIcon,
+  settings: SettingsIcon,
 };
 
 /** Below Tailwind's `md`: the sidebar becomes a drawer. */
@@ -240,6 +242,7 @@ export function SidebarNav({
           {NAV_SECTIONS.bottom.map((entry) => item(entry))}
         </nav>
         <div className="flex flex-col gap-3 px-4 pb-4">
+          <div className="-mx-2 flex flex-col">{item(SETTINGS_ENTRY)}</div>
           <ThemeToggle />
           {footerSlot}
         </div>
