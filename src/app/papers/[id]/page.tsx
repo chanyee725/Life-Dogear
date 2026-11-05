@@ -41,6 +41,7 @@ export default async function PaperPage({ params }: Props) {
         pdfSlot={
           <PdfPanel
             paperId={paper.id}
+            paperTitle={paper.title}
             hasPdf={Boolean(paper.pdfPath)}
             lastPage={paper.lastPage}
             totalPages={paper.totalPages}
@@ -50,6 +51,7 @@ export default async function PaperPage({ params }: Props) {
       />
       <PaperHighlights
         paperId={paper.id}
+        paperTitle={paper.title}
         initialHighlights={paperHighlights}
         hasPdf={Boolean(paper.pdfPath)}
       />
