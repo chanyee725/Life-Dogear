@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { areas as areasTable, goals as goalsTable, tasks as tasksTable } from "@/db/schema";
-import { archive, areas, goals, projects, tasks } from "@/lib/repo";
+import { archive, areas, goals, notes, projects, tasks } from "@/lib/repo";
 import { summarizeCare } from "@/lib/repo/areas";
 import { useFreshDb } from "./repo-helpers";
 
@@ -70,18 +70,26 @@ describe("summarizeCare", () => {
           open: 5,
         },
       ],
+      notes: [
+        { areaId: "A", count: 3 },
+        // Unknown or no area: ignored.
+        { areaId: "gone", count: 2 },
+        { areaId: null, count: 4 },
+      ],
     });
     expect(care.get("A")).toEqual({
       lastActivity: "2026-10-04T00:00:00.000Z",
       openProjects: 1,
       activeGoals: 0,
       openTasks: 2,
+      notes: 3,
     });
     expect(care.get("B")).toEqual({
       lastActivity: "2026-10-09T00:00:00.000Z",
       openProjects: 1,
       activeGoals: 1,
       openTasks: 1,
+      notes: 0,
     });
   });
 });
@@ -111,14 +119,24 @@ describe("areas.listCare", () => {
       .set({ updatedAt: "2026-02-01T00:00:00.000Z" })
       .where(eq(tasksTable.title, "책 고르기"));
 
+    await notes.create({ title: "식단 기록", areaId: health.id });
+    const shelved = await notes.create({ title: "지난 기록", areaId: health.id });
+    await archive.archive({ type: "note", id: shelved.id });
+
     const care = await areas.listCare();
-    expect(care.get(health.id)).toMatchObject({ openProjects: 1, activeGoals: 1, openTasks: 1 });
+    expect(care.get(health.id)).toMatchObject({
+      openProjects: 1,
+      activeGoals: 1,
+      openTasks: 1,
+      notes: 1,
+    });
     expect(care.get(health.id)!.lastActivity > old).toBe(true);
     expect(care.get(study.id)).toEqual({
       lastActivity: "2026-02-01T00:00:00.000Z",
       openProjects: 0,
       activeGoals: 0,
       openTasks: 1,
+      notes: 0,
     });
   });
 });

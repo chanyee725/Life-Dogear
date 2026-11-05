@@ -489,6 +489,8 @@ export type AreaCare = {
   activeGoals: number;
   /** Open tasks on the area itself, its projects or its goals. */
   openTasks: number;
+  /** Non-archived notes whose `areaId` is the area. Not part of `lastActivity`. */
+  notes: number;
 };
 
 export type CareSource = {
@@ -514,6 +516,8 @@ export type CareSource = {
     lastUpdated: string | null;
     open: number;
   }[];
+  /** Non-archived notes grouped by area: how many each has. */
+  notes?: readonly { areaId: string | null; count: number }[];
 };
 
 /** Pure part of {@link listCare}: folds goals, projects and tasks into their areas. */
@@ -521,7 +525,7 @@ export function summarizeCare(src: CareSource): Map<string, AreaCare> {
   const out = new Map<string, AreaCare>(
     src.areas.map((a) => [
       a.id,
-      { lastActivity: a.updatedAt, openProjects: 0, activeGoals: 0, openTasks: 0 },
+      { lastActivity: a.updatedAt, openProjects: 0, activeGoals: 0, openTasks: 0, notes: 0 },
     ]),
   );
   const touch = (areaId: string | null | undefined, at: string | null) => {
@@ -554,16 +558,20 @@ export function summarizeCare(src: CareSource): Map<string, AreaCare> {
     const care = touch(area, t.lastUpdated);
     if (care) care.openTasks += Number(t.open);
   }
+  for (const n of src.notes ?? []) {
+    const care = n.areaId ? out.get(n.areaId) : undefined;
+    if (care) care.notes += Number(n.count);
+  }
   return out;
 }
 
 /**
  * {@link AreaCare} for every non-archived area, keyed by id. Archived projects and goals
- * (and their tasks) don't count. Four queries, run together; no per-area queries.
+ * (and their tasks) don't count. Five queries, run together; no per-area queries.
  */
 export async function listCare(): Promise<Map<string, AreaCare>> {
   const exec = db();
-  const [areaRows, goalRows, projectRows, taskRows] = await Promise.all([
+  const [areaRows, goalRows, projectRows, taskRows, noteRows] = await Promise.all([
     exec
       .select({ id: areas.id, updatedAt: areas.updatedAt })
       .from(areas)
@@ -598,11 +606,17 @@ export async function listCare(): Promise<Map<string, AreaCare>> {
       .from(tasks)
       .where(isNotNull(tasks.parentType))
       .groupBy(tasks.parentType, tasks.parentId),
+    exec
+      .select({ areaId: notes.areaId, count: sql<number>`count(*)` })
+      .from(notes)
+      .where(and(isNull(notes.archivedAt), isNotNull(notes.areaId)))
+      .groupBy(notes.areaId),
   ]);
   return summarizeCare({
     areas: areaRows,
     goals: goalRows,
     projects: projectRows,
     tasks: taskRows,
+    notes: noteRows,
   });
 }

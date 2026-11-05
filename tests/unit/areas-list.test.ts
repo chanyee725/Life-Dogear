@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { careSignal, daysSince, filterAreas, parseAreaSort, sortAreas } from "@/app/areas/list";
+import { areaCountParts, careSignal, daysSince, filterAreas, parseAreaSort, sortAreas } from "@/app/areas/list";
 
 const now = new Date("2026-11-03T12:00:00.000Z");
 const ago = (days: number, hours = 0) =>
@@ -57,5 +57,15 @@ describe("sortAreas", () => {
     expect(sortAreas(rows, "order").map((r) => r.id)).toEqual(["a", "b", "c", "d"]);
     expect(sortAreas(rows, "recent").map((r) => r.id)).toEqual(["d", "a", "c", "b"]);
     expect(sortAreas(rows, "stale").map((r) => r.id)).toEqual(["b", "a", "c", "d"]);
+  });
+});
+
+describe("area card counts", () => {
+  it("keeps the fixed order and leaves out zeros", () => {
+    expect(areaCountParts({ openProjects: 2, activeGoals: 0, notes: 5 })).toEqual([
+      ["프로젝트", 2],
+      ["노트", 5],
+    ]);
+    expect(areaCountParts({ openProjects: 0, activeGoals: 0, notes: 0 })).toEqual([]);
   });
 });

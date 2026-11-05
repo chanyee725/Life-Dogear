@@ -6,8 +6,24 @@ import { useId, useMemo, useState, useTransition } from "react";
 import { reorderAreas } from "@/app/_actions/areas";
 import { safeAction } from "@/components/links/safe-action";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Button, cn, formatDate, NewItemButton, RowList, SearchInput } from "@/components/ui";
-import { AREA_SORTS, careSignal, filterAreas, sortAreas, type AreaSort } from "./list";
+import {
+  Button,
+  cardClass,
+  cardLinkClass,
+  cn,
+  formatDate,
+  NewItemButton,
+  RowList,
+  SearchInput,
+} from "@/components/ui";
+import {
+  AREA_SORTS,
+  areaCountParts,
+  careSignal,
+  filterAreas,
+  sortAreas,
+  type AreaSort,
+} from "./list";
 
 export type AreaRow = {
   id: string;
@@ -16,13 +32,14 @@ export type AreaRow = {
   lastActivity: string;
   openProjects: number;
   activeGoals: number;
-  openTasks: number;
+  notes: number;
 };
 
 /**
- * Areas list: filter (title + 유지 기준, kept in `?q=`), sort (`?sort=`), and a 순서 바꾸기
- * mode that shows 위로/아래로 buttons for the area order. Each row ends with its care
- * signal: when it was last touched, flagged after `STALE_AFTER_DAYS` days.
+ * Areas list as a card grid: filter (title + 유지 기준, kept in `?q=`), sort (`?sort=`), and
+ * a 순서 바꾸기 mode that shows 위로/아래로 buttons for the area order. Each card ends with
+ * its open counts and care signal: when it was last touched, flagged after
+ * `STALE_AFTER_DAYS` days.
  */
 export function AreasView({
   areas,
@@ -79,11 +96,13 @@ export function AreasView({
               ‘{query.trim()}’에 맞는 영역이 없습니다.
             </p>
           ) : (
-            <RowList aria-label="영역 목록">
+            <ul aria-label="영역 목록" className={gridClass}>
               {visible.map((area) => (
-                <AreaListRow key={area.id} area={area} now={nowDate} />
+                <li key={area.id}>
+                  <AreaCard area={area} now={nowDate} />
+                </li>
               ))}
-            </RowList>
+            </ul>
           )}
           {query.trim() && visible.length > 0 ? (
             <p className="text-xs text-muted" aria-live="polite">
@@ -156,62 +175,46 @@ function Toolbar({
   );
 }
 
-/** Open counts; zero is left out. On wide screens each count keeps its column. */
-function Counts({ area }: { area: AreaRow }) {
-  const parts = [
-    ["프로젝트", area.openProjects],
-    ["목표", area.activeGoals],
-    ["할 일", area.openTasks],
-  ] as const;
-  if (parts.every(([, n]) => n === 0)) return <span className="hidden sm:block sm:w-[13.5rem]" />;
+// Same card shape and grid as the home "프로젝트" cards (GeneralProjects.tsx).
+const gridClass = "grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3";
+const cardLink = cn(
+  cardClass,
+  cardLinkClass,
+  "flex h-full min-h-28 flex-col gap-1.5 rounded-md p-3 text-sm",
+  "focus-visible:ring-2 focus-visible:ring-ring",
+);
+
+function AreaCard({ area, now }: { area: AreaRow; now: Date }) {
+  const signal = careSignal(area.lastActivity, now);
+  const counts = areaCountParts(area);
   return (
-    <span className="flex shrink-0 items-center gap-3 text-xs text-muted tabular-nums sm:gap-0">
-      {parts.map(([label, n]) =>
-        n > 0 ? (
-          <span key={label} className="sm:w-[4.5rem] sm:text-right">
+    <Link href={`/areas/${area.id}`} className={cardLink}>
+      <span className="line-clamp-1 text-base font-semibold text-fg">{area.title}</span>
+      {area.standard ? (
+        <span className="line-clamp-2 text-[13px] leading-relaxed text-muted">
+          {area.standard}
+        </span>
+      ) : null}
+      <span className="mt-auto flex items-center gap-3 pt-2 text-xs tabular-nums">
+        {counts.map(([label, n]) => (
+          <span key={label} className="text-muted">
             {label} {n}
           </span>
-        ) : (
-          <span key={label} aria-hidden className="hidden sm:block sm:w-[4.5rem]" />
-        ),
-      )}
-    </span>
-  );
-}
-
-function AreaListRow({ area, now }: { area: AreaRow; now: Date }) {
-  const signal = careSignal(area.lastActivity, now);
-  return (
-    <li className="flex items-start gap-1 px-3 py-2 sm:items-center">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5 sm:flex-row sm:items-center sm:gap-4 sm:pt-0">
-        <Link
-          href={`/areas/${area.id}`}
-          className="group flex min-w-0 flex-1 flex-col rounded-md sm:flex-row sm:items-baseline sm:gap-3"
+        ))}
+        <span
+          className={cn(
+            "ml-auto flex shrink-0 items-center gap-1.5",
+            signal.stale ? "text-tone-amber-fg" : "text-muted",
+          )}
+          title={`마지막 활동 ${formatDate(area.lastActivity)}`}
         >
-          <span className="truncate text-sm font-medium group-hover:underline sm:max-w-[40%] sm:shrink-0">
-            {area.title}
-          </span>
-          {area.standard ? (
-            <span className="min-w-0 truncate text-[13px] text-muted">{area.standard}</span>
+          {signal.stale ? (
+            <span aria-hidden className="size-1.5 rounded-full bg-tone-amber-fg" />
           ) : null}
-        </Link>
-        <div className="flex items-center justify-between gap-3 sm:contents">
-          <Counts area={area} />
-          <span
-            className={cn(
-              "ml-auto flex shrink-0 items-center justify-end gap-1.5 text-xs tabular-nums sm:w-36",
-              signal.stale ? "text-tone-amber-fg" : "text-faint",
-            )}
-            title={`마지막 활동 ${formatDate(area.lastActivity)}`}
-          >
-            {signal.stale ? (
-              <span aria-hidden className="size-1.5 rounded-full bg-tone-amber-fg" />
-            ) : null}
-            {signal.label}
-          </span>
-        </div>
-      </div>
-    </li>
+          {signal.label}
+        </span>
+      </span>
+    </Link>
   );
 }
 

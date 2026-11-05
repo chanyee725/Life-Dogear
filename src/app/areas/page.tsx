@@ -39,7 +39,7 @@ export default async function AreasPage({ searchParams }: { searchParams: Promis
             lastActivity: c?.lastActivity ?? a.updatedAt,
             openProjects: c?.openProjects ?? 0,
             activeGoals: c?.activeGoals ?? 0,
-            openTasks: c?.openTasks ?? 0,
+            notes: c?.notes ?? 0,
           };
         })}
       />
