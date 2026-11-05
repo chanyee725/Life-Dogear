@@ -6,7 +6,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
-import { CodeBlock } from "./code-block";
+import { CodeBlock, CodeBlockClipboard } from "./code-block";
 import { WikiLink } from "./WikiLink";
 
 /**
@@ -56,6 +56,7 @@ export function createExtensions(placeholder: string) {
       },
     }),
     CodeBlock,
+    CodeBlockClipboard,
     TaskList,
     TaskItem.configure({ nested: true }),
     TightTaskLists,
