@@ -45,7 +45,7 @@ const FONT_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
 
 export const GRAPH_THEME_LIGHT: GraphTheme = {
   dark: false,
-  canvasBg: "#ffffff",
+  canvasBg: "#fafafa",
   kind: {
     goal: "#cc3430",
     area: "#953466",
@@ -81,7 +81,7 @@ export const GRAPH_THEME_LIGHT: GraphTheme = {
   gray5: "#8a8a93",
   accent: "#4f5bd5",
   accentSoft: "#eef0fc",
-  edge: "#18181b",
+  edge: "#8b9099",
   label: "#6b6b73",
   labelStrong: "#18181b",
   divider: "#e7e7ea",
@@ -129,7 +129,7 @@ export const GRAPH_THEME_DARK: GraphTheme = {
   gray5: "#7c7c85",
   accent: "#8b94f0",
   accentSoft: "#23253a",
-  edge: "#ececef",
+  edge: "#8d929c",
   label: "#9d9da6",
   labelStrong: "#ececef",
   divider: "#2a2a2f",

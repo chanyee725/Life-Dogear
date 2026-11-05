@@ -30,7 +30,6 @@ import {
   measureLabel,
   nodeColor,
   quarterGoalFill,
-  shapeBottom,
   withAlpha,
 } from "./draw";
 import {
@@ -129,6 +128,8 @@ export type GraphCanvasProps = {
 };
 
 const FADE_MS = 120;
+/** Obsidian-like small dots: model radii are scaled down for drawing. */
+const DOT_SCALE = 0.7;
 
 // Per-frame edge colors: alpha rounded to 1/100 and cached, so thousands of links do not
 // build a new rgba string every frame.
@@ -215,6 +216,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       } else {
         node.r = nodeRadius(n, n.size, large);
       }
+      node.r = Math.max(2.5, node.r * DOT_SCALE);
       const pin = mode === "free" && !local ? saved.get(n.id) : undefined;
       if (!old && pin) {
         node.x = pin.x;
@@ -443,8 +445,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     const kind = l.kind as GraphEdgeKind;
     if (!e.focus) return restEdgeAlpha(kind);
     const touches = endId(l.source) === e.focus || endId(l.target) === e.focus;
-    if (!touches) return 0.04;
-    return kind === "belongs" ? 0.9 : 0.7;
+    if (!touches) return 0.03;
+    return 0.75;
   };
   const edgeFns = useRef({ edgeAlphaIn, restEdgeAlpha });
   edgeFns.current = { edgeAlphaIn, restEdgeAlpha };
@@ -457,16 +459,16 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         ? edgeFns.current.edgeAlphaIn(l, to)
         : edgeFns.current.edgeAlphaIn(l, from) * (1 - t) + edgeFns.current.edgeAlphaIn(l, to) * t;
     const L = live.current;
-    return edgeColor(L.colors.get(endId(l.source)) ?? L.theme.edge, a);
+    return edgeColor(L.theme.edge, a);
   }, []);
   const linkWidth = useCallback((l: SimLink) => {
     const base = live.current.large
       ? l.kind === "belongs"
-        ? 1
-        : 0.75
+        ? 0.8
+        : 0.6
       : l.kind === "belongs"
-        ? 1.5
-        : 1;
+        ? 0.9
+        : 0.7;
     const f = fade.current.to.focus;
     const touches = f && (endId(l.source) === f || endId(l.target) === f);
     return touches ? base + 0.5 : base;
@@ -528,7 +530,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       const drawn = new Set<string>();
       const fadeT = progress();
 
-      const tryDraw = (n: SimNode, force: boolean) => {
+      const tryDraw = (n: SimNode, force: boolean, zoomFade = 1) => {
         if (drawn.has(n.id as string)) return;
         const x = n.x ?? 0;
         const y = n.y ?? 0;
@@ -539,7 +541,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const weight = isStrong || n.type === "goal" || n.type === "area" ? 500 : 400;
         const top =
           y +
-          shapeBottom(n.type, n.r) +
+          n.r +
           (n.type === "goal" && n.horizon === "life" ? 2 : 0) +
           3 / k;
         let text = labelText(n, isStrong || emphasised);
@@ -555,7 +557,9 @@ export default function GraphCanvas(props: GraphCanvasProps) {
           if (pick < 0) return;
           text = texts[pick]!;
         }
-        ctx.globalAlpha = emph.lit && emphasised ? Math.min(1, 0.4 + fadeT) : L.nodeAlpha(n);
+        ctx.globalAlpha =
+          (emph.lit && emphasised ? Math.min(1, 0.4 + fadeT) : L.nodeAlpha(n)) *
+          (isStrong || emphasised ? 1 : zoomFade);
         const box = drawLabel(
           ctx,
           text,
@@ -591,7 +595,9 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         if (L.local) show = L.count <= 25 || n.dist === 0 || n.dist === 1;
         else show = k >= labelZoom(n, L.count);
         if (!show) continue;
-        tryDraw(n, false);
+        // Labels fade in over 0.5 of zoom after their threshold (clearer as you zoom in).
+        const zoomFade = L.local ? 1 : Math.min(1, 0.25 + (k - labelZoom(n, L.count)) / 0.5);
+        tryDraw(n, false, zoomFade);
         budget--;
       }
       ctx.globalAlpha = 1;
@@ -615,9 +621,9 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       items.push({
         x: n.x,
         y: n.y,
-        side: n.r * 1.3,
-        top: n.r * 1.3,
-        bottom: shapeBottom(n.type, n.r) + (n.type === "goal" ? 2 : 0),
+        side: n.r,
+        top: n.r,
+        bottom: n.r + (n.type === "goal" ? 2 : 0),
         labelW: ctx.measureText(labelText(n, false)).width + 3,
         labelH: LABEL_BELOW_PX,
       });
