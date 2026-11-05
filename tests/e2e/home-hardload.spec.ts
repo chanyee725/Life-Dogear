@@ -54,8 +54,18 @@ test("하드 로드 중 '할 일 추가'에 입력하고 Enter 하면 로딩 후
     await expect(taskInput).toHaveValue(title);
     await page.keyboard.press("Enter");
     await expect(loading).toBeHidden({ timeout: 10_000 });
-    await expect(page.getByText(title).first()).toBeVisible({ timeout: 10_000 });
     await expect(taskInput).toHaveValue("");
+    // Saved: it shows in the Todo popover (오늘 할 일); delete it there.
+    await page.keyboard.press("Escape");
+    const todo = page.getByRole("dialog", { name: "할 일" });
+    await expect(async () => {
+      const button = page.getByRole("button", { name: /^할 일 \d+개$/ });
+      if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
+      await expect(todo.getByText(title, { exact: true })).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 10_000 });
+    await todo.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+    await page.getByRole("menuitem", { name: "삭제" }).click();
+    await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
   } finally {
     await context.clearCookies({ name: "e2e-calendar-delay" });
   }
