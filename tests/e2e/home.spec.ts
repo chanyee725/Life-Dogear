@@ -455,3 +455,16 @@ test("Todo의 완료·삭제 버튼은 /tasks 목록에는 없다", async ({ pag
   await page.getByRole("menuitem", { name: "삭제" }).click();
   await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
 });
+
+test("빠른 추가를 열었다 닫은 뒤에도 검색 팔레트는 Esc로 닫힌다", async ({ page }) => {
+  await page.goto("/");
+  await openQuickAdd(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "빠른 추가" })).toHaveCount(0);
+  // The hidden (kept-mounted) popover must not hold a document Esc listener.
+  await page.keyboard.press("ControlOrMeta+k");
+  const palette = page.getByRole("dialog", { name: "전체 검색" });
+  await expect(palette).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(palette).toBeHidden();
+});

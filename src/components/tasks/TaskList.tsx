@@ -862,6 +862,10 @@ function DuePopover({
         sideOffset={4}
         collisionPadding={8}
         onFocusOutside={(e) => e.preventDefault()}
+        // Radix closes it on Esc; keep the key from also closing a popover around the list.
+        onKeyDown={(e) => {
+          if (e.key === "Escape") e.stopPropagation();
+        }}
         className="flex w-auto flex-col gap-2 rounded-lg border-border bg-bg p-3 shadow-overlay"
       >
         <DateField
