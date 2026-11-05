@@ -236,8 +236,8 @@
   --text-lg--line-height: 1.5;
 
   /* shadows only on floating layers (menu, dialog, popover); resting surfaces are flat */
-  --shadow-xs: none;
-  --shadow-sm: none;
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
   --shadow-overlay: 0 8px 28px rgb(0 0 0 / 0.12);
 }
 
