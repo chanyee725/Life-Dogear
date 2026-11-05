@@ -1,5 +1,7 @@
 "use client";
 
+import type { ItemRef } from "@/lib/repo/shared";
+
 import { useState } from "react";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
@@ -58,6 +60,7 @@ export function GoalFields({
   parentOptions,
   areaOptions,
   editorKey,
+  doc,
   hasChildren = false,
   created,
 }: {
@@ -66,6 +69,8 @@ export function GoalFields({
   parentOptions: ParentOption[];
   areaOptions: { value: string; label: string }[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
   /** Child goals pin the horizon (and a year goal's year) — the repo refuses changes. */
   hasChildren?: boolean;
   /** `YYYY.MM.DD` (Seoul) of `createdAt` — detail page only, read-only. */
@@ -237,6 +242,7 @@ export function GoalFields({
       <DetailBody>
         <MarkdownEditor
           key={editorKey}
+          doc={doc}
           name="body"
           value={values.body}
           placeholder="계획, 기준, 메모…"

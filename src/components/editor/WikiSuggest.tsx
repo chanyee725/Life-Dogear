@@ -2,7 +2,6 @@
 
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { searchItemTitles } from "@/app/_actions/items";
 import { safeAction } from "@/components/links/safe-action";
@@ -12,7 +11,7 @@ import { ITEM_TYPE } from "@/lib/enums";
 import type { ItemSummary } from "@/lib/repo/items";
 import { cleanTitle, titleKey } from "@/lib/wikilinks";
 import { inPlainTextZone, insertWikiLink } from "./WikiLink";
-import { itemFromPath } from "./wiki-resolver";
+import { useCurrentDoc } from "./current-doc";
 
 /** Typed `[[query` right before the cursor: `from` is the first `[`. */
 export type WikiTrigger = { from: number; to: number; query: string };
@@ -53,7 +52,7 @@ export function WikiSuggest({
   editor: Editor;
   keyHandler: RefObject<SuggestKeyHandler | null>;
 }) {
-  const pathname = usePathname();
+  const doc = useCurrentDoc();
   const [trigger, setTrigger] = useState<WikiTrigger | null>(null);
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   /** Search results and the query they answer (stale while a new search runs). */
@@ -78,7 +77,7 @@ export function WikiSuggest({
   useEffect(() => {
     if (!open) return;
     const id = ++requestId.current;
-    const self = itemFromPath(pathname) ?? undefined;
+    const self = doc ?? undefined;
     const timer = setTimeout(async () => {
       const result = await safeAction(() => searchItemTitles(query.trim(), self));
       if (id !== requestId.current) return;
@@ -86,7 +85,7 @@ export function WikiSuggest({
       setActive(0);
     }, SEARCH_DELAY);
     return () => clearTimeout(timer);
-  }, [open, query, pathname]);
+  }, [open, query, doc]);
 
   // Until results for this exact query arrive, offer nothing: Enter must not insert the
   // raw text while a matching item is still loading.

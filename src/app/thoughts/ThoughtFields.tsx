@@ -1,3 +1,4 @@
+import type { ItemRef } from "@/lib/repo/shared";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
@@ -12,10 +13,13 @@ export function ThoughtFields({
   values,
   tagSuggestions,
   editorKey,
+  doc,
 }: {
   values: ThoughtFormValues;
   tagSuggestions: string[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
 }) {
   return (
     <>
@@ -51,6 +55,7 @@ export function ThoughtFields({
       <DetailBody>
         <MarkdownEditor
           key={editorKey}
+          doc={doc}
           name="body"
           value={values.body}
           placeholder="생각을 적어 보세요…"

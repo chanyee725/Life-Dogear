@@ -342,6 +342,7 @@ export function PaperEditor({
           onDropCapture={touchBody}
         >
           <MarkdownEditor
+            doc={{ type: "paper", id: paper.id }}
             value={body}
             onChange={(markdown) => {
               setBody(markdown);

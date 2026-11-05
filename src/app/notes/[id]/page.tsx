@@ -56,6 +56,7 @@ export default async function NoteDetailPage({ params }: Props) {
           }
         >
           <NoteFields
+            doc={{ type: "note", id: note.id }}
             editorKey={note.id}
             created={formatDate(seoulDate(note.createdAt))}
             tagSuggestions={allTags.map((t) => t.name)}

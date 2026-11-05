@@ -75,6 +75,7 @@ export default async function GoalDetailPage({ params }: Props) {
             <GoalProgress value={node.progress} />
           </p>
           <GoalFields
+            doc={{ type: "goal", id: goal.id }}
             editorKey={goal.id}
             created={formatDate(seoulDate(goal.createdAt))}
             hasChildren={goalList.some((g) => g.parentId === goal.id)}

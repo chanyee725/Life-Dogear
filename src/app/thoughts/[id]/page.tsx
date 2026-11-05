@@ -47,6 +47,7 @@ export default async function ThoughtDetailPage({ params }: Props) {
           }
         >
           <ThoughtFields
+            doc={{ type: "thought", id: thought.id }}
             editorKey={thought.id}
             tagSuggestions={allTags.map((t) => t.name)}
             values={{

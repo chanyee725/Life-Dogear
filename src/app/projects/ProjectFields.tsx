@@ -1,3 +1,4 @@
+import type { ItemRef } from "@/lib/repo/shared";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { DateField } from "@/components/fields/DateField";
 import { EnumSelect } from "@/components/fields/EnumSelect";
@@ -33,6 +34,7 @@ export function ProjectFields({
   areaOptions,
   goalOptions,
   editorKey,
+  doc,
   onKindChange,
   created,
 }: {
@@ -43,6 +45,8 @@ export function ProjectFields({
   /** Non-archived goals (plus the current one if it is archived). */
   goalOptions: { value: string; label: string }[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
   /** Makes 종류 controlled by the parent (`values.kind` is then the current value). */
   onKindChange?: (kind: ProjectKind) => void;
   /** `YYYY.MM.DD` (Seoul) of `createdAt`. */
@@ -128,7 +132,7 @@ export function ProjectFields({
         ) : null}
       </Properties>
       <DetailBody>
-        <MarkdownEditor key={editorKey} name="body" value={values.body} />
+        <MarkdownEditor key={editorKey} doc={doc} name="body" value={values.body} />
       </DetailBody>
     </>
   );

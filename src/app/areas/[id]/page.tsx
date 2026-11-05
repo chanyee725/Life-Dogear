@@ -77,6 +77,7 @@ export default async function AreaDetailPage({ params }: Props) {
           }
         >
           <AreaFields
+            doc={{ type: "area", id: area.id }}
             editorKey={area.id}
             tagSuggestions={allTags.map((t) => t.name)}
             values={{

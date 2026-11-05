@@ -1,3 +1,4 @@
+import type { ItemRef } from "@/lib/repo/shared";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
 import { Properties, Property } from "@/components/fields/Properties";
@@ -10,10 +11,13 @@ export function AreaFields({
   values,
   tagSuggestions,
   editorKey,
+  doc,
 }: {
   values: AreaFormValues;
   tagSuggestions: string[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
 }) {
   return (
     <>
@@ -39,6 +43,7 @@ export function AreaFields({
       <DetailBody>
         <MarkdownEditor
           key={editorKey}
+          doc={doc}
           name="body"
           value={values.body}
           placeholder="이 영역에 대한 메모…"

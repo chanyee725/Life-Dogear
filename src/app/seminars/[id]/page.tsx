@@ -47,6 +47,7 @@ export default async function SeminarDetailPage({ params }: Props) {
           }
         >
           <SeminarFields
+            doc={{ type: "seminar", id: seminar.id }}
             editorKey={seminar.id}
             tagSuggestions={allTags.map((t) => t.name)}
             values={{

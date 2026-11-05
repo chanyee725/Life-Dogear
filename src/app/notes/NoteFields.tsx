@@ -1,3 +1,4 @@
+import type { ItemRef } from "@/lib/repo/shared";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { EnumSelect } from "@/components/fields/EnumSelect";
 import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
@@ -27,6 +28,7 @@ export function NoteFields({
   tagSuggestions,
   areaOptions,
   editorKey,
+  doc,
   created,
 }: {
   values: NoteFormValues;
@@ -34,6 +36,8 @@ export function NoteFields({
   /** Non-archived areas (plus the current one if it is archived). */
   areaOptions: { value: string; label: string }[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
   /** `YYYY.MM.DD` (Seoul) of `createdAt`. */
   created?: string;
 }) {
@@ -107,6 +111,7 @@ export function NoteFields({
       <DetailBody>
         <MarkdownEditor
           key={editorKey}
+          doc={doc}
           name="body"
           value={values.body}
           placeholder="공부한 내용을 정리해 보세요…"

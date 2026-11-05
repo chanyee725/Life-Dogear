@@ -58,6 +58,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           }
         >
           <ProjectFields
+            doc={{ type: "project", id: project.id }}
             editorKey={project.id}
             created={formatDate(seoulDate(project.createdAt))}
             tagSuggestions={allTags.map((t) => t.name)}
