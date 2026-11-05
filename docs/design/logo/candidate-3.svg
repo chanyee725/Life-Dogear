@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
+  <title>Life Dogear — candidate 3: D monogram with a dog-ear</title>
+  <style>svg{color:#2f2e2a}@media (prefers-color-scheme:dark){svg{color:#e6e5e3}}</style>
+  <!-- Letter D drawn as a page: straight spine, folded top-right corner, round bowl -->
+  <path d="M7 4.5H14L20.5 11C23.6 14.1 25.5 17.3 25.5 20.5C25.5 24.6 21.6 27.5 15 27.5H7Z"/>
+  <!-- Fold: filled flap -->
+  <path d="M14 4.5V11H20.5Z" fill="currentColor"/>
+</svg>
