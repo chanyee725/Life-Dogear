@@ -192,10 +192,12 @@ test("홈 달력 블록: 오른쪽 패널은 다음 일정, 할 일 목록·입�
   const tomorrow = seoul.format(Date.now() + 86_400_000);
   for (const pick of [null, tomorrow]) {
     if (pick) await calendar.locator(`[data-cal-cell="${pick}"]`).first().click();
-    // The today panel's day heading (the only live one).
-    const day = (await calendar.locator('h2[aria-live="polite"]').textContent())!;
+    // The today panel's day heading (the range title above the grid is live too).
+    const day = (await panel.locator('h2[aria-live="polite"]').textContent())!;
     await expect(calendar.getByRole("heading", { name: day, exact: true })).toHaveCount(1);
-    await expect(calendar.getByRole("region", { name: day, exact: true })).toHaveCount(0);
+    // The panel is itself a region named by its day; any other one outside it is a second list.
+    const inPanel = await panel.getByRole("region", { name: day, exact: true }).count();
+    await expect(calendar.getByRole("region", { name: day, exact: true })).toHaveCount(1 + inPanel);
   }
 });
 
