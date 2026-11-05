@@ -3,7 +3,9 @@
 /**
  * Local graph card for detail pages (docs/design/graph.md 8): the item and its neighbours
  * (1 or 2 steps), collapsible (remembered in localStorage `rb-local-graph` for every
- * detail page). Clicking a node opens that item. Drag is not saved; wheel zoom needs Ctrl/⌘.
+ * detail page). Clicking a node opens that item. Drag a node to move it (not saved), drag the
+ * background to pan, pinch to zoom on touch. The mouse wheel zooms once the graph is clicked or
+ * focused (or with Ctrl/⌘), so page scrolling never gets caught; leaving focus releases it.
  *
  * Usage: `<LocalGraph node="paper:<id>" />` next to the "연결된 항목" section.
  */
@@ -15,10 +17,11 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
 } from "react";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { cn, LinkButton } from "@/components/ui";
+import { Button, cn, LinkButton } from "@/components/ui";
 import type { GraphNodeId, LocalGraphData } from "@/lib/graph/types";
 import { fetchLocalGraph } from "./api";
 import type { GraphCanvasApi } from "./GraphCanvas";
@@ -49,6 +52,17 @@ export function LocalGraph({ node, className }: { node: GraphNodeId; className?:
   const [announce, setAnnounce] = useState("");
   const apiRef = useRef<GraphCanvasApi | null>(null);
   const [canvasRef, size] = useElementSize<HTMLDivElement>();
+  // Wheel zoom is armed by a click/focus inside the graph; the ref feeds d3-zoom's filter.
+  const [wheelActive, setWheelActive] = useState(false);
+  const wheelActiveRef = useRef(false);
+  const wheelZoom = useCallback(() => wheelActiveRef.current, []);
+  const setWheel = useCallback((on: boolean) => {
+    wheelActiveRef.current = on;
+    setWheelActive(on);
+  }, []);
+  function onBlur(e: FocusEvent<HTMLDivElement>) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setWheel(false);
+  }
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(LOCAL_GRAPH_STORAGE_KEY) === "collapsed");
@@ -206,9 +220,19 @@ export function LocalGraph({ node, className }: { node: GraphNodeId; className?:
                 ref={canvasRef}
                 tabIndex={0}
                 role="application"
-                aria-label={`로컬 그래프. 노드 ${data?.nodes.length ?? 0}개. 화살표로 이동, Enter로 열기.`}
+                aria-label={`로컬 그래프. 노드 ${data?.nodes.length ?? 0}개. 화살표로 이동, Enter로 열기. 포커스 중에는 휠로 확대·축소.`}
+                data-wheel-zoom={wheelActive ? "on" : "off"}
                 onKeyDown={onKeyDown}
-                className="relative h-[220px] overflow-hidden rounded-b-lg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent lg:h-[260px]"
+                onFocus={() => setWheel(true)}
+                onBlur={onBlur}
+                onPointerDownCapture={(e) => {
+                  // d3-zoom cancels mousedown, so the browser would not move focus here itself.
+                  if (document.activeElement !== e.currentTarget) {
+                    e.currentTarget.focus({ preventScroll: true });
+                  }
+                  setWheel(true);
+                }}
+                className="relative h-[220px] touch-none overflow-hidden rounded-b-lg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent lg:h-[360px]"
               >
                 {data && size.width > 0 ? (
                   <GraphCanvasLazy
@@ -223,10 +247,34 @@ export function LocalGraph({ node, className }: { node: GraphNodeId; className?:
                     distances={distances}
                     fitKey={`${node}:${depth}`}
                     onNodeClick={(n) => open(n.id)}
+                    wheelZoom={wheelZoom}
                     onReady={(api) => {
                       apiRef.current = api;
                     }}
                   />
+                ) : null}
+                {data ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="화면에 맞춤"
+                    title="화면에 맞춤"
+                    className="absolute top-2 right-2 border border-border bg-bg/80 backdrop-blur-sm"
+                    onClick={() => apiRef.current?.zoomToFit()}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      aria-hidden
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                    >
+                      <path d="M1.5 5V1.5H5M9 1.5h3.5V5M12.5 9v3.5H9M5 12.5H1.5V9" />
+                    </svg>
+                  </Button>
                 ) : null}
               </div>
               {data?.truncated ? (
