@@ -187,8 +187,8 @@ describe("AddEventButton", () => {
     expect(document.body.textContent).not.toContain("연결이 필요해요");
     await act(async () => button().click());
 
-    const date = document.querySelector<HTMLInputElement>("input[type=date]")!;
-    expect(date.value).toBe("2026-11-05");
+    const date = document.querySelector<HTMLInputElement>("input[placeholder='YYYY.MM.DD']")!;
+    expect(date.value).toBe("2026.11.05");
     const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     const [start] = document.querySelectorAll<HTMLInputElement>("input[type=time]");
     await act(async () => {
