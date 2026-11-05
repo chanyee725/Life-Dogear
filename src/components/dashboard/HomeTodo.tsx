@@ -40,10 +40,12 @@ export function HomeTodo({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [listCount, setListCount] = useState<number | null>(null);
-  // A new server count wins until the list reports again (an emptied list never reports).
-  const [prevCount, setPrevCount] = useState(count);
-  if (prevCount !== count) {
-    setPrevCount(count);
+  // A new server render (new count or new list element) wins until the list reports again:
+  // an emptied list never reports, so a count kept from before would outlive the list that
+  // made it (badge "2" over "오늘 할 일이 없습니다").
+  const [prev, setPrev] = useState({ count, today });
+  if (prev.count !== count || prev.today !== today) {
+    setPrev({ count, today });
     setListCount(null);
   }
   const shown = listCount ?? count;

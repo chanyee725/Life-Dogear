@@ -112,4 +112,19 @@ describe("home Todo badge follows the list", () => {
     expect(t.name()).toBe("할 일 0개");
     expect(document.querySelector('[data-testid="todo-count"]')).toBeNull();
   });
+
+  it("takes the server count on a new render even when the count is unchanged", async () => {
+    let save!: () => void;
+    updateTask.mockReturnValue(
+      new Promise((resolve) => (save = () => resolve({ ok: true, data: null }))),
+    );
+    const t = await setup();
+    await act(async () => t.box("late").click());
+    expect(t.name()).toBe("할 일 1개");
+    // The server's next render has the same count but no list, so nothing reports again.
+    const empty = createElement("p", null, "오늘 할 일이 없습니다.");
+    await act(async () => root!.render(createElement(HomeTodo, { count: 2, today: empty })));
+    expect(t.name()).toBe("할 일 2개");
+    await act(async () => save());
+  });
 });
