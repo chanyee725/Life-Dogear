@@ -468,3 +468,32 @@ test("빠른 추가를 열었다 닫은 뒤에도 검색 팔레트는 Esc로 닫
   await page.keyboard.press("Escape");
   await expect(palette).toBeHidden();
 });
+
+test("Todo 안 마감일 팝오버를 눌러도 할 일 팝오버는 열린 채로 있다", async ({ page }) => {
+  const title = uniqueTitle("E2E todo due");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const input = (await openQuickAdd(page)).getByRole("textbox", { name: /^할 일 추가/ });
+  await input.fill(title);
+  await input.press("Enter");
+  await expect(page.getByText("오늘 마감으로 추가했습니다.")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: /^할 일 \d+개$/ }).click();
+  const popover = page.getByRole("dialog", { name: "할 일" });
+  await popover.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await page.getByRole("menuitem", { name: "마감일 정하기" }).click();
+  const due = page.getByRole("dialog", { name: "마감일" });
+  await expect(due).toBeVisible();
+  // Presses in the nested (portaled) date popover are not outside the 할 일 popover.
+  await due.getByLabel("마감일").click();
+  await expect(due).toBeVisible();
+  await expect(popover).toBeVisible();
+  await due.getByRole("button", { name: "오늘", exact: true }).click();
+  await expect(due).toHaveCount(0);
+  await expect(popover).toBeVisible();
+
+  await popover.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await page.getByRole("menuitem", { name: "삭제" }).click();
+  await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+});

@@ -122,6 +122,11 @@ export function Popover({
               if (e.detail.originalEvent === pressedInside.current) return;
               const t = e.target as Node | null;
               if (t && (ref.current?.contains(t) || anchor?.contains(t))) return;
+              // A nested Radix layer opened from the children (the 마감일 popover) is
+              // portaled to body; Radix cannot see it is ours through the box portal.
+              const layer =
+                t instanceof Element && t.closest("[data-radix-popper-content-wrapper]");
+              if (layer && !layer.contains(ref.current)) return;
               closeRef.current(false);
             }}
             className={cn(
