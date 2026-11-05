@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { deleteCurrentItem, uniqueTitle } from "./helpers";
+import { deleteCurrentItem, pickOption, uniqueTitle } from "./helpers";
 
 const AREA = "연구 분야";
 
@@ -10,9 +10,9 @@ test("영역 상세: 상태별 프로젝트 칸반 4열(빈 열 포함), 넓은 
   const title = uniqueTitle("E2E 계획 프로젝트");
   await page.goto("/projects/new");
   await page.getByLabel("제목", { exact: true }).fill(title);
-  await page.locator("#project-kind").selectOption("general");
-  await page.locator("#project-status").selectOption({ label: "계획" });
-  await page.locator("#project-area").selectOption({ label: AREA });
+  await pickOption(page, page.locator("#project-kind"), "일반");
+  await pickOption(page, page.locator("#project-status"), "계획");
+  await pickOption(page, page.locator("#project-area"), AREA);
   await page.getByRole("button", { name: "저장" }).click();
   await expect(page).toHaveURL(/\/projects\/(?!new)[^/]+$/, { timeout: 20_000 });
   const projectUrl = page.url();
