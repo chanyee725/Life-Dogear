@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState, NewItemButton } from "@/components/ui";
+import { EmptyAdd } from "@/components/ui";
 import { areas } from "@/lib/repo";
 import { AreasView } from "./AreasView";
 import { parseAreaSort } from "./list";
@@ -17,14 +17,9 @@ export default async function AreasPage({ searchParams }: { searchParams: Promis
     return (
       <Page>
         <PageHeader title="영역" />
-        <EmptyState
-          title="아직 영역이 없습니다"
-          action={
-            <NewItemButton href="/areas/new" size="sm">
-              새 영역
-            </NewItemButton>
-          }
-        />
+        <EmptyAdd compact href="/areas/new">
+          ＋ 새 영역
+        </EmptyAdd>
       </Page>
     );
   }

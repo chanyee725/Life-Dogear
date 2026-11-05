@@ -16,7 +16,7 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge, EmptyState, formatDate, LinkButton, NewItemButton } from "@/components/ui";
+import { Badge, ListEmpty, formatDate, NewItemButton } from "@/components/ui";
 import { seoulDate } from "@/components/calendar/model";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
@@ -85,19 +85,11 @@ export default async function SeminarsPage({
   const filtered = Boolean(kind || tag);
 
   const empty = (
-    <EmptyState
-      title={filtered ? "조건에 맞는 세미나가 없습니다" : "아직 세미나 노트가 없습니다"}
-      action={
-        filtered ? (
-          <LinkButton href="/seminars" size="sm">
-            필터 해제
-          </LinkButton>
-        ) : (
-          <NewItemButton href="/seminars/new" size="sm">
-            새 세미나
-          </NewItemButton>
-        )
-      }
+    <ListEmpty
+      filtered={filtered}
+      addHref="/seminars/new"
+      addLabel="＋ 새 세미나"
+      clearHref="/seminars"
     />
   );
 

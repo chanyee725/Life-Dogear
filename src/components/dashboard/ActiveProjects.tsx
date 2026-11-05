@@ -13,7 +13,11 @@ const allLink = (href: string) => (
 /** Home "진행 중인 연구": research projects on the stage kanban. Archived ones never appear. */
 export function ActiveResearch({ stages }: { stages: StageColumn[] }) {
   return (
-    <Section id="active-research" title="진행 중인 연구" action={allLink("/projects")}>
+    <Section
+      id="active-research"
+      title="진행 중인 연구"
+      action={stages.some((c) => c.items.length) ? allLink("/projects") : undefined}
+    >
       <ProjectKanbanBoard columns={stages} />
     </Section>
   );
@@ -34,7 +38,11 @@ export function ActiveGeneralProjects({
   context?: Record<string, string>;
 }) {
   return (
-    <Section id="active-projects" title="프로젝트" action={allLink("/projects?kind=general")}>
+    <Section
+      id="active-projects"
+      title="프로젝트"
+      action={projects.length ? allLink("/projects?kind=general") : undefined}
+    >
       <GeneralProjects projects={projects} today={today} progress={progress} context={context} />
     </Section>
   );
