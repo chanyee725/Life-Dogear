@@ -10,7 +10,7 @@ import type { GraphTheme } from "@/components/graph/graph-theme";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { dayOf, isMovable, lastDay, shortDay, timeOf } from "./model";
-import { SourceIcon, sourceColor, sourceTint } from "./SourceIcon";
+import { SourceIcon, eventBg, eventFg } from "./SourceIcon";
 import { SOURCE_LABEL } from "./sources";
 
 /** Spoken label (calendar.md 2절): source first, e.g. "할 일: 2장 초안, 마감 11월 5일". */
@@ -80,26 +80,31 @@ export function CalendarItemRow({
   const time = hideTime ? null : timeOf(item);
   const movable = isMovable(item);
   const className = cn(
-    "flex min-w-0 items-center gap-1.5 rounded-[4px] border-l-[3px] px-1 hover:brightness-95 focus-visible:outline-offset-[-2px] dark:hover:brightness-125",
+    "flex min-w-0 items-center gap-1.5 rounded-[4px] px-1.5 hover:brightness-95 focus-visible:outline-offset-[-2px] dark:hover:brightness-125",
     size === "month" && "h-5 text-xs",
     size === "week" && "h-6 text-[13px]",
-    size === "list" && "h-10 border-l-0 text-sm",
+    size === "list" && "h-10 px-1 text-sm",
     movable && "hover:cursor-grab select-none",
     dragging && "opacity-40",
   );
-  // Coloured chip: left bar in the source color over a soft tint of it (list rows keep the icon).
-  const style =
-    size === "list"
-      ? undefined
-      : {
-          borderLeftColor: sourceColor(theme, item.source),
-          background: sourceTint(theme, item.source, item.done ? 6 : 14),
-        };
+  // Soft chip: source bg + same-hue text (list rows keep the icon). Done items fade the bg.
+  const chip = size !== "list";
+  const style = chip
+    ? {
+        color: eventFg(item.source),
+        background: item.done
+          ? `color-mix(in oklch, ${eventBg(item.source)} 50%, transparent)`
+          : eventBg(item.source),
+      }
+    : undefined;
+  const title = titleClass(item, today);
   const body = (
     <>
       {size === "list" ? <SourceIcon source={item.source} done={item.done} theme={theme} /> : null}
       {time ? <span className="shrink-0 text-muted tabular-nums">{time}</span> : null}
-      <span className={cn("truncate", titleClass(item, today))}>{item.title}</span>
+      <span className={cn("truncate", chip && title === "text-fg" ? undefined : title)}>
+        {item.title}
+      </span>
     </>
   );
   const props = {

@@ -12,7 +12,6 @@ import {
 import { SourceDot } from "@/components/calendar/SourceIcon";
 import { visibleItems } from "@/components/calendar/sources";
 import { useSources } from "@/components/calendar/useSources";
-import { useGraphTheme } from "@/components/graph/graph-theme";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 
@@ -31,7 +30,6 @@ export function WeekStrip({
   items: CalendarItem[];
   google: GoogleStatus;
 }) {
-  const theme = useGraphTheme();
   const [choice] = useSources();
   const shown = visibleItems(items, choice, google);
   return (
@@ -67,7 +65,6 @@ export function WeekStrip({
                       key={dot.source}
                       source={dot.source}
                       hollow={dot.hollow}
-                      theme={theme}
                     />
                   ))}
                 </span>

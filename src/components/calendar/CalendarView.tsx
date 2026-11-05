@@ -55,7 +55,7 @@ import {
 } from "./model";
 import { Popover } from "./Popover";
 import { TodayPanel } from "./TodayPanel";
-import { SourceDot, SourceIcon, sourceColor, sourceTint } from "./SourceIcon";
+import { SourceDot, SourceIcon, eventBg, eventDot, eventFg } from "./SourceIcon";
 import { SOURCES, SOURCE_LABEL, noneChosen, visibleItems } from "./sources";
 import { useSources } from "./useSources";
 
@@ -758,7 +758,6 @@ export function CalendarView({
             today={today}
             now={now}
             items={shown}
-            theme={theme}
             onToday={goToday}
             onAdd={(anchor) => openAdd(selected, anchor)}
             gridEnd={gridDays.at(-1)}
@@ -1064,10 +1063,8 @@ function WeekRow({ days, items, ctx }: { days: string[]; items: CalendarItem[]; 
 function Bar({ bar, days, top, ctx }: { bar: WeekBar; days: string[]; top: number; ctx: GridCtx }) {
   const { item } = bar;
   const on = days.slice(bar.col, bar.col + bar.span).join(" ");
-  const color = sourceColor(ctx.theme, item.source);
   const className = cn(
-    "absolute z-10 flex h-5 min-w-0 items-center gap-1.5 overflow-hidden rounded-[4px] px-1.5 text-xs text-fg focus-visible:outline-offset-[-2px]",
-    !bar.continuesBefore && "border-l-[3px]",
+    "absolute z-10 flex h-5 min-w-0 items-center gap-1.5 overflow-hidden rounded-[4px] px-1.5 text-xs focus-visible:outline-offset-[-2px]",
     bar.continuesBefore && "rounded-l-none",
     bar.continuesAfter && "rounded-r-none",
   );
@@ -1075,8 +1072,8 @@ function Bar({ bar, days, top, ctx }: { bar: WeekBar; days: string[]; top: numbe
     top: top + bar.lane * LANE_PX,
     left: `calc(${(bar.col / 7) * 100}% + 2px)`,
     width: `calc(${(bar.span / 7) * 100}% - 4px)`,
-    borderLeftColor: bar.continuesBefore ? undefined : color,
-    background: sourceTint(ctx.theme, item.source, 16),
+    color: eventFg(item.source),
+    background: eventBg(item.source),
   };
   const body = (
     <>
@@ -1258,7 +1255,6 @@ function NarrowMonthRow({
                   key={dot.source}
                   source={dot.source}
                   hollow={dot.hollow}
-                  theme={ctx.theme}
                 />
               ))}
             </span>
@@ -1266,7 +1262,7 @@ function NarrowMonthRow({
               <span
                 aria-hidden="true"
                 className="absolute inset-x-0 bottom-0.5 h-0.5"
-                style={{ backgroundColor: sourceColor(ctx.theme, bar.source), opacity: 0.5 }}
+                style={{ backgroundColor: eventDot(bar.source) }}
               />
             ) : null}
           </div>

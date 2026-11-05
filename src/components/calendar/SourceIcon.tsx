@@ -13,9 +13,14 @@ export const sourceColor = (theme: GraphTheme, source: CalendarSource) =>
       : PERSONAL_ORANGE.light
     : theme.kind[source];
 
-/** Soft tint of a source color for chip and row backgrounds. */
-export const sourceTint = (theme: GraphTheme, source: CalendarSource, pct = 14) =>
-  `color-mix(in oklch, ${sourceColor(theme, source)} ${pct}%, transparent)`;
+/**
+ * Calendar event palette (globals.css `--rb-ev-<source>-*`): one soft bg, a same-hue
+ * text color and a mid dot per source, shared by chips, bars and dots on home, /tasks
+ * and the week strips. Kept apart from the graph kind colors (list icons) on purpose.
+ */
+export const eventBg = (source: CalendarSource) => `var(--rb-ev-${source}-bg)`;
+export const eventFg = (source: CalendarSource) => `var(--rb-ev-${source}-fg)`;
+export const eventDot = (source: CalendarSource) => `var(--rb-ev-${source}-dot)`;
 
 /**
  * 10×10 source icon (aria-hidden; labels carry the meaning): the graph shapes, a filled
@@ -63,13 +68,11 @@ export function SourceIcon({
 export function SourceDot({
   source,
   hollow,
-  theme,
 }: {
   source: CalendarSource;
   hollow: boolean;
-  theme: GraphTheme;
 }) {
-  const color = sourceColor(theme, source);
+  const color = eventDot(source);
   return (
     <span
       aria-hidden="true"

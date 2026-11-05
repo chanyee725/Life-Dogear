@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useId, type ReactNode } from "react";
-import type { GraphTheme } from "@/components/graph/graph-theme";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import type { CalendarItem } from "@/lib/calendar/types";
 import { itemLabel, titleClass } from "./CalendarItemRow";
 import { spokenDay, timeOf } from "./model";
-import { sourceColor } from "./SourceIcon";
+import { eventDot } from "./SourceIcon";
 import { groupHeading, originLabel, relativeDay, upcoming } from "./upcoming";
 
 /**
@@ -20,7 +19,6 @@ export function TodayPanel({
   today,
   now,
   items,
-  theme,
   onToday,
   onAdd,
   gridEnd,
@@ -35,7 +33,6 @@ export function TodayPanel({
   now: string;
   /** Items after the "표시" filter. */
   items: readonly CalendarItem[];
-  theme: GraphTheme;
   onToday: () => void;
   onAdd: (anchor: HTMLElement) => void;
   /** Last day the grid shows; groups after it get a "달력에서 보기" jump (with `onGoto`). */
@@ -128,7 +125,7 @@ export function TodayPanel({
               <ul className="flex flex-col">
                 {g.items.map((item) => (
                   <li key={item.id}>
-                    <UpcomingRow item={item} today={today} theme={theme} />
+                    <UpcomingRow item={item} today={today} />
                   </li>
                 ))}
               </ul>
@@ -146,11 +143,9 @@ export function TodayPanel({
 function UpcomingRow({
   item,
   today,
-  theme,
 }: {
   item: CalendarItem;
   today: string;
-  theme: GraphTheme;
 }) {
   const time = timeOf(item);
   const origin = originLabel(item);
@@ -162,7 +157,7 @@ function UpcomingRow({
       <span
         aria-hidden
         className="size-2 shrink-0 rounded-full"
-        style={{ background: sourceColor(theme, item.source), opacity: item.done ? 0.45 : 1 }}
+        style={{ background: eventDot(item.source), opacity: item.done ? 0.45 : 1 }}
       />
       {time ? <span className="shrink-0 text-xs text-muted tabular-nums">{time}</span> : null}
       <span className={cn("min-w-0 flex-1 truncate", titleClass(item, today))}>{item.title}</span>
