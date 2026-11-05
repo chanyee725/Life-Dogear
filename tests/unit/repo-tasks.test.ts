@@ -250,6 +250,22 @@ describe("tasks repo: lists", () => {
     await expect(tasks.listToday("어제")).rejects.toBeInstanceOf(RepoError);
   });
 
+  it("lists today's done tasks by completion time (Seoul day), not by due date", async () => {
+    const lateToday = await tasks.create({ title: "지난 할 일, 오늘 끝냄", dueDate: "2026-10-30" });
+    const lateYesterday = await tasks.create({ title: "어제 끝냄", dueDate: "2026-11-03" });
+    const dueTodayYesterday = await tasks.create({
+      title: "오늘 마감, 어제 끝냄",
+      dueDate: "2026-11-03",
+    });
+    // Seoul 2026-11-03 = [2026-11-02T15:00Z, 2026-11-03T15:00Z).
+    await setDoneAt(lateToday.id, "2026-11-02T15:00:00.000Z");
+    await setDoneAt(lateYesterday.id, "2026-11-02T14:59:59.999Z");
+    await setDoneAt(dueTodayYesterday.id, "2026-11-01T10:00:00.000Z");
+    const { done, overdue, today } = await tasks.listToday("2026-11-03");
+    expect(done.map((t) => t.id)).toEqual([lateToday.id]);
+    expect([...overdue, ...today]).toEqual([]);
+  });
+
   it("lists completions in the half-open ISO range [from, to)", async () => {
     const p = await projects.create({ title: "p" });
     const ids: Record<string, string> = {};
