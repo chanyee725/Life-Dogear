@@ -278,6 +278,13 @@ test("Todo: 뱃지에 지남+오늘 개수, 완료하면 줄고 취소선으로 
   const [b, p] = await Promise.all([todo, popover].map(async (l) => (await l.boundingBox())!));
   expect(Math.abs(b.x + b.width - (p.x + p.width))).toBeLessThan(2);
   await expect(popover.getByText(title, { exact: true })).toHaveCount(1);
+  // Esc in the title edit cancels the edit only; the popover stays open.
+  await popover.getByRole("button", { name: title, exact: true }).click();
+  const edit = popover.getByRole("textbox", { name: "할 일 제목" });
+  await expect(edit).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(edit).toHaveCount(0);
+  await expect(popover).toBeVisible();
 
   // Checking it drops the badge at once; the row stays, struck through, under the open ones.
   await popover.getByRole("checkbox", { name: `완료: ${title}` }).check();
