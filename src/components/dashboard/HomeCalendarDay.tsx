@@ -13,7 +13,7 @@ import { CalendarView, type CalendarViewProps } from "@/components/calendar/Cale
 import { Popover } from "@/components/calendar/Popover";
 import { PlusIcon } from "@/components/shell/icons";
 import { QUICK_ADD_EVENT, QUICK_INPUT_ID } from "@/components/shell/shortcuts";
-import { Button } from "@/components/ui";
+import { Button, cn } from "@/components/ui";
 import type { CalendarResult } from "@/lib/calendar/types";
 import { QuickInput, TaskQuickInput } from "./QuickInput";
 
@@ -91,7 +91,8 @@ const EMPTY: HomeCalendarData = { items: [], google: "off", failed: false };
 
 /**
  * 빠른 추가: a + button at the right of the calendar toolbar opening a small popover with
- * 할 일 추가 (due on the day selected in the calendar) over 생각 추가. Opening focuses the
+ * two titled sections: 할 일 (할 일 추가, due on the day selected in the calendar) over 생각
+ * (생각 추가, saved to the inbox). Opening focuses the
  * first input, `/` (QUICK_ADD_EVENT) opens it on 생각 추가. Esc and outside presses close
  * it; focus goes back to the button unless the press moved it somewhere else. Once opened
  * it stays mounted and is only hidden, so typed text and the saved / error lines survive.
@@ -164,12 +165,37 @@ export function HomeQuickAdd({ today }: { today: string }) {
           className="w-72 max-w-[calc(100vw-1rem)] p-3"
         >
           {/* Layout on an inner box: a display class on the root would beat `hidden`. */}
-          <div className="flex flex-col gap-1">
-            <TaskQuickInput day={day} today={today} />
-            <QuickInput />
+          <div className="flex flex-col gap-3">
+            <QuickAddSection title="할 일">
+              <TaskQuickInput day={day} today={today} />
+            </QuickAddSection>
+            <QuickAddSection title="생각" className="border-t border-border pt-3">
+              <QuickInput />
+            </QuickAddSection>
           </div>
         </Popover>
       ) : null}
     </>
+  );
+}
+
+/** A titled group in 빠른 추가 (할 일 / 생각). */
+function QuickAddSection({
+  title,
+  className,
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className={cn("flex flex-col gap-1.5", className)}>
+      <h3 id={id} className="text-xs font-medium text-muted">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
