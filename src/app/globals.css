@@ -63,6 +63,8 @@
   --rb-code-function: #2a52b0;
   --rb-code-attr: #0e6b72;
   --rb-code-variable: #9b3a32;
+  /* Inline `code` text (docs/design/code.md 0): 5.2:1 on --rb-subtle. */
+  --rb-code-inline: #c42b1c;
 }
 
 .dark {
@@ -117,6 +119,7 @@
   --rb-code-function: #8db4f2;
   --rb-code-attr: #7fd3d0;
   --rb-code-variable: #f09a90;
+  --rb-code-inline: #f2877a;
 }
 
 /* ---------- Tailwind theme mapping ---------- */
@@ -366,54 +369,105 @@
     text-decoration: underline;
     text-underline-offset: 2px;
   }
+  /* Inline `code` (docs/design/code.md 0). */
   .rb-prose code {
     font-family: var(--font-mono);
-    font-size: 0.88em;
+    font-size: 0.86em;
+    color: var(--rb-code-inline);
     background: var(--rb-subtle);
+    border: 1px solid var(--rb-border);
     border-radius: 4px;
-    padding: 0.1em 0.35em;
+    padding: 0.08em 0.35em;
+    overflow-wrap: anywhere;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .rb-prose a code {
+    color: inherit;
   }
   .rb-prose pre {
     font-family: var(--font-mono);
     font-size: 0.86em;
+    line-height: 1.6;
+    tab-size: 2;
     color: var(--rb-code-fg);
     background: var(--rb-code-bg);
     border: 1px solid var(--rb-border);
     border-radius: 8px;
     padding: 0.8em 1em;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rb-border-strong) transparent;
   }
   .rb-prose pre code {
+    font-size: inherit;
+    color: inherit;
     background: none;
+    border: 0;
+    border-radius: 0;
     padding: 0;
+    overflow-wrap: normal;
   }
 
-  /* Code block wrapper: language label + copy button above the scrolling <pre>
-     (docs/design/code.md 2). */
+  /* Code block wrapper (docs/design/code.md 2): the wrapper owns the frame; with a
+     language the bar is a header strip above the scrolling <pre>, without one the
+     copy button floats in the top-right corner. */
   .rb-prose .rb-code {
     position: relative;
+    background: var(--rb-code-bg);
+    border: 1px solid var(--rb-border);
+    border-radius: 8px;
+    overflow: hidden;
   }
   .rb-prose .rb-code > pre {
-    padding-top: 2em;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding: 0.75em 1em 0.85em;
+  }
+  /* No header strip: keep the first line clear of the floating copy button. */
+  .rb-prose .rb-code:not([data-language]) > pre {
+    padding-right: 4.75rem;
   }
   .rb-code-bar {
-    position: absolute;
-    top: 6px;
-    right: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
+    height: 2rem;
+    padding: 0 0.375rem 0 0.875rem;
+    background: var(--rb-surface);
+    border-bottom: 1px solid var(--rb-border);
     user-select: none;
   }
+  .rb-code:not([data-language]) > .rb-code-bar {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    height: auto;
+    padding: 0 0.375rem;
+    background: none;
+    border-bottom: 0;
+  }
+  .rb-code:not([data-language]) .rb-code-copy {
+    background: var(--rb-code-bg);
+  }
+  .rb-code:not([data-language]) .rb-code-copy:hover {
+    background: var(--rb-hover);
+  }
   .rb-code-lang {
+    order: -1;
+    margin-right: auto;
     font-family: var(--font-mono);
     font-size: 11px;
+    line-height: 1;
     color: var(--rb-muted);
   }
   .rb-code-copy {
     position: relative;
     height: 1.5rem;
     min-width: 3.5rem;
+    margin-left: auto;
     padding: 0 0.5rem;
     border-radius: 4px;
     font-size: 12px;
@@ -446,6 +500,15 @@
   @media (hover: none) {
     .rb-code-copy {
       opacity: 1;
+    }
+  }
+  @media (max-width: 639px) {
+    .rb-prose .rb-code > pre {
+      padding-left: 0.85em;
+      padding-right: 0.85em;
+    }
+    .rb-code-bar {
+      padding-left: 0.75rem;
     }
   }
 
@@ -543,4 +606,13 @@
     height: 0;
     pointer-events: none;
   }
+}
+
+/* Unlayered on purpose: Tiptap injects an unlayered `.ProseMirror pre { white-space: pre-wrap }`,
+   which beats any @layer rule. Code lines stay on one line and scroll sideways
+   (docs/design/code.md 2.1). */
+.rb-prose pre,
+.rb-prose.ProseMirror pre {
+  white-space: pre;
+  overflow-wrap: normal;
 }
