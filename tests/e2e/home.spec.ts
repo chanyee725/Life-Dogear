@@ -357,3 +357,86 @@ test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스
   await expect(input).toHaveValue("느린 달력!");
   await context.clearCookies({ name: "e2e-calendar-delay" });
 });
+
+test("Todo: 줄마다 보이는 완료·삭제 버튼으로 완료하고 지운다 (390px에서도 넘치지 않음)", async ({
+  page,
+}) => {
+  const doneTitle = uniqueTitle("E2E row done");
+  const goneTitle = uniqueTitle("E2E row delete");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const todo = page.getByRole("button", { name: /^할 일 \d+개$/ });
+  const countOf = async () => Number((await todo.getAttribute("aria-label"))!.match(/\d+/)![0]);
+  const before = await countOf();
+  for (const title of [doneTitle, goneTitle]) {
+    const input = (await openQuickAdd(page)).getByRole("textbox", { name: /^할 일 추가/ });
+    await input.fill(title);
+    await input.press("Enter");
+    await expect(page.getByText("오늘 마감으로 추가했습니다.")).toBeVisible();
+    await page.keyboard.press("Escape");
+  }
+  await expect(todo).toHaveAccessibleName(`할 일 ${before + 2}개`);
+
+  await todo.click();
+  const popover = page.getByRole("dialog", { name: "할 일" });
+  const open = popover.getByRole("list", { name: "오늘 할 일" });
+  const complete = open.getByRole("button", { name: `완료: ${doneTitle}` });
+  const remove = open.getByRole("button", { name: `삭제: ${goneTitle}` });
+  await expect(complete).toBeVisible();
+  await expect(remove).toBeVisible();
+  // Nothing in the popover runs past its right edge.
+  const box = (await popover.boundingBox())!;
+  for (const row of await open.getByRole("listitem").all()) {
+    const r = (await row.boundingBox())!;
+    expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width + 1);
+  }
+  await page.screenshot({ path: "test-results/home-todo-row-actions-390.png" });
+
+  // 완료 by keyboard: same as the checkbox, struck through under the open ones.
+  await complete.focus();
+  await page.keyboard.press("Enter");
+  await expect(todo).toHaveAccessibleName(`할 일 ${before + 1}개`);
+  const done = popover.getByRole("list", { name: "완료한 오늘 할 일" });
+  await expect(done.getByText(doneTitle, { exact: true })).toHaveClass(/line-through/);
+  await expect(done.getByRole("button", { name: `완료: ${doneTitle}` })).toHaveCount(0);
+
+  // 삭제: same as the menu's, with 되돌리기.
+  await remove.click();
+  await expect(page.getByText(`‘${goneTitle}’을 지웠습니다.`).first()).toBeVisible();
+  await expect(popover.getByText(goneTitle, { exact: true })).toHaveCount(0);
+  await expect(todo).toHaveAccessibleName(`할 일 ${before}개`);
+
+  // Clean up the done one with its own 삭제 button.
+  await done.getByRole("button", { name: `삭제: ${doneTitle}` }).click();
+  await expect(page.getByText(`‘${doneTitle}’을 지웠습니다.`).first()).toBeVisible();
+  await expect(done.getByText(doneTitle, { exact: true })).toHaveCount(0);
+  // Saved: gone after a reload too (the save may land just after the click).
+  await expect(async () => {
+    await page.reload();
+    await todo.click();
+    await expect(popover.getByText(doneTitle, { exact: true })).toHaveCount(0, { timeout: 500 });
+    await expect(popover.getByText(goneTitle, { exact: true })).toHaveCount(0, { timeout: 500 });
+  }).toPass({ timeout: 10_000 });
+  await expect(todo).toHaveAccessibleName(`할 일 ${before}개`);
+});
+
+test("Todo의 완료·삭제 버튼은 /tasks 목록에는 없다", async ({ page }) => {
+  const title = uniqueTitle("E2E row other");
+  await page.goto("/");
+  const input = (await openQuickAdd(page)).getByRole("textbox", { name: /^할 일 추가/ });
+  await input.fill(title);
+  await input.press("Enter");
+  await expect(page.getByText("오늘 마감으로 추가했습니다.")).toBeVisible();
+  await page.goto("/tasks?tab=today");
+  await expect(page.getByText(title, { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: `완료: ${title}` })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: `삭제: ${title}` })).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { name: `완료: ${title}` }).first()).toBeVisible();
+  // Clean up from the menu.
+  await page
+    .getByRole("button", { name: `할 일 메뉴: ${title}` })
+    .first()
+    .click();
+  await page.getByRole("menuitem", { name: "삭제" }).click();
+  await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+});
