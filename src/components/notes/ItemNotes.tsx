@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { EmptyAdd, formatRelative, LinkButton, ListRow, RowList, Section } from "@/components/ui";
+import { seoulDate } from "@/components/calendar/model";
+import { EmptyAdd, formatDate, LinkButton, ListRow, RowList, Section } from "@/components/ui";
 import { notes } from "@/lib/repo";
 
 /** Item whose notes are shown: projects and goals link notes, areas also own them (`areaId`). */
@@ -40,7 +41,8 @@ export async function ItemNotes({
                 {note.title}
               </Link>
               <time dateTime={note.updatedAt} className="shrink-0 text-xs text-muted tabular-nums">
-                {formatRelative(note.updatedAt)}
+                {/* Seoul day: the server may run in UTC (Vercel). */}
+                {formatDate(seoulDate(note.updatedAt))}
               </time>
             </ListRow>
           ))}
