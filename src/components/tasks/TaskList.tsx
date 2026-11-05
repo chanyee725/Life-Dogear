@@ -650,7 +650,12 @@ function TaskRow({
           {!isDone ? (
             <button
               type="button"
-              onClick={() => onToggle(task, true)}
+              onClick={(e) => {
+                // This button unmounts once done: hand focus to the row's 삭제 first so
+                // keyboard focus stays in the row (and keepFocus can move it on later).
+                (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus();
+                onToggle(task, true);
+              }}
               aria-label={`완료: ${task.title}`}
               className={rowActionClass}
             >
