@@ -757,7 +757,7 @@
     z-index: 5;
     height: 2px;
     border-radius: 1px;
-    background: var(--rb-faint);
+    background: var(--rb-muted);
     pointer-events: none;
   }
   .rb-prose .rb-dragging {
