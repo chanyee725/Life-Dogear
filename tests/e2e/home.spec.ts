@@ -389,14 +389,25 @@ test("Todo: 줄마다 보이는 완료·삭제 버튼으로 완료하고 지운�
   for (const row of await open.getByRole("listitem").all()) {
     const r = (await row.boundingBox())!;
     expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width + 1);
+    // And nothing inside the row overflows it.
+    const { scrollWidth, clientWidth } = await row.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
   }
   await page.screenshot({ path: "test-results/home-todo-row-actions-390.png" });
 
   // 완료 by keyboard: same as the checkbox, struck through under the open ones.
   await complete.focus();
   await page.keyboard.press("Enter");
+  // The 완료 button goes away; focus stays in the row on its 삭제, not on <body>.
+  await expect(open.getByRole("button", { name: `삭제: ${doneTitle}` })).toBeFocused();
   await expect(todo).toHaveAccessibleName(`할 일 ${before + 1}개`);
   const done = popover.getByRole("list", { name: "완료한 오늘 할 일" });
+  // Once the row moves down, focus goes on inside the popover, still not <body>.
+  await expect(done.getByText(doneTitle, { exact: true })).toBeVisible();
+  await expect(popover.locator(":focus")).toHaveCount(1);
   await expect(done.getByText(doneTitle, { exact: true })).toHaveClass(/line-through/);
   await expect(done.getByRole("button", { name: `완료: ${doneTitle}` })).toHaveCount(0);
 
