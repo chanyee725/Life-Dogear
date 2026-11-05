@@ -248,6 +248,7 @@ describe("tasks repo: lists", () => {
       later.id,
     );
     await expect(tasks.listToday("어제")).rejects.toBeInstanceOf(RepoError);
+    await expect(tasks.listToday("")).rejects.toBeInstanceOf(RepoError);
   });
 
   it("lists today's done tasks by completion time (Seoul day), not by due date", async () => {

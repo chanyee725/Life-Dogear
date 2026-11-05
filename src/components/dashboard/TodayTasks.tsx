@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TaskList } from "@/components/tasks/TaskList";
 import type { Task } from "@/lib/repo/tasks";
+import { TodayTaskList } from "./HomeTodo";
 import { Section, SectionHeader } from "@/components/ui";
 import { TODAY_MAX, WEEK_MAX } from "./today";
 
@@ -64,8 +65,9 @@ export function TodayTasks({
       />
       {all.length || done.length ? (
         <div className="flex flex-col">
-          <TaskList
+          <TodayTaskList
             tasks={[...all.slice(0, TODAY_MAX), ...done]}
+            hidden={Math.max(0, all.length - TODAY_MAX)}
             today={today}
             label="오늘 할 일"
             showParent
@@ -121,8 +123,7 @@ export function UpcomingTasks({ tasks, today }: { tasks: Task[]; today: string }
         id="upcoming-heading"
         title={
           <>
-            이번 주
-            <span className="ml-2 text-xs font-normal tabular-nums">{tasks.length}</span>
+            이번 주<span className="ml-2 text-xs font-normal tabular-nums">{tasks.length}</span>
           </>
         }
         action={

@@ -166,7 +166,9 @@ const SEOUL_OFFSET = "+09:00";
 export async function listToday(
   today: string,
 ): Promise<{ today: Task[]; overdue: Task[]; done: Task[] }> {
-  const day = optionalDate(today, "오늘") ?? "";
+  const day = optionalDate(today, "오늘");
+  // A missing or malformed day would make an Invalid Date (RangeError in toISOString).
+  if (!day) throw new RepoError("invalid", "오늘 날짜 형식이 올바르지 않습니다.");
   const start = new Date(`${day}T00:00:00${SEOUL_OFFSET}`);
   const end = new Date(start.getTime() + 86_400_000);
   const [rows, done] = await Promise.all([
