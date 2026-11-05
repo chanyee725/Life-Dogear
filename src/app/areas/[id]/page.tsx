@@ -145,7 +145,7 @@ export default async function AreaDetailPage({ params }: Props) {
           </RowList>
         </Section>
       )}
-      <ConnectedWithGraph item={ref} />
+      <ConnectedWithGraph item={ref} indirect />
     </Page>
   );
 }

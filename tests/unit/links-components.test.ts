@@ -55,3 +55,46 @@ describe("ConnectedItems", () => {
     expect(html).toContain("연결 추가");
   });
 });
+
+describe("ConnectedItems indirect (area)", () => {
+  it("lists 2-step items with their path, no unlink, skipping area projects and direct links", async () => {
+    const { projects, notes } = await import("@/lib/repo");
+    const area = await areas.create({ title: "Robotics" });
+    const A = { type: "area" as const, id: area.id };
+    const project = await projects.create({ title: "MoveIt2", areaId: area.id });
+    const Pr = { type: "project" as const, id: project.id };
+    const note = await notes.create({ title: "Moveit 노트" });
+    const direct = await papers.create({ title: "직접 논문" });
+    const other = await projects.create({ title: "다른 프로젝트" });
+    await links.link(Pr, { type: "note", id: note.id });
+    await links.link(Pr, { type: "paper", id: direct.id });
+    await links.link(A, { type: "paper", id: direct.id });
+    await links.link({ type: "paper", id: direct.id }, { type: "project", id: other.id });
+
+    const html = renderToStaticMarkup(await ConnectedItems({ item: A, indirect: true }));
+    expect(html).toContain(`href="/notes/${note.id}"`);
+    expect(html).toContain("MoveIt2 경유");
+    expect(html).toContain(`href="/projects/${other.id}"`);
+    expect(html).toContain("직접 논문 경유");
+    // direct paper once (direct row only), area project not listed as indirect
+    expect(html.match(new RegExp(`href="/papers/${direct.id}"`, "g"))?.length).toBe(1);
+    expect(html).not.toContain(`href="/projects/${project.id}"`);
+    const plain = renderToStaticMarkup(await ConnectedItems({ item: A }));
+    expect(plain).not.toContain("경유");
+    // unlink buttons only on the single direct row
+    expect(html.match(/연결 해제/g)?.length).toBe(plain.match(/연결 해제/g)?.length);
+  });
+
+  it("caps at 6, newest updatedAt first", async () => {
+    const { projects } = await import("@/lib/repo");
+    const area = await areas.create({ title: "영역" });
+    const project = await projects.create({ title: "P", areaId: area.id });
+    for (let i = 0; i < 8; i++) {
+      const t = await thoughts.create({ title: `생각 ${i}` });
+      await links.link({ type: "project", id: project.id }, { type: "thought", id: t.id });
+      await new Promise((r) => setTimeout(r, 2));
+    }
+    const list = await areas.listIndirect(area.id);
+    expect(list.map((x) => x.title)).toEqual([7, 6, 5, 4, 3, 2].map((i) => `생각 ${i}`));
+  });
+});

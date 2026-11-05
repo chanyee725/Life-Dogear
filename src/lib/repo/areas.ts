@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
-import { areas, goals, links, projects, tasks } from "@/db/schema";
-import { getHeads, refKey } from "./items";
+import { areas, goals, links, notes, projects, tasks } from "@/db/schema";
+import { getHeads, refKey, tableFor } from "./items";
 import { removeLinksFor, syncBodyLinks } from "./links";
 import {
   archiveFilter,
@@ -363,6 +363,118 @@ export async function listMaterials(areaId: string): Promise<AreaMaterial[]> {
       (a, b) =>
         typeOrder(a.ref.type) - typeOrder(b.ref.type) || a.title.localeCompare(b.title, "ko"),
     );
+}
+
+// ---------------------------------------------------------------------------
+// Indirect (2-step) connections for the area's "연결된 항목"
+
+export type IndirectItem = {
+  ref: ItemRef;
+  title: string;
+  updatedAt: string;
+  /** The first-step item it was reached through. */
+  via: ItemRef & { title: string };
+};
+
+/**
+ * Items two steps from the area: linked to something that is linked to the area or belongs
+ * to it (its projects and goals, see {@link inAreaWhere}). Skips the area, its projects,
+ * goals and own notes, items already linked to the area, and archived items. Newest
+ * `updatedAt` first, at most `limit`, one entry per item. Fixed query count.
+ */
+export async function listIndirect(areaId: string, limit = 6): Promise<IndirectItem[]> {
+  const self = ref(areaId);
+  const areaGoals = goalsOfArea(await liveGoalAreas(), areaId);
+  const [areaProjects, areaNotes, directRows] = await Promise.all([
+    db()
+      .select({ id: projects.id, archivedAt: projects.archivedAt })
+      .from(projects)
+      .where(inAreaWhere(areaId, areaGoals)),
+    db().select({ id: notes.id }).from(notes).where(eq(notes.areaId, areaId)),
+    db()
+      .select()
+      .from(links)
+      .where(
+        or(
+          and(eq(links.sourceType, "area"), eq(links.sourceId, areaId)),
+          and(eq(links.targetType, "area"), eq(links.targetId, areaId)),
+        ),
+      ),
+  ]);
+  const direct: ItemRef[] = directRows.map((l) =>
+    l.sourceType === "area" && l.sourceId === areaId
+      ? { type: l.targetType, id: l.targetId }
+      : { type: l.sourceType, id: l.sourceId },
+  );
+
+  const excluded = new Set<string>([refKey(self)]);
+  for (const p of areaProjects) excluded.add(`project:${p.id}`);
+  for (const g of areaGoals) excluded.add(`goal:${g.id}`);
+  for (const n of areaNotes) excluded.add(`note:${n.id}`);
+  for (const d of direct) excluded.add(refKey(d));
+
+  const firstStep = new Map<string, ItemRef>();
+  for (const d of direct) firstStep.set(refKey(d), d);
+  for (const p of areaProjects)
+    if (!p.archivedAt) firstStep.set(`project:${p.id}`, { type: "project", id: p.id });
+  for (const g of areaGoals) firstStep.set(`goal:${g.id}`, { type: "goal", id: g.id });
+  if (firstStep.size === 0) return [];
+
+  const byType = new Map<string, string[]>();
+  for (const r of firstStep.values()) byType.set(r.type, [...(byType.get(r.type) ?? []), r.id]);
+  const side = [...byType].flatMap(([type, ids]) => [
+    and(eq(links.sourceType, type as ItemRef["type"]), inArray(links.sourceId, ids))!,
+    and(eq(links.targetType, type as ItemRef["type"]), inArray(links.targetId, ids))!,
+  ]);
+  const rows = await db()
+    .select()
+    .from(links)
+    .where(or(...side));
+
+  // other → first-step item it came through (first one found wins)
+  const found = new Map<string, { ref: ItemRef; via: ItemRef }>();
+  for (const l of rows) {
+    const s = { type: l.sourceType, id: l.sourceId };
+    const t = { type: l.targetType, id: l.targetId };
+    for (const [from, other] of [
+      [s, t],
+      [t, s],
+    ] as const) {
+      if (!firstStep.has(refKey(from))) continue;
+      const key = refKey(other);
+      if (excluded.has(key) || found.has(key)) continue;
+      found.set(key, { ref: other, via: from });
+    }
+  }
+  if (found.size === 0) return [];
+
+  const entries = [...found.values()];
+  const heads = await getHeads([...entries.map((e) => e.ref), ...entries.map((e) => e.via)]);
+  const updated = new Map<string, string>();
+  const idsByType = new Map<ItemRef["type"], string[]>();
+  for (const e of entries)
+    idsByType.set(e.ref.type, [...(idsByType.get(e.ref.type) ?? []), e.ref.id]);
+  for (const [type, ids] of idsByType) {
+    const t = tableFor(type);
+    const got = await db()
+      .select({ id: t.id, updatedAt: t.updatedAt })
+      .from(t)
+      .where(inArray(t.id, ids));
+    for (const r of got) updated.set(`${type}:${r.id}`, r.updatedAt);
+  }
+
+  return entries
+    .flatMap((e) => {
+      const head = heads.get(refKey(e.ref));
+      const viaHead = heads.get(refKey(e.via));
+      const updatedAt = updated.get(refKey(e.ref));
+      if (!head || head.archived || !viaHead || !updatedAt) return [];
+      return [
+        { ref: e.ref, title: head.title, updatedAt, via: { ...e.via, title: viaHead.title } },
+      ];
+    })
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, limit);
 }
 
 // ---------------------------------------------------------------------------

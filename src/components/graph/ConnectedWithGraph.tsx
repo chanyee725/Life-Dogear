@@ -8,10 +8,17 @@ import { LocalGraph } from "./LocalGraph";
  *
  * Usage: `<ConnectedWithGraph item={{ type: "paper", id }} />` in place of `<ConnectedItems/>`.
  */
-export function ConnectedWithGraph({ item }: { item: ItemRef }) {
+export function ConnectedWithGraph({
+  item,
+  indirect = false,
+}: {
+  item: ItemRef;
+  /** Also list 2-step connections (areas only, see `ConnectedItems`). */
+  indirect?: boolean;
+}) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <ConnectedItems item={item} />
+      <ConnectedItems item={item} indirect={indirect} />
       <LocalGraph node={`${item.type}:${item.id}`} className="self-start" />
     </div>
   );
