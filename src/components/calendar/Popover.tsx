@@ -37,7 +37,7 @@ export function Popover({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; above: boolean } | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -47,17 +47,17 @@ export function Popover({
       const el = ref.current;
       if (!anchor || !el) return;
       const a = anchor.getBoundingClientRect();
-      const { width, height } = el.getBoundingClientRect();
+      // Layout size, not getBoundingClientRect: the entry `scale-95` would shrink it.
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const below = a.bottom + GAP;
-      const top =
-        below + height > vh - MARGIN && a.top - GAP - height > MARGIN
-          ? a.top - GAP - height
-          : below;
+      const above = below + height > vh - MARGIN && a.top - GAP - height > MARGIN;
+      const top = above ? a.top - GAP - height : below;
       const want = align === "end" ? a.right - width : a.left;
       const left = Math.min(Math.max(MARGIN, want), Math.max(MARGIN, vw - width - MARGIN));
-      setPos({ top, left });
+      setPos({ top, left, above });
     };
     place();
     window.addEventListener("resize", place);
@@ -100,7 +100,12 @@ export function Popover({
           closeRef.current(true);
         }
       }}
-      style={{ top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
+      style={{
+        top: pos?.top ?? -9999,
+        left: pos?.left ?? -9999,
+        // Grow from the anchored corner so the aligned edge does not move while scaling in.
+        transformOrigin: `${pos?.above ? "bottom" : "top"} ${align === "end" ? "right" : "left"}`,
+      }}
       className={cn(
         "fixed z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none",
         "transition-[opacity,scale] duration-100 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",

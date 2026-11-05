@@ -119,3 +119,42 @@ export function ShapeIcon({
       );
   }
 }
+
+/** Kinds the 2D canvas draws as a hollow dot (open item; draw.ts `drawNodeShape`). */
+const HOLLOW_DOT: ReadonlySet<GraphNodeType> = new Set(["thought", "tag", "task"]);
+
+/**
+ * 10×10 dot matching the 2D canvas node (every kind is a dot there, graph.md 1.4): filled,
+ * or hollow for open items (thought, topic, open task, quarter goal); areas slightly larger.
+ * Filter chips of the basic graph use it as the legend; the cosmos view keeps `ShapeIcon`.
+ */
+export function DotIcon({
+  type,
+  horizon,
+  color,
+  className,
+}: {
+  type: GraphNodeType;
+  horizon?: GoalHorizon;
+  color: string;
+  className?: string;
+}) {
+  const hollow = HOLLOW_DOT.has(type) || (type === "goal" && horizon === "quarter");
+  const r = type === "area" ? 4.5 : 3.5;
+  return (
+    <svg
+      className={className}
+      width={10}
+      height={10}
+      viewBox="0 0 10 10"
+      aria-hidden
+      data-dot={hollow ? "hollow" : "filled"}
+    >
+      {hollow ? (
+        <circle cx="5" cy="5" r={r - 0.7} fill="none" stroke={color} strokeWidth="1.4" />
+      ) : (
+        <circle cx="5" cy="5" r={r} fill={color} />
+      )}
+    </svg>
+  );
+}
