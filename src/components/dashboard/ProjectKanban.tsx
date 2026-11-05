@@ -18,7 +18,7 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
   const filled = columns.filter((c) => c.items.length > 0);
 
   if (total === 0) {
-    return <EmptyAdd href="/projects/new">＋ 새 연구</EmptyAdd>;
+    return <EmptyAdd compact href="/projects/new">＋ 새 연구</EmptyAdd>;
   }
 
   return (

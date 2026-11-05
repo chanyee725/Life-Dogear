@@ -37,7 +37,7 @@ export function GeneralProjects({
   if (projects.length === 0) {
     return (
       <div className={gridClass}>
-        <EmptyAdd href="/projects/new?kind=general" className="rounded-md">
+        <EmptyAdd compact href="/projects/new?kind=general">
           ＋ 새 프로젝트
         </EmptyAdd>
       </div>

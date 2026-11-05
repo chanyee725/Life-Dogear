@@ -100,7 +100,7 @@ export default async function AreaDetailPage({ params }: Props) {
         }
       >
         {areaProjects.length === 0 ? (
-          <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
+          <EmptyAdd compact href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
         ) : (
           <ProjectStatusBoard groups={projectGroups} showGroupTitles={showGroupTitles} />
         )}
@@ -118,7 +118,7 @@ export default async function AreaDetailPage({ params }: Props) {
           }
         >
           {areaGoals.length === 0 ? (
-            <EmptyAdd href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
+            <EmptyAdd compact href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
           ) : (
             <GoalTree nodes={areaGoals} />
           )}

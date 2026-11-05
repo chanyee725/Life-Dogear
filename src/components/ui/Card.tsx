@@ -19,14 +19,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement> & { href?: string; children?: ReactNode }) {
   if (href) {
     return (
-      <Link
-        href={href}
-        className={cn(
-          cardClass,
-          cardLinkClass,
-          className,
-        )}
-      >
+      <Link href={href} className={cn(cardClass, cardLinkClass, className)}>
         {children}
       </Link>
     );
@@ -38,15 +31,20 @@ export function Card({
   );
 }
 
-/** Small muted section heading (`h2`, or `as="h3"`) with an optional right-side action. */
+/**
+ * Section heading (`h2`, or `as="h3"`): 14px semibold foreground, optional faint `count`
+ * beside it, optional right-side action.
+ */
 export function SectionHeader({
   title,
+  count,
   action,
   id,
   as: Heading = "h2",
   className,
 }: {
   title: ReactNode;
+  count?: ReactNode;
   action?: ReactNode;
   id?: string;
   as?: "h2" | "h3";
@@ -54,8 +52,14 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn("flex min-h-6 items-center justify-between gap-2", className)}>
-      <Heading id={id} className="text-[13px] font-semibold tracking-tight text-muted-foreground">
+      <Heading
+        id={id}
+        className="flex items-baseline gap-1.5 text-sm font-semibold tracking-tight text-foreground"
+      >
         {title}
+        {count !== undefined && count !== null ? (
+          <span className="text-[13px] font-normal tabular-nums text-faint">{count}</span>
+        ) : null}
       </Heading>
       {action}
     </div>
@@ -69,12 +73,14 @@ export function SectionHeader({
 export function Section({
   id,
   title,
+  count,
   action,
   className,
   children,
 }: {
   id?: string;
   title: ReactNode;
+  count?: ReactNode;
   action?: ReactNode;
   className?: string;
   children?: ReactNode;
@@ -82,7 +88,7 @@ export function Section({
   const headingId = id ? `${id}-heading` : undefined;
   return (
     <section aria-labelledby={headingId} className={cn("flex flex-col gap-3", className)}>
-      <SectionHeader id={headingId} title={title} action={action} />
+      <SectionHeader id={headingId} title={title} count={count} action={action} />
       {children}
     </section>
   );
