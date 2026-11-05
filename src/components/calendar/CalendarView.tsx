@@ -19,7 +19,7 @@ import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
 import { Button, cn, Input, Spinner } from "@/components/ui";
-import { menuItemClass } from "@/components/ui/menu-style";
+import { AnchoredMenu } from "@/components/ui/Menu";
 import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { revealAdded } from "./add-event";
@@ -833,30 +833,35 @@ export function CalendarView({
         </Popover>
       ) : null}
       {pop?.kind === "menu" ? (
-        <Popover
+        <AnchoredMenu
           anchor={pop.anchor}
           onClose={closePop}
-          role="menu"
           label={`할 일 메뉴: ${pop.item.title}`}
-          className="min-w-36 p-1"
-        >
-          <MenuPanel
-            onOpen={
-              pop.item.href
-                ? () => {
-                    setPop(null);
-                    router.push(pop.item.href!);
-                  }
-                : undefined
-            }
-            onMove={() => setPop({ kind: "move", item: pop.item, anchor: pop.anchor })}
-            onDone={() => {
-              closePop(true);
-              completeTask(pop.item);
-            }}
-            onTab={() => setPop(null)}
-          />
-        </Popover>
+          items={[
+            ...(pop.item.href
+              ? [
+                  {
+                    label: "열기",
+                    run: () => {
+                      setPop(null);
+                      router.push(pop.item.href!);
+                    },
+                  },
+                ]
+              : []),
+            {
+              label: "날짜 옮기기…",
+              run: () => setPop({ kind: "move", item: pop.item, anchor: pop.anchor }),
+            },
+            {
+              label: "완료로 표시",
+              run: () => {
+                closePop(true);
+                completeTask(pop.item);
+              },
+            },
+          ]}
+        />
       ) : null}
       {pop?.kind === "move" ? (
         <Popover
@@ -1171,54 +1176,6 @@ function AddPanel({
           {tooLong ? `${TITLE_MAX}자까지 쓸 수 있습니다.` : error}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function MenuPanel({
-  onOpen,
-  onMove,
-  onDone,
-  onTab,
-}: {
-  onOpen?: () => void;
-  onMove: () => void;
-  onDone: () => void;
-  onTab: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => ref.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus(), []);
-  const entries: { label: string; run: () => void }[] = [
-    ...(onOpen ? [{ label: "열기", run: onOpen }] : []),
-    { label: "날짜 옮기기…", run: onMove },
-    { label: "완료로 표시", run: onDone },
-  ];
-  return (
-    <div
-      ref={ref}
-      className="flex flex-col"
-      onKeyDown={(e) => {
-        const buttons = [...(ref.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
-        const i = buttons.indexOf(document.activeElement as HTMLElement);
-        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-          e.preventDefault();
-          const step = e.key === "ArrowDown" ? 1 : -1;
-          buttons[(i + step + buttons.length) % buttons.length]?.focus();
-        } else if (e.key === "Tab") onTab();
-      }}
-    >
-      {entries.map((m) => (
-        <button
-          key={m.label}
-          type="button"
-          role="menuitem"
-          tabIndex={-1}
-          onClick={m.run}
-          className={menuItemClass()}
-        >
-          {m.label}
-        </button>
-      ))}
     </div>
   );
 }
