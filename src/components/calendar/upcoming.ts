@@ -11,9 +11,9 @@ export const UPCOMING_MAX = 10;
 
 /**
  * Single-day sources the list draws from (goals, reviews are periods; papers are past reads;
- * tasks are listed under "오늘 할 일", not here).
+ * tasks and project deadlines are not calendar items).
  */
-const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set(["project", "seminar", "google"]);
+const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set(["seminar", "google"]);
 
 export type UpcomingGroup = { day: string; items: CalendarItem[] };
 
@@ -88,13 +88,11 @@ export function groupHeading(day: string, today: string): string {
   return `${m}월 ${d}일(${WEEKDAYS[weekdayIndex(day)]})`;
 }
 
-/** Right column of a row: the task's parent, "마감", "세미나", "Google". */
+/** Right column of a row: the task's parent, "세미나", "Google". */
 export function originLabel(item: CalendarItem): string {
   switch (item.source) {
     case "task":
       return item.parent ?? "";
-    case "project":
-      return "마감";
     case "seminar":
       return "세미나";
     case "google":

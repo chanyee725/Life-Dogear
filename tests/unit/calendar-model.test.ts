@@ -124,7 +124,7 @@ describe("query", () => {
 });
 
 describe("order in a day (3.2)", () => {
-  it("project, seminar, open task, Google by time, paper, done task", () => {
+  it("seminar, open task, Google by time, paper, done task", () => {
     const list = [
       item("done", "2026-11-04", { done: true }),
       item("paper", "2026-11-04", { source: "paper" }),
@@ -133,18 +133,8 @@ describe("order in a day (3.2)", () => {
       item("gAll", "2026-11-04", { source: "google" }),
       item("open", "2026-11-04"),
       item("sem", "2026-11-04", { source: "seminar" }),
-      item("proj", "2026-11-04", { source: "project" }),
     ].sort(compareItems);
-    expect(list.map((i) => i.id)).toEqual([
-      "proj",
-      "sem",
-      "open",
-      "gAll",
-      "g1",
-      "g2",
-      "paper",
-      "done",
-    ]);
+    expect(list.map((i) => i.id)).toEqual(["sem", "open", "gAll", "g1", "g2", "paper", "done"]);
   });
 
   it("tells single-day items from periods", () => {
@@ -160,7 +150,7 @@ describe("order in a day (3.2)", () => {
   it("only open tasks move", () => {
     expect(isMovable(item("a", "2026-11-04", { taskId: "1" }))).toBe(true);
     expect(isMovable(item("a", "2026-11-04", { taskId: "1", done: true }))).toBe(false);
-    expect(isMovable(item("p", "2026-11-04", { source: "project" }))).toBe(false);
+    expect(isMovable(item("p", "2026-11-04", { source: "seminar" }))).toBe(false);
     // Unsaved quick-add rows carry taskId "" and must not move yet.
     expect(isMovable(item("task:new-1", "2026-11-04", { taskId: "" }))).toBe(false);
   });
@@ -252,14 +242,14 @@ describe("helpers", () => {
   it("dots: three sources at most, tasks hollow only when all done", () => {
     const dots = dayDots([
       item("d", "2026-11-04", { done: true }),
-      item("p", "2026-11-04", { source: "project" }),
+      item("p", "2026-11-04", { source: "paper" }),
       item("s", "2026-11-04", { source: "seminar" }),
       item("g", "2026-11-04", { source: "google" }),
     ]);
     expect(dots).toEqual([
-      { source: "project", hollow: false },
       { source: "seminar", hollow: false },
       { source: "google", hollow: false },
+      { source: "paper", hollow: false },
     ]);
     expect(dayDots([item("d", "x", { done: true })])).toEqual([{ source: "task", hollow: true }]);
     expect(dayDots([item("d", "x", { done: true }), item("o", "x")])).toEqual([
@@ -304,6 +294,7 @@ describe("sources (표시)", () => {
   it("defaults: papers off, others on; tasks have no choice", () => {
     expect(SOURCES.filter((s) => !DEFAULT_SOURCES[s])).toEqual(["paper"]);
     expect(SOURCES).not.toContain("task");
+    expect(SOURCES).not.toContain("project");
   });
 
   it("parses stored choices defensively", () => {
@@ -313,11 +304,12 @@ describe("sources (표시)", () => {
       paper: true,
       seminar: true,
     });
-    // An old stored `task: true` is ignored.
+    // An old stored `task: true` / `project: true` is ignored.
     expect(parseSources('{"task":true}').task).toBe(false);
+    expect(parseSources('{"project":true}')).not.toHaveProperty("project");
   });
 
-  it("filters items; never tasks; Google only when set up", () => {
+  it("filters items; never tasks or projects; Google only when set up", () => {
     const list = [
       item("t", "2026-11-04"),
       item("s", "2026-11-04", { source: "seminar" }),

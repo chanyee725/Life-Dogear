@@ -97,7 +97,14 @@ export function TodayPanel({
           </div>
         )
       ) : (
-        <div className={cn("flex flex-col", fit && "lg:min-h-32 lg:flex-1 lg:overflow-y-auto")}>
+        // Rows hang 8px out (`-mx-2`, hover fill); in the scroll box the matching padding keeps
+        // them inside, else the box scrolls sideways.
+        <div
+          className={cn(
+            "flex min-w-0 flex-col",
+            fit && "lg:-mx-2 lg:min-h-32 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:px-2",
+          )}
+        >
           {list.groups.map((g) => (
             <section key={g.day} aria-label={spokenDay(g.day)} className="mt-4 first:mt-0">
               <h4

@@ -85,7 +85,7 @@ describe("add-event helpers", () => {
   });
 
   it("mergeAdded skips ids already in the list", () => {
-    const other = { ...ITEM, id: "project:1", source: "project" as const };
+    const other = { ...ITEM, id: "seminar:1", source: "seminar" as const };
     expect(mergeAdded([other], [ITEM])).toEqual([other, ITEM]);
     const list = [other, ITEM];
     expect(mergeAdded(list, [ITEM])).toBe(list);
