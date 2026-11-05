@@ -17,7 +17,8 @@ import {
   seoulToday,
   todayHeading,
 } from "@/components/dashboard/today";
-import { TodayTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
+import { HomeTodo } from "@/components/dashboard/HomeTodo";
+import { TodayTasks, UpcomingTasks, WeekTasks } from "@/components/dashboard/TodayTasks";
 import { NEGLECTED_MIN_DAYS, NEGLECTED_MIN_SCORE } from "@/lib/cosmos/score";
 import type { CosmosNodeInfo } from "@/lib/cosmos/types";
 import type { GraphNode, GraphNodeId } from "@/lib/graph/types";
@@ -164,8 +165,9 @@ describe("today task sections", () => {
     const empty = renderToStaticMarkup(
       createElement(TodayTasks, { overdue: [], dueToday: [], today: "2026-11-03" }),
     );
-    // Nothing due today: only the heading stays, over the panel's add input.
+    // Nothing due today: the heading and a short empty line.
     expect(empty).toContain("오늘 할 일");
+    expect(empty).toContain("오늘 할 일이 없습니다.");
     expect(empty).not.toContain("<ul");
   });
 
@@ -180,5 +182,31 @@ describe("today task sections", () => {
     expect(html).toContain("내일");
     expect(html).toContain("+ 2개 더");
     expect(html).not.toContain("할 일 w5");
+  });
+});
+
+describe("home Todo button", () => {
+  it("names the open count and hides the badge at 0", () => {
+    const three = renderToStaticMarkup(createElement(HomeTodo, { count: 3, today: null }));
+    expect(three).toContain('aria-label="할 일 3개"');
+    expect(three).toContain('data-testid="todo-count"');
+    expect(three).toContain("tabular-nums");
+    const none = renderToStaticMarkup(createElement(HomeTodo, { count: 0, today: null }));
+    expect(none).toContain('aria-label="할 일 0개"');
+    expect(none).not.toContain("todo-count");
+  });
+
+  it("lists this week in the popover, hidden when empty", () => {
+    expect(
+      renderToStaticMarkup(createElement(UpcomingTasks, { tasks: [], today: "2026-11-03" })),
+    ).toBe("");
+    const html = renderToStaticMarkup(
+      createElement(UpcomingTasks, {
+        tasks: [task("w", { dueDate: "2026-11-04" })],
+        today: "2026-11-03",
+      }),
+    );
+    expect(html).toContain("이번 주");
+    expect(html).toContain("할 일 w");
   });
 });

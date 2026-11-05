@@ -51,6 +51,11 @@ export type TaskListProps = {
   showCompleted?: boolean;
   /** Start with the done rows expanded (home: finished tasks stay visible, struck through). */
   doneOpen?: boolean;
+  /**
+   * Called with the open tasks after every change to the list, including a rollback after a
+   * failed save and a reset from new `tasks` (e.g. the home Todo badge).
+   */
+  onOpenChange?: (open: readonly Task[]) => void;
   className?: string;
 };
 
@@ -98,6 +103,7 @@ export function TaskList({
   dueMode = "all",
   showCompleted = true,
   doneOpen = false,
+  onOpenChange,
   className,
 }: TaskListProps) {
   // Local copy for optimistic updates; reset whenever the server sends new tasks.
@@ -125,6 +131,14 @@ export function TaskList({
     const timer = setTimeout(() => setUndo(null), UNDO_MS);
     return () => clearTimeout(timer);
   }, [undo]);
+
+  const onOpenChangeRef = useRef(onOpenChange);
+  useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  });
+  useEffect(() => {
+    onOpenChangeRef.current?.(items.filter((t) => !t.doneAt));
+  }, [items]);
 
   const open = items.filter((t) => !t.doneAt || lingering.has(t.id));
   const done = items
@@ -664,7 +678,9 @@ function TitleEditor({
           e.preventDefault();
           finish(value.trim() ? value : null);
         } else if (e.key === "Escape") {
+          // Cancels the edit only: an enclosing popover stays open.
           e.preventDefault();
+          e.stopPropagation();
           finish(null);
         }
       }}
@@ -750,7 +766,9 @@ function AddLine({
             e.preventDefault();
             submit();
           } else if (e.key === "Escape") {
+            // Cancels the add only: an enclosing popover stays open.
             e.preventDefault();
+            e.stopPropagation();
             setValue("");
             setError(null);
             setEditing(false);
