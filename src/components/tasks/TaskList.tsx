@@ -68,6 +68,8 @@ export type TaskListProps = {
    * actions as the checkbox and the menu's 삭제 (with its 되돌리기).
    */
   rowActions?: boolean;
+  /** Open the add input right away (hidden empty section revealed by `＋ 할 일`). */
+  autoAdd?: boolean;
   className?: string;
 };
 
@@ -117,6 +119,7 @@ export function TaskList({
   doneOpen = false,
   onOpenChange,
   rowActions = false,
+  autoAdd = false,
   className,
 }: TaskListProps) {
   // Local copy for optimistic updates; reset whenever the server sends new tasks.
@@ -436,7 +439,7 @@ export function TaskList({
           ) : null}
         </ul>
       ) : null}
-      {addTo ? <AddLine onAdd={add} bare={open.length === 0} /> : null}
+      {addTo ? <AddLine onAdd={add} bare={open.length === 0} autoEdit={autoAdd} /> : null}
       {error ? (
         <p role="alert" className="py-1 text-xs text-danger">
           {error}
@@ -745,12 +748,14 @@ function TitleEditor({
 function AddLine({
   onAdd,
   bare,
+  autoEdit = false,
 }: {
   onAdd: (title: string) => Promise<string | null>;
   bare: boolean;
+  autoEdit?: boolean;
 }) {
   const indent = bare ? "-ml-2 pl-2" : "pl-[30px]";
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(autoEdit);
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Own flag, not useTransition: the transition stays pending through the page refresh

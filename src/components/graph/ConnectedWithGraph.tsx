@@ -11,14 +11,17 @@ import { LocalGraph } from "./LocalGraph";
 export function ConnectedWithGraph({
   item,
   indirect = false,
+  hideListedNotes = false,
 }: {
   item: ItemRef;
   /** Also list 2-step connections (areas only, see `ConnectedItems`). */
   indirect?: boolean;
+  /** See `ConnectedItems`. */
+  hideListedNotes?: boolean;
 }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <ConnectedItems item={item} indirect={indirect} />
+      <ConnectedItems item={item} indirect={indirect} hideListedNotes={hideListedNotes} />
       <LocalGraph node={`${item.type}:${item.id}`} className="self-start" />
     </div>
   );

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
 import { Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
-import { areas, links, type ItemRef } from "@/lib/repo";
+import { areas, links, notes, type ItemRef } from "@/lib/repo";
 import { refKey } from "@/lib/repo/items";
 import { LinkPicker } from "./LinkPicker";
 import { UnlinkButton } from "./UnlinkButton";
@@ -22,16 +22,24 @@ export async function ConnectedItems({
   title = "연결된 항목",
   className,
   indirect = false,
+  hideListedNotes = false,
 }: {
   item: ItemRef;
   title?: string;
   className?: string;
   indirect?: boolean;
+  /** Drop notes already listed in the page's 노트 section (project, goal, area pages). */
+  hideListedNotes?: boolean;
 }) {
-  const [connected, viaItems] = await Promise.all([
+  const [allConnected, viaItems, listedNotes] = await Promise.all([
     links.listConnected(item),
     indirect && item.type === "area" ? areas.listIndirect(item.id) : Promise.resolve([]),
+    hideListedNotes && (item.type === "project" || item.type === "goal" || item.type === "area")
+      ? notes.listForItem({ type: item.type, id: item.id })
+      : Promise.resolve([]),
   ]);
+  const listed = new Set(listedNotes.map((n) => n.id));
+  const connected = allConnected.filter((c) => !(c.ref.type === "note" && listed.has(c.ref.id)));
 
   return (
     <div role="region" aria-label={title} className={className}>

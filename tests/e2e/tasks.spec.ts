@@ -3,7 +3,8 @@ import { createItem, uniqueTitle } from "./helpers";
 
 test("할 일: 추가 → 완료하면 포커스가 다음 행으로, 소속별 탭이 열린다", async ({ page }) => {
   await createItem(page, "projects", uniqueTitle("E2E 할 일 프로젝트"));
-  await page.getByRole("button", { name: "＋ 할 일 추가" }).click();
+  // Empty 할 일 section is hidden: reveal it from the notes header.
+  await page.getByRole("button", { name: "＋ 할 일", exact: true }).click();
   const input = page.getByRole("textbox", { name: "새 할 일" });
   for (const name of ["첫 할 일", "둘째 할 일"]) {
     await input.fill(name);

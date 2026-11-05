@@ -56,7 +56,7 @@ export default async function AreaDetailPage({ params }: Props) {
   const showGroupTitles = projectGroups.some((g) => g.goalId !== null);
 
   return (
-    <Page className="flex flex-col gap-12">
+    <Page className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         {area.archivedAt ? <ArchivedNotice item={ref} /> : null}
         <ItemForm
@@ -145,7 +145,7 @@ export default async function AreaDetailPage({ params }: Props) {
           </RowList>
         </Section>
       )}
-      <ConnectedWithGraph item={ref} indirect />
+      <ConnectedWithGraph item={ref} indirect hideListedNotes />
     </Page>
   );
 }

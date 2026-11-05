@@ -38,7 +38,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const ref = { type: "project" as const, id: project.id };
 
   return (
-    <Page className="flex flex-col gap-12">
+    <Page className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         {project.archivedAt ? <ArchivedNotice item={ref} /> : null}
         <ItemForm
@@ -82,9 +82,9 @@ export default async function ProjectDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      <ItemNotes owner={ref} archived={Boolean(project.archivedAt)} />
+      <ItemNotes owner={ref} archived={Boolean(project.archivedAt)} taskParent={ref} />
       <TaskSection parent={ref} archived={Boolean(project.archivedAt)} />
-      <ConnectedWithGraph item={ref} />
+      <ConnectedWithGraph item={ref} hideListedNotes />
     </Page>
   );
 }
