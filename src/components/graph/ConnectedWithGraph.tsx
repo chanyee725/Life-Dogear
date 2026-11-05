@@ -24,7 +24,7 @@ export async function ConnectedWithGraph({
   const data = await loadConnected(item, { indirect, hideListedNotes });
   const empty = data.connected.length === 0 && data.viaItems.length === 0;
   return (
-    <div className={empty ? "flex flex-col gap-3" : "grid gap-8 lg:grid-cols-2"}>
+    <div className={empty ? "flex flex-col gap-3" : "grid grid-cols-1 gap-8 lg:grid-cols-2"}>
       <ConnectedItems item={item} data={data} />
       <LocalGraph node={`${item.type}:${item.id}`} className={empty ? undefined : "self-start"} />
     </div>
