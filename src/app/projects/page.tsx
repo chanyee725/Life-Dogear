@@ -9,7 +9,7 @@ import {
   type QueryParams,
 } from "@/components/list/query";
 import { SortSelect } from "@/components/list/SortSelect";
-import { EmptyState, formatDate, LinkButton, LinkTabs, NewItemButton } from "@/components/ui";
+import { ListEmpty, formatDate, LinkTabs, NewItemButton } from "@/components/ui";
 import { FilterChips, TagFilter } from "@/components/list/TagFilter";
 import { TagList } from "@/components/list/TagList";
 import { ListView } from "@/components/list/ViewToggle";
@@ -40,7 +40,16 @@ export default async function ProjectsPage({
 }) {
   const params = await searchParams;
   const kindParam = firstParam(params, "kind");
-  const kind: ProjectKind = PROJECT_KIND.is(kindParam) ? kindParam : "research";
+  const [research, general] = await Promise.all([
+    projects.list({ kind: "research" }),
+    projects.list({ kind: "general" }),
+  ]);
+  // No explicit tab: open on the one that has content ("연구" when both or neither do).
+  const kind: ProjectKind = PROJECT_KIND.is(kindParam)
+    ? kindParam
+    : research.length === 0 && general.length > 0
+      ? "general"
+      : "research";
   const stageParam = firstParam(params, "stage");
   const stage = kind === "research" && PROJECT_STAGE.is(stageParam) ? stageParam : undefined;
   const statusParam = firstParam(params, "status");
@@ -49,16 +58,13 @@ export default async function ProjectsPage({
   const sortParam = firstParam(params, "sort");
   const sort = SORTS.find((s) => s.value === sortParam)?.value ?? "updated";
 
-  const [all, areaList, research, general] = await Promise.all([
+  const [all, areaList] = await Promise.all([
     projects.list({ kind, stage, status, sort }),
     areas.list({ includeArchived: true }),
-    projects.list({ kind: "research" }),
-    projects.list({ kind: "general" }),
   ]);
   const areaTitle = new Map(areaList.map((a) => [a.id, a.title]));
   const items = filterByTag(all, tag);
   const filtered = Boolean(stage || status || tag);
-  const kindLabel = PROJECT_KIND.label(kind);
 
   const columns: Column<Project>[] = [
     { key: "title", header: "제목", primary: true, render: (p) => p.title },
@@ -91,19 +97,11 @@ export default async function ProjectsPage({
 
   const newHref = kind === "general" ? `${BASE}/new?kind=general` : `${BASE}/new`;
   const empty = (
-    <EmptyState
-      title={filtered ? "조건에 맞는 프로젝트가 없습니다" : `아직 ${kindLabel} 프로젝트가 없습니다`}
-      action={
-        filtered ? (
-          <LinkButton href={buildHref(BASE, { kind }, {})} size="sm">
-            필터 해제
-          </LinkButton>
-        ) : (
-          <NewItemButton href={newHref} size="sm">
-            새 프로젝트
-          </NewItemButton>
-        )
-      }
+    <ListEmpty
+      filtered={filtered}
+      addHref={newHref}
+      addLabel={`＋ 새 ${kind === "general" ? "일반 " : "연구 "}프로젝트`}
+      clearHref={buildHref(BASE, { kind }, {})}
     />
   );
 
@@ -118,8 +116,18 @@ export default async function ProjectsPage({
         active={kind}
         className="mb-5"
         tabs={[
-          { value: "research", label: "연구", href: BASE, count: research.length },
-          { value: "general", label: "그 외", href: `${BASE}?kind=general`, count: general.length },
+          {
+            value: "research",
+            label: PROJECT_KIND.label("research"),
+            href: `${BASE}?kind=research`,
+            count: research.length,
+          },
+          {
+            value: "general",
+            label: PROJECT_KIND.label("general"),
+            href: `${BASE}?kind=general`,
+            count: general.length,
+          },
         ]}
       />
       <ListView

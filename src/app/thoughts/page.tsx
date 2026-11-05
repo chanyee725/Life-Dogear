@@ -16,7 +16,7 @@ import { TagList } from "@/components/list/TagList";
 import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { Badge, EmptyState, formatRelative, LinkButton, NewItemButton } from "@/components/ui";
+import { Badge, ListEmpty, formatRelative, NewItemButton } from "@/components/ui";
 import { THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import { thoughts } from "@/lib/repo";
 import type { Thought, ThoughtSort } from "@/lib/repo/thoughts";
@@ -102,19 +102,11 @@ export default async function ThoughtsPage({
   const filtered = Boolean(kind || maturity || tag);
 
   const empty = (
-    <EmptyState
-      title={filtered ? "조건에 맞는 생각이 없습니다" : "아직 생각이 없습니다"}
-      action={
-        filtered ? (
-          <LinkButton href="/thoughts" size="sm">
-            필터 해제
-          </LinkButton>
-        ) : (
-          <NewItemButton href="/thoughts/new" size="sm">
-            새 생각
-          </NewItemButton>
-        )
-      }
+    <ListEmpty
+      filtered={filtered}
+      addHref="/thoughts/new"
+      addLabel="＋ 새 생각"
+      clearHref="/thoughts"
     />
   );
 

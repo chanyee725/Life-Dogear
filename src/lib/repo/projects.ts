@@ -341,7 +341,7 @@ export async function listByStage(
 }
 
 /**
- * General (non-research) projects for the home "그 외" tab: not archived, not done,
+ * General (non-research) projects for the home "일반" tab: not archived, not done,
  * soonest due first.
  */
 export async function listActiveGeneral(): Promise<Project[]> {

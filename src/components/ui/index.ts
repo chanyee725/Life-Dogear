@@ -26,6 +26,7 @@ export { EmptyAdd, emptyAddBoxClass, emptyAddCompactClass } from "./EmptyAdd";
 export { Table, THead, TBody, Tr, Th, Td } from "./Table";
 export { Dialog, ConfirmDialog } from "./Dialog";
 export { EmptyState } from "./EmptyState";
+export { ListEmpty } from "./ListEmpty";
 export { Spinner } from "./Spinner";
 export { AppToaster, Toast, type ToastPlace } from "./Toast";
 export { Kbd } from "./Kbd";

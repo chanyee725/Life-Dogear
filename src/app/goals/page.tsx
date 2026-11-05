@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EmptyState, LinkTabs, NewItemButton } from "@/components/ui";
+import { EmptyAdd, LinkTabs, NewItemButton } from "@/components/ui";
 import { seoulDate } from "@/components/calendar/model";
 import { buildHref, firstParam, type QueryParams } from "@/components/list/query";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
@@ -58,14 +58,9 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
         ]}
       />
       {tree.length === 0 ? (
-        <EmptyState
-          title="아직 목표가 없습니다"
-          action={
-            <NewItemButton href="/goals/new?horizon=life" size="sm">
-              인생 목표 만들기
-            </NewItemButton>
-          }
-        />
+        <EmptyAdd compact href="/goals/new?horizon=life">
+          ＋ 새 인생 목표
+        </EmptyAdd>
       ) : view === "map" ? (
         <GoalMap nodes={tree} />
       ) : (

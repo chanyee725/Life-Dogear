@@ -20,7 +20,7 @@ import {
 } from "@/components/list";
 import { ProgressBar } from "@/components/pdf/ProgressBar";
 import { Page, PageHeader } from "@/components/shell";
-import { Badge, EmptyState, LinkButton, NewItemButton, TagChip } from "@/components/ui";
+import { Badge, ListEmpty, NewItemButton, TagChip } from "@/components/ui";
 import { IMPORTANCE, READ_STATUS } from "@/lib/enums";
 import { papers } from "@/lib/repo";
 import type { Paper, PaperSort } from "@/lib/repo/papers";
@@ -31,11 +31,11 @@ export const dynamic = "force-dynamic";
 const BASE = "/papers";
 
 const SORTS: { value: PaperSort; label: string }[] = [
-  { value: "updated", label: "최근 수정" },
-  { value: "lastRead", label: "최근 읽음" },
+  { value: "updated", label: "최근 수정순" },
+  { value: "lastRead", label: "최근 읽음순" },
   { value: "created", label: "추가한 순" },
-  { value: "title", label: "제목" },
-  { value: "year", label: "연도" },
+  { value: "title", label: "제목순" },
+  { value: "year", label: "연도순" },
 ];
 
 type PaperGroup = "status" | "importance" | "year" | "none";
@@ -43,7 +43,7 @@ type PaperGroup = "status" | "importance" | "year" | "none";
 const GROUPS: { value: PaperGroup; label: string }[] = [
   { value: "status", label: "읽기 상태" },
   { value: "importance", label: "중요도" },
-  { value: "year", label: "연도" },
+  { value: "year", label: "연도순" },
   { value: "none", label: "묶지 않음" },
 ];
 
@@ -155,24 +155,8 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const groups = groupPapers(list, group);
   const filtered = Boolean(status || importance || tag);
 
-  const empty = filtered ? (
-    <EmptyState
-      title="조건에 맞는 논문이 없습니다"
-      action={
-        <LinkButton href={BASE} size="sm">
-          필터 지우기
-        </LinkButton>
-      }
-    />
-  ) : (
-    <EmptyState
-      title="아직 논문이 없습니다"
-      action={
-        <NewItemButton href="/papers/new" size="sm">
-          새 논문
-        </NewItemButton>
-      }
-    />
+  const empty = (
+    <ListEmpty filtered={filtered} addHref="/papers/new" addLabel="＋ 새 논문" clearHref={BASE} />
   );
 
   return (
@@ -184,28 +168,26 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       <ListView
         storageKey="papers"
         toolbar={
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <FilterChips
-                ariaLabel="읽기 상태"
-                param="status"
-                basePath={BASE}
-                params={params}
-                selected={status}
-                allLabel="모든 상태"
-                options={READ_STATUS.options}
-              />
-              <FilterChips
-                ariaLabel="중요도"
-                param="importance"
-                basePath={BASE}
-                params={params}
-                selected={importance}
-                allLabel="모든 중요도"
-                options={IMPORTANCE.options}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <>
+            <FilterChips
+              ariaLabel="읽기 상태"
+              param="status"
+              basePath={BASE}
+              params={params}
+              selected={status}
+              allLabel="모든 상태"
+              options={READ_STATUS.options}
+            />
+            <FilterChips
+              ariaLabel="중요도"
+              param="importance"
+              basePath={BASE}
+              params={params}
+              selected={importance}
+              allLabel="모든 중요도"
+              options={IMPORTANCE.options}
+            />
+            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
               <TopicPicker
                 topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
                 selected={tag}
@@ -229,7 +211,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 />
               </div>
             </div>
-          </div>
+          </>
         }
         table={
           <ItemTable

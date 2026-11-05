@@ -19,10 +19,9 @@ import { seoulDate } from "@/components/calendar/model";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import {
   Badge,
-  EmptyState,
+  ListEmpty,
   formatDate,
   formatRelative,
-  LinkButton,
   NewItemButton,
 } from "@/components/ui";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
@@ -115,20 +114,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   ];
 
   const empty = (
-    <EmptyState
-      title={filtered ? "조건에 맞는 노트가 없습니다" : "아직 노트가 없습니다"}
-      action={
-        filtered ? (
-          <LinkButton href={BASE} size="sm">
-            필터 해제
-          </LinkButton>
-        ) : (
-          <NewItemButton href="/notes/new" size="sm">
-            새 노트
-          </NewItemButton>
-        )
-      }
-    />
+    <ListEmpty filtered={filtered} addHref="/notes/new" addLabel="＋ 새 노트" clearHref={BASE} />
   );
 
   return (
