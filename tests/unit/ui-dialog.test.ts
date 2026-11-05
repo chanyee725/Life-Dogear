@@ -1,21 +1,10 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-
-beforeAll(() => {
-  // jsdom may lack the modal API.
-  const proto = HTMLDialogElement.prototype as unknown as Record<string, unknown>;
-  proto.showModal ??= function (this: HTMLDialogElement) {
-    this.setAttribute("open", "");
-  };
-  proto.close ??= function (this: HTMLDialogElement) {
-    this.removeAttribute("open");
-  };
-});
 
 let root: Root | undefined;
 let host: HTMLDivElement | undefined;
@@ -30,11 +19,12 @@ async function mount(el: ReturnType<typeof createElement>) {
   document.body.append(host);
   root = createRoot(host);
   await act(async () => root!.render(el));
-  return host.querySelector("dialog")!;
+  // Radix portals the content into document.body.
+  return document.querySelector<HTMLElement>('[role="dialog"],[role="alertdialog"]')!;
 }
 
 /** The accessible name from aria-labelledby. */
-const nameOf = (dialog: HTMLDialogElement) =>
+const nameOf = (dialog: HTMLElement) =>
   (dialog.getAttribute("aria-labelledby") ?? "")
     .split(" ")
     .map((id) => document.getElementById(id)?.textContent ?? "")
@@ -60,6 +50,22 @@ describe("Dialog name", () => {
       }),
     );
     expect(nameOf(dialog)).toBe("삭제할까요?");
+  });
+
+  it("ConfirmDialog is an alertdialog; Cancel calls onCancel, confirm calls onConfirm", async () => {
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    const dialog = await mount(
+      createElement(ConfirmDialog, { open: true, onCancel, onConfirm, title: "삭제할까요?", confirmLabel: "삭제" }),
+    );
+    expect(dialog.getAttribute("role")).toBe("alertdialog");
+    const button = (name: string) =>
+      [...dialog.querySelectorAll("button")].find((b) => b.textContent === name)!;
+    await act(async () => button("삭제").click());
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onCancel).not.toHaveBeenCalled();
+    await act(async () => button("취소").click());
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it("an empty title gives no heading and no aria-labelledby", async () => {

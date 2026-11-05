@@ -175,7 +175,7 @@ describe("AddEventButton", () => {
 
     const date = document.querySelector<HTMLInputElement>("input[type=date]")!;
     expect(date.value).toBe("2026-11-05");
-    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     const [start] = document.querySelectorAll<HTMLInputElement>("input[type=time]");
     await act(async () => {
       type(title, "회의");
@@ -203,7 +203,7 @@ describe("AddEventButton", () => {
     const onAdded = vi.fn();
     await mount({ enabled: true, defaultDate: "2026-11-05", onAdded });
     await act(async () => button().click());
-    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     await act(async () => type(title, "회의"));
     await act(async () => {
       document.querySelector("form")!.requestSubmit();
@@ -220,7 +220,7 @@ describe("AddEventButton", () => {
     vi.stubGlobal("fetch", fetchMock);
     await mount({ enabled: true, defaultDate: "2026-11-05" });
     await act(async () => button().click());
-    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     const [start, end] = document.querySelectorAll<HTMLInputElement>("input[type=time]");
     await act(async () => {
       type(title, "회의");
@@ -243,7 +243,7 @@ describe("AddEventButton", () => {
     vi.stubGlobal("fetch", fetchMock);
     await mount({ enabled: true, defaultDate: "2026-11-05" });
     await act(async () => button().click());
-    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     await act(async () => type(title, "회의"));
     for (let i = 0; i < 2; i++) {
       await act(async () => {
@@ -262,7 +262,7 @@ describe("AddEventButton", () => {
     vi.stubGlobal("fetch", fetchMock);
     await mount({ enabled: true, defaultDate: "2026-11-05" });
     await act(async () => button().click());
-    const [title] = document.querySelectorAll<HTMLInputElement>("dialog input");
+    const [title] = document.querySelectorAll<HTMLInputElement>("[role=dialog] input");
     const submit = () =>
       act(async () => {
         document.querySelector("form")!.requestSubmit();
