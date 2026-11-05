@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Project, StageColumn } from "@/lib/repo/projects";
 import { Section } from "@/components/ui";
-import { GeneralProjects } from "./GeneralProjects";
+import { GeneralProjects, type ProjectProgress } from "./GeneralProjects";
 import { ProjectKanbanBoard } from "./ProjectKanban";
 
 const allLink = (href: string) => (
@@ -20,10 +20,22 @@ export function ActiveResearch({ stages }: { stages: StageColumn[] }) {
 }
 
 /** Home "프로젝트": active general (non-research) projects, soonest due first. */
-export function ActiveGeneralProjects({ projects, today }: { projects: Project[]; today: string }) {
+export function ActiveGeneralProjects({
+  projects,
+  today,
+  progress,
+  context,
+}: {
+  projects: Project[];
+  today: string;
+  /** Task done/total per project id. */
+  progress?: Record<string, ProjectProgress>;
+  /** Linked goal (else area) title per project id. */
+  context?: Record<string, string>;
+}) {
   return (
     <Section id="active-projects" title="프로젝트" action={allLink("/projects?kind=general")}>
-      <GeneralProjects projects={projects} today={today} />
+      <GeneralProjects projects={projects} today={today} progress={progress} context={context} />
     </Section>
   );
 }

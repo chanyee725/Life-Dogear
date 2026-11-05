@@ -137,6 +137,10 @@ test("홈: 진행 중인 연구(칸반)와 프로젝트가 따로 보인다", as
 
   const general = page.getByRole("region", { name: "프로젝트", exact: true });
   await expect(general.getByRole("link", { name: /연구실 세미나 발표 준비/ })).toBeVisible();
+  // The card names its area (seed-area-4) when no goal is linked.
+  await expect(
+    general.getByRole("link", { name: /연구실 세미나 발표 준비/ }).getByText("커리어"),
+  ).toBeVisible();
   await expect(general.getByRole("link", { name: "모두 보기" })).toHaveAttribute(
     "href",
     "/projects?kind=general",

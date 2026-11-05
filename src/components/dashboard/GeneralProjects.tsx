@@ -1,47 +1,114 @@
 import Link from "next/link";
-import { Badge, EmptyAdd } from "@/components/ui";
-import { formatDue } from "@/components/tasks/format";
+import { Badge, EmptyAdd, cardClass, cardLinkClass, cn } from "@/components/ui";
 import { PROJECT_STATUS } from "@/lib/enums";
 import type { Project } from "@/lib/repo/projects";
+import { dueChip, progressPercent } from "./project-card";
 
-// Same row shape as 최근 생각/세미나 (title line, muted meta line) so the home reads as one rhythm.
-const rowClass =
-  "flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+export type ProjectProgress = { done: number; total: number };
 
-/** Active general (non-research) projects for the home "프로젝트" section, soonest due first. */
-export function GeneralProjects({ projects, today }: { projects: Project[]; today: string }) {
+// Corners, padding and type size match the "진행 중인 연구" kanban cards (ProjectKanban.tsx).
+const cardLink = cn(
+  cardClass,
+  cardLinkClass,
+  "flex h-full flex-col gap-2 rounded-md p-3 text-sm hover:shadow-md",
+  "focus-visible:ring-2 focus-visible:ring-ring",
+);
+
+const gridClass = "grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3";
+
+/**
+ * Active general (non-research) projects for the home "프로젝트" section as a card grid,
+ * soonest due first. A lone project keeps its grid-cell width.
+ *
+ * `progress` (task done/total) and `context` (linked goal or area title) are keyed by
+ * project id; a card leaves out whatever is missing.
+ */
+export function GeneralProjects({
+  projects,
+  today,
+  progress,
+  context,
+}: {
+  projects: Project[];
+  today: string;
+  progress?: Record<string, ProjectProgress>;
+  context?: Record<string, string>;
+}) {
   if (projects.length === 0) {
-    return <EmptyAdd href="/projects/new?kind=general">＋ 새 프로젝트</EmptyAdd>;
+    return (
+      <div className={gridClass}>
+        <EmptyAdd href="/projects/new?kind=general" className="rounded-md">
+          ＋ 새 프로젝트
+        </EmptyAdd>
+      </div>
+    );
   }
   return (
-    <ul className="-mx-3 flex flex-col">
-      {projects.map((p) => {
-        const due = formatDue(p.dueDate, today);
-        return (
-          <li key={p.id}>
-            <Link href={`/projects/${p.id}`} className={rowClass}>
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="line-clamp-1 text-sm text-fg">{p.title}</span>
-                {due ? (
-                  <span className={due.className}>
-                    <span aria-hidden="true">
-                      {due.tone === "muted" ? `마감 ${due.text}` : due.text}
-                    </span>
-                    <span className="sr-only">{due.label}</span>
-                  </span>
-                ) : null}
-              </span>
-              {p.status !== "active" ? (
-                <span className="flex items-center gap-1.5 text-xs text-muted">
-                  <Badge tone={PROJECT_STATUS.tone(p.status)}>
-                    {PROJECT_STATUS.label(p.status)}
-                  </Badge>
-                </span>
-              ) : null}
-            </Link>
-          </li>
-        );
-      })}
+    <ul className={gridClass}>
+      {projects.map((p) => (
+        <li key={p.id}>
+          <ProjectCard
+            project={p}
+            today={today}
+            progress={progress?.[p.id]}
+            context={context?.[p.id]}
+          />
+        </li>
+      ))}
     </ul>
+  );
+}
+
+function ProjectCard({
+  project: p,
+  today,
+  progress,
+  context,
+}: {
+  project: Project;
+  today: string;
+  progress?: ProjectProgress;
+  context?: string;
+}) {
+  const due = dueChip(p.dueDate, today);
+  return (
+    <Link href={`/projects/${p.id}`} className={cardLink}>
+      <span className="line-clamp-2 font-semibold text-fg">{p.title}</span>
+      <span className="flex flex-wrap items-center gap-1.5">
+        <Badge tone={PROJECT_STATUS.tone(p.status)}>{PROJECT_STATUS.label(p.status)}</Badge>
+        {due ? (
+          <Badge tone={due.tone} className="tabular-nums">
+            <span aria-hidden="true">{due.text}</span>
+            <span className="sr-only">{due.label}</span>
+          </Badge>
+        ) : null}
+      </span>
+      {context ? (
+        <span className="line-clamp-1 text-xs text-muted-foreground">{context}</span>
+      ) : null}
+      {progress && progress.total > 0 ? <TaskProgress {...progress} /> : null}
+    </Link>
+  );
+}
+
+function TaskProgress({ done, total }: ProjectProgress) {
+  const pct = progressPercent(done, total);
+  return (
+    <span className="mt-auto flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+      <span
+        role="progressbar"
+        aria-label="할 일 진행"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-valuetext={`할 일 ${total}개 중 ${done}개 완료`}
+        className="h-1 flex-1 overflow-hidden rounded-full bg-subtle"
+      >
+        <span className="block h-full rounded-full bg-fg/60" style={{ width: `${pct}%` }} />
+      </span>
+      <span aria-hidden="true" className="tabular-nums">
+        {done}/{total}
+      </span>
+    </span>
   );
 }

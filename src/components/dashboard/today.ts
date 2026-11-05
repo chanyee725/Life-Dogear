@@ -138,3 +138,45 @@ export function seoulToday(now: Date): { today: string; day: Date } {
   const [y, m, d] = today.split("-").map(Number);
   return { today, day: new Date(y!, m! - 1, d!) };
 }
+
+/**
+ * Home project cards' context line: the linked goal's title, else the area's. Goal titles
+ * come from the already-loaded goal tree and area titles from one area list, so the home
+ * loader stays at a fixed query count. Unknown or archived targets are left out.
+ */
+export function projectContext(
+  projects: readonly { id: string; goalId: string | null; areaId: string | null }[],
+  goalTree: readonly GoalNode[],
+  areas: readonly { id: string; title: string }[],
+): Record<string, string> {
+  const goalTitle = new Map<string, string>();
+  const walk = (nodes: readonly GoalNode[]) => {
+    for (const n of nodes) {
+      goalTitle.set(n.goal.id, n.goal.title);
+      walk(n.children);
+    }
+  };
+  walk(goalTree);
+  const areaTitle = new Map(areas.map((a) => [a.id, a.title]));
+  const out: Record<string, string> = {};
+  for (const p of projects) {
+    const title =
+      (p.goalId ? goalTitle.get(p.goalId) : undefined) ??
+      (p.areaId ? areaTitle.get(p.areaId) : undefined);
+    if (title) out[p.id] = title;
+  }
+  return out;
+}
+
+/** `tasks.countFor` result (keyed `"project:id"`) re-keyed by project id. */
+export function projectProgress(
+  projectIds: readonly string[],
+  counts: Readonly<Record<string, { done: number; total: number }>>,
+): Record<string, { done: number; total: number }> {
+  const out: Record<string, { done: number; total: number }> = {};
+  for (const id of projectIds) {
+    const c = counts[`project:${id}`];
+    if (c) out[id] = c;
+  }
+  return out;
+}

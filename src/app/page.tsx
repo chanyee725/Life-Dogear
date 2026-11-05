@@ -5,6 +5,8 @@ import { QuarterGoals } from "@/components/dashboard/QuarterGoals";
 import { RecentSeminars, RecentThoughts } from "@/components/dashboard/RecentLists";
 import { RevisitStars } from "@/components/dashboard/RevisitStars";
 import {
+  projectContext,
+  projectProgress,
   quarterGoal,
   quarterGoalNodes,
   restOfWeek,
@@ -17,7 +19,7 @@ import { HomeCalendarSection } from "@/components/dashboard/HomeCalendarSection"
 import { WeeklyReviewLine } from "@/components/dashboard/WeeklyReviewLine";
 import { Page } from "@/components/shell";
 import { getCosmosScores } from "@/lib/cosmos/load";
-import { goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
+import { areas, goals, papers, projects, seminars, tasks, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { periodOf, weeklyReviewDue } from "@/lib/reviews/period";
 
@@ -25,7 +27,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Home = 오늘 화면 (docs/design/today.md 4절). Fixed query count: one batch in parallel,
- * then one task count for this quarter's goals.
+ * then task counts for this quarter's goals and for the general projects (one each).
+ * Project cards' goal titles come from the goal tree; area titles from one area list.
  */
 export default async function HomePage() {
   const now = new Date();
@@ -46,6 +49,7 @@ export default async function HomePage() {
     weekTasks,
     goalTree,
     cosmos,
+    areaList,
   ] = await Promise.all([
     papers.listContinueReading(6),
     projects.listByStage(),
@@ -58,12 +62,24 @@ export default async function HomePage() {
     week ? tasks.listThisWeek(week.from, week.to) : Promise.resolve([]),
     goals.listTree(),
     getCosmosScores({}, now),
+    areas.list(),
   ]);
   const reviewDue = dueWeek && !dueWritten.has(dueWeek) ? dueWeek : null;
   const goalNodes = quarterGoalNodes(goalTree, periodOf("quarter", day));
-  const goalTasks = goalNodes.length
-    ? await tasks.countFor(goalNodes.map((n) => ({ type: "goal" as const, id: n.goal.id })))
-    : {};
+  type Counts = Record<string, { done: number; total: number }>;
+  const [goalTasks, projectTasks] = await Promise.all([
+    goalNodes.length
+      ? tasks.countFor(goalNodes.map((n) => ({ type: "goal" as const, id: n.goal.id })))
+      : ({} as Counts),
+    general.length
+      ? tasks.countFor(general.map((p) => ({ type: "project" as const, id: p.id })))
+      : ({} as Counts),
+  ]);
+  const generalProgress = projectProgress(
+    general.map((p) => p.id),
+    projectTasks,
+  );
+  const generalContext = projectContext(general, goalTree, areaList);
   const quarter = goalNodes.map((n) => quarterGoal(n, goalTasks[`goal:${n.goal.id}`]));
   const stars = revisitStars(cosmos, now);
 
@@ -105,7 +121,12 @@ export default async function HomePage() {
       ) : null}
       <ContinueReading papers={reading} />
       <ActiveResearch stages={stages} />
-      <ActiveGeneralProjects projects={general} today={today} />
+      <ActiveGeneralProjects
+        projects={general}
+        today={today}
+        progress={generalProgress}
+        context={generalContext}
+      />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <RecentThoughts thoughts={recentThoughts} />
         <RecentSeminars seminars={recentSeminars} />
