@@ -1,5 +1,6 @@
 import "server-only";
 import { eq, like } from "drizzle-orm";
+import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { getDb } from "@/db/client";
@@ -54,7 +55,9 @@ export async function resolveItemRoute(
 ): Promise<string> {
   const hit = await lookupItemParam(kind, rawParam);
   if (!hit) notFound();
-  if (hit.param !== hit.segment) {
+  // A server action (e.g. renaming the item) re-renders the page it was called from; a
+  // redirect there would throw away the action's client state. The next plain visit redirects.
+  if (hit.param !== hit.segment && !(await headers()).has("next-action")) {
     permanentRedirect(`/${kind}/${encodeURIComponent(hit.segment)}${suffix}`);
   }
   return hit.id;
