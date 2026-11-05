@@ -30,15 +30,26 @@ test("노트 프로젝트 칸: 고르면 프로젝트 노트 섹션에 보이고
 
   // The link survives a reload of the note, then is removed from the chip.
   await page.goto(noteUrl);
-  await chips.getByRole("button", { name: `${projectTitle} 연결 해제` }).click();
+  const unlink = chips.getByRole("button", { name: `${projectTitle} 연결 해제` });
+  // Chips show once the load action is done, so the next action response is the unlink.
+  // Wait for it: leaving the page earlier could cancel it.
+  await expect(unlink).toBeVisible();
+  const unlinked = page.waitForResponse(
+    (res) => res.request().method() === "POST" && !!res.request().headers()["next-action"],
+  );
+  await unlink.click();
+  await unlinked;
   await expect(chips).toHaveCount(0);
-  await page.goto(projectUrl);
-  await expect(section.getByRole("link", { name: noteTitle })).toHaveCount(0);
+  // The chip drops optimistically, before the server action lands: retry the check.
+  await expect(async () => {
+    await page.goto(projectUrl);
+    await expect(section.getByRole("link", { name: noteTitle })).toHaveCount(0, { timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
 
   // Clean up what this test made.
   await deleteCurrentItem(page);
   await expect(page).toHaveURL(/\/projects$/);
   await page.goto(noteUrl);
   await deleteCurrentItem(page);
-  await expect(page).toHaveURL(/\/notes$/);
+  await expect(page).toHaveURL(/\/notes$/, { timeout: 20_000 });
 });
