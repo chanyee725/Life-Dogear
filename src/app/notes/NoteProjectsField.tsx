@@ -37,7 +37,18 @@ export function NoteProjectsField() {
     };
   }, [noteId]);
 
-  if (!noteId || linked === null) return null;
+  if (!noteId) return null;
+  if (linked === null) {
+    // Still loading: show nothing. Load failed: keep the field so the error is visible.
+    if (!error) return null;
+    return (
+      <Property label="프로젝트" htmlFor="note-projects">
+        <p role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      </Property>
+    );
+  }
 
   const linkedIds = new Set(linked.map((p) => p.id));
   const choices = options.filter((p) => !linkedIds.has(p.id));
