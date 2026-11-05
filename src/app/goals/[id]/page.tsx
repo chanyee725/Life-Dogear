@@ -50,7 +50,7 @@ export default async function GoalDetailPage({ params }: Props) {
   const archived = Boolean(goal.archivedAt);
 
   return (
-    <Page className="flex flex-col gap-12">
+    <Page className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         {goal.archivedAt ? <ArchivedNotice item={ref} /> : null}
         <ItemForm
@@ -160,9 +160,9 @@ export default async function GoalDetailPage({ params }: Props) {
           )}
         </Section>
       )}
-      <ItemNotes owner={ref} archived={archived} />
+      <ItemNotes owner={ref} archived={archived} taskParent={ref} />
       <TaskSection parent={ref} archived={archived} />
-      <ConnectedWithGraph item={ref} />
+      <ConnectedWithGraph item={ref} hideListedNotes />
     </Page>
   );
 }

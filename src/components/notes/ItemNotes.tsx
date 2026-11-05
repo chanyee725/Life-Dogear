@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { seoulDate } from "@/components/calendar/model";
 import { EmptyAdd, formatDate, LinkButton, ListRow, RowList, Section } from "@/components/ui";
-import { notes } from "@/lib/repo";
+import { AddTaskButton } from "@/components/tasks/AddTaskReveal";
+import { notes, tasks } from "@/lib/repo";
+import type { TaskParent } from "@/lib/repo/tasks";
 
 /** Item whose notes are shown: projects and goals link notes, areas also own them (`areaId`). */
 export type NotesOwner = { type: "project" | "goal" | "area"; id: string };
@@ -15,11 +17,17 @@ export const newNoteHref = (owner: NotesOwner) => `/notes/new?${owner.type}=${ow
 export async function ItemNotes({
   owner,
   archived = false,
+  taskParent,
 }: {
   owner: NotesOwner;
   archived?: boolean;
+  /** Project/goal: show `＋ 할 일` here while its 할 일 section is hidden (no tasks). */
+  taskParent?: NonNullable<TaskParent>;
 }) {
-  const list = await notes.listForItem(owner);
+  const [list, taskCount] = await Promise.all([
+    notes.listForItem(owner),
+    taskParent && !archived ? tasks.list({ parent: taskParent }).then((l) => l.length) : 1,
+  ]);
   const href = newNoteHref(owner);
   return (
     <Section
@@ -33,12 +41,17 @@ export async function ItemNotes({
         </span>
       }
       action={
-        list.length && !archived ? (
-          // -mr-2: the button's text lines up with the list's right edge.
-          <LinkButton href={href} variant="ghost" size="sm" className="-mr-2">
-            새 노트
-          </LinkButton>
-        ) : null
+        archived || (!list.length && taskCount > 0) ? null : (
+          // -mr-2: the last button's text lines up with the list's right edge.
+          <div className="-mr-2 flex items-center">
+            {taskCount === 0 ? <AddTaskButton /> : null}
+            {list.length ? (
+              <LinkButton href={href} variant="ghost" size="sm">
+                새 노트
+              </LinkButton>
+            ) : null}
+          </div>
+        )
       }
     >
       {list.length ? (
