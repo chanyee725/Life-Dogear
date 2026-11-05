@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { Editor } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { createExtensions } from "@/components/editor/extensions";
 
@@ -65,5 +66,35 @@ describe("code blocks in the real editor (jsdom)", () => {
     const again = getMarkdown(e);
     e.destroy();
     expect(getMarkdown(mount(again))).toBe(MARKDOWN);
+  });
+
+  describe("Ctrl+C text (clipboardTextSerializer)", () => {
+    const DOC = "앞 문단\n\n```bash\nsource ~/ws_demo/install/setup.bash\n```\n\n뒤 문단";
+
+    function copiedText(e: Editor, from: number, to: number) {
+      e.view.dispatch(e.state.tr.setSelection(TextSelection.create(e.state.doc, from, to)));
+      const slice = e.state.selection.content();
+      return e.view.someProp("clipboardTextSerializer", (serialize) => serialize(slice, e.view));
+    }
+
+    function codeRange(e: Editor) {
+      let start = -1;
+      e.state.doc.descendants((node, pos) => {
+        if (node.type.name === "codeBlock") start = pos + 1;
+      });
+      return { start, end: start + e.state.doc.nodeAt(start - 1)!.content.size };
+    }
+
+    it("copies the code only: every character, no fence", () => {
+      const e = mount(DOC);
+      const { start, end } = codeRange(e);
+      expect(copiedText(e, start, end)).toBe("source ~/ws_demo/install/setup.bash");
+      expect(copiedText(e, start, start + 6)).toBe("source");
+    });
+
+    it("keeps Markdown when the selection spans more than the code block", () => {
+      const e = mount(DOC);
+      expect(copiedText(e, 0, e.state.doc.content.size)).toBe(DOC);
+    });
   });
 });
