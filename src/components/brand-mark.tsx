@@ -1,30 +1,30 @@
 import type { SVGProps } from "react";
 
 /**
- * Life Dogear mark: a sheet whose top-right corner is folded down onto the
- * page (a dog-ear). The flap is filled so it reads as the paper's back side,
- * which also keeps it distinct from the outline-only PaperIcon in the nav.
+ * Life Dogear mark: a solid sheet whose top-right corner is folded down onto
+ * the page (a dog-ear). The flap is drawn in a lighter tone of the same color
+ * (the paper's back side), and a small gap between flap and sheet reads as the
+ * crease shadow. Everything is currentColor, so it follows light/dark themes.
  * Geometry is shared with src/app/icon.svg and src/app/apple-icon.tsx.
  */
-export const BRAND_PAGE_PATH = "M5 2.75h6.25l4.75 4.75v9.25a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3.25a.5.5 0 0 1 .5-.5Z";
-export const BRAND_FLAP_PATH = "M11.25 2.75 16 7.5h-4.25a.5.5 0 0 1-.5-.5Z";
+export const BRAND_VIEWBOX = "0 0 32 32";
+export const BRAND_PAGE_PATH = "M8.5 3H15.5V12.5H25.5V27A2 2 0 0 1 23.5 29H8.5A2 2 0 0 1 6.5 27V5A2 2 0 0 1 8.5 3Z";
+export const BRAND_FLAP_PATH = "M17 3L25.5 11.5H18A1 1 0 0 1 17 10.5Z";
+export const BRAND_FLAP_OPACITY = 0.45;
 
 export function BrandMark({ size = 18, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
+      viewBox={BRAND_VIEWBOX}
+      fill="currentColor"
       aria-hidden="true"
       focusable="false"
       {...props}
     >
       <path d={BRAND_PAGE_PATH} />
-      <path d={BRAND_FLAP_PATH} fill="currentColor" />
+      <path d={BRAND_FLAP_PATH} opacity={BRAND_FLAP_OPACITY} />
     </svg>
   );
 }
