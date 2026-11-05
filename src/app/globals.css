@@ -122,6 +122,39 @@
   --rb-code-inline: #f2877a;
 }
 
+/* ---------- Accent: terracotta (html[data-accent="terracotta"]) ----------
+   Blue stays the default (no attribute or data-accent="blue"). Set before first
+   paint by the theme script (src/components/accent.ts).
+   Contrast: light #b8461a vs #fff 5.34:1; dark #f0936b vs #141416 7.96:1
+   (dark keeps the dark-text-on-light-accent pattern of the blue dark theme).
+   The terracotta accent sits on the old danger hue (#c2410c) and near the "노트"
+   orange tone, so in this mode only, danger moves to red and orange to brown. */
+html[data-accent="terracotta"] {
+  --rb-accent: #b8461a;
+  --rb-accent-hover: #9c3a14;
+  --rb-accent-fg: #ffffff;
+  --rb-accent-soft: #fbefe9;
+  --rb-ring: rgb(184 70 26 / 0.35);
+
+  --rb-danger: #b42318;
+  --rb-danger-hover: #912018;
+  --rb-tone-orange-bg: #f6efe6;
+  --rb-tone-orange-fg: #7a4a1e;
+}
+
+html.dark[data-accent="terracotta"] {
+  --rb-accent: #f0936b;
+  --rb-accent-hover: #f4a684;
+  --rb-accent-fg: #141416;
+  --rb-accent-soft: #2e211b;
+  --rb-ring: rgb(240 147 107 / 0.4);
+
+  --rb-danger: #f2837a;
+  --rb-danger-hover: #f59a92;
+  --rb-tone-orange-bg: #2a2219;
+  --rb-tone-orange-fg: #d9a878;
+}
+
 /* ---------- shadcn/ui theme variables ----------
    components.json points shadcn at this file. The shadcn names are aliases of the
    --rb-* tokens above, so light/dark come from the same values and the app's

@@ -25,6 +25,7 @@ import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
+import { AccentSwitcher } from "@/components/accent-switcher";
 import { BrandMark } from "@/components/brand-mark";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -242,7 +243,10 @@ export function SidebarNav({
           {NAV_SECTIONS.bottom.map((entry) => item(entry))}
         </nav>
         <div className="flex flex-col gap-3 px-4 pb-4">
-          <ThemeToggle />
+          <div className="flex flex-col gap-1.5">
+            <ThemeToggle />
+            <AccentSwitcher className="px-1" />
+          </div>
           {footerSlot}
         </div>
       </aside>
