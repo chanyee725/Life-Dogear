@@ -13,6 +13,7 @@ import { Popover } from "@/components/calendar/Popover";
 import { TaskIcon } from "@/components/shell/icons";
 import { TaskList, type TaskListProps } from "@/components/tasks/TaskList";
 import { Badge, Button } from "@/components/ui";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** Set by HomeTodo: the 오늘 할 일 list reports its open 지남 + 오늘 count here. */
 const OpenCountContext = createContext<((count: number) => void) | null>(null);
@@ -68,30 +69,31 @@ export function HomeTodo({
 
   return (
     <>
-      <Button
-        ref={buttonRef}
-        variant="secondary"
-        size="icon"
-        className="relative size-7"
-        aria-label={`할 일 ${shown}개`}
-        title="할 일"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={mounted ? id : undefined}
-        onClick={() => (open ? close(true) : show())}
-      >
-        <TaskIcon />
-        {shown ? (
-          <Badge
-            tone="blue"
-            aria-hidden="true"
-            data-testid="todo-count"
-            className="absolute -top-2 -right-2 h-4 min-w-4 justify-center rounded-full px-1 text-xs leading-none tabular-nums"
-          >
-            {shown}
-          </Badge>
-        ) : null}
-      </Button>
+      <Tooltip content="할 일" side="bottom">
+        <Button
+          ref={buttonRef}
+          variant="secondary"
+          size="icon"
+          className="relative size-7"
+          aria-label={`할 일 ${shown}개`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={mounted ? id : undefined}
+          onClick={() => (open ? close(true) : show())}
+        >
+          <TaskIcon />
+          {shown ? (
+            <Badge
+              tone="blue"
+              aria-hidden="true"
+              data-testid="todo-count"
+              className="absolute -top-2 -right-2 h-4 min-w-4 justify-center rounded-full px-1 text-xs leading-none tabular-nums"
+            >
+              {shown}
+            </Badge>
+          ) : null}
+        </Button>
+      </Tooltip>
       {mounted ? (
         <Popover
           id={id}

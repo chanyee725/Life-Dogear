@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/components/ui/cn";
+import { Popover as PopoverPrimitive } from "radix-ui";
+import { Popover as PopoverRoot, PopoverAnchor } from "@/components/ui/primitives/popover";
 
 const GAP = 4;
 const MARGIN = 8;
 
 /**
- * Popover pinned to `anchor` with `position: fixed` (the grid clips with `overflow-hidden`).
- * Flips above when there is no room below. `Esc` and outside presses close it; the caller
- * puts focus back. `hidden` keeps it mounted but closed (its fields keep their state);
- * showing it again re-places it and moves focus inside.
+ * Radix popover pinned to `anchor` (a virtual anchor: callers keep their own opener).
+ * Radix places it (flips above when there is no room below). `Esc` and outside presses
+ * close it; the caller puts focus back. `hidden` closes it but keeps the children mounted
+ * (fields and counts keep their state) with no Radix content mounted, so nothing of it
+ * listens to the document; showing it again moves focus inside.
+ *
+ * `Esc` is handled through React bubbling (not Radix's document listener) so a field
+ * inside can claim it first with `stopPropagation` (a title edit cancels without closing).
  */
 export function Popover({
   anchor,
@@ -37,36 +44,33 @@ export function Popover({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number; above: boolean } | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
-
-  useLayoutEffect(() => {
-    if (hidden) return;
-    const place = () => {
-      const el = ref.current;
-      if (!anchor || !el) return;
-      const a = anchor.getBoundingClientRect();
-      // Layout size, not getBoundingClientRect: the entry `scale-95` would shrink it.
-      const width = el.offsetWidth;
-      const height = el.offsetHeight;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const below = a.bottom + GAP;
-      const above = below + height > vh - MARGIN && a.top - GAP - height > MARGIN;
-      const top = above ? a.top - GAP - height : below;
-      const want = align === "end" ? a.right - width : a.left;
-      const left = Math.min(Math.max(MARGIN, want), Math.max(MARGIN, vw - width - MARGIN));
-      setPos({ top, left, above });
-    };
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
-  }, [anchor, hidden, align]);
+  const hiddenRef = useRef(hidden);
+  hiddenRef.current = hidden;
+  const virtualRef = useMemo(() => ({ current: anchor }), [anchor]);
+  // The children render into this one node for the popover's whole life (a React portal),
+  // so their state survives `hidden`. Open, it sits inside the Radix content; hidden, in a
+  // plain hidden box, so no Radix layer stays mounted to catch document `Esc`/presses.
+  // `display: contents` lets the caller's layout classes on the content reach the children.
+  const [box] = useState(() => {
+    if (typeof document === "undefined") return null;
+    const el = document.createElement("div");
+    el.style.display = "contents";
+    return el;
+  });
+  // Radix decides "outside" on click, when the pressed node may already be gone (a title
+  // that turned into a field), so remember presses that started inside the box.
+  const pressedInside = useRef<PointerEvent | null>(null);
+  useEffect(() => {
+    if (!box) return;
+    const onDown = (e: PointerEvent) => (pressedInside.current = e);
+    box.addEventListener("pointerdown", onDown, true);
+    return () => box.removeEventListener("pointerdown", onDown, true);
+  }, [box]);
+  const holdBox = (el: HTMLElement | null) => {
+    if (el && box && box.parentNode !== el) el.appendChild(box);
+  };
 
   // Move focus inside unless a child already took it (autoFocus input, menu item).
   useEffect(() => {
@@ -75,44 +79,64 @@ export function Popover({
     el.querySelector<HTMLElement>("a[href],button,input,[tabindex]")?.focus();
   }, [hidden]);
 
-  useEffect(() => {
-    if (hidden) return;
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (ref.current?.contains(t) || anchor?.contains(t)) return;
-      closeRef.current(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
-  }, [anchor, hidden]);
-
   return (
+    // React events from the portal bubble here (not through the Radix content): `Esc` from
+    // inside closes it, after any field inside had the chance to `stopPropagation`.
     <div
-      ref={ref}
-      id={id}
-      hidden={hidden}
-      role={role}
-      aria-label={label}
+      className="contents"
       onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          closeRef.current(true);
-        }
+        if (e.key !== "Escape" || hiddenRef.current) return;
+        if (!ref.current?.contains(e.target as Node)) return; // e.g. a nested menu's own Esc
+        e.preventDefault();
+        e.stopPropagation();
+        closeRef.current(true);
       }}
-      style={{
-        top: pos?.top ?? -9999,
-        left: pos?.left ?? -9999,
-        // Grow from the anchored corner so the aligned edge does not move while scaling in.
-        transformOrigin: `${pos?.above ? "bottom" : "top"} ${align === "end" ? "right" : "left"}`,
-      }}
-      className={cn(
-        "fixed z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none",
-        "transition-[opacity,scale] duration-100 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
-        className,
-      )}
     >
-      {children}
+      {box ? createPortal(children, box) : null}
+      {hidden ? (
+        <div ref={holdBox} id={id} role={role} aria-label={label} hidden />
+      ) : (
+        <PopoverRoot open>
+          {anchor ? <PopoverAnchor virtualRef={virtualRef as { current: HTMLElement }} /> : null}
+          {/* Content without the primitive's Portal: Radix places it `position: fixed`, so
+              the grid's `overflow-hidden` still does not clip it. */}
+          <PopoverPrimitive.Content
+            ref={(el) => {
+              ref.current = el;
+              holdBox(el);
+            }}
+            id={id}
+            role={role}
+            aria-label={label}
+            side="bottom"
+            align={align}
+            sideOffset={GAP}
+            collisionPadding={MARGIN}
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            // Esc is handled on the wrapper above, so a field inside can claim it first.
+            onEscapeKeyDown={(e) => e.preventDefault()}
+            onFocusOutside={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => {
+              e.preventDefault();
+              if (e.detail.originalEvent === pressedInside.current) return;
+              const t = e.target as Node | null;
+              if (t && (ref.current?.contains(t) || anchor?.contains(t))) return;
+              // A nested Radix layer opened from the children (the 마감일 popover) is
+              // portaled to body; Radix cannot see it is ours through the box portal.
+              const layer =
+                t instanceof Element && t.closest("[data-radix-popper-content-wrapper]");
+              if (layer && !layer.contains(ref.current)) return;
+              closeRef.current(false);
+            }}
+            className={cn(
+              "z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none",
+              "origin-(--radix-popover-content-transform-origin) transition-[opacity,scale] duration-100 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
+              className,
+            )}
+          />
+        </PopoverRoot>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui";
 import { buildLinerSearchUrl, LINER_URL_INCLUDES_TITLE } from "@/lib/liner";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const COPIED = "제목을 복사했어요. 라이너 검색창에 붙여넣으세요.";
 const COPY_FAILED = "제목을 복사하지 못했어요. 라이너 검색창에 제목을 직접 입력하세요.";
@@ -29,20 +30,21 @@ export function OpenInLiner({ title }: { title: string }) {
   return (
     // The notice floats under the button so it never shifts the row it sits in.
     <span className="relative inline-flex">
-      <a
-        href={buildLinerSearchUrl(trimmed)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={buttonClass("secondary", "sm")}
-        // Short text below `lg` keeps the paper header on one line; the name stays full.
-        aria-label="라이너에서 열기 (새 탭)"
-        title="라이너에서 열기"
-        // Copy synchronously within the click so the clipboard permission applies.
-        onClick={() => void copyTitle()}
-      >
-        <span className="hidden lg:inline">라이너에서 열기</span>
-        <span className="lg:hidden">라이너</span> ↗
-      </a>
+      <Tooltip content="라이너에서 열기">
+        <a
+          href={buildLinerSearchUrl(trimmed)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonClass("secondary", "sm")}
+          // Short text below `lg` keeps the paper header on one line; the name stays full.
+          aria-label="라이너에서 열기 (새 탭)"
+          // Copy synchronously within the click so the clipboard permission applies.
+          onClick={() => void copyTitle()}
+        >
+          <span className="hidden lg:inline">라이너에서 열기</span>
+          <span className="lg:hidden">라이너</span> ↗
+        </a>
+      </Tooltip>
       <span
         aria-live="polite"
         className="absolute top-full right-0 z-10 mt-1 text-xs whitespace-nowrap text-faint"

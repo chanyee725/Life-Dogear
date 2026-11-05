@@ -12,7 +12,10 @@ test("프로젝트 노트 섹션: 비었으면 ＋ 새 노트, 만든 노트가 
   const section = page.getByRole("region", { name: "노트" });
   await expect(section.getByRole("listitem")).toHaveCount(0);
   await section.getByRole("link", { name: "＋ 새 노트" }).click();
-  await expect(page).toHaveURL(new RegExp(`/notes/new\\?project=${projectId}$`));
+  await expect(page).toHaveURL(new RegExp(`/notes/new\\?project=${projectId}$`), {
+    // First client navigation to /notes/new may wait for the dev server to compile it.
+    timeout: 20_000,
+  });
   // The template picker is still there.
   await expect(page.getByRole("radiogroup", { name: "템플릿" })).toBeVisible();
 

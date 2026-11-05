@@ -12,6 +12,7 @@ import type { IconPaint } from "./ShapeIcon";
 import { goalLabel, GRAPH_TYPE_LABEL, nodeHref } from "./model";
 import type { NodePreview } from "./preview-types";
 import { ShapeIcon } from "./ShapeIcon";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const MAX_NEIGHBORS = 6;
 
@@ -116,20 +117,21 @@ export function GraphPreview({
         <Badge tone={badge.tone}>{data?.badge ?? badge.text}</Badge>
         {archived ? <Badge tone="gray">보관</Badge> : null}
         {cosmos?.canStar ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-pressed={cosmos.starred}
-            aria-label={cosmos.starred ? "중요 표시 해제" : "중요 표시"}
-            title="중요 표시"
-            disabled={cosmos.starBusy}
-            onClick={cosmos.onToggleStar}
-            className={cn("ml-auto h-7 w-7", cosmos.starred && "text-fg")}
-          >
-            <span aria-hidden className="text-sm leading-none">
-              {cosmos.starred ? "★" : "☆"}
-            </span>
-          </Button>
+          <Tooltip content="중요 표시">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-pressed={cosmos.starred}
+              aria-label={cosmos.starred ? "중요 표시 해제" : "중요 표시"}
+              disabled={cosmos.starBusy}
+              onClick={cosmos.onToggleStar}
+              className={cn("ml-auto h-7 w-7", cosmos.starred && "text-fg")}
+            >
+              <span aria-hidden className="text-sm leading-none">
+                {cosmos.starred ? "★" : "☆"}
+              </span>
+            </Button>
+          </Tooltip>
         ) : null}
         <Button
           variant="ghost"

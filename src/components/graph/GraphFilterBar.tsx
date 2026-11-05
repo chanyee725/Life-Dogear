@@ -1,7 +1,12 @@
 "use client";
 
-import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Fragment, useId, useState, type ReactNode } from "react";
 import { Button, Checkbox, cn, Segmented, Select, type SegmentedOption } from "@/components/ui";
+import {
+  Popover as PopoverRoot,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/primitives/popover";
 import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
@@ -256,49 +261,24 @@ export function GraphFilterControls({
   );
 }
 
-/** "필터 n" button with the less-used controls in a popover (closes on Esc or outside click). */
+/** "필터 n" button with the less-used controls in a Radix popover (Esc or outside click closes). */
 function FilterPopover({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
   return (
-    <div
-      ref={rootRef}
-      className="relative shrink-0"
-      onKeyDown={(e) => {
-        if (open && e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen(false);
-          buttonRef.current?.focus();
-        }
-      }}
-    >
-      <Button
-        size="sm"
-        ref={buttonRef}
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {label}
-      </Button>
-      <div
-        id={panelId}
-        hidden={!open}
-        className="absolute top-full left-0 z-30 mt-1.5 flex w-max flex-col gap-3 rounded-lg border border-border bg-bg p-3 shadow-overlay"
+    <PopoverRoot open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button size="sm" className="shrink-0">
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        collisionPadding={8}
+        className="flex w-max flex-col gap-3 rounded-lg border-border bg-bg p-3 shadow-overlay"
       >
         {children}
-      </div>
-    </div>
+      </PopoverContent>
+    </PopoverRoot>
   );
 }

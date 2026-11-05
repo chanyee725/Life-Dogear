@@ -25,6 +25,7 @@ import {
 } from "./layout";
 import { fetchProgress, sendProgress, type ReadingProgress } from "./progress-client";
 import { laterReadAt, newerRemotePosition } from "./remote-progress";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 // Bundled with the app (no CDN). Must be set in the module that renders react-pdf.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -381,14 +382,15 @@ export default function PdfViewerClient({
           >
             −
           </button>
-          <button
-            type="button"
-            className={`${toolbarButton} w-14 tabular-nums`}
-            onClick={() => setZoom(1)}
-            title="폭에 맞추기"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
+          <Tooltip content="폭에 맞추기" side="bottom">
+            <button
+              type="button"
+              className={`${toolbarButton} w-14 tabular-nums`}
+              onClick={() => setZoom(1)}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+          </Tooltip>
           <button
             type="button"
             className={toolbarButton}

@@ -25,6 +25,7 @@ import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, type NavIcon } from "./nav";
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const ICONS: Record<NavIcon, () => ReactNode> = {
   home: HomeIcon,
@@ -70,12 +71,11 @@ function NavLink({
   shortcut?: string;
 }) {
   const active = isActivePath(pathname, href);
-  return (
+  const link = (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
       aria-keyshortcuts={shortcut}
-      title={shortcut ? `${label} (${shortcut})` : undefined}
       className={linkClass(active)}
     >
       {icon}
@@ -83,6 +83,14 @@ function NavLink({
       <PendingDot />
       {badge}
     </Link>
+  );
+  // The hint only says what the label does not: the shortcut.
+  return shortcut ? (
+    <Tooltip content={`${label} (${shortcut})`} side="right">
+      {link}
+    </Tooltip>
+  ) : (
+    link
   );
 }
 
@@ -150,16 +158,17 @@ export function SidebarNav({
   return (
     <>
       {/* Shown while collapsed (focus mode) and on narrow screens: brings the sidebar back. */}
-      <button
-        type="button"
-        onClick={() => (narrow() ? setDrawerOn(pathname) : setSidebarCollapsed(false))}
-        aria-label="사이드바 열기"
-        title="사이드바 열기"
-        aria-expanded={drawerOpen || undefined}
-        className="fixed top-3 left-3 z-30 hidden h-8 w-8 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:flex max-md:flex"
-      >
-        <SidebarIcon />
-      </button>
+      <Tooltip content="사이드바 열기" side="right">
+        <button
+          type="button"
+          onClick={() => (narrow() ? setDrawerOn(pathname) : setSidebarCollapsed(false))}
+          aria-label="사이드바 열기"
+          aria-expanded={drawerOpen || undefined}
+          className="fixed top-3 left-3 z-30 hidden h-8 w-8 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:flex max-md:flex"
+        >
+          <SidebarIcon />
+        </button>
+      </Tooltip>
       {drawerOpen ? (
         <div
           aria-hidden
@@ -182,15 +191,16 @@ export function SidebarNav({
           <Link href="/" className="text-[15px] font-semibold tracking-tight">
             Life Dogear
           </Link>
-          <button
-            type="button"
-            onClick={() => (narrow() ? setDrawerOn(null) : setSidebarCollapsed(true))}
-            aria-label="사이드바 접기"
-            title="사이드바 접기"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
-          >
-            <SidebarIcon />
-          </button>
+          <Tooltip content="사이드바 접기" side="right">
+            <button
+              type="button"
+              onClick={() => (narrow() ? setDrawerOn(null) : setSidebarCollapsed(true))}
+              aria-label="사이드바 접기"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
+            >
+              <SidebarIcon />
+            </button>
+          </Tooltip>
         </div>
         {/* 2팀: "검색 ⌘K" button goes here. */}
         {searchSlot ? <div className="px-3 pb-2">{searchSlot}</div> : null}
