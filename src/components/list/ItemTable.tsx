@@ -11,6 +11,12 @@ type ColumnBase<T> = {
   render: (item: T) => ReactNode;
   className?: string;
   headerClassName?: string;
+  /**
+   * True when this item has nothing to show in the column. Secondary columns empty for every
+   * row are hidden (they come back once any row has data). Defaults to `render` returning
+   * null, undefined, false or "" — pass it when `render` returns a component that may draw nothing.
+   */
+  isEmpty?: (item: T) => boolean;
 };
 
 export type Column<T> = ColumnBase<T> &
@@ -33,6 +39,8 @@ const HIDE_BELOW: Record<"md" | "lg", string> = {
   lg: "hidden lg:table-cell",
 };
 
+const isBlank = (v: ReactNode) => v === null || v === undefined || v === false || v === "";
+
 const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
   c.hideBelow ? HIDE_BELOW[c.hideBelow] : undefined;
 
@@ -44,7 +52,7 @@ const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
 export function ItemTable<T>({
   items,
   groups,
-  columns,
+  columns: allColumns,
   getKey,
   getHref,
   empty,
@@ -61,13 +69,26 @@ export function ItemTable<T>({
 }) {
   if (items.length === 0) return <>{empty ?? <EmptyState title="항목이 없습니다" />}</>;
 
+  // Drop secondary columns no row fills, so the title isn't followed by blank space.
+  const columns = allColumns.filter(
+    (c) => c.primary || items.some((i) => !(c.isEmpty ? c.isEmpty(i) : isBlank(c.render(i)))),
+  );
+
   const rows = (list: readonly T[]) =>
     list.map((item) => {
       const href = getHref?.(item);
       return (
         <Tr key={getKey(item)} className={cn(href && "relative hover:bg-surface")}>
           {columns.map((c) => (
-            <Td key={c.key} className={cn(hideClass(c), c.primary && "min-w-56", c.className)}>
+            <Td
+              key={c.key}
+              className={cn(
+                hideClass(c),
+                // Title takes the slack; the rest shrink to their content on one line.
+                c.primary ? "w-full min-w-56" : "w-px whitespace-nowrap [&_.flex-wrap]:flex-nowrap",
+                c.className,
+              )}
+            >
               {c.primary && href ? (
                 // Stretched link: the ::after covers the row so the whole row is clickable.
                 <Link
@@ -90,7 +111,7 @@ export function ItemTable<T>({
       <THead>
         <tr>
           {columns.map((c) => (
-            <Th key={c.key} className={cn(hideClass(c), c.headerClassName)}>
+            <Th key={c.key} className={cn(hideClass(c), !c.primary && "w-px", c.headerClassName)}>
               {c.header}
             </Th>
           ))}

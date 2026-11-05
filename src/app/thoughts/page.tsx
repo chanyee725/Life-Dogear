@@ -72,7 +72,12 @@ const columns: Column<Thought>[] = [
   { key: "title", header: "제목", primary: true, render: (t) => t.title },
   { key: "kind", header: "종류", render: kindBadge },
   { key: "maturity", header: "발전 정도", render: maturityBadge },
-  { key: "tags", header: "태그", render: (t) => <TagList tags={t.tags} /> },
+  {
+    key: "tags",
+    header: "태그",
+    isEmpty: (t) => t.tags.length === 0,
+    render: (t) => <TagList tags={t.tags} />,
+  },
   {
     key: "updated",
     header: "수정",

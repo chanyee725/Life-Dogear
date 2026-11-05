@@ -62,8 +62,19 @@ const columns: Column<Seminar>[] = [
     header: "종류",
     render: (s) => <Badge tone={SEMINAR_KIND.tone(s.kind)}>{SEMINAR_KIND.label(s.kind)}</Badge>,
   },
-  { key: "speaker", header: "연사", className: "text-muted", render: (s) => s.speaker },
-  { key: "tags", header: "태그", render: (s) => <TagList tags={s.tags} /> },
+  {
+    key: "speaker",
+    header: "연사",
+    className: "text-muted",
+    render: (s) =>
+      s.speaker ? <span className="block max-w-[12rem] truncate">{s.speaker}</span> : "",
+  },
+  {
+    key: "tags",
+    header: "태그",
+    isEmpty: (s) => s.tags.length === 0,
+    render: (s) => <TagList tags={s.tags} />,
+  },
 ];
 
 export default async function SeminarsPage({

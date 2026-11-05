@@ -86,17 +86,20 @@ const columns: Column<Paper>[] = [
     header: "제목",
     primary: true,
     render: (p) => p.title,
-    className: "max-w-[22rem]",
   },
   {
     key: "authors",
     header: "저자",
     hideBelow: "lg",
-    render: (p) => <span className="text-muted">{formatAuthors(p.authors)}</span>,
+    isEmpty: (p) => !formatAuthors(p.authors),
+    render: (p) => (
+      <span className="block max-w-[14rem] truncate text-muted">{formatAuthors(p.authors)}</span>
+    ),
   },
   {
     key: "year",
     header: "연도",
+    isEmpty: (p) => p.year == null,
     render: (p) => <span className="text-muted tabular-nums">{p.year ?? ""}</span>,
   },
   {
@@ -109,8 +112,14 @@ const columns: Column<Paper>[] = [
       </div>
     ),
   },
-  { key: "progress", header: "읽기", render: readingCell },
-  { key: "tags", header: "태그", hideBelow: "lg", render: (p) => <Tags names={p.tags} /> },
+  { key: "progress", header: "읽기", isEmpty: (p) => !p.pdfPath, render: readingCell },
+  {
+    key: "tags",
+    header: "태그",
+    hideBelow: "lg",
+    isEmpty: (p) => p.tags.length === 0,
+    render: (p) => <Tags names={p.tags} />,
+  },
 ];
 
 function PaperCard({ paper }: { paper: Paper }) {
