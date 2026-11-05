@@ -1,5 +1,5 @@
 import { Extension } from "@tiptap/core";
-import type { Node as PMNode } from "@tiptap/pm/model";
+import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
 import { NodeSelection, Plugin, PluginKey, type EditorState, type Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
@@ -22,16 +22,46 @@ const HANDLE_SIZE = 20;
 
 export type Block = { pos: number; node: PMNode };
 
+/** Whether `block` still sits at its recorded position in `doc` (it goes stale after edits). */
+export function isCurrent(doc: PMNode, block: Block): boolean {
+  return block.pos >= 0 && block.pos < doc.content.size && doc.nodeAt(block.pos) === block.node;
+}
+
+/**
+ * The range to delete when `node` at `from` leaves its place. Taking the only item out
+ * of a list removes the list too, instead of leaving an empty item behind.
+ */
+function removalRange(doc: PMNode, from: number, node: PMNode): [number, number] {
+  const $from = doc.resolve(from);
+  let depth = $from.depth;
+  while (
+    depth > 0 &&
+    $from.node(depth).childCount === 1 &&
+    !$from.node(depth).type.validContent(Fragment.empty)
+  )
+    depth--;
+  if (depth === $from.depth) return [from, from + node.nodeSize];
+  return [$from.before(depth + 1), $from.after(depth + 1)];
+}
+
 /**
  * Moves the block that starts at `from` to the boundary `to` (a position between two
- * sibling blocks, in the original document). Returns null when nothing would change.
+ * sibling blocks, in the original document). Returns null when nothing would change, or
+ * when `expected` is given and is no longer the node at `from`.
  */
-export function moveBlock(state: EditorState, from: number, to: number): Transaction | null {
+export function moveBlock(
+  state: EditorState,
+  from: number,
+  to: number,
+  expected?: PMNode,
+): Transaction | null {
   const node = state.doc.nodeAt(from);
-  if (!node) return null;
+  if (!node || (expected && node !== expected)) return null;
   const end = from + node.nodeSize;
   if (to >= from && to <= end) return null;
-  const tr = state.tr.delete(from, end);
+  const [delFrom, delTo] = removalRange(state.doc, from, node);
+  if (to > delFrom && to < delTo) return null;
+  const tr = state.tr.delete(delFrom, delTo);
   const insertAt = tr.mapping.map(to);
   tr.insert(insertAt, node);
   tr.setSelection(NodeSelection.create(tr.doc, insertAt));
@@ -135,9 +165,13 @@ class DragHandleView {
     this.handle.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
-  update() {
-    if (!this.view.editable) this.hide();
-    else if (this.block && !this.drag) this.place(this.block);
+  update(view: EditorView, prev: EditorState) {
+    if (!view.editable) return this.hide();
+    // An edit shifts positions: a grip left over a stale block would move or select
+    // the wrong node, so it hides until the pointer hovers again.
+    if (this.block && prev.doc !== view.state.doc && !isCurrent(view.state.doc, this.block))
+      this.hide();
+    if (this.block && !this.drag) this.place(this.block);
   }
 
   destroy() {
@@ -211,6 +245,7 @@ class DragHandleView {
 
   private onDown = (event: PointerEvent) => {
     if (event.button !== 0 || !this.block || !this.view.editable) return;
+    if (!isCurrent(this.view.state.doc, this.block)) return this.hide();
     event.preventDefault();
     this.handle.setPointerCapture(event.pointerId);
     const touch = event.pointerType === "touch";
@@ -288,9 +323,11 @@ class DragHandleView {
   private onUp = () => {
     const drag = this.drag;
     if (!drag) return;
-    if (drag.active) {
+    if (!isCurrent(this.view.state.doc, drag.block)) {
+      // The document changed under the drag; the recorded block is gone or has shifted.
+    } else if (drag.active) {
       if (drag.to !== null) {
-        const tr = moveBlock(this.view.state, drag.block.pos, drag.to);
+        const tr = moveBlock(this.view.state, drag.block.pos, drag.to, drag.block.node);
         if (tr) this.view.dispatch(tr);
       }
     } else {
