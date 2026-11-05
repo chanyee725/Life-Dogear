@@ -1,10 +1,14 @@
 import { ImageResponse } from "next/og";
-import { BRAND_FLAP_PATH, BRAND_PAGE_PATH } from "@/components/brand-mark";
+import { BRAND_FLAP_PATH, BRAND_PAGE_PATH, BRAND_VIEWBOX } from "@/components/brand-mark";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-/** Home-screen icon: white dog-eared sheet on the accent color. */
+/**
+ * Home-screen icon: the two-tone dog-eared sheet in warm paper (#f7f6f3) on
+ * warm black (#2f2e2a). The flap color is the paper tone at 45% over the
+ * background, baked to a hex because the PNG has no theme.
+ */
 export default function AppleIcon() {
   return new ImageResponse(
     (
@@ -15,12 +19,12 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#4f5bd5",
+          background: "#2f2e2a",
         }}
       >
-        <svg width="112" height="112" viewBox="0 0 20 20" fill="none" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round">
+        <svg width="120" height="120" viewBox={BRAND_VIEWBOX} fill="#f7f6f3">
           <path d={BRAND_PAGE_PATH} />
-          <path d={BRAND_FLAP_PATH} fill="#ffffff" />
+          <path d={BRAND_FLAP_PATH} fill="#898884" />
         </svg>
       </div>
     ),
