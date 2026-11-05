@@ -3,6 +3,7 @@ import { act, createElement, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { Segmented } from "@/components/ui/Segmented";
+import { segmentedNextIndex } from "@/components/ui/segmented-style";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -69,5 +70,46 @@ describe("Segmented", () => {
     expect(t.radio("에이").getAttribute("aria-checked")).toBe("true");
     await t.key(t.radio("에이"), "ArrowUp");
     expect(t.radio("씨").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("takes two quick presses as two steps", async () => {
+    const t = await setup("a");
+    act(() => t.radio("에이").focus());
+    await act(async () => {
+      for (let i = 0; i < 2; i++)
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+        );
+    });
+    expect(t.radio("씨").getAttribute("aria-checked")).toBe("true");
+    expect(document.activeElement).toBe(t.radio("씨"));
+  });
+});
+
+describe("segmentedNextIndex", () => {
+  it("moves with ←/→ and wraps", () => {
+    expect(segmentedNextIndex(0, 3, "ArrowRight")).toBe(1);
+    expect(segmentedNextIndex(2, 3, "ArrowRight")).toBe(0);
+    expect(segmentedNextIndex(0, 3, "ArrowLeft")).toBe(2);
+  });
+
+  it("treats ↑ like ← and ↓ like →", () => {
+    expect(segmentedNextIndex(1, 3, "ArrowUp")).toBe(0);
+    expect(segmentedNextIndex(0, 3, "ArrowUp")).toBe(2);
+    expect(segmentedNextIndex(1, 3, "ArrowDown")).toBe(2);
+    expect(segmentedNextIndex(2, 3, "ArrowDown")).toBe(0);
+  });
+
+  it("with nothing checked, ← goes to the last option and → to the first", () => {
+    expect(segmentedNextIndex(-1, 3, "ArrowLeft")).toBe(2);
+    expect(segmentedNextIndex(-1, 3, "ArrowUp")).toBe(2);
+    expect(segmentedNextIndex(-1, 3, "ArrowRight")).toBe(0);
+    expect(segmentedNextIndex(-1, 3, "ArrowDown")).toBe(0);
+  });
+
+  it("ignores other keys and empty groups", () => {
+    expect(segmentedNextIndex(0, 3, "Enter")).toBeNull();
+    expect(segmentedNextIndex(0, 3, "Tab")).toBeNull();
+    expect(segmentedNextIndex(-1, 0, "ArrowRight")).toBeNull();
   });
 });
