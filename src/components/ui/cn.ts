@@ -1,9 +1,13 @@
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export type { ClassValue };
+
 /**
- * Joins class names, skipping falsy parts (clsx style), and resolves Tailwind
- * conflicts so a later class wins (`cn("px-2", "px-4")` → `"px-4"`).
+ * shadcn/ui `cn`: clsx joins class names (strings, arrays, `{ cls: bool }` maps,
+ * falsy parts skipped), then tailwind-merge resolves conflicts so a later class
+ * wins (`cn("px-2", "px-4")` → `"px-4"`).
  */
-export function cn(...parts: Array<string | false | null | undefined>): string {
-  return twMerge(...parts);
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }

@@ -37,6 +37,7 @@
     "@tiptap/react": "^3.32.2",
     "@tiptap/starter-kit": "^3.32.2",
     "aws4fetch": "^1.0.20",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
     "highlight.js": "^11",
     "ical.js": "^2.2.1",
