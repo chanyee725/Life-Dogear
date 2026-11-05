@@ -29,7 +29,7 @@ export async function TaskSection({
           ) : null}
         </span>
       }
-      className="gap-1"
+      className="gap-2"
     >
       <TaskList
         tasks={list}

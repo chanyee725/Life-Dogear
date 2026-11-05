@@ -24,10 +24,18 @@ export async function ItemNotes({
   return (
     <Section
       id="item-notes"
-      title="노트"
+      title={
+        <span className="flex items-baseline gap-2">
+          노트
+          {list.length ? (
+            <span className="text-xs font-normal text-muted tabular-nums">{list.length}</span>
+          ) : null}
+        </span>
+      }
       action={
         list.length && !archived ? (
-          <LinkButton href={href} variant="ghost" size="sm">
+          // -mr-2: the button's text lines up with the list's right edge.
+          <LinkButton href={href} variant="ghost" size="sm" className="-mr-2">
             새 노트
           </LinkButton>
         ) : null
@@ -36,8 +44,15 @@ export async function ItemNotes({
       {list.length ? (
         <RowList>
           {list.map((note) => (
-            <ListRow key={note.id}>
-              <Link href={`/notes/${note.id}`} className="min-w-0 flex-1 truncate hover:underline">
+            <ListRow
+              key={note.id}
+              className="relative gap-4 py-2.5 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-hover has-[a:focus-visible]:bg-hover"
+            >
+              {/* after:inset-0 stretches the link over the whole row (bigger hit area, one tab stop). */}
+              <Link
+                href={`/notes/${note.id}`}
+                className="min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-accent"
+              >
                 {note.title}
               </Link>
               <time dateTime={note.updatedAt} className="shrink-0 text-xs text-muted tabular-nums">
