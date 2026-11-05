@@ -31,14 +31,6 @@ const items: CalendarItem[] = [
     taskId: "2",
   },
   {
-    id: "project:1",
-    source: "project",
-    title: "투고 마감",
-    start: "2026-11-05",
-    allDay: true,
-    href: "/projects/1",
-  },
-  {
     id: "seminar:0",
     source: "seminar",
     title: "투고 발표",
@@ -116,10 +108,9 @@ describe("CalendarView (month)", () => {
     );
   });
 
-  it("labels items by source, leaves tasks and projects off, opens Google in a new tab", () => {
+  it("labels items by source, leaves tasks off, opens Google in a new tab", () => {
     const html = render({ range: "3w" });
     expect(html).toContain('aria-label="세미나: 투고 발표"');
-    expect(html).not.toContain("투고 마감");
     expect(html).not.toContain("2장 초안");
     expect(html).not.toContain("지난 일");
     expect(html).toContain('aria-label="Google 일정: 14시, 연구실 회의, Google 캘린더에서 열기"');
@@ -213,7 +204,6 @@ describe("CalendarView (narrow)", () => {
     );
     expect(list.length).toBeLessThan(html.length);
     expect(list).toContain('data-cal-item="seminar:0"');
-    expect(list).not.toContain('data-cal-item="project:1"');
     expect(list).not.toContain('data-cal-item="task:1"');
     expect(list).toContain('aria-label="11월 5일 마감 할 일 추가"');
   });
@@ -246,12 +236,11 @@ describe("TodayPanel (13.3)", () => {
     expect(html).not.toContain("오늘로");
     expect(html).toContain("다음 일정");
     const panel = html.slice(html.indexOf("다음 일정"));
-    // 11/5: seminar, Google 14:00 first; tasks, projects, papers, goals, reviews never listed.
+    // 11/5: seminar, Google 14:00 first; tasks, papers, goals, reviews never listed.
     expect(panel).toContain(">내일<");
     expect(panel.indexOf("연구실 회의")).toBeLessThan(panel.indexOf("투고 발표"));
     expect(panel).toContain(">14:00<");
     expect(panel).toContain(">세미나<");
-    expect(panel).not.toContain("투고 마감");
     expect(panel).not.toContain(">Google<"); // the blue dot already says Google
     expect(panel).not.toContain("주간 회고");
     expect(panel).not.toContain("논문 2장");
@@ -261,7 +250,7 @@ describe("TodayPanel (13.3)", () => {
   it("leaves tasks out of 다음 일정 but keeps events", () => {
     const today = [
       { ...items[0], id: "task:9", title: "오늘 마감 일", start: "2026-11-04" },
-      { ...items[7], id: "google:a:9", title: "오늘 세미나", start: "2026-11-04T15:00:00+09:00" },
+      { ...items[6], id: "google:a:9", title: "오늘 세미나", start: "2026-11-04T15:00:00+09:00" },
     ];
     const all = [...items, ...today];
     const home = render({ range: "3w", items: all, panelSlot: createElement("p", null, "slot") });
@@ -331,7 +320,7 @@ describe("WeekStrip", () => {
     expect(html).toContain('<nav aria-label="이번 주">');
     expect(html).toContain('href="/tasks?view=calendar&amp;date=2026-11-05&amp;day=2026-11-05"');
     expect(html).toMatch(/aria-current="date" aria-label="11월 4일 수요일, 항목 없음"/);
-    // 11/5: seminar, google — tasks, projects, the goal and review periods are not counted (9절)
+    // 11/5: seminar, google — tasks, the goal and review periods are not counted (9절)
     expect(html).toContain('aria-label="11월 5일 목요일, 항목 2개"');
     expect(html).toContain('aria-label="11월 3일 화요일, 항목 없음"');
     expect(html.match(/<li>/g)).toHaveLength(7);

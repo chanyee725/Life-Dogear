@@ -7,7 +7,6 @@ import type { CalendarItem, CalendarSource, GoogleStatus } from "@/lib/calendar/
 
 export const SOURCE_LABEL: Readonly<Record<CalendarSource, string>> = {
   task: "할 일",
-  project: "프로젝트",
   seminar: "세미나",
   goal: "분기 목표",
   review: "회고",
@@ -25,10 +24,9 @@ export const SOURCES_KEY = "rb-calendar-sources";
 
 export type SourceChoice = Readonly<Record<CalendarSource, boolean>>;
 
-/** Papers (last read day) start off; everything else on. Tasks and projects are always off. */
+/** Papers (last read day) start off; everything else on. Tasks are always off. */
 export const DEFAULT_SOURCES: SourceChoice = {
   task: false,
-  project: false,
   seminar: true,
   goal: true,
   review: true,
@@ -56,7 +54,7 @@ export function parseSources(raw: string | null): SourceChoice {
   }
 }
 
-/** Items the user chose to see (never tasks or projects; Google only when it is set up). */
+/** Items the user chose to see (never tasks; Google only when it is set up). */
 export function visibleItems(
   items: readonly CalendarItem[],
   choice: SourceChoice,

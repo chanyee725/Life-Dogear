@@ -1,7 +1,6 @@
 // 달력 데이터 계약(docs/PLAN-CALENDAR.md 3절). 서버·클라이언트 공용 — 값만 담는다.
 
-export type CalendarSource =
-  "task" | "project" | "seminar" | "review" | "goal" | "paper" | "google";
+export type CalendarSource = "task" | "seminar" | "review" | "goal" | "paper" | "google";
 
 export type CalendarItem = {
   /** "<source>:<id>" (google은 "google:<uid>:<start>") */

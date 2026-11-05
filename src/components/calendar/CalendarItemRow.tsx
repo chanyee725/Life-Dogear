@@ -29,8 +29,6 @@ export function itemLabel(item: CalendarItem, today: string): string {
     const state = item.done ? ", 완료" : first < today ? ", 마감 지남" : "";
     return `${SOURCE_LABEL.task}: ${item.title}, 마감 ${shortDay(first)}${state}`;
   }
-  if (item.source === "project")
-    return `${SOURCE_LABEL.project}: ${item.title}, 마감 ${shortDay(first)}`;
   if (item.source === "paper")
     return `${SOURCE_LABEL.paper}: ${item.title}, ${shortDay(first)}에 읽음`;
   return `${SOURCE_LABEL[item.source]}: ${item.title}${range}`;
@@ -43,7 +41,7 @@ export function titleClass(item: CalendarItem, today: string): string {
     if (item.done) return "text-muted line-through decoration-border-strong";
     return past ? "text-tone-red-fg" : "text-fg";
   }
-  if (past && (item.source === "project" || item.source === "seminar")) return "text-muted";
+  if (past && item.source === "seminar") return "text-muted";
   return "text-fg";
 }
 
