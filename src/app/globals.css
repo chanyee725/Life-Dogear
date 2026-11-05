@@ -21,9 +21,9 @@
 
   /* Single accent color */
   --rb-accent: #4f5bd5;
-  /* Calendar weekend day numbers (Saturday blue, Sunday red). */
-  --rb-sat: #2563eb;
-  --rb-sun: #dc2626;
+  /* Calendar weekend day numbers: muted grey with a faint blue / red cast. */
+  --rb-sat: #56647c;
+  --rb-sun: #84595a;
   --rb-accent-hover: #434ec2;
   --rb-accent-fg: #ffffff;
   --rb-accent-soft: #eef0fc;
@@ -65,6 +65,29 @@
   --rb-code-variable: #9b3a32;
   /* Inline `code` text (docs/design/code.md 0): 5.2:1 on --rb-subtle. */
   --rb-code-inline: #c42b1c;
+
+  /* Calendar event palette per source (docs: one place for chips, bars, dots).
+     Soft bg + same-hue dark text, all at one lightness/chroma band; text >= 4.5:1
+     on its bg (tests/unit/calendar-colors.test.ts). No blue and no orange, so no
+     source can be mistaken for the blue or terracotta accent. */
+  --rb-ev-task-bg: #e8f3ec;
+  --rb-ev-task-fg: #2b6340;
+  --rb-ev-task-dot: #5a9c72;
+  --rb-ev-seminar-bg: #e3f2f1;
+  --rb-ev-seminar-fg: #22625e;
+  --rb-ev-seminar-dot: #4d9a95;
+  --rb-ev-review-bg: #efedea;
+  --rb-ev-review-fg: #5a524b;
+  --rb-ev-review-dot: #968b82;
+  --rb-ev-goal-bg: #f9e9ef;
+  --rb-ev-goal-fg: #8f3657;
+  --rb-ev-goal-dot: #c9698f;
+  --rb-ev-paper-bg: #f0ecf9;
+  --rb-ev-paper-fg: #5a43a0;
+  --rb-ev-paper-dot: #8f78d0;
+  --rb-ev-google-bg: #f8f0d9;
+  --rb-ev-google-fg: #74520f;
+  --rb-ev-google-dot: #c49a3a;
 }
 
 .dark {
@@ -81,8 +104,8 @@
   --rb-faint: #66666e;
 
   --rb-accent: #8b94f0;
-  --rb-sat: #7aa7ff;
-  --rb-sun: #ff7b7b;
+  --rb-sat: #97a6bf;
+  --rb-sun: #c39a9a;
   --rb-accent-hover: #9ca4f3;
   --rb-accent-fg: #141416;
   --rb-accent-soft: #23253a;
@@ -120,6 +143,25 @@
   --rb-code-attr: #7fd3d0;
   --rb-code-variable: #f09a90;
   --rb-code-inline: #f2877a;
+
+  --rb-ev-task-bg: #1e2c23;
+  --rb-ev-task-fg: #93cda6;
+  --rb-ev-task-dot: #6fae84;
+  --rb-ev-seminar-bg: #1a2d2c;
+  --rb-ev-seminar-fg: #86cbc5;
+  --rb-ev-seminar-dot: #5fb0aa;
+  --rb-ev-review-bg: #2a2725;
+  --rb-ev-review-fg: #c4bbb3;
+  --rb-ev-review-dot: #9a8f86;
+  --rb-ev-goal-bg: #33202a;
+  --rb-ev-goal-fg: #e7a1bd;
+  --rb-ev-goal-dot: #cf7499;
+  --rb-ev-paper-bg: #272236;
+  --rb-ev-paper-fg: #bba9ee;
+  --rb-ev-paper-dot: #9b85dc;
+  --rb-ev-google-bg: #2f2816;
+  --rb-ev-google-fg: #e0bf72;
+  --rb-ev-google-dot: #c9a14a;
 }
 
 /* ---------- Accent: terracotta (html[data-accent="terracotta"]) ----------
