@@ -4,7 +4,7 @@ import { createItem, deleteCurrentItem, uniqueTitle, type Section } from "./help
 const SECTIONS: { section: Section; label: string }[] = [
   { section: "projects", label: "프로젝트" },
   { section: "papers", label: "논문" },
-  { section: "seminars", label: "세미나" },
+  { section: "seminars", label: "활동" },
   { section: "thoughts", label: "생각" },
 ];
 
