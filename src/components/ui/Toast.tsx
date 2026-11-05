@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { cn } from "./cn";
 import { Toaster } from "./primitives/sonner";
@@ -39,7 +39,9 @@ export function Toast({
   className?: string;
   children: ReactNode;
 }) {
-  const id = useId();
+  // One sonner id per corner: a new `key` replaces the shown toast in place instead of
+  // stacking a second one while the old one plays its exit animation.
+  const id = `app-toast-${place}`;
   const [paused, setPaused] = useState(false);
 
   // Our own timer (not sonner's): sonner pauses on hover only, and we also pause on focus.
