@@ -342,3 +342,14 @@ export const tasks = sqliteTable(
     index("tasks_due_idx").on(t.doneAt, t.dueDate),
   ],
 );
+
+/**
+ * App-editable settings (`/settings`), one row per key. A non-empty value overrides the env
+ * var of the same name (`src/lib/settings`). Values may be secrets (private iCal addresses):
+ * read only on the server, never logged or sent to the client in full.
+ */
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

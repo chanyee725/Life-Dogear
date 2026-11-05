@@ -29,7 +29,11 @@ export const NAV_SECTIONS = {
   bottom: [{ href: "/archive", label: "보관함", icon: "archive" }],
 } as const;
 
-export type NavIcon = (typeof NAV_SECTIONS)[keyof typeof NAV_SECTIONS][number]["icon"];
+/** Sidebar footer, right above the theme toggle. */
+export const SETTINGS_ENTRY = { href: "/settings", label: "설정", icon: "settings" } as const;
+
+export type NavIcon =
+  (typeof NAV_SECTIONS)[keyof typeof NAV_SECTIONS][number]["icon"] | typeof SETTINGS_ENTRY.icon;
 
 export function isActivePath(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";

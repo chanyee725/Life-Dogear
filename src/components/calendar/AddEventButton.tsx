@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useId, useRef, useState, type FormEvent } from "react";
 import { DateField } from "@/components/fields/DateField";
 import { Button, Dialog, Field, Input, Toast, type ButtonSize } from "@/components/ui";
@@ -19,8 +20,8 @@ const TOAST_MS = 4000;
 
 /** What the user reads (screen readers get it as the button's description). */
 const OFF_HINT = "Google 캘린더 연결이 필요해요";
-/** The setup detail, kept in the tooltip for whoever runs the server. */
-const OFF_DETAIL = "설정 필요: Google 캘린더 쓰기 키를 서버에 등록하면 켜집니다 (docs/DEPLOY.md).";
+/** Where the write connection is explained (status, what the server needs). */
+export const SETTINGS_HREF = "/settings#calendar-write";
 
 export type AddEventButtonProps = {
   /** `googleWrite` from `/api/calendar`; absent or false → disabled with "Google 캘린더 연결이 필요해요". */
@@ -89,7 +90,7 @@ export function AddEventButton({
 
   return (
     <>
-      <span className="inline-flex items-center" title={enabled ? undefined : OFF_DETAIL}>
+      <span className="inline-flex items-center gap-2">
         <Button
           variant="secondary"
           size={size}
@@ -102,9 +103,17 @@ export function AddEventButton({
           일정 추가
         </Button>
         {enabled ? null : (
-          <span id={`${id}-off`} className="sr-only">
-            {OFF_HINT}
-          </span>
+          <>
+            <span id={`${id}-off`} className="sr-only">
+              {OFF_HINT}
+            </span>
+            <Link
+              href={SETTINGS_HREF}
+              className="text-[13px] text-muted underline-offset-2 hover:text-fg hover:underline"
+            >
+              설정 필요
+            </Link>
+          </>
         )}
       </span>
       <Dialog

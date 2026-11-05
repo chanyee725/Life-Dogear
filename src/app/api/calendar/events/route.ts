@@ -7,6 +7,7 @@ import {
   parseNewEvent,
   type GoogleWriteErrorCode,
 } from "@/lib/calendar/google-write";
+import { settingsEnv } from "@/lib/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +47,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const input = parseNewEvent(body);
   if (!input) return fail("invalid");
   try {
-    const item = await insertEvent(input);
+    // The calendar id may be saved in /settings (wins over GOOGLE_CALENDAR_ID).
+    const item = await insertEvent(input, { env: await settingsEnv() });
     return NextResponse.json({ item }, { status: 201, headers: NO_STORE });
   } catch (e) {
     if (e instanceof GoogleWriteError) {

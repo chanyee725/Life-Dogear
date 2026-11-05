@@ -138,3 +138,9 @@ export const GraphIcon = () => (
     <path d="M5.6 5.2 7.6 10.4M5.7 4.4 10.5 4.1M11.4 5.4 9.2 10.4" />
   </Icon>
 );
+export const SettingsIcon = () => (
+  <Icon>
+    <circle cx="8" cy="8" r="2" />
+    <path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.58 3.58l1.06 1.06M11.36 11.36l1.06 1.06M3.58 12.42l1.06-1.06M11.36 4.64l1.06-1.06" />
+  </Icon>
+);
