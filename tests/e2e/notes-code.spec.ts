@@ -51,6 +51,22 @@ test("코드 블록: 색칠·언어 표시·복사, 저장 후 Markdown 그대�
     "const answer: number = 42;",
   );
 
+  // Ctrl+C inside a code block: the code only, from its first character, no fence.
+  const code = blocks.nth(0).locator("code");
+  const box = (await code.boundingBox())!;
+  await page.mouse.move(box.x, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await page.keyboard.press("ControlOrMeta+c");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "const answer: number = 42;",
+  );
+  // A selection beyond the code block still copies Markdown.
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.press("ControlOrMeta+c");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("```ts\n");
+
   // Round trip: the body field carries the same fences.
   const body = await page.locator('input[name="body"]').inputValue();
   expect(body).toBe(FENCES.join("\n\n"));
