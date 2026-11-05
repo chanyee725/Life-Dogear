@@ -51,7 +51,7 @@ export async function ItemNotes({
               {/* after:inset-0 stretches the link over the whole row (bigger hit area, one tab stop). */}
               <Link
                 href={`/notes/${note.id}`}
-                className="min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                className="min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-accent"
               >
                 {note.title}
               </Link>
