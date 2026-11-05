@@ -6,7 +6,6 @@ import type { ActionResult } from "@/app/_actions/result";
 import { archiveItem, unarchiveItem } from "@/app/_actions/archive";
 import { safeAction } from "@/components/links/safe-action";
 import { ConfirmDialog } from "@/components/ui";
-import { cn } from "@/components/ui/cn";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/Menu";
 import type { ItemRef } from "@/lib/repo/shared";
 
@@ -77,9 +76,7 @@ export function DetailMoreMenu({
             type="button"
             aria-label="더보기"
             disabled={pending}
-            className={cn(
-              "grid size-7 shrink-0 place-items-center rounded-md text-base leading-none text-muted transition-colors hover:bg-hover hover:text-fg disabled:opacity-50",
-            )}
+            className="grid size-7 shrink-0 place-items-center rounded-md text-base leading-none text-muted transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             <span aria-hidden>⋯</span>
           </button>

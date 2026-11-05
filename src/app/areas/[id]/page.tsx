@@ -69,7 +69,7 @@ export default async function AreaDetailPage({ params }: Props) {
               <DetailMoreMenu
                 item={ref}
                 archived={Boolean(area.archivedAt)}
-                redirectTo={"/areas"}
+                redirectTo="/areas"
                 deleteAction={deleteArea.bind(null, area.id)}
                 itemLabel="이 영역"
               />

@@ -51,7 +51,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               <DetailMoreMenu
                 item={ref}
                 archived={Boolean(project.archivedAt)}
-                redirectTo={"/projects"}
+                redirectTo="/projects"
                 deleteAction={deleteProject.bind(null, project.id)}
                 itemLabel="이 프로젝트"
               />
