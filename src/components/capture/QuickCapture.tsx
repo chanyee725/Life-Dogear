@@ -267,7 +267,7 @@ export function QuickCapture() {
                 onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
                 onPaste={onPasteText}
                 onKeyDown={onKeyDown("text")}
-                className={cn(controlClass, "resize-none py-2 text-[15px] leading-normal")}
+                className={cn(controlClass, "resize-none py-2 text-base leading-normal")}
               />
             ) : draft.kind === "note" ? (
               <div className="flex flex-col gap-2">
@@ -291,7 +291,7 @@ export function QuickCapture() {
                   readOnly={pending}
                   onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
                   onKeyDown={onKeyDown("body")}
-                  className={cn(controlClass, "resize-y py-2 text-[15px] leading-normal")}
+                  className={cn(controlClass, "resize-y py-2 text-base leading-normal")}
                 />
               </div>
             ) : (

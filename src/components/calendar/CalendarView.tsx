@@ -605,7 +605,7 @@ export function CalendarView({
         <div className="ml-auto flex items-center gap-2">
           <AddEventButton enabled={googleWrite} defaultDate={focusDay} onAdded={onEventAdded} />
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             aria-haspopup="dialog"
             aria-expanded={pop?.kind === "sources"}

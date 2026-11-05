@@ -18,7 +18,7 @@ export function RecentThoughts({ thoughts }: { thoughts: Thought[] }) {
   return (
     <Section id="recent-thoughts" title="최근 생각" action={moreLink("/thoughts")}>
       {thoughts.length === 0 ? (
-        <EmptyAdd href="/thoughts/new">＋ 새 생각</EmptyAdd>
+        <EmptyAdd compact href="/thoughts/new">＋ 새 생각</EmptyAdd>
       ) : (
         <ul className="-mx-3 flex flex-col">
           {thoughts.map((t) => (
@@ -45,7 +45,7 @@ export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
   return (
     <Section id="recent-seminars" title="최근 세미나" action={moreLink("/seminars")}>
       {seminars.length === 0 ? (
-        <EmptyAdd href="/seminars/new">＋ 새 세미나</EmptyAdd>
+        <EmptyAdd compact href="/seminars/new">＋ 새 세미나</EmptyAdd>
       ) : (
         <ul className="-mx-3 flex flex-col">
           {seminars.map((s) => (

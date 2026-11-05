@@ -188,7 +188,7 @@ export function SidebarNav({
         )}
       >
         <div className="flex h-14 items-center justify-between pr-2 pl-5">
-          <Link href="/" className="text-[15px] font-semibold tracking-tight">
+          <Link href="/" className="text-base font-semibold tracking-tight">
             Life Dogear
           </Link>
           <Tooltip content="사이드바 접기" side="right">

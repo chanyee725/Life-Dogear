@@ -63,7 +63,7 @@ export async function ItemNotes({
           ))}
         </RowList>
       ) : archived ? null : (
-        <EmptyAdd href={href}>＋ 새 노트</EmptyAdd>
+        <EmptyAdd compact href={href}>＋ 새 노트</EmptyAdd>
       )}
     </Section>
   );

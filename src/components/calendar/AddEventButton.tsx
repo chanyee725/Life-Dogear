@@ -86,6 +86,7 @@ export function AddEventButton({
     <>
       <span className="inline-flex items-center gap-1.5">
         <Button
+          variant="secondary"
           size={size}
           className={className}
           disabled={!enabled}
@@ -96,7 +97,7 @@ export function AddEventButton({
           일정 추가
         </Button>
         {enabled ? null : (
-          <span id={`${id}-off`} className="text-xs text-faint">
+          <span id={`${id}-off`} className="text-[13px] text-faint">
             설정 필요
           </span>
         )}

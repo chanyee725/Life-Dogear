@@ -113,7 +113,7 @@ export default async function GoalDetailPage({ params }: Props) {
           {node.children.length ? (
             <GoalTree nodes={node.children} />
           ) : archived ? null : (
-            <EmptyAdd href={childHref}>＋ 새 하위 목표</EmptyAdd>
+            <EmptyAdd compact href={childHref}>＋ 새 하위 목표</EmptyAdd>
           )}
         </Section>
       ) : null}
@@ -131,7 +131,7 @@ export default async function GoalDetailPage({ params }: Props) {
         >
           {node.projects.length === 0 ? (
             archived ? null : (
-              <EmptyAdd href={projectHref}>＋ 새 프로젝트</EmptyAdd>
+              <EmptyAdd compact href={projectHref}>＋ 새 프로젝트</EmptyAdd>
             )
           ) : (
             <RowList>

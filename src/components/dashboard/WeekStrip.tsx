@@ -52,7 +52,7 @@ export function WeekStrip({
                   isToday && "bg-accent-soft",
                 )}
               >
-                <span className="text-[11px] text-muted">{WEEKDAYS[i]}</span>
+                <span className="text-xs text-muted">{WEEKDAYS[i]}</span>
                 <span
                   className={cn(
                     "text-sm tabular-nums",

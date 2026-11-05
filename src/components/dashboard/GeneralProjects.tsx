@@ -10,7 +10,7 @@ export type ProjectProgress = { done: number; total: number };
 const cardLink = cn(
   cardClass,
   cardLinkClass,
-  "flex h-full flex-col gap-2 rounded-md p-3 text-sm hover:shadow-md",
+  "flex h-full flex-col gap-2 rounded-md p-3 text-sm",
   "focus-visible:ring-2 focus-visible:ring-ring",
 );
 
@@ -37,7 +37,7 @@ export function GeneralProjects({
   if (projects.length === 0) {
     return (
       <div className={gridClass}>
-        <EmptyAdd href="/projects/new?kind=general" className="rounded-md">
+        <EmptyAdd compact href="/projects/new?kind=general">
           ＋ 새 프로젝트
         </EmptyAdd>
       </div>

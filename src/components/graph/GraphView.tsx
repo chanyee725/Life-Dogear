@@ -604,7 +604,7 @@ export default function GraphView({ options }: { options: FilterOptions }) {
           )}
         >
           {value === "cosmos" ? (
-            <span aria-hidden className="text-[12px] leading-none">
+            <span aria-hidden className="text-xs leading-none">
               ✦
             </span>
           ) : null}
