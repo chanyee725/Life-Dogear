@@ -322,7 +322,7 @@ hover한(또는 선택한) 노드 **H**, H와 선으로 이어진 이웃 **N**, 
 
 - 상세 화면의 "연결된 항목" 섹션 줄에 붙인다. 래퍼:
   ```
-  <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+  <div class="grid gap-8 lg:grid-cols-2">
     <ConnectedItems …/>
     <LocalGraph item={…}/>
   </div>
