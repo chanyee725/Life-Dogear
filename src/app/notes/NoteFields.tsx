@@ -6,6 +6,7 @@ import { TagInput } from "@/components/fields/TagInput";
 import { buttonClass } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { NOTE_SOURCE_KIND, type NoteSourceKind } from "@/lib/enums";
+import { NoteProjectsField } from "./NoteProjectsField";
 import { isHttpUrl } from "./source";
 
 export type NoteFormValues = {
@@ -90,6 +91,8 @@ export function NoteFields({
             className="w-auto"
           />
         </Property>
+        {/* Saved notes only: links to projects (the project's 노트 section). */}
+        {created ? <NoteProjectsField /> : null}
         <Property label="태그" htmlFor="note-tags">
           <TagInput
             id="note-tags"
