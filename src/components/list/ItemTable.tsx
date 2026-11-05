@@ -39,6 +39,14 @@ const HIDE_BELOW: Record<"md" | "lg", string> = {
   lg: "hidden lg:table-cell",
 };
 
+/**
+ * Title cell width: its text's width up to 36rem (narrower on small screens), so short
+ * titles don't push the meta columns to the far edge. Long titles wrap.
+ */
+const TITLE_WIDTH = "w-max max-w-[min(36rem,calc(100vw-5rem))]";
+/** Empty last column that takes the leftover width, keeping the table full width. */
+const FILLER = "w-full p-0";
+
 const isBlank = (v: ReactNode) => v === null || v === undefined || v === false || v === "";
 
 const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
@@ -69,7 +77,7 @@ export function ItemTable<T>({
 }) {
   if (items.length === 0) return <>{empty ?? <EmptyState title="항목이 없습니다" />}</>;
 
-  // Drop secondary columns no row fills, so the title isn't followed by blank space.
+  // Drop secondary columns no row fills.
   const columns = allColumns.filter(
     (c) => c.primary || items.some((i) => !(c.isEmpty ? c.isEmpty(i) : isBlank(c.render(i)))),
   );
@@ -84,24 +92,32 @@ export function ItemTable<T>({
               key={c.key}
               className={cn(
                 hideClass(c),
-                // Title takes the slack; the rest shrink to their content on one line.
-                c.primary ? "w-full min-w-56" : "w-px whitespace-nowrap [&_.flex-wrap]:flex-nowrap",
+                // Every column shrinks to its content; the filler cell below takes the slack.
+                c.primary ? "min-w-56" : "w-px whitespace-nowrap [&_.flex-wrap]:flex-nowrap",
                 c.className,
               )}
             >
-              {c.primary && href ? (
-                // Stretched link: the ::after covers the row so the whole row is clickable.
-                <Link
-                  href={href}
-                  className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
-                >
-                  {c.render(item)}
-                </Link>
+              {c.primary ? (
+                // Title as wide as its text, capped so the meta columns stay next to it.
+                <div className={TITLE_WIDTH}>
+                  {href ? (
+                    // Stretched link: the ::after covers the row so the whole row is clickable.
+                    <Link
+                      href={href}
+                      className="font-medium text-fg after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
+                    >
+                      {c.render(item)}
+                    </Link>
+                  ) : (
+                    c.render(item)
+                  )}
+                </div>
               ) : (
                 c.render(item)
               )}
             </Td>
           ))}
+          <Td aria-hidden className={FILLER} />
         </Tr>
       );
     });
@@ -115,6 +131,7 @@ export function ItemTable<T>({
               {c.header}
             </Th>
           ))}
+          <Th aria-hidden className={FILLER} />
         </tr>
       </THead>
       {groups ? (
@@ -127,7 +144,7 @@ export function ItemTable<T>({
             <tr className="bg-subtle">
               <th
                 scope="rowgroup"
-                colSpan={columns.length}
+                colSpan={columns.length + 1}
                 className="h-8 px-3 text-left text-xs font-medium text-fg"
               >
                 {group.label}
