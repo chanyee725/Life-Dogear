@@ -25,7 +25,7 @@ export { Table, THead, TBody, Tr, Th, Td } from "./Table";
 export { Dialog, ConfirmDialog } from "./Dialog";
 export { EmptyState } from "./EmptyState";
 export { Spinner } from "./Spinner";
-export { Toast, type ToastPlace } from "./Toast";
+export { AppToaster, Toast, type ToastPlace } from "./Toast";
 export { Kbd } from "./Kbd";
 export { formatDate, formatRelative } from "./format";
 export { TemplatePicker, type TemplateOption } from "./TemplatePicker";

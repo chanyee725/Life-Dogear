@@ -349,14 +349,8 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
       <ErrorLine error={error} />
       {children}
       {toast ? (
-        // From md the detail header's buttons sit in the top corner: drop below them.
-        <Toast
-          key={toast}
-          ms={SAVED_TOAST_MS}
-          onDone={hideToast}
-          place="top-right"
-          className="md:top-20"
-        >
+        // AppToaster's top offset keeps it below the detail header's buttons.
+        <Toast key={toast} ms={SAVED_TOAST_MS} onDone={hideToast} place="top-right">
           저장되었습니다
         </Toast>
       ) : null}

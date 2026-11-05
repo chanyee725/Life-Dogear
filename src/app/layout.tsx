@@ -6,6 +6,7 @@ import { SearchButton } from "@/components/search/SearchButton";
 import { Shortcuts } from "@/components/shell/Shortcuts";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { themeInitScript } from "@/components/shell/theme";
+import { AppToaster } from "@/components/ui/Toast";
 import { canShowApp } from "@/lib/auth/server";
 import "./globals.css";
 
@@ -40,6 +41,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <QuickCapture />
           </>
         ) : null}
+        <AppToaster />
       </body>
     </html>
   );
