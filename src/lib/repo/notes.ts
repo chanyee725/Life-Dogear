@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
 import { links, notes } from "@/db/schema";
-import { NOTE_SOURCE_KIND, type NoteSourceKind } from "@/lib/enums";
+import { NOTE_SOURCE_KIND, noteSourceKind, type NoteSourceKind } from "@/lib/enums";
 import { isAssignable } from "./areas";
 import { linkWith, removeLinksFor, syncBodyLinks } from "./links";
 import {
@@ -23,7 +23,10 @@ import {
 } from "./shared";
 import { getTagsFor, removeTagsFor, setTagsWith } from "./tags";
 
-export type Note = typeof notes.$inferSelect & { tags: string[] };
+export type Note = Omit<typeof notes.$inferSelect, "sourceKind"> & {
+  sourceKind: NoteSourceKind | null;
+  tags: string[];
+};
 
 export type NoteInput = {
   title: string;
@@ -99,13 +102,20 @@ function toColumns(input: NotePatch) {
   });
 }
 
-async function withTags(rows: (typeof notes.$inferSelect)[], exec: Executor = db()) {
+async function withTags(
+  rows: (typeof notes.$inferSelect)[],
+  exec: Executor = db(),
+): Promise<Note[]> {
   const tagMap = await getTagsFor(
     "note",
     rows.map((r) => r.id),
     exec,
   );
-  return rows.map((r) => ({ ...r, tags: tagMap.get(r.id) ?? [] }));
+  return rows.map((r) => ({
+    ...r,
+    sourceKind: noteSourceKind(r.sourceKind),
+    tags: tagMap.get(r.id) ?? [],
+  }));
 }
 
 /** Non-archived by default; see {@link ArchiveOptions}. */

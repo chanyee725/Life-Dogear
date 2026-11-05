@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { graphLayout, itemStars, links as linksTable } from "@/db/schema";
+import { graphLayout, itemStars, links as linksTable, notes as notesTable } from "@/db/schema";
 import { archive, areas, goals, items, links, notes, papers, projects, tags } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
 
@@ -45,12 +45,21 @@ describe("notes repo", () => {
     expect(await notes.update("missing", { title: "x" })).toBeNull();
   });
 
+  it("reads a legacy 기타 (other) source kind as none, in get and list", async () => {
+    const n = await notes.create({ title: "옛 노트" });
+    await db.update(notesTable).set({ sourceKind: "other" });
+    expect((await notes.get(n.id))?.sourceKind).toBeNull();
+    expect((await notes.list()).map((x) => x.sourceKind)).toEqual([null]);
+  });
+
   it("rejects non-http(s) source links, bad kinds and unknown or archived areas", async () => {
     await expect(notes.create({ title: "a", sourceUrl: "javascript:alert(1)" })).rejects.toThrow(
       /http\(s\)/,
     );
     await expect(notes.create({ title: "a", sourceUrl: "not a url" })).rejects.toThrow();
     await expect(notes.create({ title: "a", sourceKind: "podcast" as never })).rejects.toThrow();
+    // 기타 (other) meant the same as 없음; it is no longer a choice.
+    await expect(notes.create({ title: "a", sourceKind: "other" as never })).rejects.toThrow();
     await expect(notes.create({ title: "a", areaId: "nope" })).rejects.toThrow(/영역/);
     const area = await areas.create({ title: "옛 영역" });
     await archive.archive({ type: "area", id: area.id });

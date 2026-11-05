@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 //
 // The server decides `googleWrite`, so the two halves need two server runs:
 //   npx playwright test tests/e2e/calendar-add-event.spec.ts
-//     → no GOOGLE_OAUTH_* keys: button disabled with "설정 필요"
+//     → no GOOGLE_OAUTH_* keys: button disabled with "Google 캘린더 연결이 필요해요"
 //   E2E_GOOGLE_WRITE=1 npx playwright test tests/e2e/calendar-add-event.spec.ts
 //     → dummy keys (playwright.config.ts): success and failure, POST answered by page.route
 // The ICS copy of an added event is covered by tests/unit/calendar-add-event.test.ts.
@@ -64,10 +64,10 @@ async function fillAndSubmit(page: Page, title: string, start?: string) {
 test.describe("달력 일정 추가: 쓰기 설정 없음", () => {
   test.skip(WRITE, "E2E_GOOGLE_WRITE=1 서버에서는 쓰기가 켜져 있다");
 
-  test("버튼이 비활성이고 '설정 필요'가 보인다", async ({ page }) => {
+  test("버튼이 비활성이고 'Google 캘린더 연결이 필요해요'가 보인다", async ({ page }) => {
     await page.goto(CALENDAR);
     await expect(addButton(page)).toBeDisabled();
-    await expect(addButton(page)).toHaveAccessibleDescription(/설정 필요/);
+    await expect(addButton(page)).toHaveAccessibleDescription("Google 캘린더 연결이 필요해요");
   });
 });
 

@@ -168,10 +168,12 @@ describe("AddEventButton", () => {
     el.dispatchEvent(new Event("input", { bubbles: true }));
   };
 
-  it("is disabled with '설정 필요' when write is off", async () => {
+  it("is disabled with a user-facing hint, the setup detail in the tooltip", async () => {
     await mount({ defaultDate: "2026-11-05" });
     expect(button().disabled).toBe(true);
-    expect(document.body.textContent).toContain("설정 필요");
+    expect(document.body.textContent).toContain("Google 캘린더 연결이 필요해요");
+    expect(document.body.textContent).not.toContain("DEPLOY.md");
+    expect(button().parentElement!.title).toMatch(/설정 필요.*docs\/DEPLOY\.md/);
   });
 
   it("posts the form and hands the item to onAdded", async () => {
@@ -181,7 +183,7 @@ describe("AddEventButton", () => {
     vi.stubGlobal("fetch", fetchMock);
     const onAdded = vi.fn();
     await mount({ enabled: true, defaultDate: "2026-11-05", onAdded });
-    expect(document.body.textContent).not.toContain("설정 필요");
+    expect(document.body.textContent).not.toContain("연결이 필요해요");
     await act(async () => button().click());
 
     const date = document.querySelector<HTMLInputElement>("input[type=date]")!;
