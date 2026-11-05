@@ -67,3 +67,15 @@ export function sortAreas<T extends { lastActivity: string }>(
     .sort((a, b) => dir * cmp(a.row.lastActivity, b.row.lastActivity) || a.i - b.i)
     .map((x) => x.row);
 }
+
+export type AreaCounts = { openProjects: number; activeGoals: number; notes: number };
+
+/** Card counts as `[label, n]`, in a fixed order; zero counts are left out. */
+export function areaCountParts(c: AreaCounts): [label: string, n: number][] {
+  const parts: [string, number][] = [
+    ["프로젝트", c.openProjects],
+    ["목표", c.activeGoals],
+    ["노트", c.notes],
+  ];
+  return parts.filter(([, n]) => n > 0);
+}
