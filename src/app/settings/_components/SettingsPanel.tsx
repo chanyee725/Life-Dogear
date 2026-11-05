@@ -21,7 +21,7 @@ function Block({
   id: string;
   title: string;
   status?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <section
@@ -47,7 +47,14 @@ const Status = ({ on, children }: { on: boolean; children: ReactNode }) => (
 );
 
 const Note = ({ children }: { children: ReactNode }) => (
-  <p className="text-[13px] leading-relaxed text-muted">{children}</p>
+  <p className="text-[13px] text-muted">{children}</p>
+);
+
+/** A small ⓘ with the explanation in a native tooltip. */
+const Info = ({ text }: { text: string }) => (
+  <span title={text} aria-label={text} role="img" className="cursor-help text-muted">
+    ⓘ
+  </span>
 );
 
 /**
@@ -57,7 +64,6 @@ const Note = ({ children }: { children: ReactNode }) => (
 function EditableSetting({
   settingKey,
   label,
-  hint,
   placeholder,
   multiline,
   source,
@@ -66,7 +72,6 @@ function EditableSetting({
 }: {
   settingKey: EditableKey;
   label: string;
-  hint: ReactNode;
   placeholder: string;
   multiline?: boolean;
   source: SettingSource;
@@ -107,9 +112,9 @@ function EditableSetting({
   return (
     <form onSubmit={submit} className="flex flex-col gap-2" noValidate>
       <div className="flex flex-col gap-1 text-[13px]">
-        <span className="text-muted">
+        <span className="flex items-center gap-1 text-muted">
           현재: {SOURCE_LABEL[source]}
-          {source === "env" ? " (앱에 저장하면 이 값보다 우선합니다)" : ""}
+          {masked.length > 0 ? <Info text="값은 일부만 가려서 보여 줍니다." /> : null}
         </span>
         {masked.length > 0 ? (
           <ul
@@ -122,7 +127,7 @@ function EditableSetting({
           </ul>
         ) : null}
       </div>
-      <Field label={label} htmlFor={id} hint={hint} error={error ?? undefined}>
+      <Field label={label} htmlFor={id} error={error ?? undefined}>
         {multiline ? <Textarea rows={2} {...control} /> : <Input {...control} />}
       </Field>
       <div className="flex gap-2">
@@ -175,14 +180,9 @@ export function SettingsPanel({ initial }: { initial: SettingsView }) {
           </Status>
         }
       >
-        <Note>
-          Google 캘린더 일정을 달력에 함께 보여 줍니다. Google 캘린더 → 설정 → 내 캘린더 → 캘린더
-          통합 → “iCal 형식의 비공개 주소”를 붙여넣으세요. 비밀번호처럼 다뤄 주세요.
-        </Note>
         <EditableSetting
           settingKey="GOOGLE_CALENDAR_ICS_URLS"
           label="iCal 비공개 주소"
-          hint="여러 개는 줄을 바꾸거나 쉼표로 구분합니다. 저장하면 지금 값을 모두 바꿉니다."
           placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
           multiline
           source={read.source}
@@ -196,15 +196,10 @@ export function SettingsPanel({ initial }: { initial: SettingsView }) {
         title="Google 캘린더 쓰기"
         status={<Status on={write.connected}>{write.connected ? "연결됨" : "연결 안 됨"}</Status>}
       >
-        <Note>
-          {write.connected
-            ? "달력의 ‘일정 추가’로 Google 캘린더에 일정을 넣을 수 있습니다."
-            : "‘일정 추가’를 쓰려면 서버를 관리하는 사람이 Google 캘린더 쓰기 키를 서버에 등록해야 합니다(docs/DEPLOY.md 7절). 이 키는 보안상 앱에서 넣을 수 없습니다."}
-        </Note>
+        {write.connected ? null : <Note>서버에 쓰기 키가 없어 일정을 추가할 수 없습니다.</Note>}
         <EditableSetting
           settingKey="GOOGLE_CALENDAR_ID"
           label="일정을 넣을 캘린더 ID"
-          hint="비우면 기본 캘린더(primary)에 넣습니다. Google 캘린더 → 설정 → 캘린더 통합 → 캘린더 ID."
           placeholder="primary"
           source={view.calendarId.source}
           masked={view.calendarId.masked ? [view.calendarId.masked] : ["기본 캘린더(primary)"]}
@@ -221,19 +216,9 @@ export function SettingsPanel({ initial }: { initial: SettingsView }) {
           </Status>
         }
       >
-        <Note>
-          {view.storage.kind === "s3"
-            ? "사진과 PDF를 공유 저장소(S3 호환)에 둡니다. 같은 데이터베이스를 쓰는 모든 컴퓨터에서 같은 파일이 보입니다."
-            : "사진과 PDF를 이 컴퓨터의 데이터 폴더에 둡니다. 여러 컴퓨터에서 함께 쓰려면 서버를 관리하는 사람이 공유 저장소를 설정해야 합니다(.env.example)."}{" "}
-          저장소는 서버 설정이라 앱에서 바꿀 수 없습니다.
-        </Note>
       </Block>
 
       <Block id="liner" title="Liner" status={<Status on>설정 필요 없음</Status>}>
-        <Note>
-          따로 연결할 계정이나 키가 없습니다. 논문 화면에서 Liner로 열고, Liner의
-          답변·요약·하이라이트를 논문 메모로 붙여넣어 씁니다.
-        </Note>
       </Block>
 
       <Block
@@ -249,12 +234,9 @@ export function SettingsPanel({ initial }: { initial: SettingsView }) {
           </Status>
         }
       >
-        <Note>
-          {view.auth.mode === "login"
-            ? `허용된 계정 ${view.auth.allowedCount}개만 로그인할 수 있습니다.`
-            : "로그인 없이 이 컴퓨터에서만 열립니다."}{" "}
-          로그인과 허용 계정은 보안 설정이라 앱에서 바꿀 수 없고, 서버 환경 설정에서만 바꿉니다.
-        </Note>
+        {view.auth.mode === "login" ? (
+          <Note>허용된 계정 {view.auth.allowedCount}개</Note>
+        ) : null}
       </Block>
     </div>
   );
