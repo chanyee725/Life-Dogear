@@ -108,18 +108,26 @@ describe("CalendarView (month)", () => {
     );
   });
 
-  it("labels items by source, marks overdue tasks, opens Google in a new tab", () => {
+  it("labels items by source, leaves tasks off, opens Google in a new tab", () => {
     const html = render({ range: "3w" });
-    expect(html).toContain('aria-label="할 일: 2장 초안, 마감 11월 5일"');
-    expect(html).toContain('aria-label="할 일: 지난 일, 마감 11월 2일, 마감 지남"');
-    expect(html).toContain("text-tone-red-fg");
+    expect(html).toContain('aria-label="프로젝트: 투고 마감, 마감 11월 5일"');
+    expect(html).not.toContain("2장 초안");
+    expect(html).not.toContain("지난 일");
     expect(html).toContain('aria-label="Google 일정: 14시, 연구실 회의, Google 캘린더에서 열기"');
     expect(html).toContain('target="_blank" rel="noopener noreferrer"');
     expect(html).toContain(">14:00<");
   });
 
   it("keeps three lines per cell: the review bar + 1 item + '+n'", () => {
-    const html = render();
+    const seminar: CalendarItem = {
+      id: "seminar:1",
+      source: "seminar",
+      title: "랩 세미나",
+      start: "2026-11-05",
+      allDay: true,
+      href: "/seminars/1",
+    };
+    const html = render({ items: [...items, seminar] });
     expect(html).toContain('aria-label="11월 5일 항목 2개 더 보기"');
     expect(html).toContain('aria-label="프로젝트: 투고 마감, 마감 11월 5일"');
   });
@@ -160,13 +168,12 @@ describe("CalendarView (3 weeks)", () => {
 
   it("keeps five lines per cell and leaves the time to the panel", () => {
     const many: CalendarItem[] = Array.from({ length: 6 }, (_, i) => ({
-      id: `task:m${i}`,
-      source: "task",
-      title: `할 일 ${i}`,
+      id: `seminar:m${i}`,
+      source: "seminar",
+      title: `세미나 ${i}`,
       start: "2026-11-10",
       allDay: true,
-      href: "/tasks",
-      taskId: `m${i}`,
+      href: `/seminars/m${i}`,
     }));
     const html = render({ range: "3w", items: many });
     // 6 items > 5 lines → 4 shown + "+2"
@@ -196,7 +203,8 @@ describe("CalendarView (narrow)", () => {
       html.indexOf('<section class="mt-4 flex flex-col" aria-label="11월 5일 목요일"'),
     );
     expect(list.length).toBeLessThan(html.length);
-    expect(list).toContain('data-cal-item="task:1"');
+    expect(list).toContain('data-cal-item="project:1"');
+    expect(list).not.toContain('data-cal-item="task:1"');
     expect(list).toContain('aria-label="11월 5일 마감 할 일 추가"');
   });
 
@@ -239,7 +247,7 @@ describe("TodayPanel (13.3)", () => {
     expect(panel).not.toContain("지난 일");
   });
 
-  it("on home (panelSlot) leaves today's tasks out of 다음 일정 but keeps events", () => {
+  it("leaves tasks out of 다음 일정 but keeps events", () => {
     const today = [
       { ...items[0], id: "task:9", title: "오늘 마감 일", start: "2026-11-04" },
       { ...items[6], id: "google:a:9", title: "오늘 세미나", start: "2026-11-04T15:00:00+09:00" },
@@ -249,10 +257,9 @@ describe("TodayPanel (13.3)", () => {
     const panel = home.slice(home.indexOf("다음 일정"));
     expect(panel).not.toContain("오늘 마감 일");
     expect(panel).toContain("오늘 세미나");
-    expect(panel).toContain("2장 초안"); // tomorrow's task stays
-    // Without a slot (/calendar) the task is still listed.
+    expect(panel).not.toContain("2장 초안"); // tomorrow's task too
     const page = render({ range: "3w", items: all });
-    expect(page.slice(page.indexOf("다음 일정"))).toContain("오늘 마감 일");
+    expect(page.slice(page.indexOf("다음 일정"))).not.toContain("오늘 마감 일");
   });
 
   it("on home drops the 오늘 group when it held only tasks", () => {
@@ -313,8 +320,8 @@ describe("WeekStrip", () => {
     expect(html).toContain('<nav aria-label="이번 주">');
     expect(html).toContain('href="/tasks?view=calendar&amp;date=2026-11-05&amp;day=2026-11-05"');
     expect(html).toMatch(/aria-current="date" aria-label="11월 4일 수요일, 항목 없음"/);
-    // 11/5: task, project, google — the goal and review periods are not counted (9절)
-    expect(html).toContain('aria-label="11월 5일 목요일, 항목 3개"');
+    // 11/5: project, google — tasks, the goal and review periods are not counted (9절)
+    expect(html).toContain('aria-label="11월 5일 목요일, 항목 2개"');
     expect(html).toContain('aria-label="11월 3일 화요일, 항목 없음"');
     expect(html.match(/<li>/g)).toHaveLength(7);
   });

@@ -19,7 +19,10 @@ import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
 import { Button, cn, Input, Spinner } from "@/components/ui";
+import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
+import { revealAdded } from "./add-event";
+import { AddEventButton } from "./AddEventButton";
 import { CalendarItemRow, itemLabel, type ItemHandlers } from "./CalendarItemRow";
 import {
   MONTH_LINES,
@@ -72,6 +75,8 @@ export type CalendarViewProps = {
   today: string;
   items: CalendarItem[];
   google: GoogleStatus;
+  /** Google Calendar write is set up: '일정 추가' in the toolbar is enabled. */
+  googleWrite?: boolean;
   /** App data could not be loaded (10절). */
   failed?: boolean;
   /** Day the today panel starts on (`?day=`); ignored unless it is on the grid. */
@@ -138,7 +143,8 @@ export function CalendarView({
   date,
   today,
   items: serverItems,
-  google,
+  google: googleStatus,
+  googleWrite = false,
   failed = false,
   day,
   now,
@@ -159,13 +165,29 @@ export function CalendarView({
   const [navPending, startNav] = useTransition();
   const [, startSave] = useTransition();
 
+  // Google events added here: kept over server refreshes until the feed has them (up to 10 min).
+  const [added, setAdded] = useState<CalendarItem[]>([]);
+  const [revealGoogle, setRevealGoogle] = useState(false);
+  const google: GoogleStatus = revealGoogle && googleStatus === "off" ? "ok" : googleStatus;
+
   // Local copy for optimistic changes; reset whenever the server sends new items.
   const [items, setItems] = useState<CalendarItem[]>(serverItems);
   const [prevItems, setPrevItems] = useState(serverItems);
   if (prevItems !== serverItems) {
     setPrevItems(serverItems);
-    setItems(serverItems);
+    // Drop added events the server list now carries, so `added` does not only grow.
+    const pending = pendingAdded(serverItems, added);
+    if (pending !== added) setAdded(pending);
+    setItems(mergeAdded(serverItems, pending));
   }
+
+  const onEventAdded = (item: CalendarItem) => {
+    setAdded((list) => [...list, item]);
+    setItems((list) => mergeAdded(list, [item]));
+    const next = revealAdded(choice, google);
+    if (next.choice !== choice) setChoice(next.choice);
+    if (next.google !== google) setRevealGoogle(true);
+  };
 
   const weeks = useMemo(() => gridWeeks(range, date), [range, date]);
   const gridDays = useMemo(() => weeks.flat(), [weeks]);
@@ -301,8 +323,6 @@ export function CalendarView({
     const value = title.replace(/\s+/g, " ").trim();
     if (!value) return null;
     if (value.length > TITLE_MAX) return `${TITLE_MAX}자까지 쓸 수 있습니다.`;
-    // Adding a task while tasks are hidden would make it vanish: show them again.
-    if (!choice.task) setChoice({ ...choice, task: true });
     const tempId = `task:new-${Date.now()}`;
     setItems((list) => [
       ...list,
@@ -576,6 +596,7 @@ export function CalendarView({
           {navPending ? <Spinner className="size-3 border sm:order-last" /> : null}
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <AddEventButton enabled={googleWrite} defaultDate={focusDay} onAdded={onEventAdded} />
           <Button
             variant="ghost"
             size="sm"
@@ -676,7 +697,7 @@ export function CalendarView({
             {announce}
           </p>
           <p id={helpId} className="sr-only">
-            화살표로 날짜 이동, Enter로 항목 보기, 할 일은 [ ] 로 하루씩 옮깁니다.
+            화살표로 날짜 이동, Enter로 항목 보기.
           </p>
 
           <div

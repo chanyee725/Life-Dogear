@@ -15,9 +15,11 @@ export const SOURCE_LABEL: Readonly<Record<CalendarSource, string>> = {
   google: "Google 일정",
 };
 
-/** Popover order (= the table in 2절). */
+/**
+ * Popover order (= the table in 2절). Tasks are not drawn on the calendar (they live in the
+ * task list and "오늘 할 일"), so they have no "표시" choice.
+ */
 export const SOURCES: readonly CalendarSource[] = [
-  "task",
   "project",
   "seminar",
   "goal",
@@ -30,9 +32,9 @@ export const SOURCES_KEY = "rb-calendar-sources";
 
 export type SourceChoice = Readonly<Record<CalendarSource, boolean>>;
 
-/** Papers (last read day) start off; everything else on. */
+/** Papers (last read day) start off; everything else on. Tasks are always off (see `SOURCES`). */
 export const DEFAULT_SOURCES: SourceChoice = {
-  task: true,
+  task: false,
   project: true,
   seminar: true,
   goal: true,
@@ -41,7 +43,10 @@ export const DEFAULT_SOURCES: SourceChoice = {
   google: true,
 };
 
-/** Stored JSON → choice; unknown or broken values fall back to the defaults per key. */
+/**
+ * Stored JSON → choice; unknown or broken values fall back to the defaults per key. Keys outside
+ * `SOURCES` (an old `task: true`) are ignored.
+ */
 export function parseSources(raw: string | null): SourceChoice {
   if (!raw) return DEFAULT_SOURCES;
   try {
@@ -58,13 +63,16 @@ export function parseSources(raw: string | null): SourceChoice {
   }
 }
 
-/** Items the user chose to see (Google only when it is set up). */
+/** Items the user chose to see (never tasks; Google only when it is set up). */
 export function visibleItems(
   items: readonly CalendarItem[],
   choice: SourceChoice,
   google: GoogleStatus,
 ): CalendarItem[] {
-  return items.filter((it) => choice[it.source] && (it.source !== "google" || google !== "off"));
+  return items.filter(
+    (it) =>
+      it.source !== "task" && choice[it.source] && (it.source !== "google" || google !== "off"),
+  );
 }
 
 export const noneChosen = (choice: SourceChoice, google: GoogleStatus) =>

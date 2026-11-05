@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button } from "./Button";
 import { cn } from "./cn";
 
@@ -26,6 +26,9 @@ export function Dialog({
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  // Named by its heading (screen readers, `getByRole("dialog", { name })`); no title, no name.
+  const named = title !== null && title !== undefined && title !== false && title !== "";
 
   useEffect(() => {
     const el = ref.current;
@@ -37,6 +40,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={named ? titleId : undefined}
       onClose={() => {
         // Fired also when we close it ourselves after `open` became false; only report user closes.
         if (open) onClose();
@@ -57,7 +61,11 @@ export function Dialog({
       {open ? (
         <div className="flex flex-col gap-4 p-5">
           <div className="flex flex-col gap-1">
-            <h2 className="text-base font-semibold">{title}</h2>
+            {named ? (
+              <h2 id={titleId} className="text-base font-semibold">
+                {title}
+              </h2>
+            ) : null}
             {description ? <p className="text-sm text-muted">{description}</p> : null}
           </div>
           {children}

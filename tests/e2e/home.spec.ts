@@ -20,7 +20,9 @@ test("빠른 입력: 빈 값 Enter는 아무것도 만들지 않는다", async (
   expect(await page.getByRole("link").count()).toBe(before);
 });
 
-test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 바로 보인다", async ({ page }) => {
+test("할 일 추가: 달력에서 고른 날 마감으로 생기고, 달력 칸에는 그리지 않는다", async ({
+  page,
+}) => {
   const title = uniqueTitle("E2E home task");
   const seoul = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
   const today = seoul.format(Date.now());
@@ -38,7 +40,8 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
   await input.press("Enter");
   await expect(page.getByText("마감으로 추가했습니다.")).toBeVisible();
   await expect(input).toHaveValue("");
-  await expect(calendar.locator(`[data-cal-cell="${tomorrow}"]`).getByText(title)).toBeVisible();
+  // Tasks stay off the calendar grid (the task list and "오늘 할 일" hold them).
+  await expect(calendar.locator(`[data-cal-cell="${tomorrow}"]`).getByText(title)).toHaveCount(0);
   await expect(page.getByText(`${m}월 ${d}일 마감으로 추가했습니다.`)).toBeVisible();
   // Picking another day (closes the popover) moves the due day of the next add, while the
   // saved line keeps the day it was saved for.
@@ -49,13 +52,6 @@ test("할 일 추가: 달력에서 고른 날 마감으로 생기고 달력에 �
   await expect(input).toHaveAccessibleName(`할 일 추가 (Enter로 ${tm}월 ${td}일 마감)`);
   await expect(page.getByText(`${m}월 ${d}일 마감으로 추가했습니다.`)).toBeVisible();
   await expect(page.getByText("오늘 마감으로 추가했습니다.")).toHaveCount(0);
-  await page.reload();
-  await expect(
-    page
-      .getByRole("region", { name: "달력" })
-      .locator(`[data-cal-cell="${tomorrow}"]`)
-      .getByText(title),
-  ).toBeVisible();
 
   // Clean up through the task list so later specs (tasks.spec "소속 없음 0") see no extra task.
   await page.goto("/tasks?tab=by-parent");
@@ -263,10 +259,10 @@ test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번
   // Not again under 다음 일정 › 오늘, nor in a day list under the grid.
   await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
   await page.screenshot({ path: "test-results/home-today-once-390.png", fullPage: true });
-  // Wide: the month cell shows it too; outside the grid only once.
+  // Wide: still once; the month grid draws no tasks.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(calendar.getByRole("grid").getByText(title, { exact: true })).toHaveCount(1);
-  await expect(calendar.getByText(title, { exact: true })).toHaveCount(2);
+  await expect(calendar.getByRole("grid").getByText(title, { exact: true })).toHaveCount(0);
+  await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
   await page.screenshot({ path: "test-results/home-today-once-1280.png", fullPage: true });
 
   await page.goto("/tasks?tab=by-parent");

@@ -9,13 +9,11 @@ import { WEEKDAYS, compareItems, dayOf, isOneDay, timeOf, weekdayIndex } from ".
 /** Rows the panel lists at most (13.3). */
 export const UPCOMING_MAX = 10;
 
-/** Single-day sources the list draws from (goals, reviews are periods; papers are past reads). */
-const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set([
-  "task",
-  "project",
-  "seminar",
-  "google",
-]);
+/**
+ * Single-day sources the list draws from (goals, reviews are periods; papers are past reads;
+ * tasks are listed under "오늘 할 일", not here).
+ */
+const UPCOMING_SOURCES: ReadonlySet<CalendarSource> = new Set(["project", "seminar", "google"]);
 
 export type UpcomingGroup = { day: string; items: CalendarItem[] };
 
