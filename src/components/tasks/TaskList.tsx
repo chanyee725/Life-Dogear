@@ -56,6 +56,11 @@ export type TaskListProps = {
    * failed save and a reset from new `tasks` (e.g. the home Todo badge).
    */
   onOpenChange?: (open: readonly Task[]) => void;
+  /**
+   * Show 완료 and 삭제 as visible buttons on each row (home Todo popover). They run the same
+   * actions as the checkbox and the menu's 삭제 (with its 되돌리기).
+   */
+  rowActions?: boolean;
   className?: string;
 };
 
@@ -104,6 +109,7 @@ export function TaskList({
   showCompleted = true,
   doneOpen = false,
   onOpenChange,
+  rowActions = false,
   className,
 }: TaskListProps) {
   // Local copy for optimistic updates; reset whenever the server sends new tasks.
@@ -383,6 +389,7 @@ export function TaskList({
     showParent,
     dueMode,
     helpId,
+    rowActions,
     onToggle: toggle,
     onRename: rename,
     onDue: setDue,
@@ -472,6 +479,9 @@ export function TaskList({
   );
 }
 
+const rowActionClass =
+  "h-6 rounded-md border border-border px-1.5 text-xs whitespace-nowrap text-muted hover:bg-bg hover:text-fg";
+
 type RowProps = {
   task: Task;
   today: string;
@@ -479,6 +489,7 @@ type RowProps = {
   showParent: boolean;
   dueMode: "all" | "overdue";
   helpId: string;
+  rowActions: boolean;
   onToggle: (task: Task, checked: boolean) => void;
   onRename: (task: Task, title: string) => void;
   onDue: (task: Task, dueDate: string | null) => void;
@@ -501,6 +512,7 @@ function TaskRow({
   showParent,
   dueMode,
   helpId,
+  rowActions,
   onToggle,
   onRename,
   onDue,
@@ -603,7 +615,14 @@ function TaskRow({
         </button>
       )}
       {href && task.parentTitle ? (
-        <Link href={href} className="max-w-40 shrink-0 truncate text-xs text-muted hover:text-fg">
+        <Link
+          href={href}
+          className={cn(
+            "shrink-0 truncate text-xs text-muted hover:text-fg",
+            // Room for the title next to 완료 and 삭제 in the narrow popover.
+            rowActions ? "max-w-20" : "max-w-40",
+          )}
+        >
           {task.parentTitle}
         </Link>
       ) : null}
@@ -625,6 +644,28 @@ function TaskRow({
         >
           마감일
         </button>
+      ) : null}
+      {rowActions ? (
+        <span className="flex shrink-0 items-center gap-1">
+          {!isDone ? (
+            <button
+              type="button"
+              onClick={() => onToggle(task, true)}
+              aria-label={`완료: ${task.title}`}
+              className={rowActionClass}
+            >
+              완료
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onRemove(task)}
+            aria-label={`삭제: ${task.title}`}
+            className={cn(rowActionClass, "hover:text-danger")}
+          >
+            삭제
+          </button>
+        </span>
       ) : null}
       <TaskMenu
         task={task}

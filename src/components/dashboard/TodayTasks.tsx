@@ -74,6 +74,7 @@ export function TodayTasks({
             dueMode="overdue"
             showCompleted
             doneOpen
+            rowActions
           />
           <More count={all.length - TODAY_MAX} href={href} />
         </div>
