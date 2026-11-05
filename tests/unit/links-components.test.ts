@@ -73,9 +73,9 @@ describe("ConnectedItems indirect (area)", () => {
 
     const html = renderToStaticMarkup(await ConnectedItems({ item: A, indirect: true }));
     expect(html).toContain(`href="/notes/${note.id}"`);
-    expect(html).toContain("MoveIt2 경유");
+    expect(html).toContain(">MoveIt2<");
     expect(html).toContain(`href="/projects/${other.id}"`);
-    expect(html).toContain("직접 논문 경유");
+    expect(html).toContain(">직접 논문<");
     // direct paper once (direct row only), area project not listed as indirect
     expect(html.match(new RegExp(`href="/papers/${direct.id}"`, "g"))?.length).toBe(1);
     expect(html).not.toContain(`href="/projects/${project.id}"`);

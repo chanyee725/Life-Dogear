@@ -12,7 +12,7 @@ import { UnlinkButton } from "./UnlinkButton";
  * Shows links in both directions, newest first, with add and remove controls.
  *
  * With `indirect` (areas only), also lists up to 6 items two steps away — linked to the
- * area's projects, goals or linked items — each tagged with the item it came through.
+ * area's projects, goals or linked items — each tagged with the name of the item it came through (small chip).
  * Those rows have no unlink button.
  *
  * Usage: `<ConnectedItems item={{ type: "paper", id }} />`
@@ -51,7 +51,7 @@ export async function ConnectedItems({
         {connected.length === 0 && viaItems.length === 0 ? null : (
           <RowList>
             {connected.map((c) => (
-              <ListRow key={refKey(c.ref)} className="group">
+              <ListRow key={refKey(c.ref)} className="group transition-colors hover:bg-hover">
                 <Badge tone={ITEM_TYPE.tone(c.type)}>{ITEM_TYPE.label(c.type)}</Badge>
                 <Link
                   href={itemPath(c.ref)}
@@ -64,7 +64,11 @@ export async function ConnectedItems({
               </ListRow>
             ))}
             {viaItems.map((c) => (
-              <ListRow key={`via-${refKey(c.ref)}`} data-indirect="">
+              <ListRow
+                key={`via-${refKey(c.ref)}`}
+                data-indirect=""
+                className="transition-colors hover:bg-hover"
+              >
                 <Badge tone={ITEM_TYPE.tone(c.ref.type)}>{ITEM_TYPE.label(c.ref.type)}</Badge>
                 <Link
                   href={itemPath(c.ref)}
@@ -72,8 +76,11 @@ export async function ConnectedItems({
                 >
                   {c.title}
                 </Link>
-                <span className="max-w-48 shrink-0 truncate text-xs text-muted">
-                  {c.via.title} 경유
+                <span
+                  title={`${c.via.title}에서 이어짐`}
+                  className="max-w-[40%] shrink-0 truncate rounded-full bg-subtle px-2 py-0.5 text-xs text-muted sm:max-w-48"
+                >
+                  {c.via.title}
                 </span>
               </ListRow>
             ))}
