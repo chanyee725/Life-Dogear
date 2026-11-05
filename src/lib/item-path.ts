@@ -95,3 +95,36 @@ export function parseRef(param: string): ItemRefParam | null {
   if (SEED_RE.test(value)) return { kind: "uuid", id: value };
   return null;
 }
+
+export type ItemPick = { id: string; segment: string };
+
+/**
+ * Picks the item a parsed param points at among `rows` (every row whose id starts with
+ * the ref's 8-char prefix, or the exact id for seed refs) and returns its canonical segment.
+ * When two UUIDs share the prefix, the short form is ambiguous: the canonical segment uses
+ * the full UUID, and a short param only resolves if its slug matches exactly one of them.
+ */
+export function pickItem(
+  param: string,
+  ref: ItemRefParam,
+  rows: readonly { id: string; title?: string | null }[],
+): ItemPick | null {
+  const uuids = rows.filter((r) => isUuid(r.id));
+  const collides = uuids.length > 1;
+  const segmentOf = (r: { id: string; title?: string | null }) =>
+    itemSegment(r.id, r.title, collides && isUuid(r.id));
+
+  let hit: { id: string; title?: string | null } | undefined;
+  if (ref.kind === "uuid") {
+    hit = rows.find((r) => r.id.toLowerCase() === ref.id.toLowerCase());
+  } else {
+    const matching = uuids.filter((r) => r.id.toLowerCase().startsWith(ref.short));
+    if (matching.length === 1) hit = matching[0];
+    else if (matching.length > 1) {
+      const slug = param.toLowerCase().slice(0, -(SHORT_ID_LENGTH + 1));
+      const bySlug = matching.filter((r) => slugify(r.title ?? "") === slug);
+      if (bySlug.length === 1) hit = bySlug[0];
+    }
+  }
+  return hit ? { id: hit.id, segment: segmentOf(hit) } : null;
+}
