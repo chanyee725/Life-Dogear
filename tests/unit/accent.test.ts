@@ -1,101 +1,49 @@
 import { describe, expect, it } from "vitest";
-import {
-  ACCENT_ATTR,
-  ACCENT_STORAGE_KEY,
-  ACCENT_VALUES,
-  accentInitSnippet,
-  applyAccent,
-  parseAccent,
-  readAccentPreference,
-  saveAccentPreference,
-} from "@/components/accent";
-import { themeInitScript } from "@/components/shell/theme";
+import { accentInitSnippet, LEGACY_ACCENT_STORAGE_KEY } from "@/components/accent";
 
-function memoryStorage() {
-  const map = new Map<string, string>();
-  return {
-    map,
-    getItem: (k: string) => map.get(k) ?? null,
-    setItem: (k: string, v: string) => void map.set(k, v),
-    removeItem: (k: string) => void map.delete(k),
-  };
+describe("accent (fixed mono)", () => {
+  it("init snippet only removes the legacy key", () => {
+    const store = new Map([[LEGACY_ACCENT_STORAGE_KEY, "terracotta"]]);
+    const localStorage = { removeItem: (k: string) => void store.delete(k) };
+    new Function("localStorage", accentInitSnippet)(localStorage);
+    expect(store.has(LEGACY_ACCENT_STORAGE_KEY)).toBe(false);
+    expect(accentInitSnippet).not.toContain("data-accent");
+  });
+});
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+function tokens(sel: string): Record<string, string> {
+  const i = css.indexOf(`\n${sel} {`);
+  const body = css.slice(i, css.indexOf("\n}", i));
+  const out: Record<string, string> = {};
+  for (const m of body.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6});/gi)) out[m[1]] = m[2];
+  return out;
 }
-
-function fakeRoot() {
-  const attrs = new Map<string, string>();
-  return {
-    attrs,
-    setAttribute: (k: string, v: string) => void attrs.set(k, v),
-    removeAttribute: (k: string) => void attrs.delete(k),
-  };
-}
-
-describe("accent preference", () => {
-  it("defaults to blue for missing or unknown values", () => {
-    expect(parseAccent(null)).toBe("blue");
-    expect(parseAccent("pink")).toBe("blue");
-    expect(parseAccent("terracotta")).toBe("terracotta");
-    expect(parseAccent("mono")).toBe("mono");
+const lum = (h: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(h.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const cr = (a: string, b: string) => {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
 
-  it("saves and applies mono", () => {
-    const s = memoryStorage();
-    saveAccentPreference("mono", s);
-    expect(readAccentPreference(s)).toBe("mono");
-    const root = fakeRoot();
-    applyAccent("mono", root);
-    expect(root.attrs.get(ACCENT_ATTR)).toBe("mono");
-    expect(ACCENT_VALUES).toEqual(["blue", "terracotta", "mono"]);
+describe("mono is the only accent and code colours are readable", () => {
+  it("has no accent override blocks", () => {
+    expect(css).not.toContain("data-accent");
   });
-
-  it("saves terracotta and clears the key for blue", () => {
-    const s = memoryStorage();
-    saveAccentPreference("terracotta", s);
-    expect(s.map.get(ACCENT_STORAGE_KEY)).toBe("terracotta");
-    expect(readAccentPreference(s)).toBe("terracotta");
-    saveAccentPreference("blue", s);
-    expect(s.map.has(ACCENT_STORAGE_KEY)).toBe(false);
-    expect(readAccentPreference(s)).toBe("blue");
-  });
-
-  it("survives a storage that throws", () => {
-    const broken = {
-      getItem: () => {
-        throw new Error("denied");
-      },
-      setItem: () => {
-        throw new Error("denied");
-      },
-      removeItem: () => {},
-    };
-    expect(readAccentPreference(broken)).toBe("blue");
-    expect(() => saveAccentPreference("terracotta", broken)).not.toThrow();
-  });
-
-  it("sets data-accent for terracotta and removes it for blue", () => {
-    const root = fakeRoot();
-    applyAccent("terracotta", root);
-    expect(root.attrs.get(ACCENT_ATTR)).toBe("terracotta");
-    applyAccent("blue", root);
-    expect(root.attrs.has(ACCENT_ATTR)).toBe(false);
-  });
-
-  it("is applied by the pre-paint theme script", () => {
-    expect(themeInitScript).toContain(accentInitSnippet);
-    const root = fakeRoot();
-    const s = memoryStorage();
-    s.setItem(ACCENT_STORAGE_KEY, "terracotta");
-    new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: root });
-    expect(root.attrs.get(ACCENT_ATTR)).toBe("terracotta");
-
-    const monoRoot = fakeRoot();
-    s.setItem(ACCENT_STORAGE_KEY, "mono");
-    new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: monoRoot });
-    expect(monoRoot.attrs.get(ACCENT_ATTR)).toBe("mono");
-
-    const junkRoot = fakeRoot();
-    s.setItem(ACCENT_STORAGE_KEY, "<script>");
-    new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: junkRoot });
-    expect(junkRoot.attrs.has(ACCENT_ATTR)).toBe(false);
-  });
+  for (const [name, sel] of [["light", ":root"], ["dark", ".dark"]] as const) {
+    it(`${name}: code tokens >= 4.5:1 on --rb-code-bg`, () => {
+      const t = tokens(sel);
+      for (const k of ["fg", "comment", "keyword", "string", "number", "function", "attr", "variable", "inline"]) {
+        expect(cr(t[`rb-code-${k === "fg" ? "fg" : k}`], t["rb-code-bg"]), k).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// The sidebar footer (설정 + theme + accent dots) must never cover the menu above it:
+// The sidebar footer (설정 + theme) must never cover the menu above it:
 // the menu scrolls instead. Checked at desktop, small laptop and phone (drawer) sizes.
 for (const vp of [
   { width: 1440, height: 900 },
@@ -19,7 +19,6 @@ for (const vp of [
     const theme = page
       .getByRole("radiogroup", { name: "화면 테마" })
       .or(page.getByRole("group", { name: "화면 테마" }));
-    const accent = page.getByRole("group", { name: "포인트 컬러" });
 
     await archive.scrollIntoViewIfNeeded();
     const a = (await archive.boundingBox())!;
@@ -29,10 +28,19 @@ for (const vp of [
     expect(a.y + a.height).toBeLessThanOrEqual(n.y + n.height + 0.5);
     expect(n.y + n.height).toBeLessThanOrEqual(s.y + 0.5);
 
-    // Theme switch and the three accent dots share one row.
-    const t = (await theme.first().boundingBox())!;
-    const c = (await accent.boundingBox())!;
-    expect(Math.abs(t.y + t.height / 2 - (c.y + c.height / 2))).toBeLessThan(4);
-    await expect(accent.getByRole("button")).toHaveCount(3);
+    // Accent is fixed to mono: no colour switch, no data-accent, and the theme switch is shown.
+    await expect(page.getByRole("group", { name: "포인트 컬러" })).toHaveCount(0);
+    await expect(page.locator("html")).not.toHaveAttribute("data-accent", /.+/);
+    expect((await theme.first().boundingBox())!.y).toBeGreaterThan(n.y + n.height - 1);
   });
 }
+
+test("예전에 저장된 포인트 컬러 값이 있어도 모노로 보이고 저장값은 지워진다", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("rb-accent", "terracotta"));
+  await page.goto("/");
+  const accent = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--rb-accent").trim(),
+  );
+  expect(accent).toBe("#37352f");
+  expect(await page.evaluate(() => localStorage.getItem("rb-accent"))).toBeNull();
+});

@@ -26,7 +26,6 @@ import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, SETTINGS_ENTRY, type NavIcon 
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
-import { AccentSwitcher } from "@/components/accent-switcher";
 import { BrandMark } from "@/components/brand-mark";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -247,10 +246,7 @@ export function SidebarNav({
         {/* Never shrinks: the menu above scrolls instead of sliding under this block. */}
         <div className="flex shrink-0 flex-col gap-2 border-t border-border px-4 pt-2 pb-3">
           <div className="-mx-2 flex flex-col">{item(SETTINGS_ENTRY)}</div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle className="min-w-0 flex-1" />
-            <AccentSwitcher className="shrink-0" />
-          </div>
+          <ThemeToggle className="min-w-0" />
           {footerSlot}
         </div>
       </aside>
