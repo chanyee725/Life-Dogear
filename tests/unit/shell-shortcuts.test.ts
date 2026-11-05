@@ -3,7 +3,12 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { Shortcuts } from "@/components/shell/Shortcuts";
-import { isTypingTarget, QUICK_ADD_EVENT, resolveShortcut } from "@/components/shell/shortcuts";
+import {
+  isTypingTarget,
+  OPEN_MODAL_SELECTOR,
+  QUICK_ADD_EVENT,
+  resolveShortcut,
+} from "@/components/shell/shortcuts";
 
 const nav = vi.hoisted(() => ({ pathname: "/", push: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -256,4 +261,49 @@ describe("Shortcuts while a Radix dialog is open", () => {
       }
     },
   );
+});
+
+describe("Radix Select and menus count as typing / open", () => {
+  const html = (markup: string) => {
+    const host = document.createElement("div");
+    host.innerHTML = markup;
+    return host;
+  };
+
+  it("treats a Select trigger, its options and menu items as typing targets", () => {
+    const host = html(`
+      <button role="combobox" id="t">영역</button>
+      <div role="listbox"><div role="option" id="o"><span id="os">연구</span></div></div>
+      <div role="menu"><div role="menuitem" id="m">삭제</div></div>
+      <button id="b">⋯</button>`);
+    for (const id of ["t", "o", "os", "m"]) {
+      expect(isTypingTarget(host.querySelector(`#${id}`))).toBe(true);
+    }
+    expect(isTypingTarget(host.querySelector("#b"))).toBe(false);
+  });
+
+  it("matches open select lists and dropdown menus as modal", () => {
+    for (const slot of ["select-content", "dropdown-menu-content"]) {
+      expect(
+        html(`<div data-slot="${slot}"></div>`).querySelector(OPEN_MODAL_SELECTOR),
+      ).not.toBeNull();
+    }
+    expect(
+      html(`<div data-slot="popover-content"></div>`).querySelector(OPEN_MODAL_SELECTOR),
+    ).toBeNull();
+  });
+
+  it("Korean-mode keys (ㅜ/ㅊ/ㅎ) on a menu item do nothing", () => {
+    const item = html(`<div role="menu"><div role="menuitem">삭제</div></div>`).querySelector(
+      "[role=menuitem]",
+    );
+    for (const [k, code] of [
+      ["ㅜ", "KeyN"],
+      ["ㅊ", "KeyC"],
+      ["ㅎ", "KeyG"],
+    ] as const) {
+      const typing = isTypingTarget(item);
+      expect(resolveShortcut(key(k, { code }), "/", { typing })).toBeNull();
+    }
+  });
 });
