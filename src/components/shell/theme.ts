@@ -1,3 +1,4 @@
+import { accentInitSnippet } from "@/components/accent";
 import { sidebarInitSnippet } from "./sidebar-config";
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -6,10 +7,10 @@ export const THEME_STORAGE_KEY = "rb-theme";
 
 /**
  * Runs before first paint (inlined in <head>) so the page never flashes the wrong theme
- * (and restores the collapsed sidebar).
+ * (and restores the collapsed sidebar and the accent colour).
  * Keep it dependency-free and in sync with applyTheme() below.
  */
-export const themeInitScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE_KEY}");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}${sidebarInitSnippet}})();`;
+export const themeInitScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE_KEY}");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}${sidebarInitSnippet}${accentInitSnippet}})();`;
 
 export function readThemePreference(): ThemePreference {
   try {

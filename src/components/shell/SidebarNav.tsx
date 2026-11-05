@@ -26,6 +26,7 @@ import { isActivePath, LIBRARY_HREF, NAV_SECTIONS, SETTINGS_ENTRY, type NavIcon 
 import { RecommendedAreas } from "./RecommendedAreas";
 import { setSidebarCollapsed } from "./sidebar-state";
 import { ThemeToggle } from "./ThemeToggle";
+import { AccentSwitcher } from "@/components/accent-switcher";
 import { BrandMark } from "@/components/brand-mark";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -245,7 +246,10 @@ export function SidebarNav({
         </nav>
         <div className="flex flex-col gap-3 px-4 pb-4">
           <div className="-mx-2 flex flex-col">{item(SETTINGS_ENTRY)}</div>
-          <ThemeToggle />
+          <div className="flex flex-col gap-1.5">
+            <ThemeToggle />
+            <AccentSwitcher className="px-1" />
+          </div>
           {footerSlot}
         </div>
       </aside>
