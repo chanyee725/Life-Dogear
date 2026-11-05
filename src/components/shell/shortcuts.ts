@@ -7,6 +7,13 @@ export const QUICK_ADD_EVENT = "rb:quick-add";
 /** Window event the graph page listens to: `/` opens its node search there. */
 export const GRAPH_SEARCH_EVENT = "rb:graph-search";
 export const GRAPH_HREF = "/graph";
+/**
+ * Matches any open modal: native `<dialog open>` plus Radix Dialog / AlertDialog content
+ * (Radix renders a `<div role=dialog>`, not `<dialog>`). Not `[role=dialog]`: that also
+ * matches non-modal popovers such as the calendar date picker.
+ */
+export const OPEN_MODAL_SELECTOR =
+  "dialog[open], [data-slot=dialog-content], [data-slot=alert-dialog-content]";
 
 const SECTIONS = ["projects", "areas", "papers", "notes", "seminars", "thoughts"] as const;
 /** Where `N` goes outside the item sections (home, inbox, tags, archive). */

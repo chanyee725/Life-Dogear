@@ -4,7 +4,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { OPEN_CAPTURE_EVENT } from "@/components/capture/capture";
 import { confirmLeave } from "@/components/fields/unsaved-guard";
-import { GRAPH_SEARCH_EVENT, isTypingTarget, QUICK_ADD_EVENT, resolveShortcut } from "./shortcuts";
+import {
+  GRAPH_SEARCH_EVENT,
+  isTypingTarget,
+  OPEN_MODAL_SELECTOR,
+  QUICK_ADD_EVENT,
+  resolveShortcut,
+} from "./shortcuts";
 
 /**
  * Asks the home 빠른 추가 to open on 생각 추가 (`#quick-input`). Always the event, never a
@@ -36,7 +42,7 @@ export function Shortcuts() {
       if (event.defaultPrevented || event.repeat) return;
       const action = resolveShortcut(event, pathname, {
         typing: isTypingTarget(event.target),
-        dialogOpen: document.querySelector("dialog[open]") !== null,
+        dialogOpen: document.querySelector(OPEN_MODAL_SELECTOR) !== null,
       });
       if (!action) return;
       event.preventDefault();

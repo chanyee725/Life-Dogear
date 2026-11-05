@@ -222,3 +222,38 @@ describe("Shortcuts `/` on the home", () => {
     }
   });
 });
+
+describe("Shortcuts while a Radix dialog is open", () => {
+  it.each(["dialog-content", "alert-dialog-content"])(
+    "ignores one-key shortcuts when [data-slot=%s] is in the DOM",
+    (slot) => {
+      (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+      nav.pathname = "/papers";
+      nav.push.mockClear();
+      const host = document.createElement("div");
+      document.body.append(host);
+      const modal = document.createElement("div");
+      modal.setAttribute("role", "dialog");
+      modal.dataset.slot = slot;
+      document.body.append(modal);
+      const root = createRoot(host);
+      act(() => root.render(createElement(Shortcuts)));
+      try {
+        act(() => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "g", code: "KeyG" }));
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "n", code: "KeyN" }));
+        });
+        expect(nav.push).not.toHaveBeenCalled();
+        modal.remove();
+        act(() => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "g", code: "KeyG" }));
+        });
+        expect(nav.push).toHaveBeenCalledWith("/graph");
+      } finally {
+        modal.remove();
+        act(() => root.unmount());
+        host.remove();
+      }
+    },
+  );
+});
