@@ -49,6 +49,7 @@ import {
 import { forceAxis, forceCollideGrid } from "./forces";
 import type { GraphTheme } from "./graph-theme";
 import {
+  allowLocalZoomEvent,
   baseRadius,
   buildNeighbors,
   byLabelPriority,
@@ -125,6 +126,8 @@ export type GraphCanvasProps = {
   onReady?: (api: GraphCanvasApi) => void;
   /** Pan/zoom changed (PARA column titles follow it). */
   onTransform?: () => void;
+  /** Local graph: whether the plain mouse wheel zooms right now (see `allowLocalZoomEvent`). */
+  wheelZoom?: () => boolean;
 };
 
 const FADE_MS = 120;
@@ -171,6 +174,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     onPin,
     onReady,
     onTransform,
+    wheelZoom,
   } = props;
   const local = variant === "local";
   const fgRef = useRef<ForceGraphMethods<SimNode, SimLink> | undefined>(undefined);
@@ -775,7 +779,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       linkHoverPrecision={0}
       enableNodeDrag
       enableZoomInteraction={
-        local ? (e: MouseEvent) => e.type !== "wheel" || e.ctrlKey || e.metaKey : true
+        local ? (e: MouseEvent) => allowLocalZoomEvent(e, wheelZoom?.() ?? false) : true
       }
       minZoom={0.2}
       maxZoom={6}

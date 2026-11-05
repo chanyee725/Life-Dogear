@@ -523,3 +523,15 @@ export function parsePageQuery(params: URLSearchParams): GraphUrlState {
     focus: focusRef ? (`${focusRef.type}:${focusRef.id}` as GraphNodeId) : null,
   };
 }
+
+/**
+ * d3-zoom event filter for the local graph: drag pan, pinch and button zoom always work;
+ * the mouse wheel zooms only once the graph is active (clicked or focused), or with Ctrl/⌘,
+ * so scrolling the page past the card never gets caught by the graph.
+ */
+export function allowLocalZoomEvent(
+  e: Pick<MouseEvent, "type" | "ctrlKey" | "metaKey">,
+  wheelActive: boolean,
+): boolean {
+  return e.type !== "wheel" || wheelActive || e.ctrlKey || e.metaKey;
+}
