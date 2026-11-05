@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ACCENT_ATTR,
   ACCENT_STORAGE_KEY,
+  ACCENT_VALUES,
   accentInitSnippet,
   applyAccent,
   parseAccent,
@@ -34,6 +35,17 @@ describe("accent preference", () => {
     expect(parseAccent(null)).toBe("blue");
     expect(parseAccent("pink")).toBe("blue");
     expect(parseAccent("terracotta")).toBe("terracotta");
+    expect(parseAccent("mono")).toBe("mono");
+  });
+
+  it("saves and applies mono", () => {
+    const s = memoryStorage();
+    saveAccentPreference("mono", s);
+    expect(readAccentPreference(s)).toBe("mono");
+    const root = fakeRoot();
+    applyAccent("mono", root);
+    expect(root.attrs.get(ACCENT_ATTR)).toBe("mono");
+    expect(ACCENT_VALUES).toEqual(["blue", "terracotta", "mono"]);
   });
 
   it("saves terracotta and clears the key for blue", () => {
@@ -75,5 +87,15 @@ describe("accent preference", () => {
     s.setItem(ACCENT_STORAGE_KEY, "terracotta");
     new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: root });
     expect(root.attrs.get(ACCENT_ATTR)).toBe("terracotta");
+
+    const monoRoot = fakeRoot();
+    s.setItem(ACCENT_STORAGE_KEY, "mono");
+    new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: monoRoot });
+    expect(monoRoot.attrs.get(ACCENT_ATTR)).toBe("mono");
+
+    const junkRoot = fakeRoot();
+    s.setItem(ACCENT_STORAGE_KEY, "<script>");
+    new Function("localStorage", "document", accentInitSnippet)(s, { documentElement: junkRoot });
+    expect(junkRoot.attrs.has(ACCENT_ATTR)).toBe(false);
   });
 });
