@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { Editor } from "@tiptap/core";
 import { afterEach, describe, expect, it } from "vitest";
-import { blockAt, dropPosition, moveBlock, type Block } from "@/components/editor/drag-handle";
+import { blockAt, dropPosition, isCurrent, moveBlock, type Block } from "@/components/editor/drag-handle";
 import { createExtensions } from "@/components/editor/extensions";
 
 let editor: Editor | undefined;
@@ -81,6 +81,35 @@ describe("moveBlock", () => {
     const a = blockAt(e.state.doc, textPos(e, "a"))!;
     move(e, b.pos, dropPosition(e.state.doc, b, a, false)!);
     expect(md(e)).toBe("- [x] b\n- [ ] a");
+  });
+
+  it("removes a one-item list when its only item moves to another list", () => {
+    const e = mount("- solo\n\npara\n\n1. x\n2. y");
+    const solo = blockAt(e.state.doc, textPos(e, "solo"))!;
+    const y = blockAt(e.state.doc, textPos(e, "y"))!;
+    move(e, solo.pos, dropPosition(e.state.doc, solo, y, true)!);
+    expect(md(e)).toBe("para\n\n1. x\n2. y\n3. solo");
+  });
+
+  it("removes a one-item nested list when its only item moves out", () => {
+    const e = mount("- a\n  - inner\n- b");
+    const inner = blockAt(e.state.doc, textPos(e, "inner"))!;
+    const b = blockAt(e.state.doc, textPos(e, "b"))!;
+    move(e, inner.pos, dropPosition(e.state.doc, inner, b, true)!);
+    expect(md(e)).toBe("- a\n- b\n- inner");
+  });
+
+  it("moves nothing once an edit has shifted the recorded block", () => {
+    const e = mount("one\n\ntwo\n\nthree");
+    const two = blockAt(e.state.doc, textPos(e, "two"))!;
+    const end = e.state.doc.content.size;
+    e.view.dispatch(e.state.tr.insertText("x", 1)); // typing in the block above
+    expect(isCurrent(e.state.doc, two)).toBe(false);
+    expect(moveBlock(e.state, two.pos, end, two.node)).toBeNull();
+    const fresh = blockAt(e.state.doc, textPos(e, "two"))!;
+    expect(isCurrent(e.state.doc, fresh)).toBe(true);
+    move(e, fresh.pos, e.state.doc.content.size);
+    expect(md(e)).toBe("xone\n\nthree\n\ntwo");
   });
 
   it("returns null when dropped onto itself", () => {
