@@ -8,8 +8,8 @@
 
 `.rb-prose code`(블록 안 `pre code`는 제외 — 1.1의 규칙만 따른다).
 
-- 글자 `--font-mono` **0.86em**, 색 `--rb-code-inline` — 라이트 `#c42b1c`(바탕 subtle 위 5.2:1), 다크 `#f2877a`(6.7:1). 붉은 계열은 기존 `--rb-tone-red`와 같은 색상각.
-- 바탕 `--rb-subtle`, 테두리 `1px --rb-border`, 모서리 4px, 여백 `0.08em 0.35em`.
+- 글자 `--font-mono` **0.86em**, 색 `--rb-code-inline` — 라이트 `#b3402f`(바탕 `#f7f6f3` 위 5.3:1), 다크 `#e8897d`(바탕 `#1f1f1f` 위 6.5:1). 붉은 계열이되 채도를 낮춰 모노 팔레트와 어울리게 했다.
+- 바탕 `--rb-code-bg`, 테두리 `1px --rb-code-border`, 모서리 4px, 여백 `0.08em 0.35em`.
 - 긴 경로는 `overflow-wrap: anywhere`로 줄을 넘기고, 줄이 바뀌어도 테두리가 양쪽에 붙게 `box-decoration-break: clone`.
 - 링크 안 인라인 코드는 링크 색을 따른다(`a code { color: inherit }`) — 눌리는 글자임이 보이게.
 
@@ -17,21 +17,22 @@
 
 ### 1.1 바탕과 틀
 
-`.rb-prose pre`: 배경 `--rb-code-bg`, 테두리 `1px --rb-border`, 모서리 8px, 안쪽 여백 `0.8em 1em`, 글자 `--font-mono` 0.86em, 줄 간격 1.6, `tab-size: 2`. 코드 블록 노드뷰(`.rb-code`) 안에서는 틀(배경·테두리·모서리)을 래퍼가 갖고 `pre`는 틀 없이 여백 `0.75em 1em 0.85em`(폭 < 640px에서 좌우 0.85em). 문법 색은 이 바탕(라이트 `#f4f4f5` / 다크 `#1f1f23`) 위에서 **전부 4.5:1 이상**이다.
+`.rb-prose pre`: 배경 `--rb-code-bg`, 테두리 `1px --rb-code-border`, 모서리 8px, 안쪽 여백 `0.8em 1em`, 글자 `--font-mono` 0.86em, 줄 간격 1.6, `tab-size: 2`. 코드 블록 노드뷰(`.rb-code`) 안에서는 틀(배경·테두리·모서리)을 래퍼가 갖고 `pre`는 틀 없이 여백 `0.75em 1em 0.85em`(폭 < 640px에서 좌우 0.85em). 문법 색은 이 바탕(라이트 `#f7f6f3` / 다크 `#1f1f1f`; 테두리 `--rb-code-border` 라이트 `#eceae5` / 다크 `#2b2b2b` — 페이지 바탕 `#ffffff` / `#191919` 위에서 아주 살짝만 구분된다) 위에서 **전부 4.5:1 이상**이다.
 
 ### 1.2 토큰 (globals.css의 `:root` / `.dark` 블록에 추가)
 
 | 변수 | 쓰임 | 라이트 | 대비 | 다크 | 대비 |
 |---|---|---|---|---|---|
-| `--rb-code-bg` | 코드 바탕 (= `--rb-subtle`로 alias) | `var(--rb-subtle)` | — | `var(--rb-subtle)` | — |
-| `--rb-code-fg` | 기본 글자 (= `--rb-fg` 값) | `#18181b` | 16.1 | `#ececef` | 13.9 |
-| `--rb-code-comment` | 주석 | `#666670` | 5.2 | `#9d9da6` | 6.1 |
-| `--rb-code-keyword` | 키워드·내장 | `#8a3a9e` | 6.0 | `#c9a0f0` | 7.6 |
-| `--rb-code-string` | 문자열·정규식 | `#1f6b3c` | 5.9 | `#8fd0a0` | 9.1 |
-| `--rb-code-number` | 숫자·리터럴(true/null) | `#a34a00` | 5.4 | `#f0a878` | 8.3 |
-| `--rb-code-function` | 함수 이름·제목(title) | `#2a52b0` | 6.5 | `#8db4f2` | 7.8 |
-| `--rb-code-attr` | 속성·태그 이름 | `#0e6b72` | 5.7 | `#7fd3d0` | 9.5 |
-| `--rb-code-variable` | 변수·매개변수·템플릿 변수 | `#9b3a32` | 6.3 | `#f09a90` | 7.6 |
+| `--rb-code-bg` | 코드 바탕 | `#f7f6f3` | — | `#1f1f1f` | — |
+| `--rb-code-border` | 코드 테두리 | `#eceae5` | — | `#2b2b2b` | — |
+| `--rb-code-fg` | 기본 글자 (= `--rb-fg` 값) | `#2f2e2a` | 12.6 | `#e6e5e3` | 13.1 |
+| `--rb-code-comment` | 주석 | `#666670` | 5.3 | `#9d9da6` | 6.1 |
+| `--rb-code-keyword` | 키워드·내장 | `#8a3a9e` | 6.1 | `#c9a0f0` | 7.7 |
+| `--rb-code-string` | 문자열·정규식 | `#1f6b3c` | 6.0 | `#8fd0a0` | 9.2 |
+| `--rb-code-number` | 숫자·리터럴(true/null) | `#a34a00` | 5.5 | `#f0a878` | 8.3 |
+| `--rb-code-function` | 함수 이름·제목(title) | `#2a52b0` | 6.6 | `#8db4f2` | 7.8 |
+| `--rb-code-attr` | 속성·태그 이름 | `#0e6b72` | 5.8 | `#7fd3d0` | 9.5 |
+| `--rb-code-variable` | 변수·매개변수·템플릿 변수 | `#9b3a32` | 6.4 | `#f09a90` | 7.6 |
 
 - 색상각은 기존 tone과 겹치게 골랐다(violet·green·amber·blue·teal·red). 새 계열을 만들지 않는다.
 - 주석은 `font-style: italic` 없이 **색만** 흐리게(5.2:1 — 흐려도 읽힌다). 굵기 변화 없음.
@@ -172,7 +173,7 @@
 간단한 **카드 목록 한 줄** — 새 화면을 만들지 않고 `/notes/new` 위쪽에 둔다.
 
 - 위치: 페이지 제목 아래, 편집 폼 위. 라벨 `text-[13px] text-muted` "템플릿".
-- 모양: 5개 **세그먼트형 선택 카드**(graph.md 7절 세그먼트와 같은 톤). 가로로 나열, 폭 < 640px이면 세로 쌓기. 카드는 `min-h-[56px] px-3 py-2`, 테두리 `1px --rb-border`, 모서리 8px, 바탕 `--rb-bg`. 첫 줄 이름 `text-[14px] font-medium text-fg`, 둘째 줄 한 줄 설명 `text-[12px] text-muted`(3.2·3.3·3.4·3.5·3.1의 설명은 한 줄에 맞춰 짧게).
+- 모양: 5개 **세그먼트형 선택 카드**(graph.md 7절 세그먼트와 같은 톤). 가로로 나열, 폭 < 640px이면 세로 쌓기. 카드는 `min-h-[56px] px-3 py-2`, 테두리 `1px --rb-code-border`, 모서리 8px, 바탕 `--rb-bg`. 첫 줄 이름 `text-[14px] font-medium text-fg`, 둘째 줄 한 줄 설명 `text-[12px] text-muted`(3.2·3.3·3.4·3.5·3.1의 설명은 한 줄에 맞춰 짧게).
 - 선택 상태: 테두리 `--rb-accent`, 바탕 `--rb-accent-soft`. 기본 선택은 **빈 페이지**.
 - 접근성: `role="radiogroup" aria-label="템플릿"`, 카드는 `role="radio" aria-checked`, ←/→(↑/↓)로 이동·선택, Tab으로 그룹 진입. 포커스는 전역 outline 2px accent.
 - 동작: 카드를 고르면 본문이 템플릿으로 채워진다. **본문을 이미 입력했다면** 덮어쓰지 않고 선택만 바꾸며, 저장 전에 "본문이 비어 있을 때만 적용돼요"는 따로 안내하지 않는다(입력 전에만 고르게 하는 것이 기본). 저장하면 URL `?template=worklog` 같은 쿼리는 필요 없다(상태만 사용).
