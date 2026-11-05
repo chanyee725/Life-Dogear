@@ -56,7 +56,13 @@ const BlankLineParagraph = Paragraph.extend({
     return {
       markdown: {
         serialize(state: MarkdownSerializerState, node: PMNode, parent: PMNode) {
-          if (node.childCount === 0 && parent.type.name === "doc" && parent.childCount > 1) {
+          // The last child is skipped: StarterKit's TrailingNode appends an empty paragraph
+          // after a final list, code block, table, heading or image on the first edit.
+          if (
+            node.childCount === 0 &&
+            parent.type.name === "doc" &&
+            node !== parent.lastChild
+          ) {
             state.write(BLANK_LINE);
           } else {
             // Same as prosemirror-markdown's default paragraph serializer.

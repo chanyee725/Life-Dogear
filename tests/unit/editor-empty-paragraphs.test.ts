@@ -56,4 +56,13 @@ describe("empty paragraphs survive the Markdown round-trip", () => {
     expect(md(mount(body))).toBe(body);
     expect(md(mount(""))).toBe("");
   });
+
+  it("does not store the trailing empty paragraph TrailingNode adds after a final list", () => {
+    const e = mount("본문\n\n- 하나\n- 둘");
+    e.commands.insertContentAt(2, "추가");
+    expect(e.state.doc.lastChild?.type.name).toBe("paragraph");
+    const saved = md(e);
+    expect(saved).toBe("본추가문\n\n- 하나\n- 둘");
+    expect(saved.endsWith("&nbsp;")).toBe(false);
+  });
 });
