@@ -23,6 +23,7 @@ import {
   type ListGoal,
   type PeriodFilter,
 } from "./list-view";
+import { itemPath } from "@/lib/item-path";
 
 export type PeriodKey = "quarter" | "year" | "all";
 export type PeriodChoice = { value: PeriodKey; label: string; href: string };
@@ -168,7 +169,7 @@ function Group({ group, today }: { group: GoalGroup; today: string }) {
       <h2 id={headingId} className="mb-1.5 truncate text-xs text-muted tabular-nums">
         {group.areaId ? (
           <Link
-            href={`/areas/${group.areaId}`}
+            href={itemPath("areas", group.areaId, group.title)}
             className="rounded-sm font-medium text-fg hover:underline"
           >
             {group.title}

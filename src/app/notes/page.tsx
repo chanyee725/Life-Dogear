@@ -22,6 +22,7 @@ import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes } from "@/lib/repo";
 import type { Note, NoteSort } from "@/lib/repo/notes";
 import { bodyPreview } from "./source";
+import { itemPath } from "@/lib/item-path";
 
 export const metadata: Metadata = { title: "노트" };
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ function groupNotes(list: Note[], group: NoteGroup): ItemGroup<Note>[] | undefin
 }
 
 const BASE = "/notes";
-const href = (n: Note) => `/notes/${n.id}`;
+const href = (n: Note) => itemPath("notes", n.id, n.title);
 
 function sourceBadge(n: Note) {
   return NOTE_SOURCE_KIND.is(n.sourceKind) ? (

@@ -13,6 +13,7 @@ import {
 import { AddTaskButton } from "@/components/tasks/AddTaskReveal";
 import { notes, tasks } from "@/lib/repo";
 import type { TaskParent } from "@/lib/repo/tasks";
+import { itemPath } from "@/lib/item-path";
 
 /** Item whose notes are shown: projects and goals link notes, areas also own them (`areaId`). */
 export type NotesOwner = { type: "project" | "goal" | "area"; id: string };
@@ -70,7 +71,7 @@ export async function ItemNotes({
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((note) => (
             <li key={note.id}>
-              <Link href={`/notes/${note.id}`} className={noteCard}>
+              <Link href={itemPath("notes", note.id, note.title)} className={noteCard}>
                 <span className="line-clamp-2 font-medium text-fg">{note.title}</span>
                 <span className="mt-auto flex flex-wrap items-center gap-1.5">
                   <time dateTime={note.updatedAt} className="text-xs text-muted tabular-nums">

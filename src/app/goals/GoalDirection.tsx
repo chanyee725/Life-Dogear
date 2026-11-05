@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge, Card } from "@/components/ui";
 import { GOAL_HORIZON } from "@/lib/enums";
 import type { ListGoal } from "./list-view";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * The active life goals as one card at the top of the list (no progress — life goals
@@ -20,7 +21,7 @@ export function GoalDirection({ goals }: { goals: readonly ListGoal[] }) {
           {goals.map((g) => (
             <li key={g.id} className="min-w-0">
               <Link
-                href={`/goals/${g.id}`}
+                href={itemPath("goals", g.id, g.title)}
                 className="rounded-sm text-base font-semibold break-words hover:underline"
               >
                 {g.title}

@@ -11,6 +11,7 @@ import { QuietButton } from "@/components/ui/Button";
 import { TagInput } from "@/components/fields/TagInput";
 import { LinkPicker } from "@/components/links/LinkPicker";
 import { safeAction } from "@/components/links/safe-action";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * One inbox thought with quick actions. Tagging or linking files it (it leaves the
@@ -55,7 +56,7 @@ export function InboxItem({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/thoughts/${id}`}
+            href={itemPath("thoughts", id, title)}
             className="block truncate text-sm font-medium hover:underline"
           >
             {title}
