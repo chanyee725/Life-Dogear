@@ -3,7 +3,7 @@ import { cn } from "./cn";
 
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card text-card-foreground shadow-sm">
       <table className={cn("w-full border-collapse text-sm", className)} {...props} />
     </div>
   );
@@ -27,7 +27,7 @@ export function Th({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
   return (
     <th
       className={cn(
-        "h-9 border-b border-border px-3 text-left text-xs font-medium whitespace-nowrap text-muted",
+        "h-9 border-b border-border px-3 text-left text-xs font-medium whitespace-nowrap text-muted-foreground",
         className,
       )}
       {...props}

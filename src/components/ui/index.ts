@@ -14,7 +14,7 @@ export { Input, Textarea, Select, Field, controlClass, type ControlSize } from "
 export { SearchInput } from "./SearchInput";
 export { Badge, TagChip, BADGE_TONES, type BadgeTone } from "./Badge";
 export { ChipLink, ChipCount, chipClass } from "./Chip";
-export { Card, Section, SectionHeader } from "./Card";
+export { Card, Section, SectionHeader, cardClass, cardLinkClass } from "./Card";
 export { RowList, ListRow } from "./ListRow";
 export { DetailHeader, BackLink } from "./DetailHeader";
 export { FilterBar } from "./FilterBar";

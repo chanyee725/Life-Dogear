@@ -6,7 +6,7 @@ export function RowList({ className, ...props }: HTMLAttributes<HTMLUListElement
   return (
     <ul
       className={cn(
-        "flex flex-col divide-y divide-border rounded-lg border border-border",
+        "flex flex-col divide-y divide-border rounded-xl border border-border bg-card text-card-foreground shadow-sm",
         className,
       )}
       {...props}
@@ -14,7 +14,18 @@ export function RowList({ className, ...props }: HTMLAttributes<HTMLUListElement
   );
 }
 
-/** One dense row inside a `RowList`. */
+/**
+ * One dense row inside a `RowList`. The first/last rows take the list's corner radius
+ * so a caller's hover background does not poke past the rounded border.
+ */
 export function ListRow({ className, ...props }: LiHTMLAttributes<HTMLLIElement>) {
-  return <li className={cn("flex items-center gap-2.5 px-3 py-2", className)} {...props} />;
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-2.5 px-3 py-2 first:rounded-t-[inherit] last:rounded-b-[inherit]",
+        className,
+      )}
+      {...props}
+    />
+  );
 }

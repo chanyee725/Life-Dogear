@@ -19,6 +19,7 @@ import { useGraphTheme, type GraphTheme } from "@/components/graph/graph-theme";
 import { safeAction } from "@/components/links/safe-action";
 import { addDays } from "@/components/tasks/format";
 import { Button, cn, Input, Spinner } from "@/components/ui";
+import { menuItemClass } from "@/components/ui/menu-style";
 import { mergeAdded, pendingAdded } from "@/lib/calendar/dedupe";
 import type { CalendarItem, GoogleStatus } from "@/lib/calendar/types";
 import { revealAdded } from "./add-event";
@@ -1213,7 +1214,7 @@ function MenuPanel({
           role="menuitem"
           tabIndex={-1}
           onClick={m.run}
-          className="flex h-8 items-center rounded-md px-2 text-left text-[13px] text-fg hover:bg-hover focus:bg-hover"
+          className={menuItemClass()}
         >
           {m.label}
         </button>

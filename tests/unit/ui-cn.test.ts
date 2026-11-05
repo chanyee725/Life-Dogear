@@ -21,4 +21,14 @@ describe("cn", () => {
       "bg-tone-gray-bg text-tone-gray-fg border-border",
     );
   });
+
+  it("accepts clsx inputs: arrays and conditional maps", () => {
+    expect(cn(["a", ["b", false]], { c: true, d: false })).toBe("a b c");
+    expect(cn({ "px-2": true }, ["px-4"])).toBe("px-4");
+  });
+
+  it("merges shadcn theme colour utilities", () => {
+    expect(cn("bg-background text-foreground", "bg-primary")).toBe("text-foreground bg-primary");
+    expect(cn("text-sm", "text-muted-foreground")).toBe("text-sm text-muted-foreground");
+  });
 });
