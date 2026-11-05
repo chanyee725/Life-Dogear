@@ -5,7 +5,7 @@ import { cn } from "./cn";
 
 /** The dashed box around an `EmptyAdd` action (for callers that must keep their own button). */
 export const emptyAddBoxClass =
-  "flex items-center justify-center rounded-lg border border-dashed border-border px-4 py-5";
+  "flex items-center justify-center rounded-xl border border-dashed border-border px-4 py-5";
 
 /**
  * The only body of an empty section: a dashed box holding one add action (`＋ 새 …`),

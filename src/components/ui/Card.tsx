@@ -2,7 +2,13 @@ import Link from "next/link";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
 
-const cardClass = "block rounded-lg border border-border bg-bg p-4";
+/** shadcn card surface: larger radius than controls, hairline border, faint lift. */
+export const cardClass =
+  "block rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm";
+
+/** Extra classes for a card that is a link: quiet hover, border darkens. */
+export const cardLinkClass =
+  "transition-[color,background-color,border-color,box-shadow] hover:border-border-strong hover:bg-surface";
 
 /** Bordered container. With `href` the whole card becomes a link with a hover state. */
 export function Card({
@@ -17,7 +23,7 @@ export function Card({
         href={href}
         className={cn(
           cardClass,
-          "transition-colors hover:border-border-strong hover:bg-surface",
+          cardLinkClass,
           className,
         )}
       >
@@ -48,7 +54,7 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn("flex min-h-6 items-center justify-between gap-2", className)}>
-      <Heading id={id} className="text-[13px] font-semibold text-muted">
+      <Heading id={id} className="text-[13px] font-semibold tracking-tight text-muted-foreground">
         {title}
       </Heading>
       {action}
