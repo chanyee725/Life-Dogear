@@ -167,7 +167,7 @@ function ProjectStatusBoard({
   return (
     <ol
       aria-label="상태별 프로젝트"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-4"
     >
       {columnsByStatus(ordered).map((column) => (
         <KanbanColumn

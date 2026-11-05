@@ -77,11 +77,14 @@ export function KanbanColumn({
   return (
     <li
       aria-label={`${label} ${count}건`}
-      className="flex flex-col gap-2 rounded-lg bg-surface p-2"
+      className={cn(
+        "flex flex-col gap-2 rounded-lg p-2",
+        count ? "bg-surface" : "bg-surface/40 py-1.5",
+      )}
     >
       <div className="flex items-center justify-between px-1 text-xs">
-        <span className="font-medium text-muted">{label}</span>
-        <span className="text-muted tabular-nums">{count}</span>
+        <span className={cn(count ? "font-medium text-fg" : "text-faint")}>{label}</span>
+        <span className={cn("tabular-nums", count ? "text-muted" : "text-faint/70")}>{count}</span>
       </div>
       {children}
     </li>

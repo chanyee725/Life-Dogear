@@ -217,7 +217,7 @@ export function CommandPalette() {
                 debouncedSearch(e.target.value);
               }}
               onKeyDown={onInputKeyDown}
-              className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-fg placeholder:text-faint focus:outline-none"
+              className="h-12 min-w-0 flex-1 bg-transparent text-base text-fg placeholder:text-faint focus:outline-none"
             />
             {status === "loading" ? <Spinner /> : null}
             <Kbd>Esc</Kbd>

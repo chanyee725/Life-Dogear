@@ -48,7 +48,7 @@ export function NewProjectFields({
           selected={choice.selected}
           onChoose={onChoose}
         />
-        <p aria-live="polite" className="min-h-[1lh] text-[12px] text-muted">
+        <p aria-live="polite" className="min-h-[1lh] text-xs text-muted">
           {choice.skipped ? KEPT_BODY_NOTICE : ""}
         </p>
       </div>
