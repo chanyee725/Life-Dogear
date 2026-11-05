@@ -6,7 +6,15 @@ import type {
 } from "react";
 import { cn } from "./cn";
 
+/**
+ * shadcn/ui text control: input border, faint shadow, opaque accent border + 3px
+ * --ring halo on focus, destructive border/halo when `aria-invalid`.
+ */
 export const controlClass =
+  "w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs placeholder:text-faint transition-[color,border-color,box-shadow] hover:border-border-strong focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50";
+
+// Select keeps its previous look until the Select pass restyles it.
+const selectControlClass =
   "w-full rounded-lg border border-border bg-bg px-3 text-sm text-fg placeholder:text-faint transition-colors hover:border-border-strong focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60";
 
 export type ControlSize = "sm" | "md";
@@ -43,7 +51,7 @@ export function Select({
 }: Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & { size?: ControlSize }) {
   return (
     <select
-      className={cn(controlClass, "rb-select cursor-pointer pr-8", controlSize[size], className)}
+      className={cn(selectControlClass, "rb-select cursor-pointer pr-8", controlSize[size], className)}
       {...props}
     >
       {children}

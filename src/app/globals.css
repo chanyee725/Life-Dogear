@@ -122,6 +122,35 @@
   --rb-code-inline: #f2877a;
 }
 
+/* ---------- shadcn/ui theme variables ----------
+   components.json points shadcn at this file. The shadcn names are aliases of the
+   --rb-* tokens above, so light/dark come from the same values and the app's
+   colours do not change. Declared on both selectors so each theme resolves its
+   own --rb-* values. */
+:root,
+.dark {
+  --background: var(--rb-bg);
+  --foreground: var(--rb-fg);
+  --card: var(--rb-bg);
+  --card-foreground: var(--rb-fg);
+  --popover: var(--rb-bg);
+  --popover-foreground: var(--rb-fg);
+  --primary: var(--rb-accent);
+  --primary-foreground: var(--rb-accent-fg);
+  --secondary: var(--rb-subtle);
+  --secondary-foreground: var(--rb-fg);
+  --muted: var(--rb-subtle);
+  --muted-foreground: var(--rb-muted);
+  --accent: var(--rb-hover);
+  --accent-foreground: var(--rb-fg);
+  --destructive: var(--rb-danger);
+  --destructive-foreground: var(--rb-accent-fg);
+  --border: var(--rb-border);
+  --input: var(--rb-border);
+  --ring: var(--rb-ring);
+  --radius: 8px;
+}
+
 /* ---------- Tailwind theme mapping ---------- */
 @theme inline {
   --font-sans:
@@ -148,6 +177,25 @@
   --color-danger: var(--rb-danger);
   --color-danger-hover: var(--rb-danger-hover);
 
+  /* shadcn/ui utility names (bg-background, text-foreground, bg-primary, ...).
+     `muted` and `accent` are NOT mapped: this app already uses text-muted (a text
+     colour) and bg-accent (the brand colour), so shadcn's bg-muted / bg-accent
+     would collide. Use bg-subtle / bg-hover for those roles. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+
   --color-tone-gray-bg: var(--rb-tone-gray-bg);
   --color-tone-gray-fg: var(--rb-tone-gray-fg);
   --color-tone-blue-bg: var(--rb-tone-blue-bg);
@@ -168,10 +216,10 @@
   --color-tone-orange-fg: var(--rb-tone-orange-fg);
 
   /* 8px corners everywhere by default */
-  --radius-DEFAULT: 8px;
-  --radius-md: 8px;
-  --radius-lg: 8px;
-  --radius-sm: 6px;
+  --radius-DEFAULT: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow-overlay: 0 8px 28px rgb(0 0 0 / 0.12);

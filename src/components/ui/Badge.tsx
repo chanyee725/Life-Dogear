@@ -40,7 +40,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center rounded-md px-1.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-5 w-fit shrink-0 items-center gap-1 rounded-md border border-transparent px-1.5 text-xs font-medium whitespace-nowrap [&>svg]:size-3",
         toneClass[resolved],
         className,
       )}
@@ -54,7 +54,7 @@ export function TagChip({ className, ...props }: HTMLAttributes<HTMLSpanElement>
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center rounded-md border border-border px-1.5 text-xs text-muted whitespace-nowrap",
+        "inline-flex h-5 w-fit shrink-0 items-center gap-1 rounded-md border border-border px-1.5 text-xs text-muted-foreground whitespace-nowrap",
         className,
       )}
       {...props}
