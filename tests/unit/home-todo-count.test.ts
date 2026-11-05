@@ -100,4 +100,16 @@ describe("home Todo badge follows the list", () => {
     await settle();
     expect(t.name()).toBe("할 일 1개");
   });
+
+  it("takes a new server count when the list empties (and so stops reporting)", async () => {
+    updateTask.mockResolvedValue({ ok: true, data: null });
+    const t = await setup();
+    await act(async () => t.box("late").click());
+    await settle();
+    expect(t.name()).toBe("할 일 1개");
+    const empty = createElement("p", null, "오늘 할 일이 없습니다.");
+    await act(async () => root!.render(createElement(HomeTodo, { count: 0, today: empty })));
+    expect(t.name()).toBe("할 일 0개");
+    expect(document.querySelector('[data-testid="todo-count"]')).toBeNull();
+  });
 });

@@ -187,6 +187,16 @@ test("홈 달력 블록: 오른쪽 패널은 다음 일정, 할 일 목록·입�
   expect(q2.x + q2.width).toBeLessThanOrEqual(390);
   expect(t2.x).toBeGreaterThanOrEqual(0);
   expect(q2.y).toBeLessThan(g2.y);
+  // The today panel lists the selected day; no second day list under the grid.
+  const seoul = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
+  const tomorrow = seoul.format(Date.now() + 86_400_000);
+  for (const pick of [null, tomorrow]) {
+    if (pick) await calendar.locator(`[data-cal-cell="${pick}"]`).first().click();
+    // The today panel's day heading (the only live one).
+    const day = (await calendar.locator('h2[aria-live="polite"]').textContent())!;
+    await expect(calendar.getByRole("heading", { name: day, exact: true })).toHaveCount(1);
+    await expect(calendar.getByRole("region", { name: day, exact: true })).toHaveCount(0);
+  }
 });
 
 test("빠른 추가: 열면 할 일 추가에 포커스, 생각 추가는 그 아래, Esc·바깥 클릭으로 닫힌다", async ({

@@ -89,8 +89,13 @@ export type CalendarViewProps = {
   syncUrl?: boolean;
   /** Told the selected day whenever it changes (home: the 할 일 추가 input's due date). */
   onSelectDay?: (day: string) => void;
-  /** Home: shown in the today panel between the day and "다음 일정" (today's tasks + add). */
+  /** Home: shown in the today panel between the day and "다음 일정" (the loading line). */
   panelSlot?: ReactNode;
+  /**
+   * Narrow layout only: list the selected day's items under the grid (default). Home turns it
+   * off — its today panel above already lists the day.
+   */
+  dayList?: boolean;
   /** Home: shown under the grid, in the grid's column (inbox / weekly review lines). */
   belowGrid?: ReactNode;
   /** Home: at the right end of the toolbar (빠른 추가). */
@@ -152,6 +157,7 @@ export function CalendarView({
   syncUrl = true,
   onSelectDay,
   panelSlot,
+  dayList = true,
   belowGrid,
   toolbarEnd,
   fitPanel = false,
@@ -733,8 +739,7 @@ export function CalendarView({
             )}
           </div>
 
-          {/* Home (panelSlot): the panel above already lists the day; no second list. */}
-          {narrow && !panelSlot ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
+          {narrow && dayList ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
           {belowGrid}
         </div>
         {/* fitPanel: the wrapper adds no height (absolute child), so the row = the grid column. */}

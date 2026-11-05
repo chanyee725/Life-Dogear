@@ -40,6 +40,12 @@ export function HomeTodo({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [listCount, setListCount] = useState<number | null>(null);
+  // A new server count wins until the list reports again (an emptied list never reports).
+  const [prevCount, setPrevCount] = useState(count);
+  if (prevCount !== count) {
+    setPrevCount(count);
+    setListCount(null);
+  }
   const shown = listCount ?? count;
 
   const show = () => {

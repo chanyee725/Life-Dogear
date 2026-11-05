@@ -71,6 +71,7 @@ export function HomeCalendarView({
         failed={current.failed}
         loading={!loaded}
         gridTestId="home-calendar-grid"
+        dayList={false}
         onSelectDay={setDay}
         panelSlot={
           <>
