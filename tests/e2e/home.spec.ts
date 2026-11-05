@@ -152,42 +152,41 @@ test("수집함 개수 줄은 /inbox로 연결된다", async ({ page }) => {
   await expect(link).toHaveAttribute("href", "/inbox");
 });
 
-test("홈 달력 블록: 오른쪽 패널에 오늘 할 일 → 다음 일정, 입력칸은 없고 높이는 달력에 맞춘다", async ({
+test("홈 달력 블록: 오른쪽 패널은 다음 일정, 할 일 목록·입력칸은 없고 높이는 달력에 맞춘다", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/");
   const calendar = page.getByRole("region", { name: "달력" });
-  const heading = calendar.getByRole("heading", { name: /오늘 할 일/ });
   const upcoming = calendar.getByRole("heading", { name: /다음 일정/ });
   const grid = calendar.getByRole("grid");
   await expect(upcoming).toBeVisible();
-  // The inputs live in 빠른 추가 only.
+  // The inputs live in 빠른 추가, 오늘 할 일 in the Todo popover: none on the page itself.
   await expect(page.getByRole("textbox", { name: /할 일 추가|생각 추가/ })).toHaveCount(0);
-  const [h, u] = await Promise.all([heading, upcoming].map(async (l) => (await l.boundingBox())!));
-  expect(h.y).toBeLessThan(u.y);
-  // The separate 오늘 section is gone: one "오늘 할 일" heading on the page.
-  await expect(page.getByRole("heading", { name: /오늘 할 일/ })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: /오늘 할 일/ })).toHaveCount(0);
   // The panel ends with the grid column (no gap under the calendar).
   const panel = upcoming.locator("xpath=ancestor::section[1]");
   const p = (await panel.boundingBox())!;
   const left = (await grid.locator("xpath=..").boundingBox())!;
   expect(p.y + p.height).toBeLessThanOrEqual(left.y + left.height + 2);
-  // 빠른 추가 sits top right of the block, above the grid.
+  // Todo then 빠른 추가 sit top right of the block, above the grid.
+  const todo = page.getByRole("button", { name: /^할 일 \d+개$/ });
   const quick = page.getByRole("button", { name: "빠른 추가" });
-  const q = (await quick.boundingBox())!;
+  const [t, q] = await Promise.all([todo, quick].map(async (l) => (await l.boundingBox())!));
   const c = (await calendar.boundingBox())!;
   expect(q.y).toBeLessThan(left.y);
   expect(c.x + c.width - (q.x + q.width)).toBeLessThan(4);
+  expect(t.x + t.width).toBeLessThanOrEqual(q.x);
+  expect(Math.abs(t.y - q.y)).toBeLessThan(2);
 
-  // Narrow: still reachable, top right, above the panel and the grid.
+  // Narrow: still reachable, top right, above the grid.
   await page.setViewportSize({ width: 390, height: 844 });
-  const [q2, h2, g2] = await Promise.all(
-    [quick, heading, grid].map(async (l) => (await l.boundingBox())!),
+  const [t2, q2, g2] = await Promise.all(
+    [todo, quick, grid].map(async (l) => (await l.boundingBox())!),
   );
   expect(q2.x + q2.width).toBeLessThanOrEqual(390);
-  expect(q2.y).toBeLessThan(h2.y);
-  expect(h2.y).toBeLessThan(g2.y);
+  expect(t2.x).toBeGreaterThanOrEqual(0);
+  expect(q2.y).toBeLessThan(g2.y);
 });
 
 test("빠른 추가: 열면 할 일 추가에 포커스, 생각 추가는 그 아래, Esc·바깥 클릭으로 닫힌다", async ({
@@ -245,30 +244,70 @@ test("빠른 추가: 오른쪽 끝이 버튼 오른쪽에 맞고, 닫았다 열�
   await expect(thought).toHaveValue("닫아도 남는 생각");
 });
 
-test("홈 달력 블록: 오늘 마감 할 일은 '오늘 할 일'에만 한 번 보인다 (390px·1280px)", async ({
+test("Todo: 뱃지에 지남+오늘 개수, 완료하면 줄고 취소선으로 남으며 달력 칸에는 없다", async ({
   page,
 }) => {
-  const title = uniqueTitle("E2E today once");
-  await page.setViewportSize({ width: 390, height: 844 });
+  const title = uniqueTitle("E2E todo badge");
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/");
   const calendar = page.getByRole("region", { name: "달력" });
+  const todo = page.getByRole("button", { name: /^할 일 \d+개$/ });
+  const countOf = async () => Number((await todo.getAttribute("aria-label"))!.match(/\d+/)![0]);
+  const before = await countOf();
+  const badge = todo.getByTestId("todo-count");
+  if (before) await expect(badge).toHaveText(String(before));
+  else await expect(badge).toHaveCount(0);
+
+  // A task due today (빠른 추가 starts on today) adds one to the badge.
   const input = (await openQuickAdd(page)).getByRole("textbox", { name: /^할 일 추가/ });
   await input.fill(title);
   await input.press("Enter");
-  await expect(page.getByText("마감으로 추가했습니다.")).toBeVisible();
-  // Not again under 다음 일정 › 오늘, nor in a day list under the grid.
-  await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
-  await page.screenshot({ path: "test-results/home-today-once-390.png", fullPage: true });
-  // Wide: still once; the month grid draws no tasks.
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(page.getByText("오늘 마감으로 추가했습니다.")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(todo).toHaveAccessibleName(`할 일 ${before + 1}개`);
+  await expect(badge).toHaveText(String(before + 1));
+  // The calendar grid draws no tasks.
   await expect(calendar.getByRole("grid").getByText(title, { exact: true })).toHaveCount(0);
-  await expect(calendar.getByText(title, { exact: true })).toHaveCount(1);
-  await page.screenshot({ path: "test-results/home-today-once-1280.png", fullPage: true });
 
-  await page.goto("/tasks?tab=by-parent");
-  await page.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
+  await todo.click();
+  await expect(todo).toHaveAttribute("aria-expanded", "true");
+  const popover = page.getByRole("dialog", { name: "할 일" });
+  await expect(popover).toBeVisible();
+  await expect(todo).toHaveAttribute("aria-controls", (await popover.getAttribute("id"))!);
+  // Right edges line up (align="end").
+  const [b, p] = await Promise.all([todo, popover].map(async (l) => (await l.boundingBox())!));
+  expect(Math.abs(b.x + b.width - (p.x + p.width))).toBeLessThan(2);
+  await expect(popover.getByText(title, { exact: true })).toHaveCount(1);
+
+  // Checking it drops the badge at once; the row stays, struck through, under the open ones.
+  await popover.getByRole("checkbox", { name: `완료: ${title}` }).check();
+  await expect(todo).toHaveAccessibleName(`할 일 ${before}개`);
+  const done = popover.getByRole("list", { name: "완료한 오늘 할 일" });
+  await expect(done.getByText(title, { exact: true })).toHaveClass(/line-through/);
+  await page.screenshot({ path: "test-results/home-todo-1280.png" });
+  // After a reload it is still there, struck through, and the count holds.
+  await page.reload();
+  await expect(todo).toHaveAccessibleName(`할 일 ${before}개`);
+  await todo.click();
+  await expect(
+    page
+      .getByRole("dialog", { name: "할 일" })
+      .getByRole("list", { name: "완료한 오늘 할 일" })
+      .getByText(title, { exact: true }),
+  ).toHaveClass(/line-through/);
+  // Esc closes and puts focus back on the button.
+  await page.keyboard.press("Escape");
+  await expect(popover).toHaveCount(0);
+  await expect(todo).toBeFocused();
+
+  // Clean up from the done row's menu (done tasks are folded away in /tasks).
+  await todo.click();
+  await popover.getByRole("button", { name: `할 일 메뉴: ${title}` }).click();
   await page.getByRole("menuitem", { name: "삭제" }).click();
   await expect(page.getByText(`‘${title}’을 지웠습니다.`).first()).toBeVisible();
+  await page.reload();
+  await todo.click();
+  await expect(popover.getByText(title, { exact: true })).toHaveCount(0);
 });
 
 test("`/`로 홈에 와서 달력이 늦게 와도 입력한 글자와 포커스가 남는다", async ({
