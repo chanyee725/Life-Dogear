@@ -13,6 +13,7 @@ import { SlashMenu } from "./SlashMenu";
 import { itemFromPath } from "./wiki-resolver";
 import { WikiRenamePrompt } from "./WikiRenamePrompt";
 import { WikiSuggest, type SuggestKeyHandler } from "./WikiSuggest";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 type MarkdownStorage = { markdown: { getMarkdown: () => string } };
 
@@ -396,21 +397,22 @@ function Tool({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      aria-pressed={active}
-      // Keep the editor selection when clicking toolbar buttons.
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={cn(
-        "h-7 min-w-7 rounded-md px-2 text-[13px] transition-colors",
-        active ? "bg-hover text-fg" : "text-muted hover:bg-hover hover:text-fg",
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip content={label} side="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={active}
+        // Keep the editor selection when clicking toolbar buttons.
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onClick}
+        className={cn(
+          "h-7 min-w-7 rounded-md px-2 text-[13px] transition-colors",
+          active ? "bg-hover text-fg" : "text-muted hover:bg-hover hover:text-fg",
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }
 

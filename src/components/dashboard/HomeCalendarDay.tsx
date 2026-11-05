@@ -16,6 +16,7 @@ import { QUICK_ADD_EVENT, QUICK_INPUT_ID } from "@/components/shell/shortcuts";
 import { Button, cn } from "@/components/ui";
 import type { CalendarResult } from "@/lib/calendar/types";
 import { QuickInput, TaskQuickInput } from "./QuickInput";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** The day selected in the home calendar, shared with the 할 일 추가 input in 빠른 추가. */
 const DayContext = createContext<{ day: string; setDay: (day: string) => void } | null>(null);
@@ -141,20 +142,21 @@ export function HomeQuickAdd({ today }: { today: string }) {
 
   return (
     <>
-      <Button
-        ref={buttonRef}
-        variant="secondary"
-        size="icon"
-        className="size-7"
-        aria-label="빠른 추가"
-        title="빠른 추가 (/)"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={mounted ? id : undefined}
-        onClick={() => (open ? close(true) : show())}
-      >
-        <PlusIcon />
-      </Button>
+      <Tooltip content="빠른 추가 (/)" side="bottom">
+        <Button
+          ref={buttonRef}
+          variant="secondary"
+          size="icon"
+          className="size-7"
+          aria-label="빠른 추가"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={mounted ? id : undefined}
+          onClick={() => (open ? close(true) : show())}
+        >
+          <PlusIcon />
+        </Button>
+      </Tooltip>
       {mounted ? (
         <Popover
           id={id}

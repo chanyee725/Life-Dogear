@@ -12,6 +12,7 @@ import { Button, ConfirmDialog, EmptyState, Textarea, cn } from "@/components/ui
 import { HIGHLIGHT_SWATCH, MAX_HIGHLIGHT_NOTE, type HighlightColor } from "@/lib/highlights";
 import type { Highlight } from "@/lib/repo/highlights";
 import { ColorSwatches } from "./ColorSwatches";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export type HighlightPanelProps = {
   highlights: Highlight[];
@@ -132,18 +133,17 @@ function HighlightItem({
   return (
     <li className={cn("flex flex-col gap-2 py-3", active && "bg-accent-soft/60")}>
       {href ? (
-        <Link href={href} className={jumpClass} title={`${h.page}쪽으로 이동`}>
-          {summary}
-        </Link>
+        <Tooltip content={`${h.page}쪽으로 이동`}>
+          <Link href={href} className={jumpClass}>
+            {summary}
+          </Link>
+        </Tooltip>
       ) : onJump ? (
-        <button
-          type="button"
-          className={jumpClass}
-          onClick={() => onJump(h)}
-          title={`${h.page}쪽으로 이동`}
-        >
-          {summary}
-        </button>
+        <Tooltip content={`${h.page}쪽으로 이동`}>
+          <button type="button" className={jumpClass} onClick={() => onJump(h)}>
+            {summary}
+          </button>
+        </Tooltip>
       ) : (
         <div className="flex flex-col gap-1 px-2">{summary}</div>
       )}

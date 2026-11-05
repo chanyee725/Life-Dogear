@@ -5,6 +5,7 @@ import {
   HIGHLIGHT_SWATCH,
   type HighlightColor,
 } from "@/lib/highlights";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** Row of colour buttons. `mousedown` is prevented so a text selection survives the click. */
 export function ColorSwatches({
@@ -22,25 +23,25 @@ export function ColorSwatches({
   return (
     <div className="flex items-center gap-1" role="group" aria-label="색상">
       {HIGHLIGHT_COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          disabled={disabled}
-          aria-label={`${labelPrefix}${HIGHLIGHT_COLOR_LABEL[color]}`}
-          aria-pressed={value === undefined ? undefined : value === color}
-          title={HIGHLIGHT_COLOR_LABEL[color]}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => onPick(color)}
-          className={cn(
-            "grid h-7 w-7 place-items-center rounded-md hover:bg-hover disabled:opacity-50",
-            value === color && "bg-hover",
-          )}
-        >
-          <span
-            className={cn("h-3.5 w-3.5 rounded-full", value === color && "ring-2 ring-ring")}
-            style={{ background: HIGHLIGHT_SWATCH[color] }}
-          />
-        </button>
+        <Tooltip key={color} content={HIGHLIGHT_COLOR_LABEL[color]}>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`${labelPrefix}${HIGHLIGHT_COLOR_LABEL[color]}`}
+            aria-pressed={value === undefined ? undefined : value === color}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onPick(color)}
+            className={cn(
+              "grid h-7 w-7 place-items-center rounded-md hover:bg-hover disabled:opacity-50",
+              value === color && "bg-hover",
+            )}
+          >
+            <span
+              className={cn("h-3.5 w-3.5 rounded-full", value === color && "ring-2 ring-ring")}
+              style={{ background: HIGHLIGHT_SWATCH[color] }}
+            />
+          </button>
+        </Tooltip>
       ))}
     </div>
   );

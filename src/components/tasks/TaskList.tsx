@@ -32,6 +32,7 @@ import {
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const TITLE_MAX = 300;
 /** A just-checked task stays in place this long before moving to 완료 (today.md 2.1). */
@@ -633,15 +634,16 @@ function TaskRow({
         </Link>
       ) : null}
       {showDue ? (
-        <button
-          type="button"
-          onClick={() => setDueOpen((v) => !v)}
-          title={due.label}
-          aria-label={`${due.label}, 마감일 바꾸기`}
-          className={cn("shrink-0", due.className)}
-        >
-          {due.text}
-        </button>
+        <Tooltip content={due.label}>
+          <button
+            type="button"
+            onClick={() => setDueOpen((v) => !v)}
+            aria-label={`${due.label}, 마감일 바꾸기`}
+            className={cn("shrink-0", due.className)}
+          >
+            {due.text}
+          </button>
+        </Tooltip>
       ) : !due && !isDone ? (
         <button
           type="button"
