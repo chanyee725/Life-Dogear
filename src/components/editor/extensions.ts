@@ -1,4 +1,6 @@
 import { Extension } from "@tiptap/core";
+import Paragraph from "@tiptap/extension-paragraph";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
@@ -34,6 +36,48 @@ const TightTaskLists = Extension.create({
   },
 });
 
+/** The part of prosemirror-markdown's serializer state used here. */
+type MarkdownSerializerState = {
+  write(content: string): void;
+  renderInline(parent: PMNode): void;
+  closeBlock(node: PMNode): void;
+};
+
+/** Written for a blank top-level paragraph; Markdown would otherwise drop it. */
+const BLANK_LINE = "&nbsp;";
+
+/**
+ * Blank lines the writer adds with Enter (empty top-level paragraphs) are stored as a
+ * `&nbsp;` line each, and read back as empty paragraphs, so spacing between blocks
+ * survives save and reload. Bodies without empty paragraphs serialize exactly as before.
+ */
+const BlankLineParagraph = Paragraph.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state: MarkdownSerializerState, node: PMNode, parent: PMNode) {
+          if (node.childCount === 0 && parent.type.name === "doc" && parent.childCount > 1) {
+            state.write(BLANK_LINE);
+          } else {
+            // Same as prosemirror-markdown's default paragraph serializer.
+            state.renderInline(node);
+          }
+          state.closeBlock(node);
+        },
+        parse: {
+          updateDOM(element: HTMLElement) {
+            for (const child of element.children) {
+              if (child.tagName === "P" && child.textContent === "\u00a0" && child.childNodes.length === 1) {
+                child.textContent = "";
+              }
+            }
+          },
+        },
+      },
+    };
+  },
+});
+
 /**
  * Editor extensions. Everything here must round-trip through Markdown:
  * underline is disabled because Markdown has no syntax for it; `[[title]]` wiki links
@@ -46,6 +90,8 @@ export function createExtensions(placeholder: string) {
       underline: false,
       // Replaced by the highlighted code block below (same node name and Markdown).
       codeBlock: false,
+      // Replaced by BlankLineParagraph (keeps blank lines through Markdown).
+      paragraph: false,
       // Pasted or typed URLs become links; a click opens them in a new tab.
       link: {
         openOnClick: true,
@@ -55,6 +101,7 @@ export function createExtensions(placeholder: string) {
         HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
       },
     }),
+    BlankLineParagraph,
     CodeBlock,
     CodeBlockClipboard,
     TaskList,
