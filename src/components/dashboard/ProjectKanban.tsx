@@ -1,7 +1,8 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { cn, EmptyAdd, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
-import type { StageColumn } from "@/lib/repo/projects";
+import type { Project, StageColumn } from "@/lib/repo/projects";
 import { formatDate } from "./format";
 
 /**
@@ -25,35 +26,15 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
       <StageStrip columns={columns} />
       <ol className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3">
         {filled.map((column) => (
-          <li
+          <KanbanColumn
             key={column.stage}
-            aria-label={`${PROJECT_STAGE.label(column.stage)} ${column.items.length}건`}
-            className="flex flex-col gap-2 rounded-lg bg-surface p-2"
+            label={PROJECT_STAGE.label(column.stage)}
+            count={column.items.length}
           >
-            <div className="flex items-center justify-between px-1 text-xs">
-              <span className="font-medium text-muted">{PROJECT_STAGE.label(column.stage)}</span>
-              <span className="text-muted tabular-nums">{column.items.length}</span>
-            </div>
             {column.items.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="flex flex-col gap-1.5 rounded-md border border-border bg-bg p-3 text-sm transition-colors hover:border-border-strong"
-              >
-                <span className="line-clamp-2 font-medium text-fg">{project.title}</span>
-                {project.dueDate ? (
-                  <span className="text-xs text-muted">마감 {formatDate(project.dueDate)}</span>
-                ) : null}
-                {project.tags.length ? (
-                  <span className="flex flex-wrap gap-1">
-                    {project.tags.slice(0, 3).map((t) => (
-                      <TagChip key={t}>#{t}</TagChip>
-                    ))}
-                  </span>
-                ) : null}
-              </Link>
+              <KanbanCard key={project.id} project={project} />
             ))}
-          </li>
+          </KanbanColumn>
         ))}
       </ol>
     </div>
@@ -80,5 +61,58 @@ function StageStrip({ columns }: { columns: StageColumn[] }) {
         );
       })}
     </ol>
+  );
+}
+
+/** One kanban column: a labelled, counted list of cards (shared by the home and area boards). */
+export function KanbanColumn({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <li
+      aria-label={`${label} ${count}건`}
+      className="flex flex-col gap-2 rounded-lg bg-surface p-2"
+    >
+      <div className="flex items-center justify-between px-1 text-xs">
+        <span className="font-medium text-muted">{label}</span>
+        <span className="text-muted tabular-nums">{count}</span>
+      </div>
+      {children}
+    </li>
+  );
+}
+
+/** A project card linking to its detail page; `meta` adds a line (e.g. its goal). */
+export function KanbanCard({
+  project,
+  meta,
+}: {
+  project: Pick<Project, "id" | "title" | "dueDate" | "tags">;
+  meta?: ReactNode;
+}) {
+  return (
+    <Link
+      href={`/projects/${project.id}`}
+      className="flex flex-col gap-1.5 rounded-md border border-border bg-bg p-3 text-sm transition-colors hover:border-border-strong"
+    >
+      <span className="line-clamp-2 font-medium text-fg">{project.title}</span>
+      {meta}
+      {project.dueDate ? (
+        <span className="text-xs text-muted">마감 {formatDate(project.dueDate)}</span>
+      ) : null}
+      {project.tags.length ? (
+        <span className="flex flex-wrap gap-1">
+          {project.tags.slice(0, 3).map((t) => (
+            <TagChip key={t}>#{t}</TagChip>
+          ))}
+        </span>
+      ) : null}
+    </Link>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalOrder, groupProjectsByGoal, viaLabel } from "@/app/areas/flow";
+import { columnsByStatus, goalOrder, groupProjectsByGoal, viaLabel } from "@/app/areas/flow";
 import type { GoalNode } from "@/lib/repo/goals";
 
 const node = (id: string, children: GoalNode[] = []) =>
@@ -36,6 +36,20 @@ describe("area flow helpers", () => {
       ["q2", "분기2", ["b", "d"]],
       ["other", "가 다른 영역 목표", ["c"]],
       [null, null, ["a", "f"]],
+    ]);
+  });
+
+  it("splits projects into 계획·진행 중·완료·보류 columns, keeping empty ones and order", () => {
+    const cols = columnsByStatus([
+      { id: "a", status: "active" as const },
+      { id: "b", status: "planning" as const },
+      { id: "c", status: "active" as const },
+    ]);
+    expect(cols.map((c) => [c.status, c.items.map((p) => p.id)])).toEqual([
+      ["planning", ["b"]],
+      ["active", ["a", "c"]],
+      ["done", []],
+      ["on_hold", []],
     ]);
   });
 });

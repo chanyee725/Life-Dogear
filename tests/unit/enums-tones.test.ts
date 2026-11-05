@@ -4,6 +4,7 @@ import {
   IMPORTANCE,
   ITEM_TYPE,
   PROJECT_STAGE,
+  PROJECT_STATUS,
   READ_STATUS,
   SEMINAR_KIND,
   THOUGHT_KIND,
@@ -15,6 +16,7 @@ describe("enum badge tones", () => {
     const all = [
       ITEM_TYPE,
       PROJECT_STAGE,
+      PROJECT_STATUS,
       READ_STATUS,
       IMPORTANCE,
       SEMINAR_KIND,

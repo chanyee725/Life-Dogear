@@ -1,4 +1,5 @@
 import type { MaterialVia } from "@/lib/repo/areas";
+import type { ProjectStatus } from "@/lib/enums";
 import type { GoalNode } from "@/lib/repo/goals";
 
 /** "직접 연결" / "프로젝트 X 경유" / "목표 Y 경유", joined. */
@@ -57,4 +58,20 @@ export function groupProjectsByGoal<P extends { goalId: string | null }>(
       title: goalId ? goalTitles.get(goalId)! : null,
       projects,
     }));
+}
+
+/** Area kanban column order (differs from the enum order: 보류 sits last). */
+export const STATUS_COLUMNS: readonly ProjectStatus[] = ["planning", "active", "done", "on_hold"];
+
+/**
+ * Projects split into the four status columns, every column present even when empty.
+ * Order inside a column is kept, so pass an already goal-grouped list to keep goals together.
+ */
+export function columnsByStatus<P extends { status: ProjectStatus }>(
+  list: readonly P[],
+): { status: ProjectStatus; items: P[] }[] {
+  return STATUS_COLUMNS.map((status) => ({
+    status,
+    items: list.filter((p) => p.status === status),
+  }));
 }
