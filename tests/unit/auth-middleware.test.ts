@@ -43,6 +43,8 @@ describe("decideAccess", () => {
     for (const mode of [LOGIN, LOCAL, SETUP]) {
       expect(decide(mode, "/_next/static/chunks/a.js")).toEqual({ type: "next" });
       expect(decide(mode, "/favicon.ico")).toEqual({ type: "next" });
+      expect(decide(mode, "/icon.svg")).toEqual({ type: "next" });
+      expect(decide(mode, "/apple-icon")).toEqual({ type: "next" });
       expect(decide(mode, "/_next/webpack-hmr", false, "GET", true)).toEqual({ type: "next" });
     }
     expect(decide(LOGIN, "/api/auth/signin/google", false, "POST")).toEqual({ type: "next" });
@@ -84,6 +86,10 @@ describe("decideAccess", () => {
       "/_nextx/a.js",
       "/_next",
       "/favicon.ico/x",
+      "/icon.svg/x",
+      "/apple-icon/x",
+      "/apple-icon.png",
+      "/icon.svgx",
       "/api/images/x.png",
       "/api/pdfjs/pdf.worker.min.mjs",
     ]) {
