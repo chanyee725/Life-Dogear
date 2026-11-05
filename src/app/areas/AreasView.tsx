@@ -75,7 +75,7 @@ export function AreasView({
         <div className="flex flex-col gap-3">
           <Toolbar sort={sort} query={query} onQuery={changeQuery} />
           {visible.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
+            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
               ‘{query.trim()}’에 맞는 영역이 없습니다.
             </p>
           ) : (

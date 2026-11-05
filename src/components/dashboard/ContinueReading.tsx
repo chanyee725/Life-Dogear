@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Paper } from "@/lib/repo/papers";
-import { Section } from "@/components/ui";
+import { Section, cardClass, cardLinkClass, cn } from "@/components/ui";
 import { paperByline } from "./format";
 import { LatestReading } from "./LatestReading";
 
@@ -25,7 +25,7 @@ export function ContinueReading({ papers }: { papers: Paper[] }) {
             <li key={paper.id}>
               <Link
                 href={paper.pdfPath ? `/papers/${paper.id}/read` : `/papers/${paper.id}`}
-                className="flex h-full flex-col gap-2 rounded-lg border border-border p-4 transition-colors hover:border-border-strong hover:bg-surface"
+                className={cn(cardClass, cardLinkClass, "flex h-full flex-col gap-2")}
               >
                 <span className="line-clamp-2 font-medium text-fg">{paper.title}</span>
                 {byline ? <span className="text-[13px] text-muted">{byline}</span> : null}
