@@ -98,6 +98,7 @@ export const PROJECT_KIND = defineEnum([
 export type ProjectKind = (typeof PROJECT_KIND.values)[number];
 
 export const PROJECT_STATUS = defineEnum([
+  { value: "planning", label: "계획", tone: "gray" },
   { value: "active", label: "진행 중", tone: "blue" },
   { value: "on_hold", label: "보류", tone: "amber" },
   { value: "done", label: "완료", tone: "green" },

@@ -5,19 +5,25 @@ import { deleteArea } from "@/app/_actions/areas";
 import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
 import { ItemForm } from "@/components/fields/ItemForm";
+import { KanbanCard, KanbanColumn } from "@/components/dashboard/ProjectKanban";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
 import { ItemNotes } from "@/components/notes/ItemNotes";
 import { Page } from "@/components/shell/PageHeader";
 import { isValidItemId } from "@/lib/ids";
-import { ITEM_ROUTE, ITEM_TYPE } from "@/lib/enums";
+import { ITEM_ROUTE, ITEM_TYPE, PROJECT_STATUS } from "@/lib/enums";
 import { areas, goals, projects, tags } from "@/lib/repo";
 import type { AreaProject } from "@/lib/repo/projects";
 import { GoalTree } from "../../goals/GoalTree";
-import { ProgressBadge } from "../../projects/ProgressBadge";
 import { updateAreaPatch } from "../actions";
 import { AreaFields } from "../AreaFields";
-import { goalOrder, groupProjectsByGoal, viaLabel } from "../flow";
+import {
+  columnsByStatus,
+  goalOrder,
+  groupProjectsByGoal,
+  type ProjectGroup,
+  viaLabel,
+} from "../flow";
 
 export const dynamic = "force-dynamic";
 
@@ -83,9 +89,24 @@ export default async function AreaDetailPage({ params }: Props) {
           />
         </ItemForm>
       </div>
-      {/* 목표 and 프로젝트 side by side on wide screens; items-start keeps an empty side short,
-          and both headers take the "새 …" button's height so titles line up when one is empty. */}
-      <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2 [&>section>div:first-child]:min-h-7">
+      <Section
+        title={`프로젝트${countLabel(areaProjects.length)}`}
+        action={
+          areaProjects.length === 0 ? undefined : (
+            <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
+              새 프로젝트
+            </LinkButton>
+          )
+        }
+      >
+        {areaProjects.length === 0 ? (
+          <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
+        ) : (
+          <ProjectStatusBoard groups={projectGroups} showGroupTitles={showGroupTitles} />
+        )}
+      </Section>
+      {/* 목표 and 노트 side by side on wide screens; items-start keeps a short side short. */}
+      <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2">
         <Section
           title={`목표${countLabel(goalOrder(areaGoals).length)}`}
           action={
@@ -102,42 +123,7 @@ export default async function AreaDetailPage({ params }: Props) {
             <GoalTree nodes={areaGoals} />
           )}
         </Section>
-        <Section
-          title={`프로젝트${countLabel(areaProjects.length)}`}
-          action={
-            areaProjects.length === 0 ? undefined : (
-              <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
-                새 프로젝트
-              </LinkButton>
-            )
-          }
-        >
-          {areaProjects.length === 0 ? (
-            <EmptyAdd href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {projectGroups.map((group) => (
-                <div key={group.goalId ?? "none"} className="flex flex-col gap-1.5">
-                  {showGroupTitles ? (
-                    <h3 className="text-xs text-muted">
-                      {group.goalId ? (
-                        <>
-                          목표{" "}
-                          <Link href={`/goals/${group.goalId}`} className="text-fg hover:underline">
-                            {group.title}
-                          </Link>
-                        </>
-                      ) : (
-                        "목표 없음"
-                      )}
-                    </h3>
-                  ) : null}
-                  <ProjectList list={group.projects} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
+        <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
       </div>
       {materials.length === 0 ? null : (
         <Section title={`논문·세미나·생각 ${materials.length}`}>
@@ -159,7 +145,6 @@ export default async function AreaDetailPage({ params }: Props) {
           </RowList>
         </Section>
       )}
-      <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
       <ConnectedWithGraph item={ref} />
     </Page>
   );
@@ -167,26 +152,54 @@ export default async function AreaDetailPage({ params }: Props) {
 
 const countLabel = (n: number) => (n ? ` ${n}` : "");
 
-function ProjectList({ list }: { list: AreaProject[] }) {
+/**
+ * 계획·진행 중·완료·보류 columns, empty ones included. Cards keep the goal grouping:
+ * within a column they follow goal order, and the first card of each goal names it.
+ */
+function ProjectStatusBoard({
+  groups,
+  showGroupTitles,
+}: {
+  groups: ProjectGroup<AreaProject>[];
+  showGroupTitles: boolean;
+}) {
+  const ordered = groups.flatMap((g) => g.projects.map((p) => ({ ...p, group: g })));
   return (
-    <RowList>
-      {list.map((p) => (
-        <li key={p.id}>
-          <Link
-            href={`/projects/${p.id}`}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
-          >
-            <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
-            {p.viaGoal ? (
-              // No area of its own: listed because its goal belongs to this area.
-              <span className="max-w-48 shrink-0 truncate text-xs text-muted">
-                {viaLabel([{ type: "goal", ...p.viaGoal }])}
-              </span>
-            ) : null}
-            <ProgressBadge project={p} />
-          </Link>
-        </li>
+    <ol
+      aria-label="상태별 프로젝트"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+    >
+      {columnsByStatus(ordered).map((column) => (
+        <KanbanColumn
+          key={column.status}
+          label={PROJECT_STATUS.label(column.status)}
+          count={column.items.length}
+        >
+          {column.items.map((p, i) => {
+            const newGroup = showGroupTitles && column.items[i - 1]?.group !== p.group;
+            return (
+              <div key={p.id} className="flex flex-col gap-1">
+                {newGroup ? (
+                  <h3 className="truncate px-1 text-xs text-muted">
+                    {p.group.goalId ? `목표 ${p.group.title}` : "목표 없음"}
+                  </h3>
+                ) : null}
+                <KanbanCard
+                  project={p}
+                  meta={
+                    p.viaGoal ? (
+                      // No area of its own: listed because its goal belongs to this area.
+                      <span className="truncate text-xs text-muted">
+                        {viaLabel([{ type: "goal", ...p.viaGoal }])}
+                      </span>
+                    ) : null
+                  }
+                />
+              </div>
+            );
+          })}
+        </KanbanColumn>
       ))}
-    </RowList>
+    </ol>
   );
 }
