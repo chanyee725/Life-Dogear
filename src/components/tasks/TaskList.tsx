@@ -24,6 +24,11 @@ import { DateField } from "@/components/fields/DateField";
 import { safeAction } from "@/components/links/safe-action";
 import { Button, buttonClass, cn, emptyAddBoxClass } from "@/components/ui";
 import { Menu, MenuContent, MenuItem, MenuTrigger, type MenuAction } from "@/components/ui/Menu";
+import {
+  Popover as PopoverRoot,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/primitives/popover";
 import type { Task, TaskParent } from "@/lib/repo/tasks";
 import { addDays, formatDue, parentHref } from "./format";
 import { applyDrop, dragPosition, placeInOrder } from "./reorder";
@@ -843,46 +848,44 @@ function DuePopover({
   onPick: (value: string | null) => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [onClose]);
+  // Anchored to the row's bottom-right corner (the row is `relative`); Radix handles
+  // Esc, outside presses and focus (the date field first). Focus leaving does not close
+  // it: the menu that opened it may hand focus back to its trigger as it closes.
   return (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label="마감일"
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }
-      }}
-      className="absolute top-full right-0 z-20 mt-1 flex flex-col gap-2 rounded-lg border border-border bg-bg p-3 shadow-overlay"
-    >
-      <DateField autoFocus value={value} aria-label="마감일" onChange={(v) => onPick(v || null)} />
-      <div className="flex gap-1">
-        <Button size="sm" variant="ghost" onClick={() => onPick(today)}>
-          오늘
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => onPick(addDays(today, 1))}>
-          내일
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => onPick(nextMonday(today))}>
-          다음 주 월요일
-        </Button>
-      </div>
-      {value ? (
-        <Button size="sm" variant="ghost" onClick={() => onPick(null)}>
-          지우기
-        </Button>
-      ) : null}
-    </div>
+    <PopoverRoot open onOpenChange={(open) => (open ? undefined : onClose())}>
+      <PopoverAnchor className="absolute right-0 bottom-0 size-0" />
+      <PopoverContent
+        aria-label="마감일"
+        align="end"
+        sideOffset={4}
+        collisionPadding={8}
+        onFocusOutside={(e) => e.preventDefault()}
+        className="flex w-auto flex-col gap-2 rounded-lg border-border bg-bg p-3 shadow-overlay"
+      >
+        <DateField
+          autoFocus
+          value={value}
+          aria-label="마감일"
+          onChange={(v) => onPick(v || null)}
+        />
+        <div className="flex gap-1">
+          <Button size="sm" variant="ghost" onClick={() => onPick(today)}>
+            오늘
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => onPick(addDays(today, 1))}>
+            내일
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => onPick(nextMonday(today))}>
+            다음 주 월요일
+          </Button>
+        </div>
+        {value ? (
+          <Button size="sm" variant="ghost" onClick={() => onPick(null)}>
+            지우기
+          </Button>
+        ) : null}
+      </PopoverContent>
+    </PopoverRoot>
   );
 }
 
