@@ -44,16 +44,8 @@ export async function ConnectedItems({
   return (
     <div role="region" aria-label={title} className={className}>
       <Section
-        title={
-          <>
-            {title}
-            {connected.length ? (
-              <span aria-hidden className="ml-1.5 font-normal text-muted">
-                {connected.length}
-              </span>
-            ) : null}
-          </>
-        }
+        title={title}
+        count={connected.length || undefined}
         action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
       >
         {connected.length === 0 && viaItems.length === 0 ? null : (

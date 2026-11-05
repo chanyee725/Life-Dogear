@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { cn, EmptyAdd, TagChip } from "@/components/ui";
 import { PROJECT_STAGE } from "@/lib/enums";
 import type { Project, StageColumn } from "@/lib/repo/projects";
-import { formatDate } from "./format";
+import { seoulToday } from "./today";
+import { dueChip } from "./project-card";
 
 /**
  * Research projects by stage (submitted excluded); used inside the home
@@ -18,7 +19,11 @@ export function ProjectKanbanBoard({ columns }: { columns: StageColumn[] }) {
   const filled = columns.filter((c) => c.items.length > 0);
 
   if (total === 0) {
-    return <EmptyAdd compact href="/projects/new">＋ 새 연구</EmptyAdd>;
+    return (
+      <EmptyAdd compact href="/projects/new">
+        ＋ 새 연구
+      </EmptyAdd>
+    );
   }
 
   return (
@@ -95,10 +100,17 @@ export function KanbanColumn({
 export function KanbanCard({
   project,
   meta,
+  today,
+  hideTag,
 }: {
   project: Pick<Project, "id" | "title" | "dueDate" | "tags">;
   meta?: ReactNode;
+  /** Seoul date (`YYYY-MM-DD`); defaults to now. */
+  today?: string;
+  /** Tag to leave out (the area's own name on its board). */
+  hideTag?: string;
 }) {
+  const tags = project.tags.filter((t) => t !== hideTag);
   return (
     <Link
       href={`/projects/${project.id}`}
@@ -107,15 +119,29 @@ export function KanbanCard({
       <span className="line-clamp-2 font-medium text-fg">{project.title}</span>
       {meta}
       {project.dueDate ? (
-        <span className="text-xs text-muted">마감 {formatDate(project.dueDate)}</span>
+        <DueText dueDate={project.dueDate} today={today ?? seoulToday(new Date()).today} />
       ) : null}
-      {project.tags.length ? (
+      {tags.length ? (
         <span className="flex flex-wrap gap-1">
-          {project.tags.slice(0, 3).map((t) => (
+          {tags.slice(0, 3).map((t) => (
             <TagChip key={t}>#{t}</TagChip>
           ))}
         </span>
       ) : null}
     </Link>
+  );
+}
+
+/** `D-24 · 11.29`, red once overdue (same format as the home project cards). */
+function DueText({ dueDate, today }: { dueDate: string; today: string }) {
+  const due = dueChip(dueDate, today);
+  if (!due) return null;
+  return (
+    <span
+      className={cn("text-xs tabular-nums", due.tone === "red" ? "text-tone-red-fg" : "text-muted")}
+    >
+      <span aria-hidden="true">{due.text}</span>
+      <span className="sr-only">{due.label}</span>
+    </span>
   );
 }

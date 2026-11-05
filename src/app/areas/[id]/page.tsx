@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteArea } from "@/app/_actions/areas";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { KanbanCard, KanbanColumn } from "@/components/dashboard/ProjectKanban";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
@@ -66,12 +66,11 @@ export default async function AreaDetailPage({ params }: Props) {
           backLabel="영역"
           actions={
             <>
-              {area.archivedAt ? null : (
-                <ArchiveButton item={ref} archived={false} redirectTo="/areas" />
-              )}
-              <DeleteItemButton
-                action={deleteArea.bind(null, area.id)}
-                redirectTo="/areas"
+              <DetailMoreMenu
+                item={ref}
+                archived={Boolean(area.archivedAt)}
+                redirectTo={"/areas"}
+                deleteAction={deleteArea.bind(null, area.id)}
                 itemLabel="이 영역"
               />
             </>
@@ -90,7 +89,8 @@ export default async function AreaDetailPage({ params }: Props) {
         </ItemForm>
       </div>
       <Section
-        title={`프로젝트${countLabel(areaProjects.length)}`}
+        title="프로젝트"
+        count={areaProjects.length || undefined}
         action={
           areaProjects.length === 0 ? undefined : (
             <LinkButton href={`/projects/new?area=${area.id}`} variant="ghost" size="sm">
@@ -100,15 +100,22 @@ export default async function AreaDetailPage({ params }: Props) {
         }
       >
         {areaProjects.length === 0 ? (
-          <EmptyAdd compact href={`/projects/new?area=${area.id}`}>＋ 새 프로젝트</EmptyAdd>
+          <EmptyAdd compact href={`/projects/new?area=${area.id}`}>
+            ＋ 새 프로젝트
+          </EmptyAdd>
         ) : (
-          <ProjectStatusBoard groups={projectGroups} showGroupTitles={showGroupTitles} />
+          <ProjectStatusBoard
+            groups={projectGroups}
+            showGroupTitles={showGroupTitles}
+            areaTitle={area.title}
+          />
         )}
       </Section>
       {/* 목표 and 노트 side by side on wide screens; items-start keeps a short side short. */}
       <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2">
         <Section
-          title={`목표${countLabel(goalOrder(areaGoals).length)}`}
+          title="목표"
+          count={goalOrder(areaGoals).length || undefined}
           action={
             areaGoals.length === 0 ? undefined : (
               <LinkButton href={`/goals/new?area=${area.id}`} variant="ghost" size="sm">
@@ -118,7 +125,9 @@ export default async function AreaDetailPage({ params }: Props) {
           }
         >
           {areaGoals.length === 0 ? (
-            <EmptyAdd compact href={`/goals/new?area=${area.id}`}>＋ 새 목표</EmptyAdd>
+            <EmptyAdd compact href={`/goals/new?area=${area.id}`}>
+              ＋ 새 목표
+            </EmptyAdd>
           ) : (
             <GoalTree nodes={areaGoals} />
           )}
@@ -126,7 +135,7 @@ export default async function AreaDetailPage({ params }: Props) {
         <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
       </div>
       {materials.length === 0 ? null : (
-        <Section title={`논문·세미나·생각 ${materials.length}`}>
+        <Section title="논문·세미나·생각" count={materials.length}>
           <RowList aria-label="연결된 자료">
             {materials.map((m) => (
               <li key={`${m.ref.type}:${m.ref.id}`}>
@@ -150,8 +159,6 @@ export default async function AreaDetailPage({ params }: Props) {
   );
 }
 
-const countLabel = (n: number) => (n ? ` ${n}` : "");
-
 /**
  * 계획·진행 중·완료·보류 columns, empty ones included. Cards keep the goal grouping:
  * within a column they follow goal order, and the first card of each goal names it.
@@ -159,9 +166,11 @@ const countLabel = (n: number) => (n ? ` ${n}` : "");
 function ProjectStatusBoard({
   groups,
   showGroupTitles,
+  areaTitle,
 }: {
   groups: ProjectGroup<AreaProject>[];
   showGroupTitles: boolean;
+  areaTitle: string;
 }) {
   const ordered = groups.flatMap((g) => g.projects.map((p) => ({ ...p, group: g })));
   return (
@@ -186,6 +195,7 @@ function ProjectStatusBoard({
                 ) : null}
                 <KanbanCard
                   project={p}
+                  hideTag={areaTitle}
                   meta={
                     p.viaGoal ? (
                       // No area of its own: listed because its goal belongs to this area.

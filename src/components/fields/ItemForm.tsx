@@ -12,7 +12,7 @@ import {
 } from "react";
 import type { ActionResult } from "@/app/_actions/result";
 import { safeAction } from "@/components/links/safe-action";
-import { Button, cn, DetailHeader, QuietButton, Toast } from "@/components/ui";
+import { Button, cn, DetailHeader, Toast } from "@/components/ui";
 import { useDebouncedCallback } from "@/lib/hooks/useDebouncedCallback";
 import {
   AUTOSAVE_READ_ATTR,
@@ -339,7 +339,9 @@ function AutosaveForm({ action, basePath, backLabel, actions, children, classNam
         actions={
           <>
             {actions}
-            <QuietButton type="submit">저장</QuietButton>
+            <Button type="submit" variant="primary" size="sm" className="ml-1">
+              저장
+            </Button>
           </>
         }
       />

@@ -32,7 +32,7 @@ export function ProjectKindFields({
   const [ownKind, setOwnKind] = useState<ProjectKind>(initialKind);
   const kind = onKindChange ? initialKind : ownKind;
   return (
-    <Property label="종류" htmlFor="project-kind">
+    <Property label={kind === "research" ? "종류 · 단계" : "종류 · 상태"} htmlFor="project-kind">
       <div className="flex flex-wrap items-center gap-2">
         <EnumSelect
           id="project-kind"

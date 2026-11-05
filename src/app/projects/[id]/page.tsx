@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { ItemNotes } from "@/components/notes/ItemNotes";
@@ -48,12 +48,11 @@ export default async function ProjectDetailPage({ params }: Props) {
           backLabel="프로젝트"
           actions={
             <>
-              {project.archivedAt ? null : (
-                <ArchiveButton item={ref} archived={false} redirectTo="/projects" />
-              )}
-              <DeleteItemButton
-                action={deleteProject.bind(null, project.id)}
-                redirectTo="/projects"
+              <DetailMoreMenu
+                item={ref}
+                archived={Boolean(project.archivedAt)}
+                redirectTo={"/projects"}
+                deleteAction={deleteProject.bind(null, project.id)}
                 itemLabel="이 프로젝트"
               />
             </>

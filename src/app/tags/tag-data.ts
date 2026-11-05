@@ -15,6 +15,7 @@ import {
   type BadgeTone,
   type ItemType,
 } from "@/lib/enums";
+import { formatDate } from "@/components/ui/format";
 import { areas, goals, notes, papers, projects, seminars, tags, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 
@@ -107,7 +108,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
           p.kind === "research"
             ? [badge(PROJECT_STAGE, p.stage)]
             : [badge(PROJECT_KIND, p.kind), badge(PROJECT_STATUS, p.status)],
-        meta: p.dueDate ? `마감 ${p.dueDate}` : undefined,
+        meta: p.dueDate ? `마감 ${formatDate(p.dueDate)}` : undefined,
       })),
     },
     {
@@ -151,7 +152,7 @@ export async function loadTagPage(rawName: string): Promise<TagPageData | null> 
         href: href("seminar", s.id),
         title: s.title,
         badges: [badge(SEMINAR_KIND, s.kind)],
-        meta: [s.date ?? "", s.speaker].filter(Boolean).join(" · ") || undefined,
+        meta: [formatDate(s.date), s.speaker].filter(Boolean).join(" · ") || undefined,
       })),
     },
     {

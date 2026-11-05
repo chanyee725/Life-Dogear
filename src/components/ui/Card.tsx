@@ -51,7 +51,7 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-h-6 items-center justify-between gap-2", className)}>
+    <div className={cn("flex min-h-7 items-center justify-between gap-2", className)}>
       <Heading
         id={id}
         className="flex items-baseline gap-1.5 text-sm font-semibold tracking-tight text-foreground"

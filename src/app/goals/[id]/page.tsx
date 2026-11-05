@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { seoulDate } from "@/components/calendar/model";
-import { ArchiveButton, ArchivedNotice } from "@/components/fields/ArchiveButton";
-import { DeleteItemButton } from "@/components/fields/DeleteItemButton";
+import { ArchivedNotice } from "@/components/fields/ArchiveButton";
+import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { ItemNotes } from "@/components/notes/ItemNotes";
@@ -60,12 +60,11 @@ export default async function GoalDetailPage({ params }: Props) {
           backLabel="목표"
           actions={
             <>
-              {goal.archivedAt ? null : (
-                <ArchiveButton item={ref} archived={false} redirectTo="/goals" />
-              )}
-              <DeleteItemButton
-                action={deleteGoal.bind(null, goal.id)}
-                redirectTo="/goals"
+              <DetailMoreMenu
+                item={ref}
+                archived={Boolean(goal.archivedAt)}
+                redirectTo={"/goals"}
+                deleteAction={deleteGoal.bind(null, goal.id)}
                 itemLabel="이 목표"
               />
             </>
@@ -101,7 +100,8 @@ export default async function GoalDetailPage({ params }: Props) {
       {childHorizon ? (
         <Section
           id="goal-children"
-          title={`하위 목표${node.children.length ? ` ${node.children.length}` : ""}`}
+          title="하위 목표"
+          count={node.children.length || undefined}
           action={
             node.children.length && !archived ? (
               <LinkButton href={childHref} variant="ghost" size="sm">
@@ -113,14 +113,17 @@ export default async function GoalDetailPage({ params }: Props) {
           {node.children.length ? (
             <GoalTree nodes={node.children} />
           ) : archived ? null : (
-            <EmptyAdd compact href={childHref}>＋ 새 하위 목표</EmptyAdd>
+            <EmptyAdd compact href={childHref}>
+              ＋ 새 하위 목표
+            </EmptyAdd>
           )}
         </Section>
       ) : null}
       {goal.horizon === "life" ? null : (
         <Section
           id="goal-projects"
-          title={`프로젝트${node.projects.length ? ` ${node.projects.length}` : ""}`}
+          title="프로젝트"
+          count={node.projects.length || undefined}
           action={
             node.projects.length && !archived ? (
               <LinkButton href={projectHref} variant="ghost" size="sm">
@@ -131,7 +134,9 @@ export default async function GoalDetailPage({ params }: Props) {
         >
           {node.projects.length === 0 ? (
             archived ? null : (
-              <EmptyAdd compact href={projectHref}>＋ 새 프로젝트</EmptyAdd>
+              <EmptyAdd compact href={projectHref}>
+                ＋ 새 프로젝트
+              </EmptyAdd>
             )
           ) : (
             <RowList>

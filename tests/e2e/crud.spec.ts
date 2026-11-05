@@ -119,10 +119,10 @@ test("저장 토스트: 저장·Cmd+S면 오른쪽 위에 하나만, 자동 저�
   await page.setViewportSize({ width: 390, height: 844 });
   await titleField.press("ControlOrMeta+s");
   await expect(toast).toHaveCount(1);
-  // Phones: top corner, above the header row (보관 · 삭제 · 저장).
+  // Phones: top corner, above the header row (더보기 · 저장).
   const narrow = (await toast.boundingBox())!;
   expect(narrow.y).toBeLessThan(40);
-  for (const name of ["보관", "삭제", "저장"]) {
+  for (const name of ["더보기", "저장"]) {
     const b = (await page.getByRole("button", { name, exact: true }).first().boundingBox())!;
     expect(narrow.y + narrow.height).toBeLessThanOrEqual(b.y);
   }
