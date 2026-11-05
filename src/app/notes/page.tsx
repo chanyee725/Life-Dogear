@@ -17,13 +17,7 @@ import { TopicPicker } from "@/components/list/TopicPicker";
 import { ListView } from "@/components/list/ViewToggle";
 import { seoulDate } from "@/components/calendar/model";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import {
-  Badge,
-  ListEmpty,
-  formatDate,
-  formatRelative,
-  NewItemButton,
-} from "@/components/ui";
+import { Badge, ListEmpty, formatDate, NewItemButton } from "@/components/ui";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes } from "@/lib/repo";
 import type { Note, NoteSort } from "@/lib/repo/notes";
@@ -81,14 +75,25 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   const filtered = Boolean(sourceKind || tag);
 
   const columns: Column<Note>[] = [
-    { key: "title", header: "제목", primary: true, render: (n) => n.title },
-    { key: "source", header: "출처 종류", render: sourceBadge },
+    {
+      key: "title",
+      header: "제목",
+      primary: true,
+      // Source kind rides next to the title instead of in its own, mostly blank column.
+      render: (n) => (
+        <span className="inline-flex items-center gap-2">
+          {n.title}
+          {sourceBadge(n)}
+        </span>
+      ),
+    },
     {
       key: "sourceTitle",
       header: "출처",
       hideBelow: "lg",
-      className: "max-w-[16rem] truncate text-muted",
-      render: (n) => n.sourceTitle ?? "",
+      className: "text-muted",
+      render: (n) =>
+        n.sourceTitle ? <span className="block max-w-[14rem] truncate">{n.sourceTitle}</span> : "",
     },
     {
       key: "area",
@@ -97,18 +102,16 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       className: "text-muted",
       render: (n) => (n.areaId ? (areaTitle.get(n.areaId) ?? "") : ""),
     },
-    { key: "tags", header: "태그", render: (n) => <TagList tags={n.tags} /> },
     {
-      key: "updated",
-      header: "수정",
-      className: "text-muted tabular-nums whitespace-nowrap",
-      render: (n) => formatRelative(n.updatedAt),
+      key: "tags",
+      header: "태그",
+      isEmpty: (n) => n.tags.length === 0,
+      render: (n) => <TagList tags={n.tags} />,
     },
     {
       key: "created",
       header: "생성일",
-      hideBelow: "lg",
-      className: "text-muted tabular-nums whitespace-nowrap",
+      className: "text-muted tabular-nums",
       render: (n) => formatDate(seoulDate(n.createdAt)),
     },
   ];
@@ -122,7 +125,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       <PageHeader title="노트" actions={<NewItemButton href="/notes/new">새 노트</NewItemButton>} />
       <ListView
         storageKey="notes"
-        toolbar={
+        filters={
           <>
             <FilterChips
               ariaLabel="출처 종류 필터"
@@ -133,30 +136,26 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
               allLabel="모든 출처"
               options={NOTE_SOURCE_KIND.options}
             />
-            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
-              <TopicPicker
-                topics={topicOptions(countTags(all), BASE, params)}
-                selected={tag}
-                clearHref={buildHref(BASE, params, { tag: undefined })}
-              />
-              <div className="ml-auto flex flex-wrap items-center gap-3">
-                <SortSelect
-                  label="묶기"
-                  param="group"
-                  options={GROUPS}
-                  value={group}
-                  basePath={BASE}
-                  params={params}
-                />
-                <SortSelect
-                  label="정렬"
-                  options={SORTS}
-                  value={sort}
-                  basePath={BASE}
-                  params={params}
-                />
-              </div>
-            </div>
+          </>
+        }
+        toolbar={
+          <TopicPicker
+            topics={topicOptions(countTags(all), BASE, params)}
+            selected={tag}
+            clearHref={buildHref(BASE, params, { tag: undefined })}
+          />
+        }
+        controls={
+          <>
+            <SortSelect
+              label="묶기"
+              param="group"
+              options={GROUPS}
+              value={group}
+              basePath={BASE}
+              params={params}
+            />
+            <SortSelect label="정렬" options={SORTS} value={sort} basePath={BASE} params={params} />
           </>
         }
         table={

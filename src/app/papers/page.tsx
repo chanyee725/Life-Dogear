@@ -86,17 +86,20 @@ const columns: Column<Paper>[] = [
     header: "제목",
     primary: true,
     render: (p) => p.title,
-    className: "max-w-[22rem]",
   },
   {
     key: "authors",
     header: "저자",
     hideBelow: "lg",
-    render: (p) => <span className="text-muted">{formatAuthors(p.authors)}</span>,
+    isEmpty: (p) => !formatAuthors(p.authors),
+    render: (p) => (
+      <span className="block max-w-[14rem] truncate text-muted">{formatAuthors(p.authors)}</span>
+    ),
   },
   {
     key: "year",
     header: "연도",
+    isEmpty: (p) => p.year == null,
     render: (p) => <span className="text-muted tabular-nums">{p.year ?? ""}</span>,
   },
   {
@@ -109,8 +112,14 @@ const columns: Column<Paper>[] = [
       </div>
     ),
   },
-  { key: "progress", header: "읽기", render: readingCell },
-  { key: "tags", header: "태그", hideBelow: "lg", render: (p) => <Tags names={p.tags} /> },
+  { key: "progress", header: "읽기", isEmpty: (p) => !p.pdfPath, render: readingCell },
+  {
+    key: "tags",
+    header: "태그",
+    hideBelow: "lg",
+    isEmpty: (p) => p.tags.length === 0,
+    render: (p) => <Tags names={p.tags} />,
+  },
 ];
 
 function PaperCard({ paper }: { paper: Paper }) {
@@ -167,7 +176,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       />
       <ListView
         storageKey="papers"
-        toolbar={
+        filters={
           <>
             <FilterChips
               ariaLabel="읽기 상태"
@@ -187,30 +196,32 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
               allLabel="모든 중요도"
               options={IMPORTANCE.options}
             />
-            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
-              <TopicPicker
-                topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
-                selected={tag}
-                clearHref={buildHref(BASE, params, { tag: undefined })}
-              />
-              <div className="ml-auto flex flex-wrap items-center gap-3">
-                <SortSelect
-                  label="묶기"
-                  param="group"
-                  options={GROUPS}
-                  value={group}
-                  basePath={BASE}
-                  params={params}
-                />
-                <SortSelect
-                  label="정렬"
-                  options={SORTS}
-                  value={isSort(sort) ? sort : "updated"}
-                  basePath={BASE}
-                  params={params}
-                />
-              </div>
-            </div>
+          </>
+        }
+        toolbar={
+          <TopicPicker
+            topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
+            selected={tag}
+            clearHref={buildHref(BASE, params, { tag: undefined })}
+          />
+        }
+        controls={
+          <>
+            <SortSelect
+              label="묶기"
+              param="group"
+              options={GROUPS}
+              value={group}
+              basePath={BASE}
+              params={params}
+            />
+            <SortSelect
+              label="정렬"
+              options={SORTS}
+              value={isSort(sort) ? sort : "updated"}
+              basePath={BASE}
+              params={params}
+            />
           </>
         }
         table={

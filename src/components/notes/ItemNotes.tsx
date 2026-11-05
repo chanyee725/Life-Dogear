@@ -1,12 +1,29 @@
 import Link from "next/link";
 import { seoulDate } from "@/components/calendar/model";
-import { EmptyAdd, formatDate, LinkButton, ListRow, RowList, Section } from "@/components/ui";
+import { TagList } from "@/components/list/TagList";
+import {
+  cardClass,
+  cardLinkClass,
+  cn,
+  EmptyAdd,
+  formatDate,
+  LinkButton,
+  Section,
+} from "@/components/ui";
 import { AddTaskButton } from "@/components/tasks/AddTaskReveal";
 import { notes, tasks } from "@/lib/repo";
 import type { TaskParent } from "@/lib/repo/tasks";
 
 /** Item whose notes are shown: projects and goals link notes, areas also own them (`areaId`). */
 export type NotesOwner = { type: "project" | "goal" | "area"; id: string };
+
+// Same shape as the home 프로젝트 cards (GeneralProjects.tsx).
+const noteCard = cn(
+  cardClass,
+  cardLinkClass,
+  "flex h-full min-h-20 flex-col gap-2 rounded-md p-3 text-sm",
+  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+);
 
 export const newNoteHref = (owner: NotesOwner) => `/notes/new?${owner.type}=${owner.id}`;
 
@@ -49,26 +66,23 @@ export async function ItemNotes({
       }
     >
       {list.length ? (
-        <RowList>
+        // Card grid like the home 프로젝트 cards, so a few notes don't leave a wide blank row.
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((note) => (
-            <ListRow
-              key={note.id}
-              className="relative gap-3 py-2.5 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-hover has-[a:focus-visible]:bg-hover"
-            >
-              {/* after:inset-0 stretches the link over the whole row (bigger hit area, one tab stop). */}
-              <Link
-                href={`/notes/${note.id}`}
-                className="min-w-0 truncate text-sm after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-accent"
-              >
-                {note.title}
+            <li key={note.id}>
+              <Link href={`/notes/${note.id}`} className={noteCard}>
+                <span className="line-clamp-2 font-medium text-fg">{note.title}</span>
+                <span className="mt-auto flex flex-wrap items-center gap-1.5">
+                  <time dateTime={note.updatedAt} className="text-xs text-muted tabular-nums">
+                    {/* Seoul day: the server may run in UTC (Vercel). */}
+                    {formatDate(seoulDate(note.updatedAt))}
+                  </time>
+                  <TagList tags={note.tags} max={2} />
+                </span>
               </Link>
-              <time dateTime={note.updatedAt} className="shrink-0 text-xs text-muted tabular-nums">
-                {/* Seoul day: the server may run in UTC (Vercel). */}
-                {formatDate(seoulDate(note.updatedAt))}
-              </time>
-            </ListRow>
+            </li>
           ))}
-        </RowList>
+        </ul>
       ) : archived ? null : (
         <EmptyAdd compact href={href}>
           ＋ 새 노트

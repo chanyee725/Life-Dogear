@@ -17,20 +17,17 @@ import { UnlinkButton } from "./UnlinkButton";
  *
  * Usage: `<ConnectedItems item={{ type: "paper", id }} />`
  */
-export async function ConnectedItems({
-  item,
-  title = "연결된 항목",
-  className,
-  indirect = false,
-  hideListedNotes = false,
-}: {
-  item: ItemRef;
-  title?: string;
-  className?: string;
+type ConnectedOptions = {
   indirect?: boolean;
   /** Drop notes already listed in the page's 노트 section (project, goal, area pages). */
   hideListedNotes?: boolean;
-}) {
+};
+
+/** What `ConnectedItems` lists; load once with this when the caller also needs the count. */
+export async function loadConnected(
+  item: ItemRef,
+  { indirect = false, hideListedNotes = false }: ConnectedOptions = {},
+) {
   const [allConnected, viaItems, listedNotes] = await Promise.all([
     links.listConnected(item),
     indirect && item.type === "area" ? areas.listIndirect(item.id) : Promise.resolve([]),
@@ -40,6 +37,27 @@ export async function ConnectedItems({
   ]);
   const listed = new Set(listedNotes.map((n) => n.id));
   const connected = allConnected.filter((c) => !(c.ref.type === "note" && listed.has(c.ref.id)));
+  return { connected, viaItems };
+}
+
+export type ConnectedData = Awaited<ReturnType<typeof loadConnected>>;
+
+export async function ConnectedItems({
+  item,
+  title = "연결된 항목",
+  className,
+  indirect = false,
+  hideListedNotes = false,
+  data,
+}: ConnectedOptions & {
+  item: ItemRef;
+  title?: string;
+  className?: string;
+  /** Already loaded with `loadConnected` (skips a second query). */
+  data?: ConnectedData;
+}) {
+  const { connected, viaItems } =
+    data ?? (await loadConnected(item, { indirect, hideListedNotes }));
 
   return (
     <div role="region" aria-label={title} className={className}>
