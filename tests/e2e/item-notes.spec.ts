@@ -28,6 +28,8 @@ test("프로젝트 노트 섹션: 비었으면 ＋ 새 노트, 만든 노트가 
   const row = section.getByRole("listitem");
   await expect(row).toHaveCount(1);
   await expect(row.getByRole("link", { name: noteTitle })).toHaveAttribute("href", /\/notes\//);
+  // Last edit as a Seoul date, not "방금 전".
+  await expect(row.locator("time")).toHaveText(/^\d{4}\.\d{2}\.\d{2}$/);
   await expect(section.getByRole("link", { name: "새 노트", exact: true })).toBeVisible();
 
   // The notes list has a 생성일 column.
