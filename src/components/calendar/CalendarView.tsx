@@ -737,10 +737,16 @@ export function CalendarView({
           {narrow && !panelSlot ? <DayList day={selected} items={rest} ctx={ctx} /> : null}
           {belowGrid}
         </div>
-        {/* fitPanel: the wrapper adds no height (absolute child), so the row = the grid column. */}
+        {/* fitPanel: the wrapper adds no height (absolute child), so the row = the grid column.
+            The scroll box reaches 8px past each side and pads it back: the rows' hover fill
+            (`-mx-2`) stays inside instead of scrolling sideways. */}
         <div className={cn("order-first min-w-0 lg:order-none", fitPanel && "lg:relative")}>
           <TodayPanel
-            className={fitPanel ? "lg:absolute lg:inset-0 lg:overflow-y-auto lg:pt-1" : "lg:pt-1"}
+            className={
+              fitPanel
+                ? "lg:absolute lg:inset-y-0 lg:-inset-x-2 lg:overflow-x-hidden lg:overflow-y-auto lg:px-2 lg:pt-1"
+                : "lg:pt-1"
+            }
             day={selected}
             today={today}
             now={now}
