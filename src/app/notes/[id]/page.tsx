@@ -7,7 +7,7 @@ import { ItemForm } from "@/components/fields/ItemForm";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell/PageHeader";
 import { formatDate } from "@/components/ui";
-import { isValidItemId } from "@/lib/ids";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { NOTE_SOURCE_KIND } from "@/lib/enums";
 import { areas, notes, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
@@ -19,14 +19,13 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const note = isValidItemId(id) ? await notes.get(id) : null;
+  const id = await itemIdForMetadata("notes", (await params).id);
+  const note = id ? await notes.get(id) : null;
   return { title: note?.title ?? "노트" };
 }
 
 export default async function NoteDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("notes", (await params).id);
   const [note, allTags, areaList] = await Promise.all([
     notes.get(id),
     tags.listAll({ visibleOnly: true }),

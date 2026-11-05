@@ -5,7 +5,8 @@ import { HighlightReader } from "@/components/highlights";
 import { FocusModeToggle } from "@/components/shell/FocusModeToggle";
 import { Page, PageHeader } from "@/components/shell";
 import { parseJumpParams } from "@/lib/highlights";
-import { isValidItemId } from "@/lib/ids";
+import { itemPath } from "@/lib/item-path";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { papers } from "@/lib/repo";
 import * as highlightsRepo from "@/lib/repo/highlights";
 import { PdfDropZone } from "../../_components/PdfUploader";
@@ -17,23 +18,31 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-async function load(id: string) {
-  return isValidItemId(id) ? papers.get(id) : null;
+async function load(id: string | null) {
+  return id ? papers.get(id) : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const paper = await load((await params).id);
+  const paper = await load(await itemIdForMetadata("papers", (await params).id));
   return { title: paper ? `${paper.title} 읽기` : "논문" };
 }
 
 export default async function ReadPaperPage({ params, searchParams }: Props) {
-  const { id } = await params;
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    for (const v of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
+      query.append(key, v);
+    }
+  }
+  const qs = query.toString();
+  const id = await resolveItemRoute("papers", (await params).id, `/read${qs ? `?${qs}` : ""}`);
   const paper = await load(id);
   if (!paper) notFound();
+  const paperHref = itemPath("papers", paper.id, paper.title);
 
   const back = (
     <Link
-      href={`/papers/${paper.id}`}
+      href={paperHref}
       // In focus mode the shell's fixed "사이드바 열기" button sits at the top-left corner.
       className="shrink-0 rounded-md px-2 py-1 text-muted hover:bg-hover hover:text-fg in-data-[sidebar=collapsed]:ml-9"
       aria-label="논문으로 돌아가기"
@@ -47,7 +56,7 @@ export default async function ReadPaperPage({ params, searchParams }: Props) {
       <Page>
         <PageHeader
           eyebrow={
-            <Link href={`/papers/${paper.id}`} className="hover:text-fg">
+            <Link href={paperHref} className="hover:text-fg">
               ← {paper.title}
             </Link>
           }

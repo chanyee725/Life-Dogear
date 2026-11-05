@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isValidItemId } from "@/lib/ids";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
@@ -15,14 +15,13 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const thought = isValidItemId(id) ? await thoughts.get(id) : null;
+  const id = await itemIdForMetadata("thoughts", (await params).id);
+  const thought = id ? await thoughts.get(id) : null;
   return { title: thought?.title ?? "생각" };
 }
 
 export default async function ThoughtDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("thoughts", (await params).id);
   const [thought, allTags] = await Promise.all([thoughts.get(id), tags.listAll()]);
   if (!thought) notFound();
 

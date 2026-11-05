@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isValidItemId } from "@/lib/ids";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { ArchivedNotice } from "@/components/fields/ArchiveButton";
 import { DetailMoreMenu } from "@/components/fields/DetailMoreMenu";
 import { ItemForm } from "@/components/fields/ItemForm";
@@ -15,14 +15,13 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const seminar = isValidItemId(id) ? await seminars.get(id) : null;
+  const id = await itemIdForMetadata("seminars", (await params).id);
+  const seminar = id ? await seminars.get(id) : null;
   return { title: seminar?.title ?? "세미나" };
 }
 
 export default async function SeminarDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("seminars", (await params).id);
   const [seminar, allTags] = await Promise.all([seminars.get(id), tags.listAll()]);
   if (!seminar) notFound();
 

@@ -9,7 +9,7 @@ import { seoulDate } from "@/components/calendar/model";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { formatDate } from "@/components/ui";
-import { isValidItemId } from "@/lib/ids";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { areas, goals, projects, tags } from "@/lib/repo";
 import { goalOptionsFor } from "../../goals/options";
 import { deleteProject, updateProject } from "../actions";
@@ -20,14 +20,13 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const project = isValidItemId(id) ? await projects.get(id) : null;
+  const id = await itemIdForMetadata("projects", (await params).id);
+  const project = id ? await projects.get(id) : null;
   return { title: project?.title ?? "프로젝트" };
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("projects", (await params).id);
   const [project, allTags, areaList, goalList] = await Promise.all([
     projects.get(id),
     tags.listAll({ visibleOnly: true }),
