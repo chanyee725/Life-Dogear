@@ -66,6 +66,8 @@
   --rb-code-variable: #9b3a32;
   /* Inline `code` text (docs/design/code.md 0): 5.3:1 on --rb-code-bg. */
   --rb-code-inline: #b3402f;
+  /* Text selection inside code, one step stronger than --rb-accent-soft; comment text stays ~4.2:1. */
+  --rb-code-selection: #dfddd6;
 
   /* Calendar event palette per source (docs: one place for chips, bars, dots).
      Soft bg + same-hue dark text, all at one lightness/chroma band; text >= 4.5:1
@@ -145,6 +147,7 @@
   --rb-code-attr: #7fd3d0;
   --rb-code-variable: #f09a90;
   --rb-code-inline: #e8897d;
+  --rb-code-selection: #403f3b;
 
   --rb-ev-task-bg: #1e2c23;
   --rb-ev-task-fg: #93cda6;
@@ -506,6 +509,11 @@
     overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--rb-border-strong) transparent;
+  }
+  .rb-prose pre::selection,
+  .rb-prose pre *::selection,
+  .rb-prose code::selection {
+    background: var(--rb-code-selection);
   }
   .rb-prose pre code {
     font-size: inherit;
