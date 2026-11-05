@@ -34,7 +34,7 @@ export function WeekStripPlaceholder({ days, today }: { days: string[]; today: s
             key={d}
             className={`flex h-16 flex-col items-center justify-center gap-1 rounded-md ${d === today ? "bg-accent-soft" : ""}`}
           >
-            <span className="text-[11px] text-muted">{WEEKDAYS[i]}</span>
+            <span className="text-xs text-muted">{WEEKDAYS[i]}</span>
             <span className="text-sm text-muted tabular-nums">{Number(d.slice(8, 10))}</span>
             <span className="h-1" />
           </li>

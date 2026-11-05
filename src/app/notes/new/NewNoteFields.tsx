@@ -38,7 +38,7 @@ export function NewNoteFields({
     <div ref={root} className="contents">
       <div className="flex flex-col gap-1.5">
         <TemplatePicker templates={NOTE_TEMPLATES} selected={choice.selected} onChoose={onChoose} />
-        <p aria-live="polite" className="min-h-[1lh] text-[12px] text-muted">
+        <p aria-live="polite" className="min-h-[1lh] text-xs text-muted">
           {choice.skipped ? KEPT_BODY_NOTICE : ""}
         </p>
       </div>

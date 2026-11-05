@@ -21,7 +21,7 @@ export function GoalDirection({ goals }: { goals: readonly ListGoal[] }) {
             <li key={g.id} className="min-w-0">
               <Link
                 href={`/goals/${g.id}`}
-                className="rounded-sm text-[15px] font-semibold break-words hover:underline"
+                className="rounded-sm text-base font-semibold break-words hover:underline"
               >
                 {g.title}
               </Link>

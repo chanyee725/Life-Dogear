@@ -64,7 +64,7 @@ export function TopicPicker({
         className={cn(chipClass(Boolean(current)), "border-border")}
       >
         {current ? `#${current}` : "주제"}
-        <span aria-hidden className="text-[10px] text-muted">
+        <span aria-hidden className="text-xs text-muted">
           ▾
         </span>
       </button>

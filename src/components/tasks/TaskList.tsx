@@ -463,7 +463,7 @@ export function TaskList({
             onClick={() => setShowDone((v) => !v)}
             className="flex h-8 w-fit items-center gap-1.5 rounded-md px-1.5 text-[13px] text-muted hover:text-fg"
           >
-            <span aria-hidden className="w-3 text-[10px]">
+            <span aria-hidden className="w-3 text-xs">
               {showDone ? "▾" : "▸"}
             </span>
             완료 <span className="tabular-nums">{done.length}</span>
