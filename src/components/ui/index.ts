@@ -20,6 +20,8 @@ export { DetailHeader, BackLink } from "./DetailHeader";
 export { FilterBar } from "./FilterBar";
 export { LinkTabs, SegmentedLinks } from "./Tabs";
 export { Segmented, type SegmentedOption } from "./Segmented";
+export { Checkbox } from "./Checkbox";
+export { Switch } from "./Switch";
 export { EmptyAdd, emptyAddBoxClass } from "./EmptyAdd";
 export { Table, THead, TBody, Tr, Th, Td } from "./Table";
 export { Dialog, ConfirmDialog } from "./Dialog";

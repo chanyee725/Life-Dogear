@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createRecommendedAreas } from "@/app/_actions/areas";
 import { safeAction } from "@/components/links/safe-action";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { RECOMMENDED_AREAS } from "@/lib/enums";
 
 /**
@@ -44,15 +45,13 @@ export function RecommendedAreas() {
           className="flex items-center gap-2 text-muted"
           title={area.standard}
         >
-          <input
-            type="checkbox"
+          <Checkbox
             checked={picked.includes(area.title)}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setPicked((prev) =>
-                e.target.checked ? [...prev, area.title] : prev.filter((t) => t !== area.title),
+                checked ? [...prev, area.title] : prev.filter((t) => t !== area.title),
               )
             }
-            className="accent-accent"
           />
           {area.title}
         </label>

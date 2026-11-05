@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Button, cn, Segmented, Select, type SegmentedOption } from "@/components/ui";
+import { Button, Checkbox, cn, Segmented, Select, type SegmentedOption } from "@/components/ui";
 import type { GraphColorBy } from "@/lib/graph/color";
 import type { GraphFilter, GraphNodeType } from "@/lib/graph/types";
 import type { GraphTheme } from "./graph-theme";
@@ -134,10 +134,9 @@ export function GraphFilterControls({
       {OPT_IN_TYPES.map(chip)}
       {shownTypes(filter).includes("task") ? (
         <label className="inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-fg">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={!!filter.doneTasks}
-            onChange={(e) => onChange({ ...filter, doneTasks: e.target.checked || undefined })}
+            onCheckedChange={(checked) => onChange({ ...filter, doneTasks: checked || undefined })}
           />
           완료 포함
         </label>
@@ -196,18 +195,16 @@ export function GraphFilterControls({
       className={cn("flex flex-wrap gap-3", compact ? "flex-col items-start" : "items-center")}
     >
       <label className="inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-fg">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={!!filter.archived}
-          onChange={(e) => onChange({ ...filter, archived: e.target.checked || undefined })}
+          onCheckedChange={(checked) => onChange({ ...filter, archived: checked || undefined })}
         />
         보관 보기
       </label>
       <label className="inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-fg">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={!!filter.orphans}
-          onChange={(e) => onChange({ ...filter, orphans: e.target.checked || undefined })}
+          onCheckedChange={(checked) => onChange({ ...filter, orphans: checked || undefined })}
         />
         연결 없는 항목만
       </label>
