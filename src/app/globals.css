@@ -155,6 +155,55 @@ html.dark[data-accent="terracotta"] {
   --rb-tone-orange-fg: #d9a878;
 }
 
+/* ---------- Accent: mono (html[data-accent="mono"]) ----------
+   Ink accent: primary buttons are near-black with white text (dark: reversed), and
+   the neutrals shift to a warm grey with a faint yellow cast. Info colours (danger,
+   tones, calendar weekend, graph nodes) are untouched: they are all chromatic, so
+   none of them can be mistaken for an achromatic accent.
+   Contrast: light #37352f vs #fff 12.3:1, on soft #e8e7e3 9.9:1, muted #65645f
+   vs hover #ecebe7 5.0:1; dark #e6e5e3 vs #191919 14.0:1, muted #9b9a97 vs hover 5.0:1.
+   accent-soft sits one step darker than --rb-hover so a selected item still reads
+   as selected while hovered. */
+html[data-accent="mono"] {
+  --rb-bg: #ffffff;
+  --rb-surface: #f7f6f3;
+  --rb-subtle: #f1f0ec;
+  --rb-hover: #ecebe7;
+  --rb-border: #e9e8e4;
+  --rb-border-strong: #d5d4cf;
+  --rb-fg: #2f2e2a;
+  --rb-muted: #65645f;
+  --rb-faint: #a3a29d;
+  --rb-tone-gray-bg: #f1f0ec;
+  --rb-tone-gray-fg: #57564f;
+
+  --rb-accent: #37352f;
+  --rb-accent-hover: #1f1e1b;
+  --rb-accent-fg: #ffffff;
+  --rb-accent-soft: #e8e7e3;
+  --rb-ring: rgb(55 53 47 / 0.3);
+}
+
+html.dark[data-accent="mono"] {
+  --rb-bg: #191919;
+  --rb-surface: #202020;
+  --rb-subtle: #252525;
+  --rb-hover: #2c2c2b;
+  --rb-border: #2f2f2f;
+  --rb-border-strong: #3f3f3e;
+  --rb-fg: #e6e5e3;
+  --rb-muted: #9b9a97;
+  --rb-faint: #6b6a67;
+  --rb-tone-gray-bg: #2c2c2b;
+  --rb-tone-gray-fg: #b5b4b0;
+
+  --rb-accent: #e6e5e3;
+  --rb-accent-hover: #ffffff;
+  --rb-accent-fg: #191919;
+  --rb-accent-soft: #363634;
+  --rb-ring: rgb(230 229 227 / 0.35);
+}
+
 /* ---------- shadcn/ui theme variables ----------
    components.json points shadcn at this file. The shadcn names are aliases of the
    --rb-* tokens above, so light/dark come from the same values and the app's

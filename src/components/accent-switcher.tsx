@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/components/ui/cn";
+import { Tooltip } from "@/components/ui/Tooltip";
 import {
   applyAccent,
   readAccentPreference,
@@ -14,9 +15,10 @@ import {
 const OPTIONS: { value: AccentPreference; label: string; swatch: string }[] = [
   { value: "blue", label: "파랑", swatch: "#4f5bd5" },
   { value: "terracotta", label: "테라코타", swatch: "#b8461a" },
+  { value: "mono", label: "모노", swatch: "#37352f" },
 ];
 
-/** Two colour dots that switch the accent between blue (default) and terracotta. */
+/** Colour dots that switch the accent: blue (default), terracotta, mono. */
 export function AccentSwitcher({ className }: { className?: string }) {
   // `null` until mounted so server and first client render match.
   const [pref, setPref] = useState<AccentPreference | null>(null);
@@ -32,29 +34,30 @@ export function AccentSwitcher({ className }: { className?: string }) {
   }
 
   return (
-    <div role="group" aria-label="포인트 컬러" className={cn("flex items-center gap-1", className)}>
-      <span className="mr-auto text-xs text-muted">포인트 컬러</span>
+    <div role="group" aria-label="포인트 컬러" className={cn("flex items-center", className)}>
       {OPTIONS.map((o) => {
         const pressed = pref === o.value;
         return (
-          <button
-            key={o.value}
-            type="button"
-            aria-label={`포인트 컬러: ${o.label}`}
-            aria-pressed={pressed}
-            title={o.label}
-            onClick={() => choose(o.value)}
-            className="grid size-6 place-items-center rounded-full"
-          >
-            <span
-              aria-hidden
-              style={{ backgroundColor: o.swatch }}
-              className={cn(
-                "size-3.5 rounded-full transition-shadow",
-                pressed && "ring-2 ring-fg ring-offset-2 ring-offset-surface",
-              )}
-            />
-          </button>
+          <Tooltip key={o.value} content={`포인트 컬러: ${o.label}`}>
+            <button
+              type="button"
+              aria-label={`포인트 컬러: ${o.label}`}
+              aria-pressed={pressed}
+              onClick={() => choose(o.value)}
+              className="grid size-6 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+            >
+              <span
+                aria-hidden
+                style={{ backgroundColor: o.swatch }}
+                className={cn(
+                  "size-3.5 rounded-full transition-shadow",
+                  // Near-black ink dot would vanish on the dark sidebar without an edge.
+                  o.value === "mono" && "dark:outline dark:outline-1 dark:outline-faint",
+                  pressed && "ring-2 ring-fg ring-offset-2 ring-offset-surface",
+                )}
+              />
+            </button>
+          </Tooltip>
         );
       })}
     </div>
