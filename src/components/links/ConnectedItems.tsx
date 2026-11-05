@@ -2,7 +2,7 @@ import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
 import { Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
-import { links, type ItemRef } from "@/lib/repo";
+import { areas, links, type ItemRef } from "@/lib/repo";
 import { refKey } from "@/lib/repo/items";
 import { LinkPicker } from "./LinkPicker";
 import { UnlinkButton } from "./UnlinkButton";
@@ -11,18 +11,27 @@ import { UnlinkButton } from "./UnlinkButton";
  * "연결된 항목" section for a detail page (server component).
  * Shows links in both directions, newest first, with add and remove controls.
  *
+ * With `indirect` (areas only), also lists up to 6 items two steps away — linked to the
+ * area's projects, goals or linked items — each tagged with the item it came through.
+ * Those rows have no unlink button.
+ *
  * Usage: `<ConnectedItems item={{ type: "paper", id }} />`
  */
 export async function ConnectedItems({
   item,
   title = "연결된 항목",
   className,
+  indirect = false,
 }: {
   item: ItemRef;
   title?: string;
   className?: string;
+  indirect?: boolean;
 }) {
-  const connected = await links.listConnected(item);
+  const [connected, viaItems] = await Promise.all([
+    links.listConnected(item),
+    indirect && item.type === "area" ? areas.listIndirect(item.id) : Promise.resolve([]),
+  ]);
 
   return (
     <div role="region" aria-label={title} className={className}>
@@ -39,7 +48,7 @@ export async function ConnectedItems({
         }
         action={<LinkPicker item={item} connectedKeys={connected.map((c) => refKey(c.ref))} />}
       >
-        {connected.length === 0 ? null : (
+        {connected.length === 0 && viaItems.length === 0 ? null : (
           <RowList>
             {connected.map((c) => (
               <ListRow key={refKey(c.ref)} className="group">
@@ -52,6 +61,20 @@ export async function ConnectedItems({
                 </Link>
                 {c.archived ? <Badge tone="gray">보관됨</Badge> : null}
                 <UnlinkButton item={item} other={c.ref} otherTitle={c.title} />
+              </ListRow>
+            ))}
+            {viaItems.map((c) => (
+              <ListRow key={`via-${refKey(c.ref)}`} data-indirect="">
+                <Badge tone={ITEM_TYPE.tone(c.ref.type)}>{ITEM_TYPE.label(c.ref.type)}</Badge>
+                <Link
+                  href={itemPath(c.ref)}
+                  className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
+                >
+                  {c.title}
+                </Link>
+                <span className="max-w-48 shrink-0 truncate text-xs text-muted">
+                  {c.via.title} 경유
+                </span>
               </ListRow>
             ))}
           </RowList>
