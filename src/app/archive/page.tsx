@@ -3,7 +3,7 @@ import Link from "next/link";
 import { itemPath } from "@/app/_actions/parse";
 import { ArchiveButton } from "@/components/fields/ArchiveButton";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState, formatDate, ListRow, RowList, Section } from "@/components/ui";
+import { EmptyLine, formatDate, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE, type ItemType } from "@/lib/enums";
 import { archive } from "@/lib/repo";
 
@@ -32,7 +32,7 @@ export default async function ArchivePage() {
     <Page>
       <PageHeader title="보관함" />
       {groups.length === 0 ? (
-        <EmptyState title="보관한 항목이 없습니다" />
+        <EmptyLine>보관한 항목이 없습니다</EmptyLine>
       ) : (
         <div className="flex flex-col gap-8">
           {groups.map((group) => (

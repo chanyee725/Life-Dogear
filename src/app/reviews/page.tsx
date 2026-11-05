@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { firstParam, type QueryParams } from "@/components/list/query";
-import { Badge, Button, EmptyState, formatRelative, LinkButton, LinkTabs } from "@/components/ui";
+import { Badge, Button, EmptyLine, formatRelative, LinkButton, LinkTabs } from "@/components/ui";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
 import { REVIEW_KIND } from "@/lib/enums";
 import * as reviews from "@/lib/repo/reviews";
@@ -87,7 +87,7 @@ export default async function ReviewsPage({
           ))}
         </ol>
       ) : (
-        <EmptyState title={`아직 ${KIND_TAB_LABEL[kind]} 회고가 없습니다`} />
+        <EmptyLine>아직 {KIND_TAB_LABEL[kind]} 회고가 없습니다</EmptyLine>
       )}
     </Page>
   );

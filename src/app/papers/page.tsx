@@ -176,7 +176,7 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
       />
       <ListView
         storageKey="papers"
-        toolbar={
+        filters={
           <>
             <FilterChips
               ariaLabel="읽기 상태"
@@ -196,30 +196,32 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
               allLabel="모든 중요도"
               options={IMPORTANCE.options}
             />
-            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
-              <TopicPicker
-                topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
-                selected={tag}
-                clearHref={buildHref(BASE, params, { tag: undefined })}
-              />
-              <div className="ml-auto flex flex-wrap items-center gap-3">
-                <SortSelect
-                  label="묶기"
-                  param="group"
-                  options={GROUPS}
-                  value={group}
-                  basePath={BASE}
-                  params={params}
-                />
-                <SortSelect
-                  label="정렬"
-                  options={SORTS}
-                  value={isSort(sort) ? sort : "updated"}
-                  basePath={BASE}
-                  params={params}
-                />
-              </div>
-            </div>
+          </>
+        }
+        toolbar={
+          <TopicPicker
+            topics={topicOptions(countTags(unfilteredByTag), BASE, params)}
+            selected={tag}
+            clearHref={buildHref(BASE, params, { tag: undefined })}
+          />
+        }
+        controls={
+          <>
+            <SortSelect
+              label="묶기"
+              param="group"
+              options={GROUPS}
+              value={group}
+              basePath={BASE}
+              params={params}
+            />
+            <SortSelect
+              label="정렬"
+              options={SORTS}
+              value={isSort(sort) ? sort : "updated"}
+              basePath={BASE}
+              params={params}
+            />
           </>
         }
         table={

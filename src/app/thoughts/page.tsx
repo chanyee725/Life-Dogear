@@ -123,7 +123,7 @@ export default async function ThoughtsPage({
       />
       <ListView
         storageKey="thoughts"
-        toolbar={
+        filters={
           <>
             <FilterChips
               ariaLabel="종류 필터"
@@ -143,30 +143,26 @@ export default async function ThoughtsPage({
               allLabel="모든 발전 정도"
               options={THOUGHT_MATURITY.options}
             />
-            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
-              <TopicPicker
-                topics={topicOptions(countTags(all), BASE, params)}
-                selected={tag}
-                clearHref={buildHref(BASE, params, { tag: undefined })}
-              />
-              <div className="ml-auto flex flex-wrap items-center gap-3">
-                <SortSelect
-                  label="묶기"
-                  param="group"
-                  options={GROUPS}
-                  value={group}
-                  basePath={BASE}
-                  params={params}
-                />
-                <SortSelect
-                  label="정렬"
-                  options={SORTS}
-                  value={sort}
-                  basePath={BASE}
-                  params={params}
-                />
-              </div>
-            </div>
+          </>
+        }
+        toolbar={
+          <TopicPicker
+            topics={topicOptions(countTags(all), BASE, params)}
+            selected={tag}
+            clearHref={buildHref(BASE, params, { tag: undefined })}
+          />
+        }
+        controls={
+          <>
+            <SortSelect
+              label="묶기"
+              param="group"
+              options={GROUPS}
+              value={group}
+              basePath={BASE}
+              params={params}
+            />
+            <SortSelect label="정렬" options={SORTS} value={sort} basePath={BASE} params={params} />
           </>
         }
         table={

@@ -40,3 +40,8 @@ export function EmptyAdd(
     </div>
   );
 }
+
+/** Empty list with nothing to add here: one quiet line of copy, same place as `EmptyAdd compact`. */
+export function EmptyLine({ children }: { children: ReactNode }) {
+  return <p className="py-1.5 text-sm text-muted">{children}</p>;
+}

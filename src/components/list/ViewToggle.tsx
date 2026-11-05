@@ -108,6 +108,8 @@ export function ListView({
   table,
   cards,
   toolbar,
+  filters,
+  controls,
   className,
 }: {
   /** Per-list key, e.g. "papers". */
@@ -116,13 +118,30 @@ export function ListView({
   cards: ReactNode;
   /** Filters etc., shown left of the toggle. */
   toolbar?: ReactNode;
+  /** Filter chip rows above the toolbar line. */
+  filters?: ReactNode;
+  /** 묶기·정렬 selects: right end of the toolbar line, just before the toggle, so they share one row. */
+  controls?: ReactNode;
   className?: string;
 }) {
   const [mode, setMode] = useViewMode(key);
+  const toggle = <ViewToggle value={mode} onChange={setMode} />;
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      {/* items-start: the toggle lines up with the first toolbar row (sort select), not the block's middle. */}
-      <FilterBar end={<ViewToggle value={mode} onChange={setMode} />}>{toolbar}</FilterBar>
+      {controls !== undefined || filters !== undefined ? (
+        <div className="flex flex-col gap-3">
+          {filters ? <div className="flex flex-wrap items-center gap-2">{filters}</div> : null}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {toolbar}
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              {controls}
+              {toggle}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <FilterBar end={toggle}>{toolbar}</FilterBar>
+      )}
       {mode === "table" ? table : cards}
     </div>
   );

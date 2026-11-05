@@ -125,7 +125,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       <PageHeader title="노트" actions={<NewItemButton href="/notes/new">새 노트</NewItemButton>} />
       <ListView
         storageKey="notes"
-        toolbar={
+        filters={
           <>
             <FilterChips
               ariaLabel="출처 종류 필터"
@@ -136,30 +136,26 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
               allLabel="모든 출처"
               options={NOTE_SOURCE_KIND.options}
             />
-            <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
-              <TopicPicker
-                topics={topicOptions(countTags(all), BASE, params)}
-                selected={tag}
-                clearHref={buildHref(BASE, params, { tag: undefined })}
-              />
-              <div className="ml-auto flex flex-wrap items-center gap-3">
-                <SortSelect
-                  label="묶기"
-                  param="group"
-                  options={GROUPS}
-                  value={group}
-                  basePath={BASE}
-                  params={params}
-                />
-                <SortSelect
-                  label="정렬"
-                  options={SORTS}
-                  value={sort}
-                  basePath={BASE}
-                  params={params}
-                />
-              </div>
-            </div>
+          </>
+        }
+        toolbar={
+          <TopicPicker
+            topics={topicOptions(countTags(all), BASE, params)}
+            selected={tag}
+            clearHref={buildHref(BASE, params, { tag: undefined })}
+          />
+        }
+        controls={
+          <>
+            <SortSelect
+              label="묶기"
+              param="group"
+              options={GROUPS}
+              value={group}
+              basePath={BASE}
+              params={params}
+            />
+            <SortSelect label="정렬" options={SORTS} value={sort} basePath={BASE} params={params} />
           </>
         }
         table={

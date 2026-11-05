@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Page, PageHeader } from "@/components/shell/PageHeader";
-import { EmptyState, formatDate, NewItemButton, RowList } from "@/components/ui";
+import { EmptyLine, formatDate, NewItemButton, RowList } from "@/components/ui";
 import { tags, thoughts } from "@/lib/repo";
 import { InboxItem } from "./InboxItem";
 
@@ -36,7 +36,7 @@ export default async function InboxPage() {
         actions={<NewItemButton href="/thoughts/new">새 생각</NewItemButton>}
       />
       {items.length === 0 ? (
-        <EmptyState title="수집함이 비었습니다" />
+        <EmptyLine>수집함이 비었습니다</EmptyLine>
       ) : (
         <RowList>
           {items.map((t) => (
