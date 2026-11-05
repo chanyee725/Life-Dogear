@@ -56,8 +56,11 @@ async function setup(hidden = 0) {
   await act(async () => root!.render(createElement(HomeTodo, { count: 2 + hidden, today: list })));
   const button = () => host!.querySelector<HTMLButtonElement>("button[aria-haspopup]")!;
   await act(async () => button().click());
+  // Radix checkbox: a role=checkbox button with aria-checked.
   const box = (title: string) =>
-    document.querySelector<HTMLInputElement>(`input[aria-label="완료: 할 일 ${title}"]`)!;
+    document.querySelector<HTMLButtonElement>(
+      `[role=checkbox][aria-label="완료: 할 일 ${title}"]`,
+    )!;
   const name = () => button().getAttribute("aria-label");
   return { box, name };
 }
@@ -93,7 +96,7 @@ describe("home Todo badge follows the list", () => {
     await act(async () => t.box("later").click());
     await settle();
     expect(updateTask).toHaveBeenCalledWith("later", { done: false });
-    expect(t.box("later").checked).toBe(false);
+    expect(t.box("later").getAttribute("aria-checked")).toBe("false");
     expect(t.name()).toBe("할 일 2개");
     // A check elsewhere still counts down from the right number.
     await act(async () => t.box("late").click());
