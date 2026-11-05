@@ -42,9 +42,10 @@ async function mountHome(data: HomeCalendarData) {
   root = createRoot(host);
   await act(async () => {
     root!.render(
-      createElement(HomeDayProvider, {
-        today: "2026-11-05",
-        children: createElement(HomeCalendarView, {
+      createElement(
+        HomeDayProvider,
+        { today: "2026-11-05" },
+        createElement(HomeCalendarView, {
           data: Promise.resolve(data),
           range: "month",
           date: "2026-11-05",
@@ -52,7 +53,7 @@ async function mountHome(data: HomeCalendarData) {
           now: "2026-11-05T01:00:00.000Z",
           syncUrl: false,
         }),
-      }),
+      ),
     );
   });
   return host.querySelector<HTMLButtonElement>("[data-testid=add-event]")!;
