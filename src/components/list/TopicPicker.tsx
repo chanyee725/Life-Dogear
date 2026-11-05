@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { chipClass, cn, SearchInput } from "@/components/ui";
@@ -64,9 +65,7 @@ export function TopicPicker({
         className={cn(chipClass(Boolean(current)), "border-border")}
       >
         {current ? `#${current}` : "주제"}
-        <span aria-hidden className="text-xs text-muted">
-          ▾
-        </span>
+        <ChevronDownIcon aria-hidden className="size-3.5 text-muted" />
       </button>
       {current ? (
         <Link
