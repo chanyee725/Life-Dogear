@@ -1,5 +1,6 @@
-import { ITEM_ROUTE, type ItemType } from "@/lib/enums";
+import { type ItemType } from "@/lib/enums";
 import type { SearchField, SearchHit, Snippet } from "./types";
+import { itemHref as detailHref } from "@/lib/item-href";
 
 export const MAX_QUERY_LENGTH = 200;
 export const DEFAULT_LIMIT = 20;
@@ -163,5 +164,5 @@ export function compareHits(a: RankedHit, b: RankedHit): number {
 }
 
 /** Detail page of an item; routes come from the shared `ITEM_ROUTE` map (incl. `/areas`). */
-export const itemHref = (type: ItemType, id: string): string =>
-  `${ITEM_ROUTE[type]}/${encodeURIComponent(id)}`;
+export const itemHref = (type: ItemType, id: string, title?: string | null): string =>
+  detailHref(type, id, title);

@@ -113,7 +113,7 @@ function WikiLinkView({ node, selected }: ReactNodeViewProps) {
   const [pending, startTransition] = useTransition();
 
   const open = () => {
-    if (target) router.push(itemHref(target.ref));
+    if (target) router.push(itemHref(target.ref, target.title));
     else if (target === null) setMenu((m) => !m);
   };
 

@@ -6,7 +6,6 @@
  * Fixed query count: four lists (each with its tags).
  */
 import {
-  ITEM_ROUTE,
   NOTE_SOURCE_KIND,
   READ_STATUS,
   SEMINAR_KIND,
@@ -16,6 +15,7 @@ import {
 import { notes, papers, seminars, thoughts } from "@/lib/repo";
 import type { TagCount } from "@/lib/repo/tags";
 import type { TopicSort } from "./topic-index";
+import { itemHref } from "@/lib/item-href";
 
 export * from "./topic-index";
 
@@ -162,7 +162,7 @@ export function mergeResources(
     ...paperRows.map((p) => ({
       type: "paper" as const,
       id: p.id,
-      href: `${ITEM_ROUTE.paper}/${p.id}`,
+      href: itemHref("paper", p.id, p.title),
       title: p.title,
       meta: join(authorsLine(p.authors), p.year ? String(p.year) : null),
       status: READ_STATUS.is(p.readStatus)
@@ -173,7 +173,7 @@ export function mergeResources(
     ...seminarRows.map((s) => ({
       type: "seminar" as const,
       id: s.id,
-      href: `${ITEM_ROUTE.seminar}/${s.id}`,
+      href: itemHref("seminar", s.id, s.title),
       title: s.title,
       meta: join(
         s.date,
@@ -185,7 +185,7 @@ export function mergeResources(
     ...thoughtRows.map((t) => ({
       type: "thought" as const,
       id: t.id,
-      href: `${ITEM_ROUTE.thought}/${t.id}`,
+      href: itemHref("thought", t.id, t.title),
       title: t.title,
       meta: THOUGHT_KIND.is(t.kind) ? THOUGHT_KIND.label(t.kind) : undefined,
       updatedAt: t.updatedAt,
@@ -193,7 +193,7 @@ export function mergeResources(
     ...noteRows.map((n) => ({
       type: "note" as const,
       id: n.id,
-      href: `${ITEM_ROUTE.note}/${n.id}`,
+      href: itemHref("note", n.id, n.title),
       title: n.title,
       // e.g. "책 · 데이터 중심 애플리케이션 설계"
       meta: join(

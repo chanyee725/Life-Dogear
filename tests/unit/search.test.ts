@@ -29,6 +29,7 @@ import {
   titleScore,
 } from "@/lib/search/text";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 let db: Awaited<ReturnType<typeof useFreshDb>>;
 
@@ -134,7 +135,7 @@ describe("searchAll", () => {
     expect(hits[0]).toMatchObject({ type: "paper", field: "title", snippet: null });
     expect(hits.find((h) => h.type === "thought")).toMatchObject({
       field: "body",
-      href: `/thoughts/${t.id}`,
+      href: itemPath("thoughts", t.id, t.title),
       snippet: { before: "생각 ", match: "자연어", after: "처리를 다시 보자" },
     });
     expect(hits.find((h) => h.type === "seminar")!.field).toBe("meta");
@@ -301,7 +302,7 @@ describe("areas and archived items (phase 1.5)", () => {
     expect(hits[0]).toMatchObject({
       type: "area",
       field: "title",
-      href: `/areas/${byTitle.id}`,
+      href: itemPath("areas", byTitle.id, byTitle.title),
       archived: false,
     });
     expect(hits[1]).toMatchObject({ field: "meta", snippet: { match: "건강" } });
@@ -415,7 +416,7 @@ describe("goals and reviews", () => {
     expect(hits[0]).toMatchObject({
       type: "goal",
       field: "title",
-      href: `/goals/${byTitle.id}`,
+      href: itemPath("goals", byTitle.id, byTitle.title),
       archived: false,
     });
     expect(hits[1]).toMatchObject({ field: "meta", snippet: { match: "체력" } });
@@ -430,7 +431,7 @@ describe("goals and reviews", () => {
       type: "review",
       id: review.id,
       field: "title",
-      href: `/reviews/${review.id}`,
+      href: itemPath("reviews", review.id, review.title),
     });
     const [byBody] = await searchAll("재현");
     expect(byBody).toMatchObject({ type: "review", field: "body", snippet: { match: "재현" } });
@@ -497,7 +498,7 @@ describe("task source", () => {
     const hits = (await searchAll("초안")).filter((h) => h.type === "task");
     expect(hits.map((h) => [h.type, h.title, h.href, h.parentTitle]).sort()).toEqual(
       [
-        ["task", "초안 쓰기", `/projects/${p.id}`, "논문 A"],
+        ["task", "초안 쓰기", itemPath("projects", p.id, "논문 A"), "논문 A"],
         ["task", "초안 인쇄", "/tasks?tab=by-parent", undefined],
       ].sort(),
     );
@@ -521,7 +522,7 @@ describe("note source", () => {
     expect(find(byTitle.id)).toMatchObject({
       type: "note",
       field: "title",
-      href: `/notes/${byTitle.id}`,
+      href: itemPath("notes", byTitle.id, byTitle.title),
     });
     expect(find(bySource.id)).toMatchObject({ type: "note", field: "meta" });
     expect(find(byBody.id)).toMatchObject({ type: "note", field: "body" });
