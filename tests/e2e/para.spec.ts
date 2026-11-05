@@ -12,7 +12,7 @@ test("영역이 없으면 추천 영역을 골라 만든다", async ({ page }) =
     if ((await first.count()) === 0) break;
     await first.click();
     await page.getByRole("button", { name: "삭제", exact: true }).first().click();
-    await page.getByRole("dialog").getByRole("button", { name: "삭제" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "삭제" }).click();
     await expect(page).toHaveURL(/\/areas$/);
   }
 
@@ -77,11 +77,11 @@ test("수집함: 삭제는 확인 후 생각을 아예 지운다", async ({ page
 
   // Cancelling keeps it.
   await row.getByRole("button", { name: "삭제", exact: true }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "취소" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "취소" }).click();
   await expect(row).toBeVisible();
 
   await row.getByRole("button", { name: "삭제", exact: true }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "삭제" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "삭제" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: title })).toHaveCount(0);
 
   // Gone everywhere, not just filed away.

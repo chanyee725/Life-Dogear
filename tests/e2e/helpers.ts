@@ -18,7 +18,7 @@ export async function createItem(page: Page, section: Section, title: string) {
 /** Deletes the item shown on the current detail page via the confirm dialog. */
 export async function deleteCurrentItem(page: Page) {
   await page.getByRole("button", { name: "삭제", exact: true }).first().click();
-  const dialog = page.getByRole("dialog");
+  const dialog = page.getByRole("alertdialog");
   await dialog.getByRole("button", { name: "삭제" }).click();
 }
 

@@ -16,6 +16,7 @@ import { createNote } from "@/app/notes/actions";
 import { useUnsavedChangesGuard } from "@/components/fields/useUnsavedChangesGuard";
 import { safeAction } from "@/components/links/safe-action";
 import { useModKey } from "@/components/shell/mod-key";
+import { OPEN_MODAL_SELECTOR } from "@/components/shell/shortcuts";
 import { Button, cn, controlClass, Input, Kbd, Spinner, Toast } from "@/components/ui";
 import {
   autosizeHeight,
@@ -98,7 +99,7 @@ export function QuickCapture() {
 
   useEffect(() => {
     const onOpen = () => {
-      if (document.querySelector("dialog[open]")) return;
+      if (document.querySelector(OPEN_MODAL_SELECTOR)) return;
       setDraft(EMPTY_DRAFT); // always opens as 생각
       setStatus({ text: "" });
       escAt.current = 0;

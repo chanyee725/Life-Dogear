@@ -1,11 +1,37 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { Button } from "./Button";
 import { cn } from "./cn";
+import {
+  Dialog as DialogRoot,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./primitives/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./primitives/alert-dialog";
+
+// Entry fades/zooms in via @starting-style (globals.css has no tw-animate-css keyframes).
+const enter =
+  "transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none";
+const panel = "w-[min(28rem,calc(100vw-2rem))] max-w-none sm:max-w-none text-foreground border-border";
+
+function isNamed(title: ReactNode) {
+  return title !== null && title !== undefined && title !== false && title !== "";
+}
 
 /**
- * Modal built on the native <dialog> element (focus trap, Esc and backdrop handled by the browser).
+ * Modal built on Radix Dialog (focus trap, Esc, outside click, aria handled by Radix).
  * Controlled: render with `open` and close via `onClose`.
  */
 export function Dialog({
@@ -25,63 +51,38 @@ export function Dialog({
   footer?: ReactNode;
   className?: string;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
   // Named by its heading (screen readers, `getByRole("dialog", { name })`); no title, no name.
-  const named = title !== null && title !== undefined && title !== false && title !== "";
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (open && !el.open) el.showModal();
-    if (!open && el.open) el.close();
-  }, [open]);
-
+  const named = isNamed(title);
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby={named ? titleId : undefined}
-      onClose={() => {
-        // Fired also when we close it ourselves after `open` became false; only report user closes.
-        if (open) onClose();
+    <DialogRoot
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
       }}
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={(e) => {
-        // Click on the backdrop (the dialog element itself, outside the panel) closes.
-        if (e.target === e.currentTarget) onClose();
-      }}
-      className={cn(
-        // shadcn DialogContent look; entry fades/zooms in via @starting-style (no keyframes needed).
-        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-background p-0 text-foreground shadow-lg",
-        "transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none",
-        "backdrop:bg-black/50 backdrop:transition-opacity backdrop:duration-150 starting:backdrop:opacity-0 motion-reduce:backdrop:transition-none",
-        className,
-      )}
     >
-      {open ? (
-        <div className="flex flex-col gap-4 p-6">
-          <div className="flex flex-col gap-1.5">
-            {named ? (
-              <h2 id={titleId} className="text-lg leading-none font-semibold tracking-tight">
-                {title}
-              </h2>
-            ) : null}
-            {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-          </div>
-          {children}
-          {footer ? <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div> : null}
-        </div>
-      ) : null}
-    </dialog>
+      <DialogContent
+        showCloseButton={false}
+        className={cn(panel, enter, className)}
+        {...(named ? {} : { "aria-labelledby": undefined })}
+        {...(description ? {} : { "aria-describedby": undefined })}
+      >
+        <DialogHeader className="gap-1.5 text-left">
+          {named ? (
+            <DialogTitle className="tracking-tight">{title}</DialogTitle>
+          ) : null}
+          {description ? <DialogDescription>{description}</DialogDescription> : null}
+        </DialogHeader>
+        {children}
+        {footer ? <DialogFooter>{footer}</DialogFooter> : null}
+      </DialogContent>
+    </DialogRoot>
   );
 }
 
 /**
- * Confirmation dialog. `onConfirm` may be async; the confirm button shows a pending state
- * and the dialog closes when it resolves. Errors are left to the caller.
+ * Confirmation dialog on Radix AlertDialog (role="alertdialog", focus starts on cancel,
+ * no outside-click close). `onConfirm` may be async; the confirm button shows a pending
+ * state while it runs. Closing after confirm is left to the caller (via `open`).
  */
 export function ConfirmDialog({
   open,
@@ -114,28 +115,33 @@ export function ConfirmDialog({
   }
 
   return (
-    <Dialog
+    <AlertDialog
       open={open}
-      onClose={() => {
-        if (!pending) onCancel();
+      onOpenChange={(next) => {
+        if (!next && !pending) onCancel();
       }}
-      title={title}
-      description={description}
-      footer={
-        <>
-          <Button variant="ghost" onClick={onCancel} disabled={pending}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={danger ? "danger" : "primary"}
-            onClick={handleConfirm}
-            disabled={pending}
-            autoFocus
-          >
+    >
+      <AlertDialogContent
+        className={cn(panel, enter)}
+        {...(description ? {} : { "aria-describedby": undefined })}
+      >
+        <AlertDialogHeader className="gap-1.5 place-items-start text-left">
+          <AlertDialogTitle className="leading-none tracking-tight">{title}</AlertDialogTitle>
+          {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          {/* Radix Cancel (not the shadcn-styled wrapper) so our Button keeps its own look. */}
+          <AlertDialogPrimitive.Cancel asChild>
+            <Button variant="ghost" disabled={pending}>
+              {cancelLabel}
+            </Button>
+          </AlertDialogPrimitive.Cancel>
+          {/* Not AlertDialogAction: that closes immediately, before an async onConfirm settles. */}
+          <Button variant={danger ? "danger" : "primary"} onClick={handleConfirm} disabled={pending}>
             {pending ? "처리 중…" : confirmLabel}
           </Button>
-        </>
-      }
-    />
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
