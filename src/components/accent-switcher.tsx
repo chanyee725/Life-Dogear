@@ -14,9 +14,10 @@ import {
 const OPTIONS: { value: AccentPreference; label: string; swatch: string }[] = [
   { value: "blue", label: "파랑", swatch: "#4f5bd5" },
   { value: "terracotta", label: "테라코타", swatch: "#b8461a" },
+  { value: "mono", label: "모노", swatch: "#37352f" },
 ];
 
-/** Two colour dots that switch the accent between blue (default) and terracotta. */
+/** Colour dots that switch the accent: blue (default), terracotta, mono. */
 export function AccentSwitcher({ className }: { className?: string }) {
   // `null` until mounted so server and first client render match.
   const [pref, setPref] = useState<AccentPreference | null>(null);
@@ -51,6 +52,8 @@ export function AccentSwitcher({ className }: { className?: string }) {
               style={{ backgroundColor: o.swatch }}
               className={cn(
                 "size-3.5 rounded-full transition-shadow",
+                // Near-black ink dot would vanish on the dark sidebar without an edge.
+                o.value === "mono" && "dark:outline dark:outline-1 dark:outline-faint",
                 pressed && "ring-2 ring-fg ring-offset-2 ring-offset-surface",
               )}
             />
