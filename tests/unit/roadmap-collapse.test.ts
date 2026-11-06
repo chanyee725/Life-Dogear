@@ -8,6 +8,7 @@ import {
   visibleTree,
 } from "@/app/roadmap/collapse";
 import { defaultCollapsed } from "@/app/roadmap/layout";
+import { includeDoneHref } from "@/app/roadmap/RoadmapToolbar";
 import type { RoadmapKind, RoadmapNode } from "@/lib/repo/roadmap-types";
 
 function n(kind: RoadmapKind, id: string, children: RoadmapNode[] = []): RoadmapNode {
@@ -68,5 +69,15 @@ describe("roadmap collapse", () => {
   it("visibleTree shows everything when expanded and only roots when all collapsed", () => {
     expect(visibleTree(roots, expandAll())).toEqual(roots);
     expect(ids(visibleTree(roots, collapseAll(roots)))).toEqual(["area-a1", "area-a2"]);
+  });
+});
+
+describe("roadmap toolbar 완료 포함 link", () => {
+  it("adds ?all=1 when off and drops it when on, keeping other params", () => {
+    expect(includeDoneHref("/roadmap", null, false)).toBe("/roadmap?all=1");
+    expect(includeDoneHref("/roadmap", new URLSearchParams("all=1"), true)).toBe("/roadmap");
+    expect(includeDoneHref("/roadmap", new URLSearchParams("all=1&x=2"), true)).toBe(
+      "/roadmap?x=2",
+    );
   });
 });
