@@ -15,7 +15,7 @@ export const NAV_SECTIONS = {
   ],
   projects: [
     { href: "/goals", label: "목표", icon: "goal" },
-    { href: "/roadmap", label: "로드맵", icon: "graph" },
+    { href: "/roadmap", label: "로드맵", icon: "roadmap" },
     { href: "/projects", label: "프로젝트", icon: "project" },
     { href: "/areas", label: "영역", icon: "area" },
   ],
