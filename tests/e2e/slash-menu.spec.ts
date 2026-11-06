@@ -165,3 +165,38 @@ test("한글 조합: 조합 중에는 메뉴가 유지되고, 끝나면 필터�
   await expect(editor(page).locator('ul[data-type="taskList"]')).toHaveCount(1);
   await expect(editor(page)).not.toContainText("/할");
 });
+
+test("'/' 메뉴: 스크롤 후에도 커서 바로 아래에 붙어 있다", async ({ page }) => {
+  await createNote(page, uniqueTitle("슬래시 스크롤"));
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await editor(page).click();
+  // Enough lines that the page scrolls.
+  for (let i = 0; i < 40; i++) await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowUp");
+  for (let i = 0; i < 30; i++) await page.keyboard.press("ArrowUp");
+  await page.keyboard.type("/");
+  await expect(menu(page)).toBeVisible();
+
+  const gap = () =>
+    page.evaluate(() => {
+      const sel = window.getSelection()!;
+      const caret = sel.getRangeAt(0).getBoundingClientRect();
+      const box = document.querySelector('[role="listbox"][aria-label="블록 넣기"]')!;
+      return box.getBoundingClientRect().top - caret.bottom;
+    });
+  const before = await gap();
+  expect(Math.abs(before - 4)).toBeLessThan(6);
+
+  await page.mouse.move(640, 300);
+  await page.mouse.wheel(0, 200);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  // Two frames after the scroll: the menu has moved with it (not later, on some edit).
+  await page.evaluate(
+    () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+  );
+  expect(Math.abs((await gap()) - before)).toBeLessThan(2);
+  await expect(menu(page)).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await deleteCurrentItem(page);
+});

@@ -12,6 +12,7 @@ import type { ItemSummary } from "@/lib/repo/items";
 import { cleanTitle, titleKey } from "@/lib/wikilinks";
 import { inPlainTextZone, insertWikiLink } from "./WikiLink";
 import { useCurrentDoc } from "./current-doc";
+import { useFollowScroll } from "./use-follow-scroll";
 
 /** Typed `[[query` right before the cursor: `from` is the first `[`. */
 export type WikiTrigger = { from: number; to: number; query: string };
@@ -147,7 +148,10 @@ export function WikiSuggest({
     };
   });
 
-  if (!open || (!options.length && !loading)) return null;
+  const visible = open && (options.length > 0 || loading);
+  useFollowScroll(visible);
+
+  if (!visible) return null;
   const coords = editor.view.coordsAtPos(trigger.from);
 
   return (
