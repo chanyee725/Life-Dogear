@@ -1,5 +1,5 @@
 import type { RoadmapNode } from "@/lib/repo/roadmap-types";
-import { nodeId } from "./layout";
+import { nodeId } from "./roadmapLayout";
 
 /**
  * Collapse state for the roadmap tree: a set of `nodeId` keys (`kind-id`, see layout.ts).

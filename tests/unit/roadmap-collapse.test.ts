@@ -7,7 +7,7 @@ import {
   toggleCollapsed,
   visibleTree,
 } from "@/app/roadmap/collapse";
-import { defaultCollapsed } from "@/app/roadmap/layout";
+import { defaultCollapsed } from "@/app/roadmap/roadmapLayout";
 import { includeDoneHref } from "@/app/roadmap/RoadmapToolbar";
 import type { RoadmapKind, RoadmapNode } from "@/lib/repo/roadmap-types";
 
