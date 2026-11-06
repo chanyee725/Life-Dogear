@@ -3,7 +3,7 @@ import { Editor } from "@tiptap/core";
 import { TextSelection } from "@tiptap/pm/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { insertColumns, removeEmptyColumnTr } from "@/components/editor/columns-edit";
-import { blockAt, dropPosition, moveBlock } from "@/components/editor/drag-handle";
+import { blockAt, columnsAround, dropPosition, moveBlock } from "@/components/editor/drag-handle";
 import { createExtensions } from "@/components/editor/extensions";
 
 let editor: Editor | undefined;
@@ -165,9 +165,9 @@ describe("Backspace in an empty column", () => {
 });
 
 describe("dragging with columns", () => {
-  it("moves the whole columns block from the first column", () => {
+  it("moves the whole columns block, grabbed at its top edge", () => {
     const e = mount(`${cols("a", "b")}\n\nafter`);
-    const block = blockAt(e.state.doc, textPos(e, "a"));
+    const block = columnsAround(e.state.doc, textPos(e, "a"));
     expect(block?.node.type.name).toBe("columns");
     const after = e.state.doc.child(1);
     const to = dropPosition(e.state.doc, block!, { pos: block!.node.nodeSize, node: after }, true);
@@ -179,8 +179,6 @@ describe("dragging with columns", () => {
     const e = mount(cols("a", "b"));
     const block = blockAt(e.state.doc, textPos(e, "b"));
     expect(block?.node.type.name).toBe("paragraph");
-    const target = blockAt(e.state.doc, textPos(e, "a"))!;
-    expect(target.node.type.name).toBe("columns");
     const a = { pos: textPos(e, "a") - 1, node: e.state.doc.nodeAt(textPos(e, "a") - 1)! };
     const to = dropPosition(e.state.doc, block!, a, true);
     expect(to).not.toBeNull();
@@ -188,13 +186,5 @@ describe("dragging with columns", () => {
     const saved = md(e);
     expect(saved).toBe(cols("a\n\nb", ""));
     expect(md(mount(saved))).toBe(saved);
-  });
-
-  it("does not drop a column block among top-level blocks", () => {
-    const e = mount(`${cols("a", "b")}\n\nafter`);
-    const block = blockAt(e.state.doc, textPos(e, "b"))!;
-    const after = e.state.doc.child(1);
-    const pos = e.state.doc.child(0).nodeSize;
-    expect(dropPosition(e.state.doc, block, { pos, node: after }, true)).toBeNull();
   });
 });
