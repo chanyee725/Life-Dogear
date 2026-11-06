@@ -26,7 +26,7 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   test.slow();
   await page.goto("/roadmap");
 
-  const stage = (t: string) => page.locator('section[data-testid^="rm-stage-"]').filter({ hasText: t });
+  const stage = (t: string) => page.locator('[role="treeitem"][data-kind="stage"]').filter({ hasText: t });
   const item = (t: string) => page.locator('button[data-testid^="rm-item-"]').filter({ hasText: t });
 
   await expect(stage("E2E 1단계 기초")).toBeVisible();
