@@ -26,15 +26,23 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   test.slow();
   await page.goto("/roadmap");
 
-  await expect(page.getByText("E2E 1단계 기초")).toBeVisible();
-  await expect(page.getByText("E2E 2단계 심화")).toBeVisible();
-  await expect(page.getByText(ITEM)).toBeVisible();
-  await expect(page.getByText("E2E 권장 항목")).toBeVisible();
+  const stage = (t: string) => page.locator('[data-testid^="rm-stage-"]').filter({ hasText: t });
+  const item = (t: string) => page.locator('[data-testid^="rm-item-"]').filter({ hasText: t });
 
-  // Click the item; the status control is expected to expose done as checked / data-status.
-  const row = page.locator("li, [data-testid]").filter({ hasText: ITEM }).last();
-  await row.getByText(ITEM).click();
+  await expect(stage("E2E 1단계 기초")).toBeVisible();
+  await expect(stage("E2E 2단계 심화")).toBeVisible();
+  await expect(item(ITEM)).toBeVisible();
+  await expect(item("E2E 권장 항목")).toBeVisible();
+
+  // TODO(ItemPanel, impl-275): done 판정은 패널 마크업 확정 후 상태 버튼 data-testid로 교체.
+  await item(ITEM).click();
   const done = page.locator('[data-status="done"], [aria-checked="true"]').filter({ hasText: ITEM });
+  await expect(done.first()).toBeVisible();
+
+  await page.reload();
+  await expect(item(ITEM)).toBeVisible();
+  await expect(done.first()).toBeVisible();
+});
   await expect(done.first()).toBeVisible();
 
   await page.reload();
