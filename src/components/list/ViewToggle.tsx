@@ -129,11 +129,11 @@ export function ListView({
   return (
     <div className={cn("flex flex-col gap-4", className)}>
       {controls !== undefined || filters !== undefined ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {filters ? <div className="flex flex-wrap items-center gap-2">{filters}</div> : null}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {toolbar}
-            <div className="ml-auto flex flex-wrap items-center gap-3">
+            <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
               {controls}
               {toggle}
             </div>
