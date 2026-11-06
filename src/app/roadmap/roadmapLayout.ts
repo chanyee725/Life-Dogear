@@ -204,35 +204,9 @@ export function rootAnchor(layout: TreeLayout): number {
   return (c(roots[0]) + c(roots[roots.length - 1])) / 2;
 }
 
-/** Keys of `key`'s ancestors and of `key` itself (path keys are `a/b/c`). */
-export function lineageOf(key: string): Set<string> {
-  const out = new Set<string>();
-  const parts = key.split("/");
-  for (let i = 1; i <= parts.length; i++) out.add(parts.slice(0, i).join("/"));
-  return out;
-}
-
 /** True when `key` is `focus`, one of its ancestors, or one of its descendants. */
 export function inLineage(key: string, focus: string): boolean {
   return key === focus || focus.startsWith(`${key}/`) || key.startsWith(`${focus}/`);
-}
-
-/** Goals, projects and tasks anywhere under `n` (collapsed or not). */
-export function subtreeCounts(n: RoadmapNode): Record<"goal" | "project" | "task", number> {
-  const out = { goal: 0, project: 0, task: 0 };
-  const walk = (m: RoadmapNode) => {
-    for (const c of m.children) {
-      if (c.kind !== "area") out[c.kind]++;
-      walk(c);
-    }
-  };
-  walk(n);
-  return out;
-}
-
-/** `2026-11-29` → `2026.11.29` (the app's date style); anything else is left as is. */
-export function dotDate(s: string): string {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.replaceAll("-", ".") : s;
 }
 
 /** Cubic Bézier from (x1,y1) to (x2,y2) with horizontal tangents at both ends. */

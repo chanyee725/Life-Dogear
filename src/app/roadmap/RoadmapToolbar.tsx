@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 
-const BTN =
-  "inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md border border-border px-2 text-[13px] text-muted transition-colors hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted";
+/** One segmented control: buttons share a frame, split by hairlines. */
+export const SEG_GROUP = "rb-roadmap-seg";
+export const SEG_BTN = "rb-roadmap-seg-btn";
 
 /** The `?all=1` URL for the opposite of `includeDone`, keeping any other params. */
 export function includeDoneHref(
@@ -30,6 +32,8 @@ export interface RoadmapToolbarProps {
   /** Disable 모두 접기 when everything is already collapsed (see `isAllCollapsed`). */
   allCollapsed?: boolean;
   className?: string;
+  /** Right-hand controls (zoom), drawn as their own segment group. */
+  children?: ReactNode;
 }
 
 /**
@@ -44,6 +48,7 @@ export default function RoadmapToolbar({
   allExpanded = false,
   allCollapsed = false,
   className,
+  children,
 }: RoadmapToolbarProps) {
   const pathname = usePathname();
   const params = useSearchParams();
@@ -52,48 +57,43 @@ export default function RoadmapToolbar({
       role="toolbar"
       aria-label="로드맵 보기"
       data-testid="roadmap-toolbar"
-      className={cn("flex flex-wrap items-center gap-1", className)}
+      className={cn("flex flex-wrap items-center gap-2", className)}
     >
-      <button
-        type="button"
-        data-testid="roadmap-expand-all"
-        onClick={onExpandAll}
-        disabled={allExpanded}
-        className={BTN}
-      >
-        모두 펼치기
-      </button>
-      <button
-        type="button"
-        data-testid="roadmap-collapse-all"
-        onClick={onCollapseAll}
-        disabled={allCollapsed}
-        className={BTN}
-      >
-        모두 접기
-      </button>
-      <Link
-        href={includeDoneHref(pathname, params, includeDone)}
-        replace
-        scroll={false}
-        role="switch"
-        aria-checked={includeDone}
-        data-testid="roadmap-include-done"
-        className={cn(
-          BTN,
-          "gap-1.5",
-          includeDone && "border-border-strong bg-subtle text-fg hover:bg-subtle",
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className={cn(
-            "size-2 rounded-full border",
-            includeDone ? "border-fg bg-fg" : "border-border-strong",
-          )}
-        />
-        완료 포함
-      </Link>
+      <div className={SEG_GROUP}>
+        <button
+          type="button"
+          data-testid="roadmap-expand-all"
+          onClick={onExpandAll}
+          disabled={allExpanded}
+          className={SEG_BTN}
+        >
+          모두 펼치기
+        </button>
+        <button
+          type="button"
+          data-testid="roadmap-collapse-all"
+          onClick={onCollapseAll}
+          disabled={allCollapsed}
+          className={SEG_BTN}
+        >
+          모두 접기
+        </button>
+      </div>
+      <div className={SEG_GROUP}>
+        <Link
+          href={includeDoneHref(pathname, params, includeDone)}
+          replace
+          scroll={false}
+          role="switch"
+          aria-checked={includeDone}
+          data-testid="roadmap-include-done"
+          className={SEG_BTN}
+        >
+          <span aria-hidden="true" className="rb-roadmap-switch" />
+          완료 포함
+        </Link>
+      </div>
+      {children}
     </div>
   );
 }
