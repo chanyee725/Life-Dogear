@@ -46,8 +46,12 @@ function parentItem(item: HTMLElement, root: HTMLElement): HTMLElement | null {
   return p && root.contains(p) ? p : null;
 }
 
+/**
+ * First child treeitem. The first descendant treeitem in document order is always a direct
+ * child, so this holds however the grid wraps the groups (left/right columns, extra divs).
+ */
 function firstChild(item: HTMLElement): HTMLElement | null {
-  return item.querySelector<HTMLElement>(`:scope > [role="group"] > ${ITEM}`);
+  return item.querySelector<HTMLElement>(ITEM);
 }
 
 function hasChildren(item: HTMLElement): boolean {
