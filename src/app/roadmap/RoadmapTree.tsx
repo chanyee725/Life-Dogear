@@ -1,270 +1,256 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type CSSProperties } from "react";
 import { cn } from "@/components/ui/cn";
-import type { RoadmapData } from "@/lib/repo/roadmap-types";
+import { collapseAll, expandAll, toggleCollapsed, type CollapsedSet } from "./collapse";
 import {
-  collapseAll,
-  expandAll,
-  isAllCollapsed,
-  isAllExpanded,
-  toggleCollapsed,
-  type CollapsedSet,
-} from "./collapse";
-import { defaultCollapsed, edgePath, inLineage, layoutTree, rootAnchor } from "./roadmapLayout";
-import { KIND_LABEL, RoadmapNodeBox, TaskCheck } from "./RoadmapNode";
-import RoadmapToolbar, { SEG_BTN, SEG_GROUP } from "./RoadmapToolbar";
-import { countAll } from "./roadmapStats";
-import { MAX_ZOOM, MIN_ZOOM, useViewport, type Rect } from "./useViewport";
-import { AreaIcon, GoalIcon, ProjectIcon } from "@/components/shell/icons";
+  PRIORITY_LABEL,
+  STATUS_LABEL,
+  ratio,
+  splitSides,
+  stageStatus,
+  type LearningRoadmap,
+  type Progress,
+  type RoadmapNode,
+} from "./model";
 
-/** Room around the tree (layout px) so boxes do not touch the scroll edge. */
-const PAD = 28;
-const ZOOM_STEP = 0.1;
-/** The drawn root ('나의 로드맵') and the gap to the area column. */
-const ROOT = { width: 116, height: 40, gap: 72 };
-/** Dashed tail drawn off an area with nothing under it. */
-const TAIL = 40;
-const TAIL_ROOM = TAIL + 72;
-/** Branch colours cycle through this many tones (see .rb-roadmap-canvas in globals.css). */
-const BRANCH_TONES = 6;
-/** Stroke weight by the child end's depth: thick at the root, thinner toward the tips. */
-const STROKE = [4.5, 3, 2.25, 1.5];
-const stroke = (depth: number) => STROKE[Math.min(depth, STROKE.length - 1)];
+type Side = "left" | "right";
 
-/** Edge path written as a CSS `d`, so a collapse animates the curve with its boxes. */
-const pathStyle = (d: string) => ({ d: `path("${d}")` }) as CSSProperties;
+export interface RoadmapTreeProps {
+  roadmap: LearningRoadmap;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}
 
-function Legend() {
-  const items: { kind: keyof typeof KIND_LABEL; icon: ReactNode }[] = [
-    { kind: "area", icon: <AreaIcon /> },
-    { kind: "goal", icon: <GoalIcon /> },
-    { kind: "project", icon: <ProjectIcon /> },
-    { kind: "task", icon: <TaskCheck done={false} /> },
-  ];
+function ProgressBar({ progress, label }: { progress: Progress; label: string }) {
   return (
-    <ul className="rb-roadmap-legend" aria-label="범례">
-      {items.map((i) => (
-        <li key={i.kind} data-kind={i.kind}>
-          <span aria-hidden="true">{i.icon}</span>
-          {KIND_LABEL[i.kind]}
-        </li>
-      ))}
-    </ul>
+    <div
+      className="rm-progress flex items-center gap-2"
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={progress.total}
+      aria-valuenow={progress.done}
+      style={{ "--rm-progress": ratio(progress) } as CSSProperties}
+    >
+      <span className="rm-progress-bar block h-1.5 flex-1" />
+      <span className="rm-progress-text text-xs tabular-nums">
+        {progress.done}/{progress.total}
+      </span>
+    </div>
   );
 }
 
-export default function RoadmapTree({ data }: { data: RoadmapData }) {
-  const [collapsed, setCollapsed] = useState<CollapsedSet>(() => defaultCollapsed(data.roots));
-  const layout = useMemo(() => layoutTree(data.roots, collapsed), [data.roots, collapsed]);
-  const counts = useMemo(() => countAll(data.roots), [data.roots]);
-  /** Path key of the hovered / focused node: its lineage stays lit, the rest dims. */
-  const [focusKey, setFocusKey] = useState<string | null>(null);
-
-  const rootY = rootAnchor(layout) - ROOT.height / 2;
-  const ox = ROOT.width + ROOT.gap; // tree's left edge, right of the drawn root
-  // Only the first layout matters: the hook focuses once.
-  const [initialFocus] = useState<Rect | null>(() =>
-    layout.nodes.length ? { x: PAD, y: PAD + rootY, ...ROOT } : null,
+function ItemButton({
+  item,
+  depth,
+  selected,
+  onSelect,
+}: {
+  item: RoadmapNode;
+  depth: 1 | 2;
+  selected: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const priority = item.priority ? PRIORITY_LABEL[item.priority] : null;
+  return (
+    <button
+      type="button"
+      className="rm-item flex min-w-0 items-center gap-2 text-left"
+      data-testid={`rm-item-${item.id}`}
+      data-priority={item.priority ?? undefined}
+      data-status={item.status}
+      data-depth={depth}
+      aria-pressed={selected}
+      title={[priority, STATUS_LABEL[item.status]].filter(Boolean).join(" · ")}
+      onClick={() => onSelect(item.id)}
+    >
+      <span className="rm-item-status shrink-0" aria-hidden="true" />
+      <span className="rm-item-title min-w-0 break-words">{item.title}</span>
+      <span className="sr-only">
+        ({[priority, STATUS_LABEL[item.status]].filter(Boolean).join(", ")})
+      </span>
+    </button>
   );
-  const { ref, zoom, dragging, setZoom } = useViewport({ initialFocus });
+}
 
-  const zoomControls = data.roots.length > 0 && (
-    <div className={`${SEG_GROUP} ml-auto`} role="group" aria-label="확대/축소">
-      <button
-        type="button"
-        aria-label="축소"
-        className={SEG_BTN}
-        disabled={zoom <= MIN_ZOOM}
-        onClick={() => setZoom(zoom - ZOOM_STEP)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label="원래 크기"
-        title="원래 크기"
-        className={cn(SEG_BTN, "min-w-14 justify-center tabular-nums")}
-        onClick={() => setZoom(1)}
-      >
-        {Math.round(zoom * 100)}%
-      </button>
-      <button
-        type="button"
-        aria-label="확대"
-        className={SEG_BTN}
-        disabled={zoom >= MAX_ZOOM}
-        onClick={() => setZoom(zoom + ZOOM_STEP)}
-      >
-        +
-      </button>
+/** One item plus its children, which sit further from the stem (outward). */
+function Branch({
+  item,
+  side,
+  collapsed,
+  onToggle,
+  selectedId,
+  onSelect,
+}: {
+  item: RoadmapNode;
+  side: Side;
+  collapsed: CollapsedSet;
+  onToggle: (id: string) => void;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const hasChildren = item.children.length > 0;
+  const folded = collapsed.has(item.id);
+  return (
+    <div
+      className={cn(
+        "rm-branch flex items-start gap-3",
+        side === "left" ? "lg:flex-row-reverse" : "lg:flex-row",
+        "max-lg:flex-col max-lg:gap-1.5",
+      )}
+      data-side={side}
+    >
+      <div className={cn("flex items-center gap-1", side === "left" && "lg:flex-row-reverse")}>
+        <ItemButton
+          item={item}
+          depth={1}
+          selected={selectedId === item.id}
+          onSelect={onSelect}
+        />
+        {hasChildren && (
+          <button
+            type="button"
+            className="rm-toggle shrink-0 px-1 text-xs"
+            data-testid={`rm-toggle-${item.id}`}
+            aria-expanded={!folded}
+            aria-label={folded ? `${item.title} 펼치기` : `${item.title} 접기`}
+            onClick={() => onToggle(item.id)}
+          >
+            {folded ? `+${item.children.length}` : "−"}
+          </button>
+        )}
+      </div>
+      {hasChildren && !folded && (
+        <div
+          className={cn(
+            "rm-children flex flex-col gap-1.5",
+            side === "left" ? "lg:items-end" : "lg:items-start",
+            "max-lg:pl-6",
+          )}
+        >
+          {item.children.map((c) => (
+            <ItemButton
+              key={c.id}
+              item={c}
+              depth={2}
+              selected={selectedId === c.id}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StageRow({
+  stage,
+  index,
+  collapsed,
+  onToggle,
+  selectedId,
+  onSelect,
+}: {
+  stage: RoadmapNode;
+  index: number;
+  collapsed: CollapsedSet;
+  onToggle: (id: string) => void;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const folded = collapsed.has(stage.id);
+  const { left, right } = splitSides(stage.children);
+  const side = (items: RoadmapNode[], s: Side) => (
+    <div
+      className={cn(
+        "rm-side flex flex-col gap-3",
+        s === "left" ? "lg:items-end" : "lg:items-start",
+        "max-lg:pl-6",
+      )}
+      data-side={s}
+    >
+      {items.map((item) => (
+        <Branch
+          key={item.id}
+          item={item}
+          side={s}
+          collapsed={collapsed}
+          onToggle={onToggle}
+          selectedId={selectedId}
+          onSelect={onSelect}
+        />
+      ))}
     </div>
   );
 
-  const toolbar = (
-    <RoadmapToolbar
-      includeDone={data.includeDone}
-      onExpandAll={() => setCollapsed(expandAll())}
-      onCollapseAll={() => setCollapsed(collapseAll(data.roots))}
-      allExpanded={isAllExpanded(data.roots, collapsed)}
-      allCollapsed={isAllCollapsed(data.roots, collapsed)}
+  return (
+    <section
+      className={cn(
+        "rm-stage relative grid items-center gap-x-8 gap-y-3",
+        "lg:grid-cols-[minmax(0,1fr)_16rem_minmax(0,1fr)]",
+        "max-lg:grid-cols-1",
+      )}
+      data-testid={`rm-stage-${stage.id}`}
+      data-status={stageStatus(stage)}
+      aria-label={`${index + 1}단계 ${stage.title}`}
     >
-      {zoomControls}
-    </RoadmapToolbar>
-  );
-
-  if (data.roots.length === 0) {
-    return (
-      <div className="flex flex-col gap-3">
-        {toolbar}
-        <p
-          data-testid="roadmap-empty"
-          className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted"
+      {!folded && <div className="max-lg:order-2">{side(left, "left")}</div>}
+      <div
+        className={cn(
+          "rm-stage-node relative z-10 flex flex-col gap-2 lg:col-start-2 max-lg:order-1",
+        )}
+      >
+        <button
+          type="button"
+          className="flex items-baseline gap-2 text-left"
+          aria-expanded={!folded}
+          data-testid={`rm-stage-toggle-${stage.id}`}
+          onClick={() => onToggle(stage.id)}
         >
-          {data.includeDone
-            ? "아직 그릴 항목이 없습니다. 영역·목표·프로젝트를 만들면 여기에 나무로 펼쳐집니다."
-            : "진행 중인 항목이 없습니다. 영역·목표·프로젝트를 만들거나 완료 항목도 보이게 해 보세요."}
-        </p>
+          <span className="rm-stage-index tabular-nums">{String(index + 1).padStart(2, "0")}</span>
+          <span className="rm-stage-title min-w-0 break-words">{stage.title}</span>
+        </button>
+        {stage.description && <p className="rm-desc text-xs">{stage.description}</p>}
+        <ProgressBar progress={stage.progress} label={`${stage.title} 진행률`} />
       </div>
-    );
-  }
+      {!folded && (
+        <div className="lg:col-start-3 max-lg:order-3">{side(right, "right")}</div>
+      )}
+    </section>
+  );
+}
 
-  const tone = (branch: number) =>
-    data.roots[branch]?.id === "none" ? "none" : String(branch % BRANCH_TONES);
-  const dim = (key: string) => (focusKey !== null && !inLineage(key, focusKey) ? "true" : undefined);
-  const bareAreas = layout.nodes.filter((p) => p.depth === 0 && p.node.children.length === 0);
-  const areaRight = layout.nodes.find((p) => p.depth === 0)!.width;
-  const treeW = Math.max(layout.width, bareAreas.length ? areaRight + TAIL_ROOM : 0);
-  const w = ox + treeW + PAD * 2;
-  const h = Math.max(layout.height, ROOT.height) + PAD * 2;
-  const rx = ROOT.width; // root's right edge (tree coords, before ox)
-  const ry = rootY + ROOT.height / 2;
+/** Stages down a central stem; each stage's items branch left and right, children outward. */
+export default function RoadmapTree({ roadmap, selectedId, onSelect }: RoadmapTreeProps) {
+  const [collapsed, setCollapsed] = useState<CollapsedSet>(expandAll);
+  const onToggle = (id: string) => setCollapsed((c) => toggleCollapsed(c, id));
+  const stageIds = roadmap.stages.map((s) => s.id);
+  const allFolded = stageIds.length > 0 && stageIds.every((id) => collapsed.has(id));
 
   return (
-    <div className="flex flex-col gap-3">
-      {toolbar}
-      <div
-        ref={ref}
-        data-testid="roadmap-viewport"
-        className={cn(
-          "rb-roadmap-canvas max-h-[75vh] min-h-48 w-fit max-w-full self-start overflow-auto",
-          dragging ? "cursor-grabbing select-none" : "cursor-grab",
-        )}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusKey(null);
-        }}
-      >
-        <div style={{ width: w * zoom, height: h * zoom }}>
-          <div
-            className="rb-roadmap-plane relative"
-            style={{ width: w, height: h, transform: `scale(${zoom})`, transformOrigin: "0 0" }}
-          >
-            <svg
-              className="pointer-events-none absolute inset-0 overflow-visible"
-              width={w}
-              height={h}
-              aria-hidden="true"
-            >
-              <g transform={`translate(${PAD},${PAD})`}>
-                {layout.nodes
-                  .filter((p) => p.depth === 0)
-                  .map((p) => {
-                    const d = edgePath({ x1: rx, y1: ry, x2: ox, y2: p.y + p.height / 2 });
-                    return (
-                      <path
-                        key={`root/${p.key}`}
-                        className="rb-roadmap-edge"
-                        data-tone={tone(p.branch)}
-                        data-dim={dim(p.key)}
-                        d={d}
-                        style={pathStyle(d)}
-                        strokeWidth={stroke(0)}
-                      />
-                    );
-                  })}
-                <g transform={`translate(${ox},0)`}>
-                  {layout.edges.map((e) => {
-                    const d = edgePath(e);
-                    return (
-                      <path
-                        key={e.key}
-                        className="rb-roadmap-edge"
-                        data-tone={tone(e.branch)}
-                        data-dim={dim(e.key)}
-                        d={d}
-                        style={pathStyle(d)}
-                        strokeWidth={stroke(e.depth)}
-                      />
-                    );
-                  })}
-                  {bareAreas.map((p) => {
-                    const y = p.y + p.height / 2;
-                    const d = `M${p.x + p.width},${y} H${p.x + p.width + TAIL}`;
-                    return (
-                      <path
-                        key={`tail/${p.key}`}
-                        className="rb-roadmap-edge rb-roadmap-tail"
-                        data-tone={tone(p.branch)}
-                        data-dim={dim(p.key)}
-                        d={d}
-                        style={pathStyle(d)}
-                        strokeWidth={stroke(1)}
-                      />
-                    );
-                  })}
-                </g>
-              </g>
-            </svg>
-            <div className="absolute" style={{ left: PAD, top: PAD }}>
-              <div
-                className="rb-roadmap-root"
-                data-testid="roadmap-root"
-                style={{ width: ROOT.width, height: ROOT.height, transform: `translate(0px, ${rootY}px)` }}
-              >
-                나의 로드맵
-              </div>
-              {bareAreas.map((p) => (
-                <span
-                  key={`hint/${p.key}`}
-                  className="rb-roadmap-hint"
-                  data-dim={dim(p.key)}
-                  style={{
-                    transform: `translate(${ox + p.x + p.width + TAIL + 8}px, ${p.y + p.height / 2}px)`,
-                  }}
-                >
-                  목표 없음
-                </span>
-              ))}
-              {layout.nodes.map((p) => (
-                <RoadmapNodeBox
-                  key={p.key}
-                  node={p.node}
-                  width={p.width}
-                  height={p.height}
-                  collapsed={p.collapsed}
-                  counts={p.depth === 0 ? counts.get(p.id) : undefined}
-                  onToggle={() => setCollapsed((c) => toggleCollapsed(c, p.id))}
-                  style={
-                    {
-                      transform: `translate(${ox + p.x}px, ${p.y}px)`,
-                      "--rb-roadmap-depth": p.depth,
-                    } as CSSProperties
-                  }
-                  tone={tone(p.branch)}
-                  dim={dim(p.key) === "true"}
-                  onFocusIn={() => setFocusKey(p.key)}
-                  onFocusOut={() => setFocusKey(null)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          className="rm-toggle text-xs"
+          onClick={() => setCollapsed(allFolded ? expandAll() : collapseAll(stageIds))}
+        >
+          {allFolded ? "모두 펼치기" : "모두 접기"}
+        </button>
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <Legend />
-        <span className="ml-auto hidden text-xs text-faint md:inline">
-          드래그로 이동, Ctrl+휠로 확대·축소
-        </span>
+      <div className="rm-tree relative flex flex-col gap-10 py-4" data-testid="rm-tree">
+        {roadmap.stages.map((stage, i) => (
+          <StageRow
+            key={stage.id}
+            stage={stage}
+            index={i}
+            collapsed={collapsed}
+            onToggle={onToggle}
+            selectedId={selectedId}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
     </div>
   );
