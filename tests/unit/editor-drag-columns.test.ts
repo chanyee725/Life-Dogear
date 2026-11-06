@@ -71,9 +71,7 @@ describe("dropPosition across columns", () => {
   it("column → column: moves between columns", () => {
     const e = mount(group("왼쪽 하나\n\n왼쪽 둘", "오른쪽"));
     drop(e, block(e, "왼쪽 둘"), block(e, "오른쪽"), false);
-    expect(md(e)).toBe(group("왼쪽 하나", "왼쪽 둘
-
-오른쪽"));
+    expect(md(e)).toBe(group("왼쪽 하나", "왼쪽 둘\n\n오른쪽"));
   });
 
   it("columns → column: a whole columns block cannot go into a column", () => {
@@ -102,11 +100,7 @@ describe("taking the last list item out of a column", () => {
     const e = mount(`바깥\n\n${group("왼쪽", "- 혼자\n\n끝")}`);
     drop(e, block(e, "혼자", "listItem"), block(e, "바깥"), true);
     const saved = md(e);
-    expect(saved).toBe(`바깥
-
-- 혼자
-
-${group("왼쪽", "끝")}`);
+    expect(saved).toBe(`바깥\n\n- 혼자\n\n${group("왼쪽", "끝")}`);
     expect(saved).not.toMatch(/^- *$/m);
   });
 
