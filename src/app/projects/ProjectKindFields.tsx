@@ -44,8 +44,11 @@ export function ProjectKindFields({
           }}
           className="w-auto"
         />
+        {/* Keys: without them React reuses one Select for both, and its kept value (e.g.
+            "active") would be posted as the stage. */}
         {kind === "research" ? (
           <EnumSelect
+            key="stage"
             id="project-stage"
             name="stage"
             aria-label="단계"
@@ -55,6 +58,7 @@ export function ProjectKindFields({
           />
         ) : (
           <EnumSelect
+            key="status"
             id="project-status"
             name="status"
             aria-label="상태"
