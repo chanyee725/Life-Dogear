@@ -25,7 +25,7 @@ const SRC = "/api/images/00000000-0000-0000-0000-000000000000.png";
 describe("image captions (Markdown alt text)", () => {
   it("round-trips a caption through save and reload", () => {
     const saved = md(mount(`앞 문단\n\n![화이트보드 [초안] 정리](${SRC})\n\n뒤 문단`));
-    expect(saved).toContain(`](${SRC})`);
+    expect(saved).toBe(`앞 문단\n\n![화이트보드 \\[초안\\] 정리](${SRC})\n\n뒤 문단`);
     editor?.destroy();
     const again = mount(saved);
     expect(again.getJSON().content?.find((n) => n.type === "image")?.attrs?.alt).toBe(

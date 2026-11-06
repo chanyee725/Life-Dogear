@@ -175,7 +175,11 @@ type InlineToken = { type: string; content: string; children: InlineToken[] | nu
 type MarkdownIt = {
   core: { ruler: { push(name: string, rule: (state: { tokens: InlineToken[] }) => void): void } };
 };
-type SerializerState = { write(content: string): void; esc(text: string): string };
+type SerializerState = {
+  write(content: string): void;
+  esc(text: string): string;
+  closeBlock(node: PMNode): void;
+};
 
 /**
  * markdown-it turns `\[` inside an image's alt into a `text_special` token, and its alt
@@ -194,7 +198,9 @@ function keepEscapesInAlt(md: MarkdownIt) {
 
 /**
  * Block photo with a hover copy button and a one-line caption under it, both centred.
- * Markdown stays `![캡션](url)` (the same output as prosemirror-markdown's image).
+ * Markdown stays `![캡션](url)` (the same output as prosemirror-markdown's image), now
+ * closed as a block: the stock serializer wrote the next paragraph straight after the `)`,
+ * so `![](url)` and the text below it merged into one line.
  */
 export const CaptionedImage = Image.extend({
   addStorage() {
@@ -211,6 +217,7 @@ export const CaptionedImage = Image.extend({
               (title ? ` "${title.replace(/"/g, '\\"')}"` : "") +
               ")",
           );
+          state.closeBlock(node);
         },
         parse: { setup: keepEscapesInAlt },
       },
