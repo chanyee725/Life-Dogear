@@ -1,3 +1,4 @@
+import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
 import { findWikiTrigger } from "./WikiSuggest";
 
@@ -11,6 +12,8 @@ export type SlashCommand = {
   icon: string;
   /** Extra words that find it (lower case). */
   aliases: readonly string[];
+  /** Applies the command (the `/query` is already removed); else the menu's own switch does. */
+  run?: (editor: Editor) => boolean;
 };
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
