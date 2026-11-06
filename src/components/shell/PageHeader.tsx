@@ -6,8 +6,8 @@ import { cn } from "@/components/ui/cn";
  * Narrow screens: the fixed "사이드바 열기" button sits at the top-left (12px + 32px), so the page
  * starts below it (64px) instead of under it.
  * Detail pages (anything holding a `DetailBody`) get a wider column so the notes, connected
- * items and graph below the form use the room next to the sidebar; the editor itself keeps a
- * reading width inside `DetailBody`.
+ * items and graph below the form use the room next to the sidebar; the editor in `DetailBody`
+ * runs the same width as the title and properties.
  */
 export function Page({ className, children }: { className?: string; children: ReactNode }) {
   return (
