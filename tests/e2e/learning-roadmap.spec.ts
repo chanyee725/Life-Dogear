@@ -34,9 +34,17 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   await expect(item(ITEM)).toBeVisible();
   await expect(item("E2E 권장 항목")).toBeVisible();
 
-  // TODO(ItemPanel, impl-275): done 판정은 패널 마크업 확정 후 상태 버튼 data-testid로 교체.
+  // Clicking the item opens the ItemPanel (impl-275); its done button sets the status.
   await item(ITEM).click();
-  const done = page.locator('[data-status="done"], [aria-checked="true"]').filter({ hasText: ITEM });
+  const panel = page.getByTestId("rm-item-panel");
+  await expect(panel).toBeVisible();
+  await page.getByTestId("rm-status-done").click();
+  await expect(panel).toHaveAttribute("data-status", "done");
+
+  await page.reload();
+  await item(ITEM).click();
+  await expect(page.getByTestId("rm-item-panel")).toHaveAttribute("data-status", "done");
+});
   await expect(done.first()).toBeVisible();
 
   await page.reload();
