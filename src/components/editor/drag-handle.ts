@@ -14,15 +14,19 @@ import type { EditorView } from "@tiptap/pm/view";
  * Dragging the grip moves the block (a drop line marks where it lands); clicking it
  * selects the block so the keyboard can delete or copy it. List and task items move
  * as single items; every other block moves as a whole top-level block (a table, a
- * quote, a code block, a photo, a columns block). Blocks in the second or third column
- * get their own grip (in the gap between columns) and move between columns; the grip
- * beside the first column moves the whole columns block. Hidden while the editor is
- * read-only. On touch the grip has to be held briefly before it drags.
+ * quote, a code block, a photo, a columns block). Blocks in a column get their own grip
+ * and move between columns and the top level; the grip along the top edge of a columns
+ * block moves the whole block. Hidden while the editor is read-only. On touch the grip
+ * has to be held briefly before it drags.
  */
 
 const LIST_TYPES = new Set(["bulletList", "orderedList", "taskList"]);
 const ITEM_TYPES = new Set(["listItem", "taskItem"]);
 const COLUMN = "column";
+/** Parents whose blocks trade places: the document and the columns inside it. */
+const BLOCK_HOLDERS = new Set(["doc", COLUMN]);
+/** Height (px) of the band along a columns block's top edge that grabs the whole block. */
+const COLUMNS_EDGE = 8;
 /** Pointer travel (px) before a press on the grip becomes a drag. */
 const DRAG_SLOP = 4;
 /** Touch hold (ms) before the grip drags, so a swipe over it still scrolls the page. */
@@ -37,22 +41,47 @@ export function isCurrent(doc: PMNode, block: Block): boolean {
 }
 
 /**
- * The range to delete when `node` at `from` leaves its place. Taking the only item out
- * of a list removes the list too, instead of leaving an empty item behind.
+ * What leaves when `node` at `from` moves away: the range to delete and what fills it.
+ * Taking the only item out of a list removes the list too, instead of leaving an empty
+ * item behind; a container that has to keep a block (a column) keeps an empty line.
  */
-function removalRange(doc: PMNode, from: number, node: PMNode): [number, number] {
+function removal(
+  doc: PMNode,
+  from: number,
+  node: PMNode,
+): { from: number; to: number; filler: PMNode | null } {
   const $from = doc.resolve(from);
   let depth = $from.depth;
-  while (
-    depth > 0 &&
-    $from.node(depth).childCount === 1 &&
-    !$from.node(depth).type.validContent(Fragment.empty) &&
-    // A column cannot leave its columns block (it needs two); it keeps an empty line.
-    $from.node(depth - 1).canReplace($from.index(depth - 1), $from.index(depth - 1) + 1)
-  )
-    depth--;
-  if (depth === $from.depth) return [from, from + node.nodeSize];
-  return [$from.before(depth + 1), $from.after(depth + 1)];
+  while (depth > 0 && $from.node(depth).childCount === 1) {
+    const container = $from.node(depth);
+    if (container.type.validContent(Fragment.empty)) break;
+    const parent = $from.node(depth - 1);
+    const index = $from.index(depth - 1);
+    if (parent.canReplace(index, index + 1)) {
+      depth--;
+      continue;
+    }
+    // An emptied list in a column (or any block that cannot be left empty) becomes the
+    // parent's empty line instead of an empty bullet. A column cannot leave its columns
+    // block (it needs two); it keeps an empty line itself.
+    const line = parent.type.contentMatch.defaultType;
+    if (
+      LIST_TYPES.has(container.type.name) &&
+      line &&
+      parent.canReplaceWith(index, index + 1, line)
+    )
+      return { from: $from.before(depth), to: $from.after(depth), filler: line.createAndFill() };
+    break;
+  }
+  if (depth === $from.depth) {
+    const parent = $from.parent;
+    const filler =
+      parent.childCount === 1 && !parent.type.validContent(Fragment.empty)
+        ? (parent.type.contentMatch.defaultType?.createAndFill() ?? null)
+        : null;
+    return { from, to: from + node.nodeSize, filler };
+  }
+  return { from: $from.before(depth + 1), to: $from.after(depth + 1), filler: null };
 }
 
 /**
@@ -70,14 +99,9 @@ export function moveBlock(
   if (!node || (expected && node !== expected)) return null;
   const end = from + node.nodeSize;
   if (to >= from && to <= end) return null;
-  const [delFrom, delTo] = removalRange(state.doc, from, node);
+  const { from: delFrom, to: delTo, filler } = removal(state.doc, from, node);
   if (to > delFrom && to < delTo) return null;
   const tr = state.tr;
-  const parent = state.doc.resolve(delFrom).parent;
-  const filler =
-    delFrom === from && parent.childCount === 1 && !parent.type.validContent(Fragment.empty)
-      ? parent.type.contentMatch.defaultType?.createAndFill()
-      : null;
   if (filler) tr.replaceWith(delFrom, delTo, filler);
   else tr.delete(delFrom, delTo);
   const insertAt = tr.mapping.map(to);
@@ -86,53 +110,51 @@ export function moveBlock(
   return tr.scrollIntoView();
 }
 
-/**
- * Depth of the column (not the first in its columns block) that holds `$pos`, or -1.
- * Blocks there drag on their own; the first column's blocks belong to the whole block.
- */
-function innerColumnDepth($pos: ResolvedPos): number {
-  for (let d = $pos.depth; d >= 1; d--)
-    if ($pos.node(d).type.name === COLUMN) return $pos.index(d - 1) > 0 ? d : -1;
+/** Depth of the column that holds `$pos`, or -1. Blocks there drag on their own. */
+function columnDepth($pos: ResolvedPos): number {
+  for (let d = $pos.depth; d >= 1; d--) if ($pos.node(d).type.name === COLUMN) return d;
   return -1;
 }
 
 /**
- * The draggable block around `pos`: the innermost list item or block of a second/third
- * column, else the top-level block.
+ * The draggable block around `pos`: the innermost list item or block of a column, else
+ * the top-level block. (The whole columns block is grabbed at its top edge, see
+ * `columnsEdge`.)
  */
 export function blockAt(doc: PMNode, pos: number, inside = -1): Block | null {
   if (inside >= 0) {
     const node = doc.nodeAt(inside);
     const $inside = doc.resolve(inside);
-    const column = innerColumnDepth($inside);
-    const inFirstColumn = column < 0 && hasColumn($inside);
+    const column = columnDepth($inside);
     if (
       node?.isBlock &&
-      ((ITEM_TYPES.has(node.type.name) && !inFirstColumn) ||
+      (ITEM_TYPES.has(node.type.name) ||
         $inside.depth === 0 ||
         (column >= 0 && $inside.depth === column))
     )
       return { pos: inside, node };
   }
   const $pos = doc.resolve(Math.min(Math.max(pos, 0), doc.content.size));
-  const column = innerColumnDepth($pos);
-  const inFirstColumn = column < 0 && hasColumn($pos);
+  const column = columnDepth($pos);
   for (let d = $pos.depth; d >= 1; d--) {
     const node = $pos.node(d);
-    if ((ITEM_TYPES.has(node.type.name) && !inFirstColumn) || d === column + 1 || d === 1)
+    if (ITEM_TYPES.has(node.type.name) || (column >= 0 && d === column + 1) || d === 1)
       return { pos: $pos.before(d), node };
   }
   return null;
 }
 
-function hasColumn($pos: ResolvedPos): boolean {
-  for (let d = $pos.depth; d >= 1; d--) if ($pos.node(d).type.name === COLUMN) return true;
-  return false;
+/** The top-level columns block around `pos`, if any. */
+export function columnsAround(doc: PMNode, pos: number): Block | null {
+  const $pos = doc.resolve(Math.min(Math.max(pos, 0), doc.content.size));
+  if ($pos.depth < 1 || columnDepth($pos) < 0) return null;
+  return { pos: $pos.before(1), node: $pos.node(1) };
 }
 
 /**
  * Where `dragged` may land near `pos`: a sibling boundary in a parent that can hold it.
- * Top-level blocks stay top-level; list items go into lists that accept them.
+ * Blocks move between the top level and columns (a columns block stays top-level, as a
+ * column only holds `block`s); list items go into lists that accept them.
  * `after` picks the boundary below the hovered block instead of above it.
  */
 export function dropPosition(
@@ -146,7 +168,8 @@ export function dropPosition(
   const sourceParent = doc.resolve(dragged.pos).parent;
   const sameKind =
     parent.type === sourceParent.type ||
-    (LIST_TYPES.has(parent.type.name) && LIST_TYPES.has(sourceParent.type.name));
+    (LIST_TYPES.has(parent.type.name) && LIST_TYPES.has(sourceParent.type.name)) ||
+    (BLOCK_HOLDERS.has(parent.type.name) && BLOCK_HOLDERS.has(sourceParent.type.name));
   const index = $hover.index() + (after ? 1 : 0);
   if (!sameKind || !parent.canReplaceWith(index, index, dragged.node.type)) return null;
   const to = after ? hover.pos + hover.node.nodeSize : hover.pos;
@@ -259,8 +282,14 @@ class DragHandleView {
     // The margin left of the text maps to the block beside it, so the grip stays reachable.
     const left = Math.max(event.clientX, content.left + 1);
     const hit = this.view.posAtCoords({ left, top: event.clientY });
-    const block = hit && blockAt(this.view.state.doc, hit.pos, hit.inside);
+    const { doc } = this.view.state;
+    let block = hit && blockAt(doc, hit.pos, hit.inside);
     if (!block) return this.hide();
+    // Along a columns block's top edge the grip takes the whole block.
+    const columns = columnsAround(doc, block.pos);
+    const columnsDom = columns && this.blockDom(columns);
+    if (columnsDom && event.clientY < columnsDom.getBoundingClientRect().top + COLUMNS_EDGE)
+      block = columns;
     this.block = block;
     this.place(block);
   };
