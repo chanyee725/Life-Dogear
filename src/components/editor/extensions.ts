@@ -1,6 +1,6 @@
 import { Extension, Node } from "@tiptap/core";
 import Paragraph from "@tiptap/extension-paragraph";
-import type { Node as PMNode } from "@tiptap/pm/model";
+import type { Fragment, Node as PMNode } from "@tiptap/pm/model";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
@@ -59,10 +59,13 @@ const BlankLineParagraph = Paragraph.extend({
   addStorage() {
     return {
       markdown: {
-        serialize(state: MarkdownSerializerState, node: PMNode, parent: PMNode) {
+        serialize(state: MarkdownSerializerState, node: PMNode, parent: PMNode | Fragment) {
           // The last child is skipped: StarterKit's TrailingNode appends an empty paragraph
           // after a final list, code block, table, heading or image on the first edit.
+          // A Fragment parent is a copied selection (tiptap-markdown serializes the slice's
+          // content, not a doc): copied text gets no `&nbsp;` lines.
           if (
+            "type" in parent &&
             node.childCount === 0 &&
             (parent.type.name === "doc" || parent.type.name === "column") &&
             node !== parent.lastChild
