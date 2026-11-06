@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type KeyboardEvent, type RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, type KeyboardEvent, type RefObject } from "react";
 
 /**
  * Keyboard navigation for the roadmap tree (WAI-ARIA tree pattern, roving tabindex).
@@ -63,12 +63,48 @@ export function focusTreeItem(root: HTMLElement, next: HTMLElement): void {
   next.focus();
 }
 
+/** data-ids of `item` and its ancestor treeitems, nearest first. */
+function ancestry(item: HTMLElement, root: HTMLElement): string[] {
+  const ids: string[] = [];
+  for (let el: HTMLElement | null = item; el; el = parentItem(el, root)) {
+    if (el.dataset.id) ids.push(el.dataset.id);
+  }
+  return ids;
+}
+
 export function useTreeKeyboard({
   rootRef,
   collapsed,
   onToggle,
   onSelect,
 }: UseTreeKeyboardOptions): UseTreeKeyboardResult {
+  // Path of the tabbable (tabindex=0) item, so a fold that unmounts it can hand the tab stop
+  // to the nearest still-visible ancestor (or the first row).
+  const tabPath = useRef<string[]>([]);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const current = root.querySelector<HTMLElement>(`${ITEM}[tabindex="0"]`);
+    if (current && isVisible(current, root)) {
+      tabPath.current = ancestry(current, root);
+      return;
+    }
+    const byId = (id: string) =>
+      root.querySelector<HTMLElement>(`${ITEM}[data-id="${CSS.escape(id)}"]`);
+    const next =
+      tabPath.current.map(byId).find((el) => el && isVisible(el, root)) ??
+      visibleItems(root)[0];
+    if (!next) return;
+    const lostFocus = document.activeElement === document.body;
+    root.querySelectorAll<HTMLElement>(`${ITEM}[tabindex="0"]`).forEach((el) => {
+      el.tabIndex = -1;
+    });
+    next.tabIndex = 0;
+    if (lostFocus) next.focus();
+    tabPath.current = ancestry(next, root);
+  }, [rootRef, collapsed]);
+
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
       const root = rootRef.current;
@@ -79,7 +115,9 @@ export function useTreeKeyboard({
       if (!id) return;
 
       const go = (el: HTMLElement | null | undefined) => {
-        if (el) focusTreeItem(root, el);
+        if (!el) return;
+        focusTreeItem(root, el);
+        tabPath.current = ancestry(el, root);
       };
 
       switch (e.key) {
