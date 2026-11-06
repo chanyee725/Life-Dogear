@@ -5,7 +5,7 @@ import {
   layoutTree,
   type LayoutSize,
   type PlacedNode,
-} from "@/app/roadmap/layout";
+} from "@/app/roadmap/roadmapLayout";
 import type { RoadmapKind, RoadmapNode } from "@/lib/repo/roadmap-types";
 
 const SIZE: LayoutSize = { nodeWidth: 100, nodeHeight: 20, colGap: 40, rowGap: 10 };

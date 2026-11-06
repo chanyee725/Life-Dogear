@@ -11,7 +11,7 @@ import {
   toggleCollapsed,
   type CollapsedSet,
 } from "./collapse";
-import { DEFAULT_SIZE, defaultCollapsed, edgePath, layoutTree, type TreeLayout } from "./layout";
+import { DEFAULT_SIZE, defaultCollapsed, edgePath, layoutTree, type TreeLayout } from "./roadmapLayout";
 import { RoadmapNodeBox } from "./RoadmapNode";
 import RoadmapToolbar from "./RoadmapToolbar";
 import { MAX_ZOOM, MIN_ZOOM, useViewport, type Rect } from "./useViewport";
