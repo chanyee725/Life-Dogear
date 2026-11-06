@@ -855,6 +855,45 @@
   overflow-wrap: normal;
 }
 
+/* Column widths (columns.ts): only side by side (`md`), where the columns are a row.
+   Unlayered so it beats the column's `flex-1` utility; stacked columns ignore it. */
+@media (width >= 48rem) {
+  .rb-prose .rb-column[data-width] {
+    flex-grow: var(--rb-col-w);
+  }
+}
+
+/* ---------- Column width bar (columns-resize.ts) ---------- */
+@layer components {
+  .rb-column-resize {
+    position: absolute;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .rb-column-resize::before {
+    content: "";
+    width: 2px;
+    height: 100%;
+    border-radius: 1px;
+    background: var(--rb-accent);
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .rb-column-resize:hover::before,
+  .rb-column-resize-active::before {
+    opacity: 1;
+  }
+  body.rb-column-resizing,
+  body.rb-column-resizing * {
+    cursor: col-resize !important;
+  }
+}
+
 /* ---------- Editor block handle (drag-handle.ts) ---------- */
 @layer components {
   .rb-drag-handle {
