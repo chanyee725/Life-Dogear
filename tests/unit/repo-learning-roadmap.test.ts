@@ -95,9 +95,9 @@ describe("getRoadmapTree", () => {
 });
 
 describe("listRoadmaps", () => {
-  it("lists newest first with item progress", async () => {
-    await seed("rust", "2026-11-01T00:00:00.000Z");
-    await seed("go", "2026-11-02T00:00:00.000Z");
+  it("lists by slug ascending regardless of updatedAt, with item progress", async () => {
+    await seed("step-2", "2026-11-03T00:00:00.000Z");
+    await seed("step-1", "2026-11-01T00:00:00.000Z");
     await db.insert(learningRoadmaps).values({
       id: "seed-empty",
       slug: "empty",
@@ -107,9 +107,9 @@ describe("listRoadmaps", () => {
       updatedAt: T,
     });
     const list = await listRoadmaps();
-    expect(list.map((r) => r.slug)).toEqual(["go", "empty", "rust"]);
-    expect(list[0]!.progress).toEqual({ done: 1, total: 4 });
-    expect(list[1]!.progress).toEqual({ done: 0, total: 0 });
+    expect(list.map((r) => r.slug)).toEqual(["empty", "step-1", "step-2"]);
+    expect(list[0]!.progress).toEqual({ done: 0, total: 0 });
+    expect(list[1]!.progress).toEqual({ done: 1, total: 4 });
   });
 });
 
