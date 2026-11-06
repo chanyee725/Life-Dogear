@@ -2,7 +2,12 @@
 
 import {
   BookOpen,
+  Circle,
+  CircleCheck,
+  CircleDot,
   Code2,
+  Diamond,
+  ExternalLink,
   FileText,
   GraduationCap,
   PlayCircle,
@@ -15,6 +20,7 @@ import {
   PRIORITY_LABEL,
   STATUSES,
   STATUS_LABEL,
+  type Priority,
   type RoadmapItem,
   type Status,
 } from "./model";
@@ -36,6 +42,40 @@ const KIND_LABEL: Record<string, string> = {
   code: "코드",
   doc: "문서",
 };
+
+const STATUS_ICON: Record<Status, LucideIcon> = {
+  todo: Circle,
+  doing: CircleDot,
+  done: CircleCheck,
+};
+
+/** Shared status glyph (tree, legend, panel): ring, dotted ring, checked ring. Decorative. */
+export function StatusIcon({ status, size = 14 }: { status: Status; size?: number }) {
+  const Icon = STATUS_ICON[status];
+  return <Icon size={size} aria-hidden className="ip-status-icon" data-status={status} />;
+}
+
+/** Shared priority mark: filled diamond (필수), outline diamond (추천), nothing (선택). */
+export function PriorityMark({ priority }: { priority: Priority }) {
+  if (priority === "optional") return null;
+  return (
+    <Diamond
+      size={10}
+      aria-hidden
+      className="ip-priority-mark"
+      fill={priority === "essential" ? "currentColor" : "none"}
+      strokeWidth={2.5}
+    />
+  );
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
 
 export interface ItemPanelProps {
   item: RoadmapItem | null;
@@ -62,73 +102,70 @@ export default function ItemPanel({
       aria-label={`${item.title} 상세`}
       data-testid="rm-item-panel"
       data-status={item.status}
-      className={cn(
-        "flex flex-col gap-4 border-l border-[var(--rb-border)] bg-[var(--rb-bg)] p-4",
-        className,
-      )}
+      data-priority={item.priority ?? undefined}
+      aria-busy={pending || undefined}
+      className={cn("ip-root", className)}
     >
-      <header className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-[var(--rb-fg)]">{item.title}</h2>
+      <header className="ip-head">
+        <div className="ip-head-text">
           {item.priority ? (
-            <p className="mt-0.5 text-xs text-[var(--rb-muted)]">{PRIORITY_LABEL[item.priority]}</p>
+            <span className="ip-chip" data-priority={item.priority}>
+              <PriorityMark priority={item.priority} />
+              {PRIORITY_LABEL[item.priority]}
+            </span>
           ) : null}
+          <h2 className="ip-title">{item.title}</h2>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="닫기"
-          className="rounded p-1 text-[var(--rb-muted)] hover:bg-[var(--rb-hover)]"
-        >
+        <button type="button" onClick={onClose} aria-label="닫기" className="ip-close">
           <X size={16} aria-hidden />
         </button>
       </header>
 
-      {item.description ? (
-        <p className="whitespace-pre-wrap text-sm text-[var(--rb-fg)]">{item.description}</p>
-      ) : null}
-
-      <div role="radiogroup" aria-label="상태 바꾸기" className="flex gap-1">
+      <div role="radiogroup" aria-label="상태 바꾸기" className="ip-status">
         {STATUSES.map((s) => (
           <button
             key={s}
             type="button"
             role="radio"
             data-testid={`rm-status-btn-${s}`}
+            data-status={s}
             aria-checked={item.status === s}
             disabled={pending || !onStatusChange}
             onClick={() => {
               if (item.status !== s) onStatusChange?.(item.id, s);
             }}
-            className={cn(
-              "rounded border border-[var(--rb-border)] px-2.5 py-1 text-xs disabled:opacity-50",
-              item.status === s
-                ? "bg-[var(--rb-accent)] text-[var(--rb-accent-fg)]"
-                : "text-[var(--rb-fg)] hover:bg-[var(--rb-hover)]",
-            )}
+            className="ip-status-btn"
           >
+            <StatusIcon status={s} size={15} />
             {STATUS_LABEL[s]}
           </button>
         ))}
       </div>
 
+      {item.description ? <p className="ip-desc">{item.description}</p> : null}
+
       {item.resources.length > 0 ? (
-        <section aria-label="자료">
-          <h3 className="mb-1 text-xs font-medium text-[var(--rb-muted)]">자료</h3>
-          <ul className="flex flex-col gap-1">
+        <section aria-labelledby={`ip-res-${item.id}`} className="ip-resources">
+          <h3 id={`ip-res-${item.id}`} className="ip-section-title">
+            자료 {item.resources.length}개
+          </h3>
+          <ul className="ip-res-list">
             {item.resources.map((r, i) => {
               const Icon = KIND_ICON[r.kind] ?? FileText;
+              const host = hostOf(r.url);
               return (
                 <li key={`${r.url}-${i}`}>
-                  <a
-                    href={r.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded px-1.5 py-1 text-sm text-[var(--rb-fg)] hover:bg-[var(--rb-hover)]"
-                  >
-                    <Icon size={14} aria-hidden className="shrink-0 text-[var(--rb-muted)]" />
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="ip-res">
+                    <span className="ip-res-kind" title={KIND_LABEL[r.kind] ?? "문서"}>
+                      <Icon size={15} aria-hidden />
+                    </span>
                     <span className="sr-only">{KIND_LABEL[r.kind] ?? "문서"}: </span>
-                    <span className="truncate">{r.title}</span>
+                    <span className="ip-res-text">
+                      <span className="ip-res-title">{r.title}</span>
+                      {host ? <span className="ip-res-host">{host}</span> : null}
+                    </span>
+                    <ExternalLink size={13} aria-hidden className="ip-res-out" />
+                    <span className="sr-only">(새 탭)</span>
                   </a>
                 </li>
               );
