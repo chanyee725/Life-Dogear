@@ -30,7 +30,11 @@ describe("empty paragraphs survive the Markdown round-trip", () => {
       content: [
         { type: "codeBlock", attrs: { language: "bash" }, content: [{ type: "text", text: "ls" }] },
         p(),
-        { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Workspace 셋업" }] },
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Workspace 셋업" }],
+        },
         p("a"),
         p(),
         p(),
@@ -64,5 +68,29 @@ describe("empty paragraphs survive the Markdown round-trip", () => {
     const saved = md(e);
     expect(saved).toBe("본추가문\n\n- 하나\n- 둘");
     expect(saved.endsWith("&nbsp;")).toBe(false);
+  });
+});
+
+describe("copying as Markdown", () => {
+  // Copy serializes a slice's Fragment, not the doc: top-level paragraphs have no parent.
+  it("serializes a selection that holds top-level paragraphs, empty or not", () => {
+    const e = mount({
+      type: "doc",
+      content: [
+        { type: "codeBlock", attrs: { language: "ts" }, content: [{ type: "text", text: "x" }] },
+        p(),
+        p("a"),
+        p(),
+      ],
+    });
+    const slice = e.state.doc.slice(0, e.state.doc.content.size);
+    const serializer = (
+      e.storage as unknown as {
+        markdown: { serializer: { serialize(content: unknown): string } };
+      }
+    ).markdown.serializer;
+    const text = serializer.serialize(slice.content);
+    expect(text).toContain("```ts\nx\n```");
+    expect(text).toContain("a");
   });
 });
