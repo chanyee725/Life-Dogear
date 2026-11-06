@@ -2,7 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { uniqueTitle } from "./helpers";
 
 const editor = (page: Page) => page.getByRole("textbox", { name: "본문" });
-const kindSelect = (page: Page) => page.getByLabel("종류", { exact: true });
+// 종류 is a Radix Select (a combobox button); its value travels in the hidden form input.
+const kindSelect = (page: Page) => page.locator('input[type="hidden"][name="kind"]');
 
 test("새 프로젝트 템플릿: 종류가 같이 바뀌고, 직접 쓴 본문은 유지되고, 저장된다", async ({
   page,

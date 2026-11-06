@@ -18,7 +18,8 @@ test("goals list: a goal-less year in the URL shows in the year select, no perio
   await page.goto(`/goals?period=${goalless}`);
   const year = page.getByRole("combobox", { name: "다른 연도" });
   await expect(year).toBeVisible();
-  await expect(year).toHaveValue(goalless);
+  // A Radix Select: the trigger shows the chosen option's label.
+  await expect(year).toHaveText(`${goalless}년`);
 
   const filters = page.getByRole("radiogroup", { name: "기간" });
   for (const name of ["이번 분기", "올해", "전체"]) {
