@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { collapseAll, expandAll, toggleCollapsed } from "@/app/roadmap/collapse";
+import {
+  collapseAll,
+  collapseEverything,
+  defaultCollapsed,
+  expandAll,
+  setCollapsed,
+  toggleCollapsed,
+} from "@/app/roadmap/collapse";
 
 describe("roadmap collapse set", () => {
   it("toggle folds then unfolds an id", () => {
@@ -26,5 +33,27 @@ describe("roadmap collapse set", () => {
     expect(new Set(collapseAll(["s1", "s2"]))).toEqual(new Set(["s1", "s2"]));
     expect(collapseAll([]).size).toBe(0);
     expect(expandAll().size).toBe(0);
+  });
+});
+
+describe("tree default / collapse everything", () => {
+  const leaf = (id: string) => ({ id, children: [] });
+  const stages = [
+    { id: "s1", children: [{ id: "a", children: [{ id: "a1", children: [leaf("a11")] }] }, leaf("b")] },
+    { id: "s2", children: [] },
+  ];
+
+  it("default folds item branches only, stages stay open", () => {
+    expect(new Set(defaultCollapsed(stages))).toEqual(new Set(["a", "a1"]));
+  });
+
+  it("collapseEverything folds every node with children, stages included", () => {
+    expect(new Set(collapseEverything(stages))).toEqual(new Set(["s1", "a", "a1"]));
+  });
+
+  it("setCollapsed is a no-op when already in that state", () => {
+    const set = new Set(["a"]);
+    expect(setCollapsed(set, "a", true)).toBe(set);
+    expect([...setCollapsed(set, "a", false)]).toEqual([]);
   });
 });
