@@ -105,7 +105,15 @@ export function moveBlock(
   if (filler) tr.replaceWith(delFrom, delTo, filler);
   else tr.delete(delFrom, delTo);
   const insertAt = tr.mapping.map(to);
-  tr.insert(insertAt, node);
+  // A list item dropped among blocks (see `dropPosition`) becomes a one-item list.
+  const $at = tr.doc.resolve(insertAt);
+  const list = state.doc.resolve(from).parent.type;
+  const moved =
+    ITEM_TYPES.has(node.type.name) &&
+    !$at.parent.canReplaceWith($at.index(), $at.index(), node.type)
+      ? list.create(null, node)
+      : node;
+  tr.insert(insertAt, moved);
   tr.setSelection(NodeSelection.create(tr.doc, insertAt));
   return tr.scrollIntoView();
 }
@@ -119,7 +127,7 @@ function columnDepth($pos: ResolvedPos): number {
 /**
  * The draggable block around `pos`: the innermost list item or block of a column, else
  * the top-level block. (The whole columns block is grabbed at its top edge, see
- * `columnsEdge`.)
+ * `columnsAround`.)
  */
 export function blockAt(doc: PMNode, pos: number, inside = -1): Block | null {
   if (inside >= 0) {
@@ -154,7 +162,8 @@ export function columnsAround(doc: PMNode, pos: number): Block | null {
 /**
  * Where `dragged` may land near `pos`: a sibling boundary in a parent that can hold it.
  * Blocks move between the top level and columns (a columns block stays top-level, as a
- * column only holds `block`s); list items go into lists that accept them.
+ * column only holds `block`s); list items go into lists that accept them, and an item
+ * of a list in a column may also leave for the top level as a list of its own.
  * `after` picks the boundary below the hovered block instead of above it.
  */
 export function dropPosition(
@@ -170,8 +179,17 @@ export function dropPosition(
     parent.type === sourceParent.type ||
     (LIST_TYPES.has(parent.type.name) && LIST_TYPES.has(sourceParent.type.name)) ||
     (BLOCK_HOLDERS.has(parent.type.name) && BLOCK_HOLDERS.has(sourceParent.type.name));
+  // A list item taken out of a column to the top level lands wrapped in a list.
+  const $source = doc.resolve(dragged.pos);
+  const wrap =
+    ITEM_TYPES.has(dragged.node.type.name) &&
+    LIST_TYPES.has(sourceParent.type.name) &&
+    $source.depth >= 2 &&
+    $source.node($source.depth - 1).type.name === COLUMN &&
+    parent.type.name === "doc";
+  const type = wrap ? sourceParent.type : dragged.node.type;
   const index = $hover.index() + (after ? 1 : 0);
-  if (!sameKind || !parent.canReplaceWith(index, index, dragged.node.type)) return null;
+  if (!(sameKind || wrap) || !parent.canReplaceWith(index, index, type)) return null;
   const to = after ? hover.pos + hover.node.nodeSize : hover.pos;
   if (to >= dragged.pos && to <= dragged.pos + dragged.node.nodeSize) return null;
   return to;
