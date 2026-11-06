@@ -44,10 +44,3 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   await page.reload();
   await item(ITEM).click();
   await expect(page.getByTestId("rm-item-panel")).toHaveAttribute("data-status", "done");
-});
-  await expect(done.first()).toBeVisible();
-
-  await page.reload();
-  await expect(item(ITEM)).toBeVisible();
-  await expect(done.first()).toBeVisible();
-});
