@@ -1,3 +1,4 @@
+import { stripColumnMarkers } from "@/lib/column-markers";
 import type { ReviewKind } from "@/lib/enums";
 
 /** "이번 주 회고 쓰기" etc. */
@@ -18,7 +19,7 @@ export const KIND_TAB_LABEL: Record<ReviewKind, string> = {
 /** First non-heading text line of a body, for list previews. */
 export function bodyPreview(body: string): string {
   return (
-    body
+    stripColumnMarkers(body)
       .split("\n")
       .map((l) =>
         l

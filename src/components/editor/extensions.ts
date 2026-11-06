@@ -1,4 +1,4 @@
-import { Extension } from "@tiptap/core";
+import { Extension, Node } from "@tiptap/core";
 import Paragraph from "@tiptap/extension-paragraph";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -8,7 +8,7 @@ import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { CodeBlock, CodeBlockClipboard } from "./code-block";
-import { Column, Columns } from "./columns";
+import { Column, Columns, TOP_BLOCK } from "./columns";
 import { BlockDragHandle } from "./drag-handle";
 import { CaptionedImage } from "./image-view";
 import { WikiLink } from "./WikiLink";
@@ -76,10 +76,16 @@ const BlankLineParagraph = Paragraph.extend({
           updateDOM(element: HTMLElement) {
             const blocks = [
               ...element.children,
-              ...element.querySelectorAll(':scope > div[data-type="columns"] > div[data-type="column"] > *'),
+              ...element.querySelectorAll(
+                ':scope > div[data-type="columns"] > div[data-type="column"] > *',
+              ),
             ];
             for (const child of blocks) {
-              if (child.tagName === "P" && child.textContent === "\u00a0" && child.childNodes.length === 1) {
+              if (
+                child.tagName === "P" &&
+                child.textContent === "\u00a0" &&
+                child.childNodes.length === 1
+              ) {
                 child.textContent = "";
               }
             }
@@ -88,6 +94,13 @@ const BlankLineParagraph = Paragraph.extend({
       },
     };
   },
+});
+
+/** The document also takes `columns` (group `topBlock`), which no other node accepts. */
+const ColumnsDocument = Node.create({
+  name: "doc",
+  topNode: true,
+  content: `(block | ${TOP_BLOCK})+`,
 });
 
 /**
@@ -100,6 +113,8 @@ export function createExtensions(placeholder: string) {
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
+      // Replaced by ColumnsDocument (also accepts columns).
+      document: false,
       // Replaced by the highlighted code block below (same node name and Markdown).
       codeBlock: false,
       // Replaced by BlankLineParagraph (keeps blank lines through Markdown).
@@ -113,6 +128,7 @@ export function createExtensions(placeholder: string) {
         HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
       },
     }),
+    ColumnsDocument,
     BlankLineParagraph,
     CodeBlock,
     CodeBlockClipboard,

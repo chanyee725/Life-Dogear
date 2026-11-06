@@ -54,6 +54,32 @@ export type MarkdownItBlockLike = {
   };
 };
 
+const MARKERS = new Set([COLUMNS_OPEN, COLUMN_OPEN, COLUMN_CLOSE]);
+
+/**
+ * Column Markdown with `\` before every line (outside code fences) that would otherwise read
+ * as a marker: text typed as `:::` or `::: column` inside a column. Markdown reads `\:` back
+ * as `:`, so the text survives a round trip without ending the column. Leading spaces are
+ * ignored here as in `scan`, so list continuation lines are covered too.
+ */
+export function escapeMarkerLines(markdown: string): string {
+  let fence: string | null = null;
+  return markdown
+    .split("\n")
+    .map((line) => {
+      const t = line.trim();
+      if (fence) {
+        if (t.startsWith(fence) && /^[`~]*$/.test(t)) fence = null;
+        return line;
+      }
+      const open = /^(`{3,}|~{3,})/.exec(t);
+      if (open) fence = open[1];
+      else if (MARKERS.has(t)) return line.replace(":", "\\:");
+      return line;
+    })
+    .join("\n");
+}
+
 const lineText = (state: BlockState, line: number) =>
   state.src.slice(state.bMarks[line] + state.tShift[line], state.eMarks[line]).trimEnd();
 

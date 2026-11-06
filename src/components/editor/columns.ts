@@ -3,6 +3,7 @@ import type { Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import {
   columnsPlugin,
+  escapeMarkerLines,
   COLUMN_CLOSE,
   COLUMN_OPEN,
   COLUMNS_OPEN,
@@ -19,6 +20,12 @@ import {
 
 export const COLUMNS = "columns";
 export const COLUMN = "column";
+/**
+ * Group of `columns` instead of `block`: a column holds `block+`, so columns cannot sit in
+ * a column (nor in lists, quotes or table cells) — not by typing, dragging or pasting HTML.
+ * Only the document accepts it (see `ColumnsDocument`).
+ */
+export const TOP_BLOCK = "topBlock";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -30,6 +37,7 @@ declare module "@tiptap/core" {
 }
 
 type SerializerState = {
+  out: string;
   write(content?: string): void;
   ensureNewLine(): void;
   flushClose(size?: number): void;
@@ -123,7 +131,7 @@ export const Column = Node.create({
 
 export const Columns = Node.create({
   name: COLUMNS,
-  group: "block",
+  group: TOP_BLOCK,
   content: `${COLUMN}{${MIN_COLUMNS},${MAX_COLUMNS}}`,
   isolating: true,
   defining: true,
@@ -152,8 +160,10 @@ export const Columns = Node.create({
           node.forEach((column) => {
             state.write(COLUMN_OPEN);
             state.ensureNewLine();
+            const from = state.out.length;
             state.renderContent(column);
             state.flushClose(1);
+            state.out = state.out.slice(0, from) + escapeMarkerLines(state.out.slice(from));
             state.write(COLUMN_CLOSE);
             state.ensureNewLine();
           });
