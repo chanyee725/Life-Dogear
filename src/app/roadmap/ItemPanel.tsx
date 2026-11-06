@@ -70,7 +70,9 @@ export default function ItemPanel({
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-[var(--rb-fg)]">{item.title}</h2>
-          <p className="mt-0.5 text-xs text-[var(--rb-muted)]">{PRIORITY_LABEL[item.priority]}</p>
+          {item.priority ? (
+            <p className="mt-0.5 text-xs text-[var(--rb-muted)]">{PRIORITY_LABEL[item.priority]}</p>
+          ) : null}
         </div>
         <button
           type="button"
