@@ -92,7 +92,7 @@ export default function ItemPanel({
             key={s}
             type="button"
             role="radio"
-            data-testid={`rm-status-${s}`}
+            data-testid={`rm-status-btn-${s}`}
             aria-checked={item.status === s}
             disabled={pending || !onStatusChange}
             onClick={() => {
