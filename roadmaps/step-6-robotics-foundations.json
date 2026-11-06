@@ -1214,13 +1214,7 @@
           "title": "비선형 최소제곱",
           "priority": "essential",
           "description": "가우스-뉴턴, 레벤버그-마쿼트, 강건 커널(Huber·Cauchy), 매니폴드 위 갱신 — Nocedal & Wright 10장, Madsen·Nielsen·Tingleff",
-          "resources": [
-            {
-              "title": "Ceres Solver",
-              "url": "http://ceres-solver.org",
-              "kind": "code"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "가우스-뉴턴",
@@ -2921,13 +2915,7 @@
           "title": "<transmission> 요소",
           "priority": "recommended",
           "description": "액추에이터–관절 사이 기어비·기계적 감속을 기술. type(SimpleTransmission, DifferentialTransmission, FourBarLinkageTransmission), <joint><hardwareInterface>, <actuator><mechanicalReduction>. ROS 1 형식과 ros2_control 의 transmission_interface 해석 차이. 기준: ROS Wiki urdf/XML/transmission.",
-          "resources": [
-            {
-              "title": "urdf/XML/transmission",
-              "url": "http://wiki.ros.org/urdf/XML/transmission",
-              "kind": "doc"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "SimpleTransmission",
