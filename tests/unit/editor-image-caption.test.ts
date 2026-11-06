@@ -63,3 +63,41 @@ describe("image captions (Markdown alt text)", () => {
     expect(e.view.dom.querySelector<HTMLElement>("figcaption")?.hidden).toBe(true);
   });
 });
+
+describe("image sizes (Markdown image title w=..)", () => {
+  it("saves a chosen size as the title and reads it back", () => {
+    const e = mount(`![회의 메모](${SRC})`);
+    const figure = e.view.dom.querySelector<HTMLElement>("figure.rb-image")!;
+    const sizes = figure.querySelectorAll<HTMLButtonElement>(".rb-image-size");
+    expect([...sizes].map((b) => b.textContent)).toEqual(["작게", "중간", "크게", "원본"]);
+    expect(figure.querySelector('[aria-pressed="true"]')?.textContent).toBe("원본");
+
+    figure.querySelector<HTMLButtonElement>(".rb-image-size:nth-child(2)")!.click();
+    const saved = md(e);
+    expect(saved).toBe(`![회의 메모](${SRC} "w=50")`);
+    expect(figure.dataset.width).toBe("50");
+    expect(figure.querySelector<HTMLElement>(".rb-image-frame")?.style.width).toBe("50%");
+    expect(figure.querySelector("figcaption")?.style.width).toBe("50%");
+    expect(figure.querySelector('[aria-pressed="true"]')?.textContent).toBe("중간");
+
+    editor?.destroy();
+    const again = mount(saved, false);
+    const image = again.getJSON().content?.find((n) => n.type === "image");
+    expect(image?.attrs?.width).toBe(50);
+    expect(image?.attrs?.title).toBeNull();
+    expect(again.view.dom.querySelector("img")?.hasAttribute("title")).toBe(false);
+    expect(again.view.dom.querySelector<HTMLElement>("figure.rb-image")?.dataset.width).toBe("50");
+    expect(md(again)).toBe(saved);
+  });
+
+  it("leaves photos without a size and other titles unchanged", () => {
+    const plain = mount(`![](${SRC})`);
+    expect(plain.getJSON().content?.[0]?.attrs?.width).toBeNull();
+    expect(plain.view.dom.querySelector<HTMLElement>("figure")?.dataset.width).toBeUndefined();
+    expect(md(plain)).toBe(`![](${SRC})`);
+    editor?.destroy();
+    const titled = mount(`![a](${SRC} "w=33")`);
+    expect(titled.getJSON().content?.[0]?.attrs).toMatchObject({ width: null, title: "w=33" });
+    expect(md(titled)).toBe(`![a](${SRC} "w=33")`);
+  });
+});

@@ -127,3 +127,36 @@ test("사진: 복사 버튼, 캡션 입력, 가운데 정렬, 블록 이동", as
 
   await deleteCurrentItem(page);
 });
+
+test("사진: 크기 버튼으로 본문 폭의 비율을 바꾸고 새로고침 뒤에도 유지된다", async ({ page }) => {
+  await createItem(page, "thoughts", uniqueTitle("E2E photo size"));
+  const editor = page.getByRole("textbox", { name: "본문" });
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: /사진 넣기/ }).click();
+  await (await chooser).setFiles({ name: "image.png", mimeType: "image/png", buffer: PNG });
+  const img = editor.locator("figure.rb-image img");
+  await expect(img).toHaveAttribute("src", /^\/api\/images\//);
+
+  await img.hover();
+  const sizes = page.getByRole("group", { name: "사진 크기" });
+  await expect(sizes).toBeVisible();
+  await expect(sizes.getByRole("button", { name: "원본" })).toHaveAttribute("aria-pressed", "true");
+  await sizes.getByRole("button", { name: "중간" }).click();
+  await expect(sizes.getByRole("button", { name: "중간" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('input[type="hidden"][name="body"]')).toHaveValue(
+    /!\[\]\(\/api\/images\/[^)\s]+ "w=50"\)/,
+  );
+
+  // Half the column, still centred, caption the same width.
+  const column = (await editor.boundingBox())!;
+  const box = (await img.boundingBox())!;
+  expect(Math.abs(box.width - column.width / 2)).toBeLessThan(3);
+  expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2))).toBeLessThan(3);
+  const caption = (await page.getByPlaceholder("캡션 추가").boundingBox())!;
+  expect(Math.abs(caption.width - box.width)).toBeLessThan(3);
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(editor.locator("figure.rb-image")).toHaveAttribute("data-width", "50");
+  await deleteCurrentItem(page);
+});
