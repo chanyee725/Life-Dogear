@@ -7,6 +7,7 @@ import {
   type EditorState,
   type Transaction,
 } from "@tiptap/pm/state";
+import { COLUMN, COLUMNS, insertColumnsTr, isEmptyColumn } from "./columns";
 import { COLUMN_RESIZE_META } from "./columns-resize";
 
 /**
@@ -16,45 +17,8 @@ import { COLUMN_RESIZE_META } from "./columns-resize";
  * every column empty with the cursor outside it.
  */
 
-const COLUMNS = "columns";
-const COLUMN = "column";
-
-/** A column holding nothing but one empty textblock. */
-export function isEmptyColumn(column: PMNode): boolean {
-  const only = column.childCount === 1 ? column.firstChild : null;
-  return !!only && only.isTextblock && only.content.size === 0;
-}
-
-/**
- * Inserts a columns block with `count` empty columns as a top-level block: it replaces
- * the empty paragraph the cursor is in, else goes below the cursor's top-level block.
- * The cursor lands in the first column. False when the schema has no columns.
- */
-export function insertColumnsTr(state: EditorState, count: number): Transaction | null {
-  const { columns, column, paragraph } = state.schema.nodes;
-  if (!columns || !column || !paragraph) return null;
-  const node = columns.createAndFill(
-    null,
-    Array.from({ length: count }, () => column.create(null, paragraph.create())),
-  );
-  if (!node) return null;
-  const { $from, to } = state.selection;
-  const tr = state.tr;
-  let at: number;
-  if ($from.depth === 1 && $from.parent.isTextblock && $from.parent.content.size === 0) {
-    at = $from.before(1);
-    tr.replaceWith(at, $from.after(1), node);
-  } else {
-    at = $from.depth >= 1 ? $from.after(1) : to;
-    tr.insert(at, node);
-  }
-  // columns > column > paragraph: the first column's text starts three steps in.
-  tr.setSelection(TextSelection.create(tr.doc, at + 3));
-  return tr.scrollIntoView();
-}
-
 export function insertColumns(editor: Editor, count: number): boolean {
-  const tr = insertColumnsTr(editor.state, count);
+  const tr = insertColumnsTr(editor.state, count, { fromSlash: true });
   if (!tr) return false;
   editor.view.dispatch(tr);
   editor.view.focus();
