@@ -1,0 +1,1764 @@
+[
+  {
+    "title": "로봇 안전 표준과 기능 안전",
+    "items": [
+      {
+        "title": "리스크 평가 절차(ISO 12100)",
+        "priority": "essential",
+        "description": "위험원 식별 → 리스크 추정(심각도·노출 빈도·발생 확률·회피 가능성) → 평가 → 3단계 저감(본질 안전 설계 → 보호 장치 → 사용 정보). ISO 12100:2010(유료 표준).",
+        "children": [
+          {
+            "title": "위험원 식별 방법",
+            "priority": "essential",
+            "description": "기계적·전기적·열·소음·인간공학 위험원 목록, 수명주기(운반·설치·운전·보수·폐기)·작업별 위험 시나리오 작성. ISO 12100:2010 5.4절과 부속서 B(위험원 예시 목록).",
+            "children": [
+              {
+                "title": "기계 한계 결정",
+                "priority": "essential",
+                "description": "사용 한계(의도된 사용·운전 모드·사용자 숙련도), 공간 한계(동작 범위·접근 공간), 시간 한계(수명·정비 주기)를 먼저 정의해 분석 범위를 고정. — ISO 12100:2010 5.3절"
+              },
+              {
+                "title": "합리적으로 예측 가능한 오용",
+                "priority": "essential",
+                "description": "지름길 행동, 보호 장치 무력화, 미숙련자 접근 등 의도된 사용 밖의 행동을 위험 시나리오에 포함하는 원칙. — ISO 12100:2010 3.24 정의, 5.3절"
+              },
+              {
+                "title": "작업 단위 위험 시나리오 표",
+                "priority": "recommended",
+                "description": "작업(티칭·자동 운전·보수·청소)별로 위험원–위험 상황–위험 사건–피해를 한 줄로 잇는 표 작성법. — ISO/TR 14121-2 부속서 예시"
+              }
+            ]
+          },
+          {
+            "title": "리스크 추정 요소",
+            "priority": "essential",
+            "description": "심각도 S, 노출 빈도·시간 F, 위험 사건 발생 확률 O(P), 회피 가능성 A를 조합하는 리스크 매트릭스·리스크 그래프 방식. ISO 12100:2010 5.5절, ISO/TR 14121-2(실무 예시).",
+            "children": [
+              {
+                "title": "리스크 매트릭스 방식",
+                "priority": "essential",
+                "description": "심각도 × 발생 가능성 2차원 표로 리스크 등급을 읽는 방법과 등급 경계 설정의 주관성 문제. — ISO/TR 14121-2 6장"
+              },
+              {
+                "title": "리스크 그래프 방식",
+                "priority": "essential",
+                "description": "S·F·O·A 분기를 따라 내려가 리스크 지수를 얻는 결정 트리, ISO 13849-1 PL_r 그래프와의 연결. — ISO/TR 14121-2 6장"
+              },
+              {
+                "title": "수치 점수 방식",
+                "priority": "recommended",
+                "description": "각 요소에 점수를 주고 합·곱으로 리스크 점수를 계산(IEC 62061 Cl = Fr + Pr + Av와 같은 구조), 점수 척도 선택. — ISO/TR 14121-2 6장, IEC 62061 부속서 A"
+              }
+            ]
+          },
+          {
+            "title": "3단계 리스크 저감",
+            "priority": "essential",
+            "description": "본질 안전 설계 → 안전 방호·보완 보호 조치 → 사용 정보의 우선순위, 잔류 리스크 평가와 반복. ISO 12100:2010 6장(3단계 방법).",
+            "children": [
+              {
+                "title": "본질 안전 설계 조치",
+                "priority": "essential",
+                "description": "날카로운 모서리 제거, 힘·속도·에너지 자체를 낮추는 설계(경량 링크, 저감속비), 끼임 간격 확보, 인간공학 설계. — ISO 12100:2010 6.2절"
+              },
+              {
+                "title": "안전 방호와 보완 보호 조치",
+                "priority": "essential",
+                "description": "고정·연동 가드, 감지 보호 장치(라이트 커튼·스캐너), 비상정지·갇힘 탈출 같은 보완 보호 조치의 선택 기준. — ISO 12100:2010 6.3절"
+              },
+              {
+                "title": "사용 정보와 잔류 리스크",
+                "priority": "recommended",
+                "description": "경고 표시·신호·취급 설명서·교육으로 남은 리스크를 전달, 잔류 리스크를 문서화하고 다시 평가하는 반복 루프. — ISO 12100:2010 6.4절, 5.6절"
+              }
+            ]
+          },
+          {
+            "title": "FMEA·FTA",
+            "priority": "recommended",
+            "description": "고장 모드 영향 분석, 결함 나무 분석(최소 컷셋, 사건 확률 계산). IEC 60812, IEC 61025.",
+            "children": [
+              {
+                "title": "FMEA 절차와 RPN",
+                "priority": "recommended",
+                "description": "구성품별 고장 모드–영향–원인 표, RPN = S × O × D, AIAG-VDA 2019의 행동 우선순위(AP)로 RPN 대체. — IEC 60812:2018, AIAG & VDA FMEA Handbook"
+              },
+              {
+                "title": "FTA 게이트와 최소 컷셋",
+                "priority": "recommended",
+                "description": "AND/OR 게이트, 불 대수 축약으로 최소 컷셋 도출, 정상 사건 확률 근사 P_top ≈ Σ P(컷셋), 독립 OR 게이트 P = 1 − Π(1 − P_i). — IEC 61025:2006"
+              },
+              {
+                "title": "FMEDA",
+                "priority": "recommended",
+                "description": "고장률을 λ_S·λ_DD·λ_DU로 분해하고 DC = λ_DD/λ_D, SFF = (λ_S + λ_DD)/λ를 계산하는 정량 FMEA. — IEC 61508-2 부속서 C"
+              },
+              {
+                "title": "이벤트 트리와 보우타이",
+                "priority": "optional",
+                "description": "초기 사건에서 방호 계층 성공/실패로 분기하는 ETA, FTA(원인)와 ETA(결과)를 잇는 보우타이 도식, LOPA 개념. — IEC 61511-3, CCPS LOPA 지침서"
+              }
+            ]
+          },
+          {
+            "title": "HARA(위험원 분석과 리스크 평가)",
+            "priority": "essential",
+            "description": "차량용 ISO 26262에서 온 HARA: 운용 상황별 위험 사건을 심각도 S0~S3, 노출 E0~E4, 제어 가능성 C0~C3로 평가해 ASIL A~D를 결정, 로봇·자율 이동체에 응용. — ISO 26262-3:2018 6장",
+            "children": [
+              {
+                "title": "S·E·C 등급 정의",
+                "priority": "essential",
+                "description": "부상 심각도(S), 운용 상황 노출 빈도·시간(E), 사람이 피해를 피할 수 있는 정도(C)의 등급 기준과 근거 기록. — ISO 26262-3:2018 6.4.3절"
+              },
+              {
+                "title": "ASIL 결정 표",
+                "priority": "essential",
+                "description": "S × E × C 조합에서 QM·ASIL A~D를 읽는 표, S3·E4·C3 → ASIL D, 한 등급 낮을 때마다 한 단계 하강하는 구조. — ISO 26262-3:2018 표 4"
+              },
+              {
+                "title": "안전 목표와 기능 안전 요구",
+                "priority": "recommended",
+                "description": "위험 사건마다 안전 목표(예: 사람 근접 시 속도 0.25 m/s 이하)를 정하고 기능 안전 요구로 분해, 안전 상태·FTTI 정의. — ISO 26262-3:2018 7장"
+              }
+            ]
+          },
+          {
+            "title": "HAZOP과 STPA",
+            "priority": "recommended",
+            "description": "가이드워드 기반 HAZOP과 제어 구조 기반 STPA로 소프트웨어·상호작용 위험(부품 고장이 아닌 원인)을 찾는 방법. — IEC 61882, Leveson 'Engineering a Safer World'",
+            "children": [
+              {
+                "title": "HAZOP 가이드워드",
+                "priority": "optional",
+                "description": "NO·MORE·LESS·REVERSE·OTHER THAN 등 가이드워드를 설계 변수(속도·힘·위치)에 적용해 편차를 체계적으로 찾음. — IEC 61882:2016"
+              },
+              {
+                "title": "STPA 제어 구조와 UCA",
+                "priority": "recommended",
+                "description": "제어 구조도 작성 → 안전하지 않은 제어 행동(UCA) 4유형(안 줌·줌·너무 이르거나 늦음·너무 길거나 짧음) → 손실 시나리오. — Leveson & Thomas 'STPA Handbook'"
+              }
+            ]
+          },
+          {
+            "title": "협동 작업 리스크 평가",
+            "priority": "essential",
+            "description": "협동 작업 공간·접촉 가능 신체 부위·접촉 유형(준정적/과도) 식별, 작업 순서별 접촉 시나리오 목록화, PFL·SSM 선택 근거 기록. — ISO/TS 15066:2016 4장, ISO 10218-2 부속서 A(위험원 목록)"
+          }
+        ]
+      },
+      {
+        "title": "산업용 로봇 안전(ISO 10218)",
+        "priority": "essential",
+        "description": "ISO 10218-1(로봇 설계)·10218-2(시스템 통합)의 요구사항: 비상정지·보호정지, 정지 범주 0/1/2(IEC 60204-1), 협동 운전 4가지 방식(안전 등급 감시 정지, 핸드 가이딩, SSM, PFL). ISO 10218:2025(유료 표준).",
+        "children": [
+          {
+            "title": "정지 범주 0·1·2",
+            "priority": "essential",
+            "description": "전원 차단 정지 vs 제어 정지, 비상정지와 보호정지 구분. IEC 60204-1.",
+            "children": [
+              {
+                "title": "비상정지와 보호정지 요구",
+                "priority": "essential",
+                "description": "비상정지는 수동 조작·래칭·정지 범주 0 또는 1, 보호정지는 보호 장치 신호로 자동 발동하고 자동 재시작 조건이 다름. — ISO 13850:2015, ISO 10218-1 5.5절"
+              },
+              {
+                "title": "정지 범주 2와 정지 상태 감시",
+                "priority": "essential",
+                "description": "전원을 유지한 제어 정지 후 정지 상태 감시(SOS)로 움직임을 감시하는 구조, 협동 로봇 안전 등급 감시 정지와의 관계. — IEC 60204-1 9.2.2절, IEC 61800-5-2 SOS"
+              }
+            ]
+          },
+          {
+            "title": "협동 운전 4가지 방식",
+            "priority": "essential",
+            "description": "안전 등급 감시 정지(SMS), 핸드 가이딩(HG), 속도·분리 감시(SSM), 동력·힘 제한(PFL) 각각의 진입 조건·안전 기능·적용 예. ISO 10218-2 협동 운전 절, ISO/TS 15066 5.5절.",
+            "children": [
+              {
+                "title": "안전 등급 감시 정지(SMS)",
+                "priority": "essential",
+                "description": "사람이 협동 작업 공간에 들어오면 정지 범주 2로 멈추고 정지 상태를 감시, 사람이 나가면 자동 재개하는 방식. — ISO/TS 15066 5.5.2절"
+              },
+              {
+                "title": "핸드 가이딩(HG)",
+                "priority": "essential",
+                "description": "로봇 말단 근처의 활성화 장치·비상정지를 갖춘 안내 장치로 직접 이끄는 방식, 안전 등급 감시 속도 제한. — ISO/TS 15066 5.5.3절"
+              },
+              {
+                "title": "2025 개정의 협동 개념 변화",
+                "priority": "recommended",
+                "description": "ISO 10218-1/2:2025에서 협동 운전 '방식' 대신 협동 애플리케이션 관점으로 재구성하고 ISO/TS 15066 내용을 본문에 흡수한 점, 기존 문서 읽을 때 용어 대응. — ISO 10218-1:2025, ISO 10218-2:2025"
+              }
+            ]
+          },
+          {
+            "title": "안전 기능 목록",
+            "priority": "recommended",
+            "description": "속도·위치·토크 감시, 안전 제한 공간, 활성화 장치(3위치 스위치).",
+            "children": [
+              {
+                "title": "안전 등급 공간·축 제한",
+                "priority": "essential",
+                "description": "소프트웨어 기반 안전 등급 소프트 축·공간 제한으로 기계식 스톱 대신 동작 범위를 제한, 제한 경계 + 정지 거리 고려. — ISO 10218-1 5.12절"
+              },
+              {
+                "title": "수동 감속 모드(T1) 250 mm/s",
+                "priority": "essential",
+                "description": "티칭 시 TCP 속도 250 mm/s 이하로 제한하고 3위치 활성화 장치를 눌러야 움직이는 요구, T2(수동 고속) 조건. — ISO 10218-1 5.7·5.8절"
+              },
+              {
+                "title": "안전 관련 제어 성능 요구",
+                "priority": "essential",
+                "description": "로봇 안전 기능의 기본 요구 PL d·범주 3(또는 SIL 2·HFT 1), 리스크 평가 결과로 달리 정하는 조건. — ISO 10218-1:2011 5.4.2절"
+              }
+            ]
+          },
+          {
+            "title": "로봇 셀 보호 장치",
+            "priority": "essential",
+            "description": "고정 가드·연동 가드·감지 보호 장치를 셀 둘레에 배치하는 원칙과 각 장치 표준. — ISO 10218-2, ISO 14120",
+            "children": [
+              {
+                "title": "연동 장치(ISO 14119)",
+                "priority": "recommended",
+                "description": "연동 장치 유형 1~4(기계식·비접촉 코딩), 무력화 방지 설계, 가드 잠금. — ISO 14119:2013"
+              },
+              {
+                "title": "감지 보호 장치(IEC 61496)",
+                "priority": "recommended",
+                "description": "라이트 커튼·레이저 스캐너의 타입 2·3·4 구분, 검출 능력(분해능) d와 OSSD 출력. — IEC 61496-1/-2/-3"
+              },
+              {
+                "title": "바닥 매트와 에지 센서",
+                "priority": "optional",
+                "description": "압력 감지 매트·범퍼의 작동력·응답 시간 요구와 용도. — ISO 13856-1/-2"
+              }
+            ]
+          },
+          {
+            "title": "로봇 운전 모드 선택",
+            "priority": "recommended",
+            "description": "자동·T1·T2 모드 선택 스위치의 요구, 모드별 활성 안전 기능, 단일 지점 제어. — ISO 10218-1 5.7절"
+          }
+        ]
+      },
+      {
+        "title": "PFL 동력·힘 제한 수식",
+        "priority": "essential",
+        "description": "ISO/TS 15066 신체 부위별 허용 압력·힘(준정적/과도 접촉), 2물체 충돌 에너지 E = F²/(2k) = ½μv², 환산 질량 μ = (1/m_H + 1/m_R)⁻¹, 허용 상대 속도 v_rel,max = F_max/√(μk). ISO/TS 15066:2016(유료 표준).",
+        "children": [
+          {
+            "title": "준정적 접촉과 과도 접촉",
+            "priority": "essential",
+            "description": "끼임(quasi-static, clamping)과 자유 충돌(transient)의 구분, 과도 접촉 허용치가 준정적 허용치의 2배라는 규칙과 적용 조건. ISO/TS 15066 부속서 A 표 A.2.",
+            "children": [
+              {
+                "title": "신체 모델과 부위별 한계값 표",
+                "priority": "essential",
+                "description": "29개 신체 부위별 최대 허용 압력(N/cm²)·힘(N) 표 읽기, 머리·얼굴 접촉 금지 원칙. — ISO/TS 15066 부속서 A 표 A.2"
+              },
+              {
+                "title": "통증 역치 연구 근거",
+                "priority": "recommended",
+                "description": "한계값이 부상이 아니라 통증 발생 역치 실험(Mainz 대학 연구)에서 왔다는 점과 그 의미·한계. — ISO/TS 15066 부속서 A.1"
+              },
+              {
+                "title": "끼임 해제 기능",
+                "priority": "recommended",
+                "description": "준정적 끼임 발생 시 역구동·브레이크 해제로 사람을 풀어주는 요구와 설계. — ISO/TS 15066 5.5.5절"
+              }
+            ]
+          },
+          {
+            "title": "스프링 모델과 허용 속도",
+            "priority": "essential",
+            "description": "신체 부위 유효 강성 k와 환산 질량 μ로 ½μv² = F²/(2k)를 세워 허용 상대 속도 v = F_max/√(μk)를 유도. ISO/TS 15066 부속서 A.3, 부속서 A 표 A.3(신체 모델 질량·강성).",
+            "children": [
+              {
+                "title": "최대 전달 에너지 E_max",
+                "priority": "essential",
+                "description": "부위별 E = F_max²/(2k) = A²p_max²/(2k), 표 A.4의 에너지 한계와 접촉 면적 A 영향. — ISO/TS 15066 부속서 A.3"
+              },
+              {
+                "title": "환산 질량 μ 계산 예제",
+                "priority": "essential",
+                "description": "μ = (1/m_H + 1/m_R)⁻¹, 손(0.6 kg)·몸통 등 부위 유효 질량을 대입해 허용 v_rel 계산 연습. — ISO/TS 15066 부속서 A 표 A.3"
+              },
+              {
+                "title": "힘·압력 동시 만족 검사",
+                "priority": "essential",
+                "description": "접촉 면적이 작은 공구 모서리에서 압력 p = F/A가 먼저 한계에 걸리는 경우, 모서리 라운드·패딩 설계. — ISO/TS 15066 부속서 A"
+              }
+            ]
+          },
+          {
+            "title": "로봇 유효 질량 계산",
+            "priority": "essential",
+            "description": "로봇 유효 질량 m_R = (u ᵀ Λ⁻¹ u)⁻¹ (충돌 방향 u, 연산 공간 관성). Khatib 1995 'Inertial properties in robotic manipulation'.",
+            "children": [
+              {
+                "title": "표준의 유효 질량 근사",
+                "priority": "essential",
+                "description": "m_R = M/2 + m_L(M: 움직이는 부품 총질량, m_L: 유효 하중), 근사의 보수성과 한계. — ISO/TS 15066 부속서 A.3.2"
+              },
+              {
+                "title": "연산 공간 관성 Λ",
+                "priority": "recommended",
+                "description": "Λ(q) = (J M(q)⁻¹ Jᵀ)⁻¹, 자세에 따라 방향별 유효 질량이 달라지는 관성 타원체. — Khatib 1987 IEEE JRA, Lynch & Park 8장"
+              }
+            ]
+          },
+          {
+            "title": "충돌 측정과 검증",
+            "priority": "recommended",
+            "description": "압력 필름·힘 측정 장치를 쓰는 PFL 검증 절차(ISO/TR 21454 등).",
+            "children": [
+              {
+                "title": "압력 필름·센서 배열 측정",
+                "priority": "recommended",
+                "description": "감압 필름·압력 매트로 최대 압력·면적을 읽는 방법, 시간 분해능 한계. — ISO/TS 15066 5.5.5절, DGUV FB HM-080"
+              },
+              {
+                "title": "스프링·댐퍼 측정 장치",
+                "priority": "optional",
+                "description": "신체 부위 강성을 모사한 스프링을 단 힘 측정 장치(PFL 측정기)로 준정적·과도 피크 측정. — DGUV FB HM-080"
+              }
+            ]
+          },
+          {
+            "title": "에너지·전력 기반 PFL 제어",
+            "priority": "essential",
+            "description": "운동 에너지 T = ½ẋᵀΛẋ ≤ E_max, 충돌 방향 성분만 제한하는 방향성 에너지 제약, 전력 P = Fᵀẋ 제한. — ISO/TS 15066 부속서 A, Meguenani et al. 2015 IROS"
+          },
+          {
+            "title": "허용 속도 표 작성 절차",
+            "priority": "recommended",
+            "description": "작업 경로별 접촉 가능 부위 → μ·k·F_max 대입 → 허용 속도 → 안전 등급 속도 제한 설정의 절차와 검증. — ISO/TS 15066 부속서 A.3"
+          }
+        ]
+      },
+      {
+        "title": "SSM 속도·분리 감시 수식",
+        "priority": "essential",
+        "description": "최소 보호 분리 거리 S_p = S_h + S_r + S_s + C + Z_d + Z_r: 사람 속도(1.6 m/s 기본)×시간, 로봇 반응·정지 거리, 침입 거리, 센서 불확실성. ISO/TS 15066 5.5.4, ISO 13855(유료 표준).",
+        "children": [
+          {
+            "title": "분리 거리 항별 의미",
+            "priority": "essential",
+            "description": "S_h = v_h(T_r + T_s), S_r = v_r·T_r, S_s(정지 거리)와 침입 거리 C, 위치 불확실성 Z_d·Z_r 각 항의 계산. ISO/TS 15066 5.5.4절 식(1)~(3).",
+            "children": [
+              {
+                "title": "사람 기여 S_h",
+                "priority": "essential",
+                "description": "S_h = ∫ v_h dt ≈ v_h(T_r + T_s), 사람 속도 1.6 m/s(ISO 13855) 가정과 방향 성분 사용. — ISO/TS 15066 5.5.4절"
+              },
+              {
+                "title": "로봇 기여 S_r과 정지 거리 S_s",
+                "priority": "essential",
+                "description": "반응 시간 동안 로봇 이동 S_r = v_r·T_r, 정지 중 이동 S_s = ∫ v_s dt, 속도·하중·자세 의존. — ISO/TS 15066 5.5.4절"
+              },
+              {
+                "title": "불확실성 C·Z_d·Z_r",
+                "priority": "essential",
+                "description": "침입 거리 C, 센서 위치 불확실성 Z_d, 로봇 위치 불확실성 Z_r을 더하는 보수적 여유. — ISO/TS 15066 5.5.4절"
+              }
+            ]
+          },
+          {
+            "title": "정지 시간·정지 거리 특성",
+            "priority": "essential",
+            "description": "정지 범주 0/1/2별 정지 시간·정지 거리 측정, 최대 속도·최대 하중·최대 확장 자세 최악 조건 가정. ISO 10218-1 부속서(정지 시간·거리 측정), IEC 60204-1 9.2.2절.",
+            "children": [
+              {
+                "title": "최악 조건 정지 곡선 읽기",
+                "priority": "essential",
+                "description": "제조사 정지 거리·시간 그래프(속도 33/66/100%, 하중, 확장)에서 S_s·T_s를 읽고 보간. — ISO 10218-1 부속서 B"
+              }
+            ]
+          },
+          {
+            "title": "동적 SSM 구현",
+            "priority": "recommended",
+            "description": "사람 추적 센서(레이저 스캐너·3D 카메라) 기반 실시간 속도 스케일링, 보호 분리 거리의 보수성 vs 생산성 트레이드오프. Marvel & Norcross 2017 Robotics and Computer-Integrated Manufacturing 'Implementing speed and separation monitoring in collaborative robot workcells'.",
+            "children": [
+              {
+                "title": "허용 로봇 속도 식",
+                "priority": "essential",
+                "description": "S_p 식을 v_r에 대해 풀어 현재 거리 d에서 허용 속도 v_r,max(d)를 얻는 실시간 속도 스케일링. — Marvel & Norcross 2017 RCIM"
+              },
+              {
+                "title": "사람 운동 예측과 보수성",
+                "priority": "recommended",
+                "description": "방향 성분·운동 예측으로 S_h를 줄이는 방법과 안전 등급 센서 요구의 충돌. — Lasota, Fong & Shah 2017 'A Survey of Methods for Safe Human-Robot Interaction'"
+              }
+            ]
+          },
+          {
+            "title": "SSM과 PFL 결합",
+            "priority": "recommended",
+            "description": "먼 거리는 SSM으로 감속, 접촉 가능 거리에서는 PFL 허용 속도 이하로 운전해 정지 없이 협업하는 하이브리드. — ISO/TS 15066 5.5.4~5.5.5절, Lucci et al. 2020 IROS"
+          }
+        ]
+      },
+      {
+        "title": "기능 안전 기초(IEC 61508)",
+        "priority": "essential",
+        "description": "안전 수명주기, 안전 무결성 수준 SIL 1~4, PFD_avg/PFH, 하드웨어 고장 허용(HFT), 안전 고장 비율(SFF), 체계적 능력(SC). IEC 61508(유료 표준).",
+        "children": [
+          {
+            "title": "SIL과 고장 확률",
+            "priority": "essential",
+            "description": "저요구 모드 PFD_avg(SIL 2: 10⁻³~10⁻²)와 고요구·연속 모드 PFH(SIL 2: 10⁻⁷~10⁻⁶ /h) 구간, 요구 빈도에 따른 모드 선택. IEC 61508-1 표 2·표 3.",
+            "children": [
+              {
+                "title": "요구 모드 판정",
+                "priority": "essential",
+                "description": "요구 빈도 연 1회 이하 → 저요구(PFD_avg), 초과·연속 → 고요구(PFH), 로봇 안전 기능이 대부분 고요구인 이유. — IEC 61508-4 3.5.16"
+              },
+              {
+                "title": "1oo1·1oo2 PFD 근사식",
+                "priority": "essential",
+                "description": "PFD_1oo1 ≈ λ_DU·T₁/2, PFD_1oo2 ≈ (λ_DU·T₁)²/3 + β·λ_DU·T₁/2, 증명 시험 간격 T₁ 영향. — IEC 61508-6 부속서 B.3"
+              }
+            ]
+          },
+          {
+            "title": "신뢰성 기초 수학",
+            "priority": "essential",
+            "description": "고장률 λ, MTTF, 지수 분포, 직렬·병렬(1oo2) 구조 신뢰도, 신뢰성 블록 다이어그램.",
+            "children": [
+              {
+                "title": "지수 분포와 욕조 곡선",
+                "priority": "essential",
+                "description": "R(t) = e^{−λt}, MTTF = 1/λ, 초기·우발·마모 고장 구간, 상수 고장률 가정의 범위. — O'Connor 'Practical Reliability Engineering' 2~3장"
+              },
+              {
+                "title": "MooN 구조 신뢰도",
+                "priority": "essential",
+                "description": "k-out-of-n 신뢰도 Σ C(n,i)Rⁱ(1−R)ⁿ⁻ⁱ, 직렬 Π R_i, 병렬 1 − Π(1 − R_i). — O'Connor 'Practical Reliability Engineering' 6장"
+              },
+              {
+                "title": "마르코프 모델 기초",
+                "priority": "optional",
+                "description": "상태(정상·검출 고장·미검출 고장)와 전이율로 진단·수리 포함 PFH 계산. — IEC 61508-6 부속서 B.5, Rausand & Høyland 'System Reliability Theory'"
+              }
+            ]
+          },
+          {
+            "title": "공통 원인 고장과 β 인자",
+            "priority": "recommended",
+            "description": "공통 원인 고장(CCF) β 인자 모델 λ_CCF = βλ, 이중화 효과의 한계와 β 추정 체크리스트. IEC 61508-6 부속서 D, ISO 13849-1 부속서 F(CCF 점수표).",
+            "children": [
+              {
+                "title": "β 점수 체크리스트",
+                "priority": "recommended",
+                "description": "분리·다양성·설계·환경 항목 점수 합으로 β를 1~10%에서 고르는 방법, ISO 13849 CCF 65점 기준과 비교. — IEC 61508-6 부속서 D, ISO 13849-1 부속서 F"
+              }
+            ]
+          },
+          {
+            "title": "안전 수명주기",
+            "priority": "essential",
+            "description": "개념 → 위험원·리스크 분석 → 안전 요구 할당 → 실현 → 설치·검증 → 운영·변경 → 폐기의 16단계와 기능 안전 평가. — IEC 61508-1 그림 2"
+          },
+          {
+            "title": "고장 분류와 SFF·DC",
+            "priority": "essential",
+            "description": "λ = λ_SD + λ_SU + λ_DD + λ_DU, DC = λ_DD/(λ_DD + λ_DU), SFF = (λ_S + λ_DD)/λ, 진단 시험 간격. — IEC 61508-2 부속서 C"
+          },
+          {
+            "title": "HFT와 아키텍처 제약",
+            "priority": "essential",
+            "description": "Route 1H: 유형 A(단순)/B(복잡) 소자별 SFF·HFT 조합으로 달성 가능한 최대 SIL 표, Route 2H(사용 실적) 대안. — IEC 61508-2 7.4.4절 표 2·3"
+          },
+          {
+            "title": "체계적 능력과 소프트웨어 요구",
+            "priority": "recommended",
+            "description": "체계적 고장은 확률이 아니라 절차로 다룸, SC 1~4, IEC 61508-3의 SIL별 기법·측정 표(정적 분석·코딩 표준·MC/DC). — IEC 61508-3 부속서 A·B"
+          },
+          {
+            "title": "증명 시험과 진단 시험",
+            "priority": "recommended",
+            "description": "주기적 증명 시험(proof test)과 온라인 진단의 차이, 시험 범위(PTC)가 PFD에 주는 영향. — IEC 61508-6 부속서 B"
+          }
+        ]
+      },
+      {
+        "title": "기계 제어 안전(ISO 13849·IEC 62061)",
+        "priority": "essential",
+        "description": "성능 수준 PL a~e, 범주(B·1·2·3·4) 구조, MTTF_D·DC_avg·CCF로 PL 결정, 리스크 그래프로 PL_r 산정. ISO 13849-1:2023, IEC 62061(유료 표준).",
+        "children": [
+          {
+            "title": "PL_r 리스크 그래프",
+            "priority": "essential",
+            "description": "심각도 S1/S2, 노출 빈도 F1/F2, 회피 가능성 P1/P2로 요구 성능 수준 PL_r(a~e)을 결정하는 리스크 그래프. ISO 13849-1:2023 부속서 A.",
+            "children": [
+              {
+                "title": "S·F·P 판정 기준",
+                "priority": "essential",
+                "description": "S1(가역 경상)/S2(비가역·사망), F1(드묾·짧음)/F2(빈번·긺, 15분 기준 등), P1(회피 가능)/P2(거의 불가) 판정. — ISO 13849-1:2023 부속서 A"
+              },
+              {
+                "title": "협동 셀 PL_r 예제",
+                "priority": "recommended",
+                "description": "협동 로봇 접촉·끼임 위험에 S·F·P를 적용해 PL_r d를 얻는 예제. — ISO 13849-1:2023 부속서 A, ISO 10218-2"
+              }
+            ]
+          },
+          {
+            "title": "범주와 아키텍처",
+            "priority": "essential",
+            "description": "범주 B·1·2·3·4의 지정 아키텍처(단채널, 시험 채널, 이중채널+진단), MTTF_D·DC_avg·CCF로 PL을 읽는 막대 도표. ISO 13849-1:2023 6장(범주)과 부속서 K.",
+            "children": [
+              {
+                "title": "범주 B·1 단채널",
+                "priority": "essential",
+                "description": "기본 안전 원칙·검증된 부품으로만 신뢰도 확보, 단일 고장 시 안전 기능 상실 허용. — ISO 13849-1:2023 6.2.3~6.2.4"
+              },
+              {
+                "title": "범주 2 시험 채널",
+                "priority": "essential",
+                "description": "주기적 시험 장비(TE)와 출력(OTE), 시험률이 요구율의 100배 이상이어야 하는 조건. — ISO 13849-1:2023 6.2.5"
+              },
+              {
+                "title": "범주 3·4 이중 채널",
+                "priority": "essential",
+                "description": "범주 3: 단일 고장 후에도 안전 기능 유지·가능하면 검출, 범주 4: 고장 누적까지 검출(DC 높음, MTTF_D 높음). — ISO 13849-1:2023 6.2.6~6.2.7"
+              }
+            ]
+          },
+          {
+            "title": "PL과 SIL 대응",
+            "priority": "recommended",
+            "description": "PL b≈SIL 1, PL c≈SIL 1, PL d≈SIL 2, PL e≈SIL 3의 PFH 기반 대응과 두 표준의 적용 범위 차이. ISO 13849-1:2023 표 2, IEC 62061:2021 표 3."
+          },
+          {
+            "title": "MTTF_D 계산",
+            "priority": "essential",
+            "description": "부품 고장 데이터로 채널별 MTTF_D 산출과 등급(낮음 3~10년, 중간 10~30년, 높음 30~100년). — ISO 13849-1:2023 부속서 C·D",
+            "children": [
+              {
+                "title": "B10D와 n_op",
+                "priority": "essential",
+                "description": "전기기계 부품 MTTF_D = B10D/(0.1·n_op), n_op = d_op·h_op·3600/t_cycle. — ISO 13849-1:2023 부속서 C"
+              },
+              {
+                "title": "채널 대칭화 공식",
+                "priority": "recommended",
+                "description": "두 채널 MTTF_D가 다를 때 MTTF_D = ⅔[A + B − 1/(1/A + 1/B)]로 하나의 값으로 환산. — ISO 13849-1:2023 부속서 D"
+              }
+            ]
+          },
+          {
+            "title": "진단 범위 DC",
+            "priority": "essential",
+            "description": "DC 등급(없음 < 60%, 낮음 60~90%, 중간 90~99%, 높음 ≥ 99%), 측정 기법별 DC 표, 가중 평균 DC_avg. — ISO 13849-1:2023 부속서 E"
+          },
+          {
+            "title": "IEC 62061 SIL 할당",
+            "priority": "essential",
+            "description": "심각도 Se와 등급 Cl = Fr + Pr + Av로 요구 SIL을 정하고 하위 시스템 PFH를 합산해 검증. — IEC 62061:2021 부속서 A, 6장",
+            "children": [
+              {
+                "title": "SIL 할당 표",
+                "priority": "essential",
+                "description": "Se(1~4) × Cl(3~15) 표에서 SIL 1~3 또는 기타 조치(OM)를 읽는 법. — IEC 62061:2021 부속서 A"
+              },
+              {
+                "title": "하위 시스템 PFH 합산",
+                "priority": "recommended",
+                "description": "감지–논리–출력 하위 시스템 PFH 합 ≤ SIL 상한, 하위 시스템별 HFT·SFF 아키텍처 제약. — IEC 62061:2021 6~7장"
+              }
+            ]
+          },
+          {
+            "title": "검증과 확인(ISO 13849-2)",
+            "priority": "recommended",
+            "description": "고장 목록(단락·개방·고착)과 고장 배제 근거, 분석·시험에 의한 확인 계획. — ISO 13849-2:2012 부속서 A~D"
+          },
+          {
+            "title": "SISTEMA로 PL 계산",
+            "priority": "optional",
+            "description": "IFA SISTEMA 도구로 안전 기능을 블록·채널로 모델링하고 MTTF_D·DC·CCF에서 PL 계산, 제조사 라이브러리 사용. — IFA SISTEMA 설명서"
+          }
+        ]
+      },
+      {
+        "title": "휴머노이드·이동 매니퓰레이터 안전 쟁점",
+        "priority": "recommended",
+        "description": "정적 안정이 없는 로봇의 정지 범주 문제(전원 차단 시 넘어짐), 동적 안정 로봇 안전 요구(ISO 25785-1 작업 중), 넘어짐 피해 최소화. 이동 로봇 ISO 3691-4, 개인 돌봄 로봇 ISO 13482(유료 표준).",
+        "children": [
+          {
+            "title": "안전한 정지와 넘어짐",
+            "priority": "essential",
+            "description": "보호정지 시 균형을 유지하는 정지 범주 1/2 vs 전원 차단 후 주저앉기(controlled fall) 설계, 정적 안정이 없는 로봇의 정지 범주 0 문제. IEC 60204-1 9.2.2절(정지 범주), ISO 25785-1(작업 중, 동적 안정 산업용 이동 로봇)."
+          },
+          {
+            "title": "넘어짐 제어",
+            "priority": "recommended",
+            "description": "넘어짐 감지(캡처 가능성 상실)와 낙하 자세 최적화. Fujiwara 2002 UKEMI, Ha & Liu 2015."
+          },
+          {
+            "title": "개인 돌봄 로봇(ISO 13482)",
+            "priority": "optional",
+            "description": "이동 도우미·신체 보조·사람 탑승 로봇 유형별 위험원과 안전 요구, 안전 관련 속도·힘 제어. — ISO 13482:2014"
+          },
+          {
+            "title": "무인 이동체 안전(ISO 3691-4)",
+            "priority": "recommended",
+            "description": "무인 산업용 트럭의 운전 구역(제한·위험 구역), 사람 검출, 속도별 정지 거리 요구, 이동 매니퓰레이터 적용. — ISO 3691-4:2023"
+          }
+        ]
+      },
+      {
+        "title": "인간-로봇 상호작용 위험 지표",
+        "priority": "recommended",
+        "description": "부상 심각도 지표(HIC, AIS), 충돌 생체역학 실험, Haddadin 등의 충돌 부상 데이터. Haddadin, Albu-Schäffer & Hirzinger 2009 IJRR 'Requirements for safe robots'.",
+        "children": [
+          {
+            "title": "HIC 정의와 한계",
+            "priority": "recommended",
+            "description": "HIC = max (t₂ − t₁)[(1/(t₂ − t₁))∫a dt]^{2.5}, 자동차 충돌 기준을 저속 로봇 충돌에 쓸 때 과소평가되는 이유. — Haddadin, Albu-Schäffer & Hirzinger 2009 IJRR 3절"
+          },
+          {
+            "title": "AIS 부상 등급",
+            "priority": "optional",
+            "description": "간이 부상 척도 AIS 0~6, 부상 지표와 AIS 확률 곡선 연결. — AAAM 'Abbreviated Injury Scale'"
+          },
+          {
+            "title": "질량·속도 부상 지도(Safety Map)",
+            "priority": "recommended",
+            "description": "충돌 질량·속도·접촉 형상별 부상 데이터를 모아 허용 속도를 주는 Safe Motion Unit. — Haddadin et al. 2012 ICRA 'On making robots understand safety'"
+          }
+        ]
+      },
+      {
+        "title": "안전 소프트웨어 개발",
+        "priority": "optional",
+        "description": "V-모델, 요구사항 추적성, 안전 PLC·이중화 MCU, 소프트웨어 SIL 요구(IEC 61508-3), 안전 사례(safety case)와 GSN 표기.",
+        "children": [
+          {
+            "title": "V-모델과 추적성",
+            "priority": "recommended",
+            "description": "안전 요구 → 설계 → 구현 → 단위·통합·검증 시험의 양방향 추적 행렬, 변경 영향 분석. — IEC 61508-3 7장"
+          },
+          {
+            "title": "안전 사례와 GSN",
+            "priority": "optional",
+            "description": "주장–전략–근거로 안전성을 논증하는 safety case, GSN 표기(Goal·Strategy·Solution·Context). — GSN Community Standard v3"
+          },
+          {
+            "title": "ROS 시스템의 안전 분리",
+            "priority": "recommended",
+            "description": "안전 기능은 안전 등급 컨트롤러·안전 PLC에 두고 ROS 2 같은 비안전 소프트웨어는 비안전 경로로 분리하는 아키텍처, 간섭 배제(freedom from interference). — IEC 61508-3 7.4.2.8, ISO 26262-6 부속서 D"
+          }
+        ]
+      },
+      {
+        "title": "보호 장치 위치 결정(ISO 13855)",
+        "priority": "essential",
+        "description": "사람이 위험 지점에 닿기 전에 기계가 멈추도록 감지 장치를 놓는 최소 거리 S 계산. — ISO 13855:2010",
+        "children": [
+          {
+            "title": "일반식 S = K·T + C",
+            "priority": "essential",
+            "description": "접근 속도 K(2000 mm/s, S > 500 mm이면 1600 mm/s 재계산), 전체 정지 시간 T, 침입 거리 C로 최소 거리 결정. — ISO 13855:2010 5장"
+          },
+          {
+            "title": "침입 거리 C와 검출 능력",
+            "priority": "essential",
+            "description": "수직 라이트 커튼 C = 8(d − 14) (d ≤ 40 mm), 손·팔·몸 검출 장치별 C 값, 넘어 닿기 고려. — ISO 13855:2010 6장"
+          },
+          {
+            "title": "정지 시간 T 구성",
+            "priority": "essential",
+            "description": "T = t₁(감지 장치 응답) + t₂(제어·기계 정지 시간), 브레이크 마모·최악 조건 측정과 여유. — ISO 13855:2010 5장"
+          },
+          {
+            "title": "넘어 닿기 안전 거리(ISO 13857)",
+            "priority": "recommended",
+            "description": "위·옆·개구부 너머로 닿는 경우의 안전 거리 표, 가드 높이와 거리 조합. — ISO 13857:2019"
+          }
+        ]
+      },
+      {
+        "title": "안전 정지·감시 기능(IEC 61800-5-2)",
+        "priority": "essential",
+        "description": "전력 구동 시스템에 구현되는 표준 안전 기능 정의와 각 기능의 정지 범주 대응. — IEC 61800-5-2:2016 4.2절",
+        "children": [
+          {
+            "title": "STO 안전 토크 차단",
+            "priority": "essential",
+            "description": "모터에 회전력을 만드는 에너지를 차단(게이트 드라이브 차단), 정지 범주 0 대응, 수직축은 브레이크 필요. — IEC 61800-5-2 4.2.2.2"
+          },
+          {
+            "title": "SS1과 SS2",
+            "priority": "essential",
+            "description": "SS1: 감속 후 STO(정지 범주 1), 감속 램프 감시(SS1-r)와 시간 지연(SS1-t), SS2: 감속 후 SOS(정지 범주 2). — IEC 61800-5-2 4.2.2.3~4"
+          },
+          {
+            "title": "SOS 안전 운전 정지",
+            "priority": "essential",
+            "description": "토크를 유지한 채 위치 이탈 허용창을 감시, 이탈 시 STO. — IEC 61800-5-2 4.2.2.5"
+          },
+          {
+            "title": "SLS·SLP·SLT 감시 기능",
+            "priority": "essential",
+            "description": "안전 제한 속도(SLS)·위치(SLP)·토크(SLT)·방향(SDI) 감시와 위반 시 정지 반응. — IEC 61800-5-2 4.2.3절"
+          },
+          {
+            "title": "SBC와 브레이크 시험",
+            "priority": "recommended",
+            "description": "안전 브레이크 제어 출력, 중력 축 브레이크의 주기적 토크 시험(SBT)과 이중 브레이크. — IEC 61800-5-2 4.2.2.6"
+          }
+        ]
+      },
+      {
+        "title": "안전 PLC와 이중 채널 설계",
+        "priority": "essential",
+        "description": "안전 기능을 이중화·자기 진단으로 구현하는 하드웨어 구조와 안전 신호 처리. — ISO 13849-1, IEC 61508-2",
+        "children": [
+          {
+            "title": "1oo2·2oo2·2oo3 투표 구조",
+            "priority": "essential",
+            "description": "MooN 구조별 안전성(위험 고장 내성)과 가용성(오정지) 트레이드오프, HFT와의 관계. — IEC 61508-6 부속서 B"
+          },
+          {
+            "title": "교차 감시와 불일치 시간",
+            "priority": "essential",
+            "description": "두 채널 입력 비교, 허용 불일치 시간 창, 등가·반등가(antivalent) 접점 배선으로 단락 검출. — ISO 13849-2, 안전 PLC 제조사 매뉴얼"
+          },
+          {
+            "title": "테스트 펄스와 OSSD",
+            "priority": "recommended",
+            "description": "출력 신호 스위칭 장치(OSSD)의 짧은 OFF 펄스로 교차 단락·접지 단락 검출, 부하 측 필터링 문제. — IEC 61496-1, ISO 13849-2"
+          },
+          {
+            "title": "안전 통신과 블랙 채널",
+            "priority": "recommended",
+            "description": "비안전 네트워크 위에 CRC·순번·타임아웃·ID로 오류를 잡는 블랙 채널 원리, PROFIsafe·FSoE·CIP Safety. — IEC 61784-3"
+          },
+          {
+            "title": "안전 릴레이·안전 PLC·안전 컨트롤러 비교",
+            "priority": "optional",
+            "description": "고정 기능 안전 릴레이, 프로그래머블 안전 PLC(제한 언어 LVL), 로봇 내장 안전 컨트롤러의 적용 범위. — ISO 13849-1 4.6절(소프트웨어 요구)"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "안전 제어 이론",
+    "items": [
+      {
+        "title": "충돌 감지: 모멘텀 옵저버",
+        "priority": "essential",
+        "description": "일반화 운동량 p = M(q)q̇ 기반 잔차 r = K_O(p(t) − ∫(τ + Cᵀq̇ − g + r)dt − p(0)), ṙ = K_O(τ_ext − r) 1차 필터 성질. De Luca & Mattone 2005 ICRA, Haddadin, De Luca & Albu-Schäffer 2017 T-RO 'Robot Collisions' 서베이.",
+        "children": [
+          {
+            "title": "일반화 운동량 잔차 유도",
+            "priority": "essential",
+            "description": "Ṁ = C + Cᵀ 성질로 ṗ = τ + Cᵀq̇ − g + τ_ext를 얻고, 가속도 측정 없이 외력 τ_ext를 추정하는 잔차 r 유도. Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 'Robot Collisions: A Survey on Detection, Isolation, and Identification' 4절.",
+            "children": [
+              {
+                "title": "Ṁ − 2C 반대칭 성질",
+                "priority": "essential",
+                "description": "크리스토펠 기호로 정의한 C에서 Ṁ − 2C가 반대칭, Ṁ = C + Cᵀ 유도. — Siciliano et al. 'Robotics: Modelling, Planning and Control' 7.3절"
+              },
+              {
+                "title": "이산 시간 구현",
+                "priority": "recommended",
+                "description": "적분 항의 수치 적분(오일러·사다리꼴), 샘플링 주기·K_O 선택과 잡음 대역폭. — Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 4절"
+              }
+            ]
+          },
+          {
+            "title": "임계값 설정과 모델 오차",
+            "priority": "essential",
+            "description": "마찰·관성 파라미터 오차로 인한 잔차 편향, 정적 임계값 vs 속도·가속도 의존 동적 임계값, 오탐·미탐 트레이드오프. Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 5절.",
+            "children": [
+              {
+                "title": "마찰 보상과 잔차 편향",
+                "priority": "essential",
+                "description": "쿨롱·점성 마찰 모델 τ_f = F_c sign(q̇) + F_v q̇ 보상, 저속 영역 sign 불연속이 만드는 오탐. — Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 5절"
+              }
+            ]
+          },
+          {
+            "title": "충돌 고립·식별·반응",
+            "priority": "recommended",
+            "description": "충돌 링크 고립(잔차 성분 패턴), 접촉점·접촉력 식별, 반응 전략(정지·반사 후퇴·토크 제어 순응 전환) 파이프라인. Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 6~8절.",
+            "children": [
+              {
+                "title": "반응 전략 비교",
+                "priority": "recommended",
+                "description": "정지(범주 0/1), 토크 영 중력 보상 모드, 반사 후퇴 τ = K_R r, 어드미턴스 순응 전환의 장단점. — De Luca et al. 2006 IROS 'Collision detection and safe reaction with the DLR-III lightweight manipulator arm'"
+              }
+            ]
+          },
+          {
+            "title": "외란 관측기·칼만 기반 대안",
+            "priority": "optional",
+            "description": "외란 관측기(DOB, Ohnishi 계열), 에너지 옵저버(스칼라 잔차), 칼만 필터 기반 외력 추정과 모멘텀 옵저버 비교. Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 4절 비교표.",
+            "children": [
+              {
+                "title": "DOB 구조와 Q 필터",
+                "priority": "optional",
+                "description": "공칭 역모델 P_n⁻¹과 저역 Q 필터로 외란 d̂ = Q(P_n⁻¹y − u) 추정, Q 대역폭과 강건성. — Ohnishi, Shibata & Murakami 1996 IEEE/ASME TMech 'Motion control for advanced mechatronics'"
+              }
+            ]
+          },
+          {
+            "title": "관절 토크 센서 vs 모터 전류",
+            "priority": "recommended",
+            "description": "관절 토크 센서 유무에 따른 τ 측정 경로, 모터 전류 기반 추정에서 기어 마찰·효율이 만드는 오차. — Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 3절"
+          },
+          {
+            "title": "충돌과 의도 접촉 구분",
+            "priority": "recommended",
+            "description": "잔차의 주파수 성분·지속 시간으로 우발 충돌과 의도적 상호작용(밀기·안내)을 구분, 학습 기반 분류. — Golz, Osendorfer & Haddadin 2015 IROS"
+          },
+          {
+            "title": "외력 추정과 F/T 센서 융합",
+            "priority": "optional",
+            "description": "말단 F/T 센서와 관절 잔차를 결합해 접촉 링크·접촉력 추정, τ_ext = Jᵀ(x_c)F 모델. — Haddadin, De Luca & Albu-Schäffer 2017 IEEE TRO 7절"
+          }
+        ]
+      },
+      {
+        "title": "리아푸노프 안정성 복습",
+        "priority": "essential",
+        "description": "리아푸노프 직접법, LaSalle 불변 원리, ISS(입력-상태 안정성). Khalil 'Nonlinear Systems' 4장.",
+        "children": [
+          {
+            "title": "리아푸노프 직접법",
+            "priority": "essential",
+            "description": "V(x) > 0, V̇(x) ≤ 0이면 안정, V̇ < 0이면 점근 안정, 지수 안정 조건과 2차 형식 V = xᵀPx, 리아푸노프 방정식 AᵀP + PA = −Q. Khalil 'Nonlinear Systems' 4.1·4.3절."
+          },
+          {
+            "title": "입력-상태 안정성(ISS)",
+            "priority": "recommended",
+            "description": "외란 크기에 비례하는 수렴 경계 ‖x(t)‖ ≤ β(‖x₀‖,t) + γ(‖w‖∞), ISS-리아푸노프 함수. Khalil 'Nonlinear Systems' 4.9절, Sontag 2008 'Input to State Stability: Basic Concepts and Results'."
+          },
+          {
+            "title": "LaSalle 불변 원리",
+            "priority": "essential",
+            "description": "V̇ ≤ 0일 때 {V̇ = 0} 안 최대 불변 집합으로 수렴, 감쇠 있는 기계 시스템 점근 안정 증명에 쓰는 방법. — Khalil 'Nonlinear Systems' 4.2절"
+          },
+          {
+            "title": "바바라트 보조정리",
+            "priority": "recommended",
+            "description": "시변 시스템에서 V̇ → 0 결론, 균일 연속 조건, 적응 제어·텔레오퍼레이션 수렴 증명. — Slotine & Li 'Applied Nonlinear Control' 4.5절"
+          },
+          {
+            "title": "수동성과 저장 함수",
+            "priority": "essential",
+            "description": "공급률 s = uᵀy, 저장 함수 S로 Ṡ ≤ uᵀy, 수동 시스템 피드백 결합의 안정성, 로봇 동역학 수동성(q̇ᵀτ). — Khalil 'Nonlinear Systems' 6장, van der Schaft 'L2-Gain and Passivity Techniques in Nonlinear Control'"
+          }
+        ]
+      },
+      {
+        "title": "제어 장벽 함수(CBF)",
+        "priority": "essential",
+        "description": "안전 집합 C = {x | h(x) ≥ 0}, 전방 불변성, 나구모 정리, CBF 조건 ḣ ≥ −α(h), CLF-CBF QP. Ames et al. 2017 TAC, Ames et al. 2019 ECC 튜토리얼.",
+        "resources": [
+          {
+            "title": "Control Barrier Functions: Theory and Applications",
+            "url": "https://arxiv.org/abs/1903.11199",
+            "kind": "paper"
+          },
+          {
+            "title": "Control Barrier Function Based Quadratic Programs for Safety Critical Systems",
+            "url": "https://arxiv.org/abs/1609.06408",
+            "kind": "paper"
+          }
+        ],
+        "children": [
+          {
+            "title": "전방 불변성과 나구모 정리",
+            "priority": "essential",
+            "description": "닫힌 집합 C가 전방 불변일 필요충분조건: 경계에서 벡터장이 접원뿔(tangent cone) 안에 있음. Blanchini 1999 Automatica 'Set invariance in control' 3절, Ames et al. 2019 ECC 튜토리얼 2절."
+          },
+          {
+            "title": "영점화 CBF와 class-K 함수",
+            "priority": "essential",
+            "description": "ZCBF 조건 sup_u [L_f h + L_g h u] ≥ −α(h), 확장 class-K 함수 α 선택(선형 γh 등)이 보수성·개입 시점에 주는 영향. Ames et al. 2017 IEEE TAC 'Control Barrier Function Based Quadratic Programs for Safety Critical Systems' 3절.",
+            "children": [
+              {
+                "title": "선형 class-K 계수 선택",
+                "priority": "essential",
+                "description": "α(h) = γh에서 γ가 크면 경계까지 빠르게 접근(덜 보수적), 작으면 일찍 감속, 시뮬레이션으로 개입 시점 비교. — Ames et al. 2019 ECC 튜토리얼 3절"
+              }
+            ]
+          },
+          {
+            "title": "CLF-CBF QP",
+            "priority": "essential",
+            "description": "min ‖u − u_nom‖² + pδ² s.t. L_f V + L_g V u ≤ −γV + δ, L_f h + L_g h u ≥ −α(h): 안정성은 완화 변수 δ로 양보, 안전은 강제. Ames et al. 2017 IEEE TAC 4절."
+          },
+          {
+            "title": "고차 CBF(HOCBF)·지수 CBF",
+            "priority": "essential",
+            "description": "상대 차수 r ≥ 2 제약(관절 위치 한계 → 토크 입력)을 ψ_i = ψ̇_{i−1} + α_i(ψ_{i−1}) 연쇄로 처리. Nguyen & Sreenath 2016 ACC 'Exponential Control Barrier Functions', Xiao & Belta 2019 CDC 'Control Barrier Functions for Systems with High Relative Degree'.",
+            "children": [
+              {
+                "title": "관절 한계 HOCBF 예제",
+                "priority": "essential",
+                "description": "h = q_max − q (상대 차수 2)에 ψ₁ = ḣ + α₁h, ψ̇₁ + α₂ψ₁ ≥ 0을 세워 토크 입력 선형 제약 도출. — Xiao & Belta 2019 CDC 4절"
+              }
+            ],
+            "resources": [
+              {
+                "title": "Control Barrier Functions for Systems with High Relative Degree",
+                "url": "https://arxiv.org/abs/1903.04706",
+                "kind": "paper"
+              }
+            ]
+          },
+          {
+            "title": "입력 제약과 실현 가능성",
+            "priority": "recommended",
+            "description": "입력 포화 하 CBF QP가 infeasible 해지는 문제, 백업 정책의 도달 집합으로 안전 집합을 암묵 정의하는 backup CBF. Gurriet et al. 2018 ICCPS 'Towards a framework for realizable safety critical control through active set invariance'.",
+            "children": [
+              {
+                "title": "backup CBF 구성",
+                "priority": "recommended",
+                "description": "백업 정책 흐름 φ^{u_b}(t, x)를 유한 시간 시뮬레이션해 백업 불변 집합 안에 머무는지 제약으로 걸기. — Gurriet et al. 2020 IEEE RA-L 'Scalable safety-critical control of robotic systems'"
+              }
+            ]
+          },
+          {
+            "title": "강건·확률적 CBF",
+            "priority": "optional",
+            "description": "모델 오차·외란 하 입력-안전 안정성(ISSf)으로 안전 집합 팽창량 상한, 확률 CBF로 기대 안전 보장. Kolathaya & Ames 2019 IEEE L-CSS 'Input-to-State Safety With Control Barrier Functions', Clark 2019 ACC 확률 CBF."
+          },
+          {
+            "title": "사람-로봇 거리 CBF 예제",
+            "priority": "essential",
+            "description": "h = ‖p_r − p_h‖² − d_min², 사람 속도를 외란으로 둔 강건 CBF와 SSM 분리 거리와의 대응. — Ames et al. 2019 ECC 튜토리얼, Landi et al. 2019 IROS"
+          },
+          {
+            "title": "이산 시간 CBF",
+            "priority": "recommended",
+            "description": "h(x_{k+1}) ≥ (1 − γ)h(x_k), 0 < γ ≤ 1, 비선형 제약이 되는 이유와 MPC에 넣는 방법. — Agrawal & Sreenath 2017 RSS 'Discrete Control Barrier Functions'"
+          },
+          {
+            "title": "측정 오차와 강건 CBF",
+            "priority": "optional",
+            "description": "상태 추정 오차 ε에 대해 h에 여유를 더하는 measurement-robust CBF, 학습 기반 인지 모듈 안전 보장. — Dean et al. 2020 CoRL"
+          },
+          {
+            "title": "CBF와 리아푸노프 함수 비교",
+            "priority": "recommended",
+            "description": "CLF: 수렴(V 감소), CBF: 집합 불변(h 감소 속도 제한)의 대칭 구조, 동시 만족 불가 시 우선순위. — Ames et al. 2019 ECC 튜토리얼 1~2절"
+          }
+        ]
+      },
+      {
+        "title": "안전 필터 일반론",
+        "priority": "essential",
+        "description": "명목 제어기(사람 원격 명령·학습 정책) 출력을 최소 수정하는 안전 필터 구조, 감시형(least-restrictive) vs 연속 보정. Hsu, Hu & Fisac 2024 Annual Review 'The Safety Filter'.",
+        "children": [
+          {
+            "title": "최소 개입 원칙",
+            "priority": "essential",
+            "description": "u* = argmin ‖u − u_nom‖ s.t. 안전 제약 형태의 연속 필터 vs 안전 집합 경계에서만 백업으로 전환하는 감시형(least-restrictive) 필터, 개입 시점 결정. Hsu, Hu & Fisac 2024 Annual Review of Control, Robotics, and Autonomous Systems 'The Safety Filter' 2~3절."
+          },
+          {
+            "title": "텔레오퍼레이션·정책에 안전 필터 적용",
+            "priority": "essential",
+            "description": "원격 조작 명령·학습 정책 출력 위에 CBF-QP 필터를 얹는 구조, 필터 개입 시 채터링·지연, 운영자에게 개입 사실을 햅틱으로 알리는 방법. Hsu, Hu & Fisac 2024 'The Safety Filter' 응용 절, Ames et al. 2019 ECC 튜토리얼 5절."
+          },
+          {
+            "title": "예측 안전 필터(MPSF)",
+            "priority": "recommended",
+            "description": "학습 정책 입력을 첫 입력으로 고정한 MPC 문제가 종단 안전 집합까지 실현 가능하면 통과, 아니면 최소 수정. — Wabersich & Zeilinger 2021 Automatica 'A predictive safety filter for learning-based control of constrained nonlinear dynamical systems'"
+          },
+          {
+            "title": "강화학습 차폐(Shielding)",
+            "priority": "optional",
+            "description": "안전 명세(LTL)에서 합성한 shield가 RL 에이전트의 위험 행동을 차단·대체하는 구조. — Alshiekh et al. 2018 AAAI 'Safe Reinforcement Learning via Shielding'",
+            "resources": [
+              {
+                "title": "Safe Reinforcement Learning via Shielding",
+                "url": "https://arxiv.org/abs/1708.08611",
+                "kind": "paper"
+              }
+            ]
+          },
+          {
+            "title": "CBF·HJ·MPC 필터 비교",
+            "priority": "recommended",
+            "description": "안전 집합을 얻는 방법(수작업 h, HJ 값함수, 종단 집합), 계산량, 보장 수준, 보수성 비교표. — Hsu, Hu & Fisac 2024 'The Safety Filter' 4절",
+            "resources": [
+              {
+                "title": "The Safety Filter: A Unified View of Safety-Critical Control in Autonomous Systems",
+                "url": "https://arxiv.org/abs/2309.05837",
+                "kind": "paper"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "해밀턴-야코비 도달 가능성",
+        "priority": "essential",
+        "description": "역방향 도달 집합(BRS/BRT), HJ-Isaacs 변분 부등식 min{∂V/∂t + H(x,∇V), l(x) − V} = 0, 최적 회피 제어, 레벨셋 수치 해법과 차원의 저주. Mitchell, Bayen & Tomlin 2005 TAC, Bansal et al. 2017.",
+        "resources": [
+          {
+            "title": "Hamilton-Jacobi Reachability: A Brief Overview and Recent Advances",
+            "url": "https://arxiv.org/abs/1709.07523",
+            "kind": "paper"
+          }
+        ],
+        "children": [
+          {
+            "title": "도달 집합과 회피 집합",
+            "priority": "essential",
+            "description": "전방/역방향 도달 집합, 집합(set: 정확히 t초 후) vs 관(tube: t초 이내) 구분, 회피 문제에서 BRT가 위험 집합이 되는 이유. Bansal, Chen, Herbert & Tomlin 2017 CDC 'Hamilton-Jacobi Reachability: A Brief Overview and Recent Advances' 2절."
+          },
+          {
+            "title": "HJ 편미분방정식과 차등 게임",
+            "priority": "essential",
+            "description": "제어 u가 최대화·외란 d가 최소화하는 해밀토니안 H(x,p) = max_u min_d pᵀf(x,u,d), HJI 변분 부등식과 최적 회피 제어 u* = argmax ∇Vᵀf. Mitchell, Bayen & Tomlin 2005 IEEE TAC 'A time-dependent Hamilton-Jacobi formulation of reachable sets for continuous dynamic games'.",
+            "children": [
+              {
+                "title": "점성해 개념",
+                "priority": "optional",
+                "description": "값 함수가 미분 불가능한 곳에서 해를 정의하는 점성해, 레벨셋 수치 해법의 수렴 근거. — Evans 'Partial Differential Equations' 10장"
+              },
+              {
+                "title": "최적 회피 제어 추출",
+                "priority": "essential",
+                "description": "u*(x) = argmax_u ∇V(x)ᵀf(x, u), bang-bang 구조와 경계 근처에서만 개입하는 감시형 전환. — Bansal et al. 2017 CDC 3절"
+              }
+            ]
+          },
+          {
+            "title": "레벨셋 수치 해법",
+            "priority": "recommended",
+            "description": "격자 기반 레벨셋 풀이, 상향(upwind)·ENO 차분과 Lax-Friedrichs 해밀토니안, 시스템 분해(decomposition)로 차원 축소. Mitchell 'A Toolbox of Level Set Methods' 사용 설명서, Osher & Fedkiw 'Level Set Methods and Dynamic Implicit Surfaces' 5~7장."
+          },
+          {
+            "title": "학습 기반 근사 도달성",
+            "priority": "optional",
+            "description": "DeepReach: 사인 활성 신경망으로 HJ PDE 잔차를 최소화해 고차원 값 함수를 근사, 근사 오차 검증과 보정 문제. Bansal & Tomlin 2021 ICRA 'DeepReach'.",
+            "children": [
+              {
+                "title": "DeepReach 손실과 검증",
+                "priority": "optional",
+                "description": "PDE 잔차 + 경계 조건 손실, 시간 커리큘럼 학습, 샘플 기반 검증으로 레벨 보정. — Bansal & Tomlin 2021 ICRA"
+              }
+            ],
+            "resources": [
+              {
+                "title": "DeepReach: A Deep Learning Approach to High-Dimensional Reachability",
+                "url": "https://arxiv.org/abs/2011.02082",
+                "kind": "paper"
+              }
+            ]
+          },
+          {
+            "title": "HJ 도구 실습",
+            "priority": "recommended",
+            "description": "격자 정의 → 동역학·목표 집합 l(x) 정의 → 시간 역방향 풀이 → 0-레벨셋 시각화의 흐름을 helperOC·hj_reachability로 따라 하기. — 각 저장소 README",
+            "resources": [
+              {
+                "title": "hj_reachability (JAX)",
+                "url": "https://github.com/StanfordASL/hj_reachability",
+                "kind": "code"
+              },
+              {
+                "title": "helperOC (MATLAB)",
+                "url": "https://github.com/HJReachability/helperOC",
+                "kind": "code"
+              },
+              {
+                "title": "ToolboxLS",
+                "url": "https://www.cs.ubc.ca/~mitchell/ToolboxLS/",
+                "kind": "code"
+              }
+            ]
+          },
+          {
+            "title": "CBF와 HJ 값함수 연결",
+            "priority": "optional",
+            "description": "제어 장벽-값 함수(CBVF): 할인 HJ 값함수가 CBF 조건을 만족하도록 구성해 두 방법을 통합. — Choi et al. 2021 CDC 'Robust Control Barrier-Value Functions for Safety-Critical Control'",
+            "resources": [
+              {
+                "title": "Robust Control Barrier-Value Functions for Safety-Critical Control",
+                "url": "https://arxiv.org/abs/2104.02808",
+                "kind": "paper"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "모델 예측 안전 제어",
+        "priority": "recommended",
+        "description": "제약 MPC로 상태·입력 제약 보장, 종단 집합·재귀 실현 가능성, 튜브 MPC로 외란 강건성. Rawlings, Mayne & Diehl 'Model Predictive Control: Theory, Computation, and Design'.",
+        "children": [
+          {
+            "title": "종단 불변 집합",
+            "priority": "recommended",
+            "description": "최대 제어 불변 집합 계산(역방향 사전집합 반복), 종단 비용·종단 집합이 재귀 실현 가능성과 안정성을 보장하는 조건. Rawlings, Mayne & Diehl 'Model Predictive Control' 2장, Borrelli, Bemporad & Morari 'Predictive Control for Linear and Hybrid Systems' 10장."
+          },
+          {
+            "title": "튜브 MPC",
+            "priority": "optional",
+            "description": "명목 궤적 + 보조 피드백 u = v + K(x − z), 강건 양의 불변(RPI) 집합으로 제약을 조이는 방식. Rawlings, Mayne & Diehl 'Model Predictive Control' 3장, Mayne, Seron & Raković 2005 Automatica."
+          },
+          {
+            "title": "재귀 실현 가능성 증명",
+            "priority": "essential",
+            "description": "시점 k의 최적 해를 한 칸 밀고 종단 제어 불변 집합의 제어로 채워 k+1의 실현 가능 해를 만드는 표준 논증. — Rawlings, Mayne & Diehl 'Model Predictive Control' 2.4절"
+          },
+          {
+            "title": "제약 조임과 안전 여유",
+            "priority": "recommended",
+            "description": "예측 오차 상한으로 상태 제약을 단계별로 조이는 constraint tightening, 사람 위치 예측 불확실성에 적용. — Borrelli, Bemporad & Morari 'Predictive Control for Linear and Hybrid Systems' 12장"
+          }
+        ]
+      },
+      {
+        "title": "강건 제어 기초",
+        "priority": "recommended",
+        "description": "H∞ 노름, 소이득 정리, 구조적 불확실성과 μ-해석 개념, 슬라이딩 모드 제어. Zhou & Doyle 'Essentials of Robust Control', Slotine & Li 'Applied Nonlinear Control' 7장.",
+        "children": [
+          {
+            "title": "소이득 정리",
+            "priority": "recommended",
+            "description": "두 안정 시스템의 피드백 결합이 ‖G₁‖‖G₂‖ < 1이면 안정, 지연·불확실성을 노름 경계 블록으로 다루는 근거. Khalil 'Nonlinear Systems' 5.4절, Zhou & Doyle 'Essentials of Robust Control' 8장."
+          },
+          {
+            "title": "H∞ 제어 개념",
+            "priority": "optional",
+            "description": "혼합 감도 문제 ‖[W₁S; W₂KS; W₃T]‖∞ < γ, 두 개의 리카티 방정식 기반 해(DGKF). Zhou & Doyle 'Essentials of Robust Control' 14장, Skogestad & Postlethwaite 'Multivariable Feedback Control' 9장."
+          },
+          {
+            "title": "슬라이딩 모드 제어",
+            "priority": "recommended",
+            "description": "슬라이딩 면 s = ė + λe, 도달 조건 sṡ ≤ −η|s|, 불연속 항의 채터링과 경계층(saturation) 근사. Slotine & Li 'Applied Nonlinear Control' 7장."
+          }
+        ]
+      },
+      {
+        "title": "속도·에너지 기반 안전 제한",
+        "priority": "essential",
+        "description": "운동 에너지·전력 제한(PFL 연계), 관절 토크 포화, 속도 스케일링으로 충돌 시 에너지 상한 보장. Haddadin 2012 'Injury knowledge for safe velocity', Meguenani et al. 2015 에너지 제약 제어.",
+        "children": [
+          {
+            "title": "운동 에너지 제약",
+            "priority": "essential",
+            "description": "말단 운동 에너지 ½ẋᵀΛẋ ≤ E_max를 매 주기 토크 제약으로 바꿔 QP에 넣는 방법. — Meguenani et al. 2015 IROS 'Energy-based control for safe human-robot physical interactions'"
+          },
+          {
+            "title": "경로 유지 속도 스케일링",
+            "priority": "essential",
+            "description": "경로 파라미터 s의 시간 법칙만 바꿔 ṡ를 줄이는 속도 스케일링, 기하 경로는 유지. — Lynch & Park 'Modern Robotics' 9.4절(시간 스케일링)"
+          },
+          {
+            "title": "Safe Motion Unit",
+            "priority": "recommended",
+            "description": "부상 데이터 기반 질량-속도 한계를 실시간 속도 제한으로 쓰는 SMU, 방향별 유효 질량 반영. — Haddadin et al. 2012 ICRA"
+          },
+          {
+            "title": "관절 토크·전력 포화",
+            "priority": "recommended",
+            "description": "토크·전력 한계를 안전 등급 감시값(SLT)과 연계, 포화 시 안정성 영향. — IEC 61800-5-2 SLT, Siciliano et al. 8장"
+          }
+        ]
+      },
+      {
+        "title": "자기 충돌·환경 충돌 회피",
+        "priority": "recommended",
+        "description": "거리 계산(GJK), 반발 포텐셜 필드(Khatib 1986), 속도 감쇠자(velocity damper) 부등식 제약을 WBC QP에 포함.",
+        "children": [
+          {
+            "title": "GJK·EPA 거리 계산",
+            "priority": "recommended",
+            "description": "볼록체 민코프스키 차와 심플렉스 반복으로 최단 거리(GJK)·침투 깊이(EPA), 캡슐·구 근사. — Ericson 'Real-Time Collision Detection' 9장"
+          },
+          {
+            "title": "속도 감쇠자 제약",
+            "priority": "essential",
+            "description": "ḋ ≥ −ξ(d − d_s)/(d_i − d_s) (d < d_i일 때), 거리 미분을 Jacobian으로 표현해 QP 선형 제약화. — Kanoun, Lamiraux & Wieber 2011 IEEE TRO"
+          },
+          {
+            "title": "포텐셜 필드와 지역 최소점",
+            "priority": "optional",
+            "description": "반발 포텐셜 U = ½η(1/d − 1/d₀)², 인력과 결합 시 지역 최소점 문제와 내비게이션 함수. — Khatib 1986 IJRR, Choset et al. 'Principles of Robot Motion' 4장"
+          }
+        ]
+      },
+      {
+        "title": "형식 검증 기초",
+        "priority": "optional",
+        "description": "시제 논리(LTL·STL) 명세, 도달성 기반 검증, 모니터링(runtime verification). Baier & Katoen 'Principles of Model Checking'.",
+        "children": [
+          {
+            "title": "LTL 기본 연산자",
+            "priority": "optional",
+            "description": "G(항상)·F(언젠가)·X(다음)·U(까지), 안전성(G ¬bad)과 활성(F goal) 명세, 뷔히 오토마타. — Baier & Katoen 'Principles of Model Checking' 5장"
+          },
+          {
+            "title": "STL과 강건도",
+            "priority": "optional",
+            "description": "실수 신호 위 시간 구간 명세 G_[0,T](d > 0.5), 강건도 ρ로 만족 여유를 수치화. — Donzé & Maler 2010 FORMATS"
+          },
+          {
+            "title": "런타임 모니터링",
+            "priority": "optional",
+            "description": "실행 중 명세 위반을 감시하는 모니터 합성, 안전 필터와 결합한 감시 아키텍처(Simplex). — Sha 2001 'Using Simplicity to Control Complexity'"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "양방향 원격 조작의 구조와 모델링",
+    "items": [
+      {
+        "title": "텔레오퍼레이션 시스템 구성 요소",
+        "priority": "essential",
+        "description": "운영자–마스터–통신 채널–슬레이브–환경의 5블록 모델, 단방향(unilateral)과 양방향(bilateral) 원격 조작의 차이, 감독 제어(supervisory control)와 직접 제어의 구분을 배운다. Sheridan 1992, Hokayem & Spong 2006 서베이.",
+        "children": [
+          {
+            "title": "단방향 vs 양방향",
+            "priority": "recommended",
+            "description": "힘 귀환 없는 단방향 원격 조작(영상·VR 기반)의 접촉 작업 한계, 시각·진동 촉각 보조로 일부 보완하는 방법. Hokayem & Spong 2006 Automatica 'Bilateral teleoperation: An historical survey' 1~2절.",
+            "children": [
+              {
+                "title": "VR 기반 단방향 원격 조작",
+                "priority": "recommended",
+                "description": "VR 헤드셋·손 추적 기반 데이터 수집형 원격 조작이 힘 귀환 없이 동작하는 구조와 접촉 작업 품질 한계. — Hokayem & Spong 2006 2절"
+              }
+            ]
+          },
+          {
+            "title": "감독 제어와 공유 제어",
+            "priority": "essential",
+            "description": "사람이 목표만 주는 감독 제어, 사람 명령과 자율 명령을 섞는 공유 제어 u = αu_h + (1 − α)u_a, 중재(arbitration) 설계. — Sheridan 'Telerobotics, Automation, and Human Supervisory Control', Dragan & Srinivasa 2013 IJRR"
+          },
+          {
+            "title": "원격 현장감과 몰입",
+            "priority": "recommended",
+            "description": "시각·힘·촉각 귀환이 원격 현장감(telepresence)을 만드는 요소, 현장감과 작업 성능의 관계. — Sheridan 1992 Presence"
+          },
+          {
+            "title": "성능 지표",
+            "priority": "recommended",
+            "description": "작업 완료 시간, 접촉력 최대·적분, 오류 횟수, NASA-TLX 작업 부하 평가. — Hokayem & Spong 2006, Hart & Staveland 1988"
+          }
+        ]
+      },
+      {
+        "title": "2-포트 네트워크 표현",
+        "priority": "essential",
+        "description": "마스터·통신·슬레이브를 (힘, 속도) 포트를 가진 2-포트 네트워크로 보고 임피던스 행렬 Z, 어드미턴스 행렬 Y, 하이브리드 행렬 H를 정의한다. 운영자 임피던스 Z_h와 환경 임피던스 Z_e 종단 조건을 다룬다. Hannaford 1989.",
+        "children": [
+          {
+            "title": "하이브리드 행렬 H의 물리적 의미",
+            "priority": "essential",
+            "description": "h11=입력 임피던스, h12=힘 반사 비율, h21=속도 추종 비율, h22=출력 어드미턴스. 이상적 투명성은 H=[[0,1],[-1,0]]. Hannaford 1989.",
+            "children": [
+              {
+                "title": "Z·Y·H·G 행렬 상호 변환",
+                "priority": "essential",
+                "description": "포트 변수 배치에 따른 네 표현과 상호 변환식, 존재하지 않는 표현(특이)의 의미. — Hannaford 1989 IEEE TRA, Chua, Desoer & Kuh 'Linear and Nonlinear Circuits' 13장"
+              }
+            ]
+          },
+          {
+            "title": "전달 임피던스 Z_t",
+            "priority": "essential",
+            "description": "운영자가 느끼는 임피던스 Z_t = F_h/V_h를 H 원소와 Z_e로 표현하고, Z_t=Z_e가 투명성 조건임을 유도한다. Lawrence 1993.",
+            "children": [
+              {
+                "title": "Z_t 유도 예제",
+                "priority": "essential",
+                "description": "Z_t = (h11 − Δh·Z_e)/(1 + h22Z_e) (Δh = h11h22 − h12h21) 형태 유도와 Z_e → 0(자유 공간), ∞(강체) 극한. — Lawrence 1993 IEEE TRA"
+              }
+            ]
+          },
+          {
+            "title": "힘-전압·속도-전류 유비",
+            "priority": "essential",
+            "description": "질량↔인덕터, 감쇠↔저항, 스프링↔커패시터 대응, 노력(effort)·흐름(flow) 변수와 전력 F·v. — Hogan 1985 ASME JDSMC, Karnopp 'System Dynamics' 본드 그래프 장"
+          },
+          {
+            "title": "운영자·환경 종단 모델",
+            "priority": "essential",
+            "description": "F_h = F_h* − Z_h v_h(외생 힘 + 임피던스), F_e = Z_e v_e, 종단을 붙여 폐루프 전달함수 구성. — Hashtrudi-Zaad & Salcudean 2001 IJRR"
+          },
+          {
+            "title": "산란 행렬 표현",
+            "priority": "recommended",
+            "description": "S = (Z − I)(Z + I)⁻¹, 파동 변수 a = (F + bv)/√(2b), 수동성 ⇔ ‖S‖ ≤ 1. — Anderson & Spong 1989 IEEE TAC, Niemeyer & Slotine 1991"
+          }
+        ]
+      },
+      {
+        "title": "마스터·슬레이브 동역학 모델",
+        "priority": "essential",
+        "description": "1자유도 질량-감쇠 모델 m s² + b s 에서 시작해 다자유도 M(q)q̈+C(q,q̇)q̇+g(q)=τ로 확장, 운영자 팔과 환경을 선형 질량-스프링-댐퍼로 근사하는 방법을 배운다. Hokayem & Spong 2006.",
+        "children": [
+          {
+            "title": "1자유도 질량-감쇠 모델",
+            "priority": "essential",
+            "description": "m_m ẍ_m + b_m ẋ_m = F_h + τ_m, 슬레이브도 동일 형태, 라플라스 변환으로 블록도 구성. — Lawrence 1993 2절"
+          },
+          {
+            "title": "다자유도 동역학 성질",
+            "priority": "essential",
+            "description": "M(q) 양정치·유계, Ṁ − 2C 반대칭, 파라미터 선형 Y(q, q̇, q̈)θ = τ, 양방향 제어 증명에 쓰이는 성질. — Spong, Hutchinson & Vidyasagar 'Robot Modeling and Control' 6~7장"
+          },
+          {
+            "title": "환경 접촉 모델",
+            "priority": "essential",
+            "description": "켈빈-보이트 F = kx + bẋ, 헌트-크로슬리 F = kxⁿ + λxⁿẋ(충격 시 비물리적 인장력 제거), 강체 접촉 근사. — Hunt & Crossley 1975 J. Appl. Mech., Gilardi & Sharf 2002 Mech. Mach. Theory"
+          },
+          {
+            "title": "작동기 비이상성",
+            "priority": "recommended",
+            "description": "대역폭·백래시·쿨롱 마찰·센서 양자화가 투명성과 안정성을 제한하는 경로. — Hannaford & Okamura, Springer Handbook of Robotics 햅틱 장"
+          }
+        ]
+      },
+      {
+        "title": "위치-위치(P-P) 구조",
+        "priority": "essential",
+        "description": "마스터·슬레이브 위치 오차에 PD 결합을 걸어 양쪽이 서로를 끌어당기는 대칭 구조. 힘 센서 없이 반력이 느껴지지만 자유 공간에서도 슬레이브 관성·마찰이 운영자에게 전달되는 문제를 분석한다. Lawrence 1993.",
+        "children": [
+          {
+            "title": "PD 결합 이득 설계",
+            "priority": "essential",
+            "description": "τ_m = −K_p(x_m − x_s) − K_d(ẋ_m − ẋ_s), τ_s = −τ_m, 결합 강성 K_p가 접촉 시 느껴지는 최대 강성 상한이 되는 이유. — Lawrence 1993, Hokayem & Spong 2006 3절"
+          },
+          {
+            "title": "자유 공간 인지 관성",
+            "priority": "essential",
+            "description": "자유 공간에서 Z_t ≈ (m_m + m_s)s + …, 슬레이브 관성·마찰이 운영자에게 그대로 느껴지는 문제. — Hashtrudi-Zaad & Salcudean 2001 IJRR"
+          },
+          {
+            "title": "가상 커플링 해석",
+            "priority": "recommended",
+            "description": "P-P 결합을 마스터-슬레이브 사이 스프링-댐퍼(가상 커플링)로 보고 수동성 확인. — Colgate, Stanley & Brown 1995 IROS 'Issues in the haptic display of tool use'"
+          }
+        ]
+      },
+      {
+        "title": "위치-힘(P-F) 구조",
+        "priority": "essential",
+        "description": "마스터 위치를 슬레이브가 추종하고, 슬레이브 힘 센서 값을 마스터로 되돌리는 힘 반사(force reflection) 구조. 높은 힘 이득에서 강체 접촉 시 불안정해지는 이유를 배운다. Hannaford 1989, Lawrence 1993.",
+        "children": [
+          {
+            "title": "힘 반사 이득과 접촉 불안정",
+            "priority": "essential",
+            "description": "강체 환경에서 루프 이득 ∝ k_f·K_e, 지연·샘플링 하 진동 발생 조건, 이득을 낮추면 투명성 저하. — Hannaford 1989, Daniel & McAree 1998 IJRR"
+          },
+          {
+            "title": "힘 센서 잡음과 필터링",
+            "priority": "recommended",
+            "description": "저역 필터의 위상 지연이 안정성 여유를 줄이는 효과, 관성 보상(F_meas − m_tool·a). — Hannaford & Okamura, Springer Handbook of Robotics 햅틱 장"
+          },
+          {
+            "title": "국소 힘 피드백",
+            "priority": "recommended",
+            "description": "마스터 쪽 F_h 측정으로 마스터 관성을 줄이는 국소 힘 루프(C6), 운영자 힘 센서 필요성. — Hashtrudi-Zaad & Salcudean 2002 IEEE TRA"
+          }
+        ]
+      },
+      {
+        "title": "힘-위치·힘-힘 구조",
+        "priority": "recommended",
+        "description": "운영자 힘을 슬레이브 힘 명령으로 보내는 F-P, 양쪽 힘만 주고받는 F-F 구조의 하이브리드 행렬을 유도하고 P-P·P-F와 비교한다. Lawrence 1993.",
+        "children": [
+          {
+            "title": "F-P 하이브리드 행렬",
+            "priority": "recommended",
+            "description": "운영자 힘 → 슬레이브 힘 명령, 슬레이브 위치 → 마스터 위치 명령 구조의 H 원소 유도. — Lawrence 1993 3절"
+          },
+          {
+            "title": "F-F 구조의 위치 드리프트",
+            "priority": "optional",
+            "description": "힘만 교환하면 위치 오차 피드백이 없어 마스터·슬레이브 위치가 벌어지는 드리프트와 보정 방법. — Hokayem & Spong 2006"
+          }
+        ]
+      },
+      {
+        "title": "4채널(4ch) 아키텍처",
+        "priority": "essential",
+        "description": "위치·힘을 양방향 모두 보내는 일반 구조와 제어 블록 C1~C6, 국소 힘 피드백 C5·C6를 배운다. 4채널이 모든 2·3채널 구조를 포함함을 확인한다. Lawrence 1993, Hashtrudi-Zaad & Salcudean 2001.",
+        "children": [
+          {
+            "title": "3채널 구조로의 축약",
+            "priority": "recommended",
+            "description": "국소 힘 피드백을 쓰면 4채널 중 하나를 빼도 투명성을 유지할 수 있음을 보인다. Hashtrudi-Zaad & Salcudean 2002."
+          },
+          {
+            "title": "완전 투명 조건(C1~C4)",
+            "priority": "essential",
+            "description": "Lawrence 1993 4채널(C1~C4)과 완전 투명 조건.",
+            "children": [
+              {
+                "title": "투명 조건 유도",
+                "priority": "essential",
+                "description": "C1 = Z_cs(슬레이브 제어기 임피던스), C4 = −Z_cm, C2 = C3 = 1 형태의 조건을 H = [[0,1],[−1,0]]에서 유도. — Lawrence 1993 4절"
+              },
+              {
+                "title": "C5·C6 국소 힘 피드백 역할",
+                "priority": "recommended",
+                "description": "국소 힘 이득 C5·C6이 투명 조건에 자유도를 더해 C2·C3 선택을 넓히는 방식. — Hashtrudi-Zaad & Salcudean 2001 IJRR 3절"
+              }
+            ]
+          },
+          {
+            "title": "4채널 블록도 읽기",
+            "priority": "essential",
+            "description": "마스터·슬레이브 제어기 Z_cm·Z_cs, 채널 C1(속도 순방향)~C4(속도 역방향) 신호 경로를 따라 F_h·F_e 관계식 세우기. — Lawrence 1993 그림, Hashtrudi-Zaad & Salcudean 2001"
+          },
+          {
+            "title": "가속도 기반 양방향 제어",
+            "priority": "recommended",
+            "description": "DOB로 외란을 상쇄한 가속도 제어 위에 공통 모드(위치)·차동 모드(힘) 분리 제어, 실세계 햅틱스. — Katsura, Matsumoto & Ohnishi 2007 IEEE TIE 'Modeling of force sensing and validation of disturbance observer for force control'"
+          }
+        ]
+      },
+      {
+        "title": "스케일링과 비대칭 마스터-슬레이브",
+        "priority": "recommended",
+        "description": "위치 스케일 k_p와 힘 스케일 k_f, 투명성 조건 Z_t = (k_f/k_p) Z_e, 작업 공간·자유도가 다른 마스터-슬레이브(예: 햅틱 장치 ↔ 휴머노이드 팔)에서의 작업 공간 매핑과 인덱싱(clutching)을 배운다. Colgate 1993.",
+        "children": [
+          {
+            "title": "스케일 투명 조건",
+            "priority": "essential",
+            "description": "x_s = k_p x_m, F_h = k_f F_e일 때 Z_t = (k_f/k_p)Z_e, 미세 조작(축소)·대형 조작(확대) 사례. — Colgate 1993 IEEE VRAIS"
+          },
+          {
+            "title": "인덱싱(clutching)",
+            "priority": "essential",
+            "description": "마스터 작업 공간 한계를 클러치로 재중심화, 클러치 해제 중 슬레이브 유지·힘 귀환 처리. — Conti & Khatib 2005 'Spanning large workspaces using small haptic devices'"
+          },
+          {
+            "title": "위치 모드와 속도 모드",
+            "priority": "recommended",
+            "description": "마스터 위치 → 슬레이브 위치(위치 모드)와 마스터 변위 → 슬레이브 속도(속도 모드)의 장단점, 혼합 모드. — Conti & Khatib 2005 World Haptics"
+          }
+        ]
+      },
+      {
+        "title": "작업 공간 기반 양방향 제어",
+        "priority": "recommended",
+        "description": "관절 공간이 아닌 Cartesian 공간에서 J(q)ᵀF로 힘을 반사하고, 자유도 불일치·특이점 근처에서 J의 감쇠 역행렬을 쓰는 방법을 배운다. Siciliano & Khatib, Springer Handbook of Robotics 텔레로보틱스 장.",
+        "children": [
+          {
+            "title": "Jᵀ 힘 반사",
+            "priority": "essential",
+            "description": "τ_m = J_mᵀ(q_m)F, 말단 힘 → 관절 토크 매핑과 정역학 쌍대성. — Lynch & Park 'Modern Robotics' 5.2절"
+          },
+          {
+            "title": "감쇠 최소제곱 역행렬",
+            "priority": "essential",
+            "description": "J^† = Jᵀ(JJᵀ + λ²I)⁻¹, 특이점 근처 속도 폭주 억제와 추종 오차 트레이드오프, 가변 λ. — Nakamura 'Advanced Robotics: Redundancy and Optimization', Wampler 1986"
+          },
+          {
+            "title": "자유도 불일치와 영공간",
+            "priority": "recommended",
+            "description": "슬레이브 여유 자유도를 영공간 투영 (I − J^†J)로 자세 유지·관절 한계 회피에 쓰기, 마스터 자유도 부족 축 처리. — Siciliano et al. 'Robotics: Modelling, Planning and Control' 3.5절"
+          }
+        ]
+      },
+      {
+        "title": "역사적 흐름과 서베이",
+        "priority": "optional",
+        "description": "Goertz의 기계식 마스터-슬레이브에서 Ferrell의 지연 실험, 수동성 기반 제어, 네트워크 텔레오퍼레이션까지 흐름을 정리한다. Hokayem & Spong 2006, Passenberg et al. 2010.",
+        "children": [
+          {
+            "title": "Ferrell 이동-대기 실험",
+            "priority": "optional",
+            "description": "지연 하 운영자가 이동-대기(move-and-wait) 전략을 쓰게 되는 현상과 작업 시간 모델. — Ferrell 1965 IEEE Trans. Human Factors in Electronics"
+          }
+        ]
+      },
+      {
+        "title": "임피던스형·어드미턴스형 마스터 장치",
+        "priority": "essential",
+        "description": "장치 인과성(힘 출력 vs 위치 출력)에 따른 마스터 설계, 양방향 제어 구조 선택에 주는 영향. — Hannaford & Okamura, Springer Handbook of Robotics 햅틱 장",
+        "children": [
+          {
+            "title": "임피던스형 장치",
+            "priority": "essential",
+            "description": "백드라이버블·저관성 장치가 위치를 읽고 힘을 출력, 고강성 렌더링 한계. — Springer Handbook of Robotics 햅틱 장"
+          },
+          {
+            "title": "어드미턴스형 장치",
+            "priority": "recommended",
+            "description": "F/T 센서로 힘을 읽고 가상 모델 위치를 추종, 저관성 렌더링 한계·고강성에 유리. — Van der Linde et al. 2002 Eurohaptics 'The HapticMaster'"
+          }
+        ]
+      },
+      {
+        "title": "양방향 제어의 상태공간 모델",
+        "priority": "recommended",
+        "description": "마스터·슬레이브·운영자·환경을 묶은 상태공간 ẋ = Ax + Bu 구성, 고유값·근궤적으로 이득별 안정성 확인. — Ogata 'Modern Control Engineering' 9장 응용",
+        "children": [
+          {
+            "title": "폐루프 행렬 구성",
+            "priority": "recommended",
+            "description": "1자유도 P-P·P-F에 운영자(m_h, b_h, k_h)·환경(k_e, b_e)을 연결한 4~6차 상태공간 유도. — Hokayem & Spong 2006 응용"
+          },
+          {
+            "title": "이득 스윕과 근궤적",
+            "priority": "optional",
+            "description": "K_p·k_f·K_e를 바꾸며 극점 이동을 그려 불안정 경계 찾기(수치 실습). — Ogata 'Modern Control Engineering' 6장"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "투명성과 안정성의 트레이드오프",
+    "items": [
+      {
+        "title": "투명성의 정의와 지표",
+        "priority": "essential",
+        "description": "Z_t=Z_e(완전 투명), 위치 추종 x_s=x_m과 힘 추종 F_h=F_e의 동시 만족 조건, 임피던스 폭(Z-width)과 투명성 오차 지표를 배운다. Lawrence 1993, Yokokohji & Yoshikawa 1994.",
+        "children": [
+          {
+            "title": "Z_t = Z_e 조건 분석",
+            "priority": "essential",
+            "description": "Z_t를 Z_e에 대한 1차 분수 함수로 보고 모든 Z_e에서 같아지려면 h11 = h22 = 0, h12h21 = −1이어야 함을 보임. — Lawrence 1993"
+          },
+          {
+            "title": "Z-width(임피던스 폭)",
+            "priority": "essential",
+            "description": "장치가 안정하게 표현할 수 있는 임피던스 범위(Z_min~Z_max), 샘플링·감쇠·센서 분해능의 영향. — Colgate & Brown 1994 ICRA 'Factors affecting the Z-Width of a haptic display'"
+          },
+          {
+            "title": "주파수 대역별 투명성",
+            "priority": "recommended",
+            "description": "운영자 동작 대역(수 Hz)과 촉각 대역(수백 Hz)에서 요구가 다름, 투명성 대역폭 지표. — Hannaford 1989, Hashtrudi-Zaad & Salcudean 2001"
+          },
+          {
+            "title": "Z_t 감도 지표",
+            "priority": "optional",
+            "description": "dZ_t/dZ_e로 환경 변화 감지 능력(구분 가능성)을 정의하는 투명성 척도. — Cavusoglu, Sherman & Tendick 2002 IEEE TRA"
+          }
+        ]
+      },
+      {
+        "title": "Lawrence의 투명성-안정성 트레이드오프",
+        "priority": "essential",
+        "description": "4채널 구조에서 완전 투명성을 달성하는 제어기 조건을 유도하고, 같은 조건이 지연·모델 오차 하에서 안정성 여유를 없앰을 보인다. Lawrence 1993 'Stability and Transparency in Bilateral Teleoperation'.",
+        "children": [
+          {
+            "title": "완전 투명 제어기 조건",
+            "priority": "essential",
+            "description": "4채널 제어기에서 C1·C2·C3·C4가 투명 조건을 만족하도록 고르는 방법과 2채널 구조에서 불가능한 이유. — Lawrence 1993 4절"
+          },
+          {
+            "title": "지연 하 안정성 여유 소실",
+            "priority": "essential",
+            "description": "완전 투명 제어기에 통신 지연 T를 넣으면 루프 이득이 1에 붙어 위상 여유가 사라지는 해석. — Lawrence 1993 5절"
+          },
+          {
+            "title": "투명성-안정성 파레토 설계",
+            "priority": "recommended",
+            "description": "안정성 여유를 제약으로 두고 투명성 오차를 최소화하는 이득 선택, 보수성 조절. — Hashtrudi-Zaad & Salcudean 2001 IJRR, Hokayem & Spong 2006"
+          }
+        ]
+      },
+      {
+        "title": "Yokokohji–Yoshikawa 이상 응답",
+        "priority": "recommended",
+        "description": "마스터·슬레이브 위치·힘이 같아지는 이상 응답의 정의, 수정된 마스터-슬레이브 시스템으로 이상 응답을 근사하는 설계. Yokokohji & Yoshikawa 1994.",
+        "children": [
+          {
+            "title": "이상 응답 3종",
+            "priority": "recommended",
+            "description": "위치만 같음, 힘만 같음, 둘 다 같음의 3가지 이상 응답 정의와 각 조건. — Yokokohji & Yoshikawa 1994 IEEE TRA 2절"
+          },
+          {
+            "title": "수정 마스터-슬레이브 설계",
+            "priority": "optional",
+            "description": "마스터·슬레이브 동역학 차이를 제어기로 상쇄해 이상 응답에 근접시키는 설계와 모델 오차 민감도. — Yokokohji & Yoshikawa 1994 3절"
+          }
+        ]
+      },
+      {
+        "title": "절대 안정성(Llewellyn 판별법)",
+        "priority": "essential",
+        "description": "운영자·환경 임피던스가 수동적이기만 하면 어떤 값이든 안정한 조건. 2-포트의 Llewellyn 조건(Re h11≥0, Re h22≥0, 2Re h11 Re h22 − Re(h12h21) − |h12h21| ≥ 0)을 적용한다. Llewellyn 1952, Adams & Hannaford 1999.",
+        "children": [
+          {
+            "title": "Llewellyn 조건 유도",
+            "priority": "essential",
+            "description": "2-포트에 임의 수동 종단을 붙였을 때 입력 임피던스 실수부가 음이 되지 않을 조건에서 세 부등식 유도. — Llewellyn 1952 Proc. IRE"
+          },
+          {
+            "title": "절대 안정성 파라미터 η",
+            "priority": "essential",
+            "description": "η = −cos∠(h12h21) + 2Re h11 Re h22/|h12h21| ≥ 1, 주파수별 η 그래프로 안정성 여유 읽기. — Hashtrudi-Zaad & Salcudean 2001 IJRR, Haddadi & Hashtrudi-Zaad 2010 IEEE TRO"
+          },
+          {
+            "title": "P-F 구조 판별 예제",
+            "priority": "essential",
+            "description": "1자유도 P-F의 h 원소를 대입해 Llewellyn 조건이 깨지는 힘 이득·감쇠 범위 계산. — Adams & Hannaford 1999 IEEE TRA"
+          },
+          {
+            "title": "절대 안정성의 보수성",
+            "priority": "recommended",
+            "description": "실제 운영자·환경 범위를 무시하고 모든 수동 종단을 고려하므로 보수적, 유계 임피던스 안정성 대안. — Haddadi & Hashtrudi-Zaad 2010 IEEE TRO"
+          }
+        ]
+      },
+      {
+        "title": "2-포트 수동성 판별",
+        "priority": "essential",
+        "description": "2-포트가 수동적일 조건(산란 행렬 노름 ≤1 또는 임피던스 행렬의 양의 실수성)과 절대 안정성과의 관계(수동성 ⊂ 절대 안정성)를 배운다. Anderson & Spong 1989, Colgate & Hogan 1988.",
+        "children": [
+          {
+            "title": "수동성 관점의 2포트 해석",
+            "priority": "recommended",
+            "description": "마스터·통신·슬레이브 각 블록의 수동성으로 전체 폐루프 안정을 보장하는 직렬 연결 논리. Anderson & Spong 1989, Khalil 'Nonlinear Systems' 6장(수동성).",
+            "children": [
+              {
+                "title": "블록 직렬 연결 논리",
+                "priority": "recommended",
+                "description": "운영자(수동) – 마스터 – 통신 – 슬레이브 – 환경(수동) 각 블록 수동이면 전체 안정, 하나라도 능동이면 깨짐. — Anderson & Spong 1989 IEEE TAC"
+              }
+            ]
+          },
+          {
+            "title": "양의 실수 함수",
+            "priority": "essential",
+            "description": "Z(s)가 PR일 조건: 우반면 해석적, Re Z(jω) ≥ 0, 허축 극점 단순·양의 유수, 2-포트 확장 Z + Z^H ≥ 0. — Khalil 'Nonlinear Systems' 6.3절"
+          },
+          {
+            "title": "산란 행렬 노름 조건",
+            "priority": "essential",
+            "description": "‖S(jω)‖ ≤ 1 ∀ω ⇔ 수동, 주파수별 최대 특이값 그래프로 판정. — Anderson & Spong 1989 IEEE TAC"
+          },
+          {
+            "title": "수동성과 절대 안정성의 포함 관계",
+            "priority": "recommended",
+            "description": "수동 2-포트는 절대 안정이지만 역은 성립하지 않음, 능동 2-포트가 절대 안정일 수 있는 예. — Adams & Hannaford 1999 IEEE TRA"
+          }
+        ]
+      },
+      {
+        "title": "Colgate의 커플드 안정성",
+        "priority": "recommended",
+        "description": "운영자-장치 결합계에서 장치 쪽 임피던스가 양의 실수(positive real)이면 어떤 수동적 인간과도 안정하다는 결합 안정성(coupled stability) 정리. Colgate & Hogan 1988, Colgate 1994.",
+        "children": [
+          {
+            "title": "가상 벽 수동성 조건",
+            "priority": "essential",
+            "description": "샘플링 가상 벽 K + Bs가 수동일 조건 b > KT/2 + |B|(b: 장치 물리 감쇠, T: 샘플 주기). — Colgate & Schenkel 1997 J. Robotic Systems 'Passivity of a class of sampled-data systems'"
+          },
+          {
+            "title": "결합 안정성 정리 증명 흐름",
+            "priority": "recommended",
+            "description": "수동 인간과 결합한 장치 임피던스가 PR이 아니면 불안정하게 만드는 수동 인간 모델이 존재함을 보이는 논증. — Colgate & Hogan 1988 Int. J. Control"
+          }
+        ]
+      },
+      {
+        "title": "운영자 팔 임피던스 모델",
+        "priority": "recommended",
+        "description": "인간 팔의 질량·감쇠·강성 추정치, 긴장도(co-contraction)에 따른 임피던스 변화, 운영자를 수동 요소로 가정하는 근거와 한계를 배운다. Hogan 1985, Dolan et al. 1993.",
+        "children": [
+          {
+            "title": "질량·감쇠·강성 범위",
+            "priority": "recommended",
+            "description": "손끝 기준 m_h ≈ 수 kg 이하, b_h ≈ 수~수십 Ns/m, k_h ≈ 수백~수천 N/m 범위와 측정법. — Dolan, Friedman & Nebot 1993, Hogan 1985"
+          },
+          {
+            "title": "공동수축과 임피던스 조절",
+            "priority": "recommended",
+            "description": "길항근 공동수축으로 강성이 커지는 현상, 안정성 해석에서 최악 운영자 선택. — Hogan 1984 IEEE TAC 'Adaptive control of mechanical impedance by coactivation of antagonist muscles'"
+          },
+          {
+            "title": "운영자 수동성 가정의 한계",
+            "priority": "optional",
+            "description": "반사·의도적 움직임은 능동적일 수 있음, 저주파 수동 근사의 타당성 논의. — Hogan 1989 ICRA 'Controlling impedance at the man/machine interface'"
+          }
+        ]
+      },
+      {
+        "title": "μ-분석과 강인 설계",
+        "priority": "optional",
+        "description": "운영자·환경 불확실성을 구조적 불확실성으로 두고 구조 특이값 μ로 강인 안정성을 판정, H∞ 기반 양방향 제어기 설계. Colgate 1993, Leung, Francis & Apkarian 1995.",
+        "children": [
+          {
+            "title": "구조적 특이값 μ",
+            "priority": "optional",
+            "description": "M-Δ 구조, μ_Δ(M) = 1/min{σ̄(Δ) : det(I − MΔ) = 0}, 상·하한 계산. — Zhou & Doyle 'Essentials of Robust Control' 10장"
+          },
+          {
+            "title": "H∞ 양방향 설계",
+            "priority": "optional",
+            "description": "투명성 오차와 안정성을 가중 감도로 두고 H∞ 합성으로 제어기 설계. — Yan & Salcudean 1996 IEEE TCST"
+          }
+        ]
+      },
+      {
+        "title": "투명성 실험 평가 방법",
+        "priority": "optional",
+        "description": "자유 공간·강체 접촉·연성 환경에서의 위치/힘 추종 오차, 주파수 응답으로 Z_t를 측정하는 방법, 인지 투명성(JND)을 배운다. Hannaford 1989.",
+        "children": [
+          {
+            "title": "주파수 응답으로 Z_t 측정",
+            "priority": "optional",
+            "description": "마스터에 처프·의사 랜덤 힘을 넣고 F_h/V_h 전달함수 추정, 코히어런스로 신뢰도 확인. — Hannaford 1989"
+          },
+          {
+            "title": "JND와 인지 투명성",
+            "priority": "optional",
+            "description": "강성 JND 약 8~22%, 지각적으로 구분되지 않으면 충분히 투명하다고 보는 인지 기반 기준. — Jones & Tan 2013 IEEE ToH 'Application of psychophysical techniques to haptic research'"
+          }
+        ]
+      },
+      {
+        "title": "환경 적응형 양방향 제어",
+        "priority": "recommended",
+        "description": "환경 임피던스를 온라인 추정해 이득을 바꿔 자유 공간 투명성과 접촉 안정성을 함께 얻는 방법. — Hashtrudi-Zaad & Salcudean 1996 IEEE ICRA",
+        "children": [
+          {
+            "title": "환경 강성 온라인 추정",
+            "priority": "recommended",
+            "description": "F_e = k̂x + b̂ẋ를 재귀 최소제곱(RLS)으로 추정, 망각 인자 선택. — Ljung 'System Identification' 11장"
+          },
+          {
+            "title": "이득 스케줄링",
+            "priority": "optional",
+            "description": "추정 강성에 따라 힘 반사 이득·감쇠를 바꾸는 스케줄링과 전환 시 안정성. — Hashtrudi-Zaad & Salcudean 1996"
+          }
+        ]
+      },
+      {
+        "title": "안정성 여유 지표",
+        "priority": "essential",
+        "description": "양방향 루프의 이득·위상 여유, 나이퀴스트 판별법으로 운영자·환경 범위 내 안정성 확인. — Franklin, Powell & Emami-Naeini 'Feedback Control of Dynamic Systems' 6장",
+        "children": [
+          {
+            "title": "나이퀴스트 판별법 적용",
+            "priority": "essential",
+            "description": "개루프 L(jω) = Z_device·Y_operator 형태로 두고 −1 둘러싸임 여부로 결합 안정성 판정. — Franklin, Powell & Emami-Naeini 6.3절"
+          },
+          {
+            "title": "샘플링·지연의 위상 손실",
+            "priority": "recommended",
+            "description": "ZOH 지연 T/2와 통신 지연 e^{−sT}가 위상 여유를 깎는 양 계산. — Franklin, Powell & Workman 'Digital Control of Dynamic Systems' 4장"
+          }
+        ]
+      },
+      {
+        "title": "감쇠 주입과 투명성 비용",
+        "priority": "recommended",
+        "description": "안정성 확보용 감쇠 주입(마스터 감쇠·가상 댐퍼)이 자유 공간에서 느껴지는 끈적임으로 바뀌는 비용, 최소 감쇠 선택. — Colgate & Schenkel 1997, Hokayem & Spong 2006"
+      }
+    ]
+  }
+]
