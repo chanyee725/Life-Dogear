@@ -10,31 +10,31 @@
 
   /* Neutrals */
   --rb-bg: #ffffff;
-  --rb-surface: #fafafa;
-  --rb-subtle: #f4f4f5;
-  --rb-hover: #efeff1;
-  --rb-border: #e7e7ea;
-  --rb-border-strong: #d4d4d8;
-  --rb-fg: #18181b;
-  --rb-muted: #6b6b73;
-  --rb-faint: #a1a1aa;
+  --rb-surface: #f7f6f3;
+  --rb-subtle: #f1f0ec;
+  --rb-hover: #ecebe7;
+  --rb-border: #e9e8e4;
+  --rb-border-strong: #d5d4cf;
+  --rb-fg: #2f2e2a;
+  --rb-muted: #65645f;
+  --rb-faint: #a3a29d;
 
-  /* Single accent color */
-  --rb-accent: #4f5bd5;
+  /* Single accent colour: mono (ink). The only accent; no per-user switch. */
+  --rb-accent: #37352f;
   /* Calendar weekend day numbers: muted grey with a faint blue / red cast. */
   --rb-sat: #56647c;
   --rb-sun: #84595a;
-  --rb-accent-hover: #434ec2;
+  --rb-accent-hover: #1f1e1b;
   --rb-accent-fg: #ffffff;
-  --rb-accent-soft: #eef0fc;
-  --rb-ring: rgb(79 91 213 / 0.35);
+  --rb-accent-soft: #e8e7e3;
+  --rb-ring: rgb(55 53 47 / 0.3);
 
   --rb-danger: #c2410c;
   --rb-danger-hover: #a8380a;
 
   /* Quiet badge tones (bg / fg) */
-  --rb-tone-gray-bg: #f1f1f3;
-  --rb-tone-gray-fg: #52525b;
+  --rb-tone-gray-bg: #f1f0ec;
+  --rb-tone-gray-fg: #57564f;
   --rb-tone-blue-bg: #eaf1fb;
   --rb-tone-blue-fg: #2f5f9e;
   --rb-tone-green-bg: #e9f5ee;
@@ -53,9 +53,10 @@
   --rb-tone-orange-bg: #fbede6;
   --rb-tone-orange-fg: #8d481a;
 
-  /* Code block syntax colours (docs/design/code.md 1.2), all >= 4.5:1 on --rb-subtle. */
-  --rb-code-bg: var(--rb-subtle);
-  --rb-code-fg: #18181b;
+  /* Code block syntax colours (docs/design/code.md 1.2), all >= 4.5:1 on --rb-code-bg. */
+  --rb-code-bg: #f7f6f3;
+  --rb-code-border: #eceae5;
+  --rb-code-fg: #2f2e2a;
   --rb-code-comment: #666670;
   --rb-code-keyword: #8a3a9e;
   --rb-code-string: #1f6b3c;
@@ -63,13 +64,15 @@
   --rb-code-function: #2a52b0;
   --rb-code-attr: #0e6b72;
   --rb-code-variable: #9b3a32;
-  /* Inline `code` text (docs/design/code.md 0): 5.2:1 on --rb-subtle. */
-  --rb-code-inline: #c42b1c;
+  /* Inline `code` text (docs/design/code.md 0): 5.3:1 on --rb-code-bg. */
+  --rb-code-inline: #b3402f;
+  /* Text selection inside code, one step stronger than --rb-accent-soft; comment text stays ~4.2:1. */
+  --rb-code-selection: #dfddd6;
 
   /* Calendar event palette per source (docs: one place for chips, bars, dots).
      Soft bg + same-hue dark text, all at one lightness/chroma band; text >= 4.5:1
-     on its bg (tests/unit/calendar-colors.test.ts). No blue and no orange, so no
-     source can be mistaken for the blue or terracotta accent. */
+     on its bg (tests/unit/calendar-colors.test.ts). Chromatic hues only, so no
+     source can be mistaken for the achromatic mono accent. */
   --rb-ev-task-bg: #e8f3ec;
   --rb-ev-task-fg: #2b6340;
   --rb-ev-task-dot: #5a9c72;
@@ -93,29 +96,29 @@
 .dark {
   color-scheme: dark;
 
-  --rb-bg: #141416;
-  --rb-surface: #19191c;
-  --rb-subtle: #1f1f23;
-  --rb-hover: #26262b;
-  --rb-border: #2a2a2f;
-  --rb-border-strong: #3a3a41;
-  --rb-fg: #ececef;
-  --rb-muted: #9d9da6;
-  --rb-faint: #66666e;
+  --rb-bg: #191919;
+  --rb-surface: #202020;
+  --rb-subtle: #252525;
+  --rb-hover: #2c2c2b;
+  --rb-border: #2f2f2f;
+  --rb-border-strong: #3f3f3e;
+  --rb-fg: #e6e5e3;
+  --rb-muted: #9b9a97;
+  --rb-faint: #6b6a67;
 
-  --rb-accent: #8b94f0;
+  --rb-accent: #e6e5e3;
   --rb-sat: #97a6bf;
   --rb-sun: #c39a9a;
-  --rb-accent-hover: #9ca4f3;
-  --rb-accent-fg: #141416;
-  --rb-accent-soft: #23253a;
-  --rb-ring: rgb(139 148 240 / 0.4);
+  --rb-accent-hover: #ffffff;
+  --rb-accent-fg: #191919;
+  --rb-accent-soft: #363634;
+  --rb-ring: rgb(230 229 227 / 0.35);
 
   --rb-danger: #f08a5d;
   --rb-danger-hover: #f39d76;
 
-  --rb-tone-gray-bg: #26262b;
-  --rb-tone-gray-fg: #b4b4bc;
+  --rb-tone-gray-bg: #2c2c2b;
+  --rb-tone-gray-fg: #b5b4b0;
   --rb-tone-blue-bg: #1c2636;
   --rb-tone-blue-fg: #8db4e8;
   --rb-tone-green-bg: #1a2a21;
@@ -133,8 +136,9 @@
   --rb-tone-orange-bg: #2d1f18;
   --rb-tone-orange-fg: #eca57d;
 
-  --rb-code-bg: var(--rb-subtle);
-  --rb-code-fg: #ececef;
+  --rb-code-bg: #1f1f1f;
+  --rb-code-border: #2b2b2b;
+  --rb-code-fg: #e6e5e3;
   --rb-code-comment: #9d9da6;
   --rb-code-keyword: #c9a0f0;
   --rb-code-string: #8fd0a0;
@@ -142,7 +146,8 @@
   --rb-code-function: #8db4f2;
   --rb-code-attr: #7fd3d0;
   --rb-code-variable: #f09a90;
-  --rb-code-inline: #f2877a;
+  --rb-code-inline: #e8897d;
+  --rb-code-selection: #403f3b;
 
   --rb-ev-task-bg: #1e2c23;
   --rb-ev-task-fg: #93cda6;
@@ -162,88 +167,6 @@
   --rb-ev-google-bg: #2f2816;
   --rb-ev-google-fg: #e0bf72;
   --rb-ev-google-dot: #c9a14a;
-}
-
-/* ---------- Accent: terracotta (html[data-accent="terracotta"]) ----------
-   Blue stays the default (no attribute or data-accent="blue"). Set before first
-   paint by the theme script (src/components/accent.ts).
-   Contrast: light #b8461a vs #fff 5.34:1; dark #f0936b vs #141416 7.96:1
-   (dark keeps the dark-text-on-light-accent pattern of the blue dark theme).
-   The terracotta accent sits on the old danger hue (#c2410c) and near the "노트"
-   orange tone, so in this mode only, danger moves to red and orange to brown. */
-html[data-accent="terracotta"] {
-  --rb-accent: #b8461a;
-  --rb-accent-hover: #9c3a14;
-  --rb-accent-fg: #ffffff;
-  --rb-accent-soft: #fbefe9;
-  --rb-ring: rgb(184 70 26 / 0.35);
-
-  --rb-danger: #b42318;
-  --rb-danger-hover: #912018;
-  --rb-tone-orange-bg: #f6efe6;
-  --rb-tone-orange-fg: #7a4a1e;
-}
-
-html.dark[data-accent="terracotta"] {
-  --rb-accent: #f0936b;
-  --rb-accent-hover: #f4a684;
-  --rb-accent-fg: #141416;
-  --rb-accent-soft: #2e211b;
-  --rb-ring: rgb(240 147 107 / 0.4);
-
-  --rb-danger: #f2837a;
-  --rb-danger-hover: #f59a92;
-  --rb-tone-orange-bg: #2a2219;
-  --rb-tone-orange-fg: #d9a878;
-}
-
-/* ---------- Accent: mono (html[data-accent="mono"]) ----------
-   Ink accent: primary buttons are near-black with white text (dark: reversed), and
-   the neutrals shift to a warm grey with a faint yellow cast. Info colours (danger,
-   tones, calendar weekend, graph nodes) are untouched: they are all chromatic, so
-   none of them can be mistaken for an achromatic accent.
-   Contrast: light #37352f vs #fff 12.3:1, on soft #e8e7e3 9.9:1, muted #65645f
-   vs hover #ecebe7 5.0:1; dark #e6e5e3 vs #191919 14.0:1, muted #9b9a97 vs hover 5.0:1.
-   accent-soft sits one step darker than --rb-hover so a selected item still reads
-   as selected while hovered. */
-html[data-accent="mono"] {
-  --rb-bg: #ffffff;
-  --rb-surface: #f7f6f3;
-  --rb-subtle: #f1f0ec;
-  --rb-hover: #ecebe7;
-  --rb-border: #e9e8e4;
-  --rb-border-strong: #d5d4cf;
-  --rb-fg: #2f2e2a;
-  --rb-muted: #65645f;
-  --rb-faint: #a3a29d;
-  --rb-tone-gray-bg: #f1f0ec;
-  --rb-tone-gray-fg: #57564f;
-
-  --rb-accent: #37352f;
-  --rb-accent-hover: #1f1e1b;
-  --rb-accent-fg: #ffffff;
-  --rb-accent-soft: #e8e7e3;
-  --rb-ring: rgb(55 53 47 / 0.3);
-}
-
-html.dark[data-accent="mono"] {
-  --rb-bg: #191919;
-  --rb-surface: #202020;
-  --rb-subtle: #252525;
-  --rb-hover: #2c2c2b;
-  --rb-border: #2f2f2f;
-  --rb-border-strong: #3f3f3e;
-  --rb-fg: #e6e5e3;
-  --rb-muted: #9b9a97;
-  --rb-faint: #6b6a67;
-  --rb-tone-gray-bg: #2c2c2b;
-  --rb-tone-gray-fg: #b5b4b0;
-
-  --rb-accent: #e6e5e3;
-  --rb-accent-hover: #ffffff;
-  --rb-accent-fg: #191919;
-  --rb-accent-soft: #363634;
-  --rb-ring: rgb(230 229 227 / 0.35);
 }
 
 /* ---------- shadcn/ui theme variables ----------
@@ -562,8 +485,8 @@ html.dark[data-accent="mono"] {
     font-family: var(--font-mono);
     font-size: 0.86em;
     color: var(--rb-code-inline);
-    background: var(--rb-subtle);
-    border: 1px solid var(--rb-border);
+    background: var(--rb-code-bg);
+    border: 1px solid var(--rb-code-border);
     border-radius: 4px;
     padding: 0.08em 0.35em;
     overflow-wrap: anywhere;
@@ -580,12 +503,17 @@ html.dark[data-accent="mono"] {
     tab-size: 2;
     color: var(--rb-code-fg);
     background: var(--rb-code-bg);
-    border: 1px solid var(--rb-border);
+    border: 1px solid var(--rb-code-border);
     border-radius: 8px;
     padding: 0.8em 1em;
     overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--rb-border-strong) transparent;
+  }
+  .rb-prose pre::selection,
+  .rb-prose pre *::selection,
+  .rb-prose code::selection {
+    background: var(--rb-code-selection);
   }
   .rb-prose pre code {
     font-size: inherit;
@@ -603,7 +531,7 @@ html.dark[data-accent="mono"] {
   .rb-prose .rb-code {
     position: relative;
     background: var(--rb-code-bg);
-    border: 1px solid var(--rb-border);
+    border: 1px solid var(--rb-code-border);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -803,4 +731,48 @@ html.dark[data-accent="mono"] {
 .rb-prose.ProseMirror pre {
   white-space: pre;
   overflow-wrap: normal;
+}
+
+/* ---------- Editor block handle (drag-handle.ts) ---------- */
+@layer components {
+  .rb-drag-handle {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    color: var(--rb-faint);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    transition: background-color 120ms, color 120ms;
+  }
+  .rb-drag-handle[hidden],
+  .rb-drop-line[hidden] {
+    display: none;
+  }
+  .rb-drag-handle:hover {
+    background: var(--rb-hover);
+    color: var(--rb-muted);
+  }
+  .rb-drop-line {
+    position: absolute;
+    z-index: 5;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--rb-muted);
+    pointer-events: none;
+  }
+  .rb-prose .rb-dragging {
+    opacity: 0.4;
+  }
+  body.rb-block-dragging,
+  body.rb-block-dragging * {
+    cursor: grabbing !important;
+  }
 }

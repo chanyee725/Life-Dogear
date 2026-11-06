@@ -48,10 +48,7 @@ describe("GET /graph/preview", () => {
     const body = (await (await get(`note:${note.id}`)).json()) as NodePreview;
     expect(body).toEqual({
       archived: false,
-      props: [
-        { label: "출처 종류", value: "강의" },
-        { label: "출처", value: "통계 입문" },
-      ],
+      props: [{ label: "출처 종류", value: "강의" }],
       summary: "회귀는 관계를 본다.",
     });
     expect((await get("note:seed-missing")).status).toBe(404);

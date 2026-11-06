@@ -136,7 +136,7 @@ export default async function AreaDetailPage({ params }: Props) {
         <ItemNotes owner={ref} archived={Boolean(area.archivedAt)} />
       </div>
       {materials.length === 0 ? null : (
-        <Section title="논문·세미나·생각" count={materials.length}>
+        <Section title="논문·활동·생각" count={materials.length}>
           <RowList aria-label="연결된 자료">
             {materials.map((m) => (
               <li key={`${m.ref.type}:${m.ref.id}`}>

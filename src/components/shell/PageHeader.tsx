@@ -5,10 +5,13 @@ import { cn } from "@/components/ui/cn";
  * Standard page width + padding. Pages that need full width (e.g. the PDF viewer) can skip it.
  * Narrow screens: the fixed "사이드바 열기" button sits at the top-left (12px + 32px), so the page
  * starts below it (64px) instead of under it.
+ * Detail pages (anything holding a `DetailBody`) get a wider column so the notes, connected
+ * items and graph below the form use the room next to the sidebar; the editor in `DetailBody`
+ * runs the same width as the title and properties.
  */
 export function Page({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn("mx-auto w-full max-w-5xl px-10 py-10 max-md:pt-16", className)}>
+    <div className={cn("mx-auto w-full max-w-5xl px-10 has-[[data-detail-body]]:max-w-6xl py-10 max-md:pt-16", className)}>
       {children}
     </div>
   );

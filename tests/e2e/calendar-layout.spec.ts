@@ -102,6 +102,6 @@ test("달력에 할 일·프로젝트 마감은 그리지 않는다 (홈·달력
     0,
   );
   await page.getByRole("button", { name: "표시" }).click();
-  await expect(page.getByRole("checkbox", { name: "세미나" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "활동" })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: /프로젝트|할 일/ })).toHaveCount(0);
 });

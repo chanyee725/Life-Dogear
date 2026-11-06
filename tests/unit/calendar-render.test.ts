@@ -110,7 +110,7 @@ describe("CalendarView (month)", () => {
 
   it("labels items by source, leaves tasks off, opens Google in a new tab", () => {
     const html = render({ range: "3w" });
-    expect(html).toContain('aria-label="세미나: 투고 발표"');
+    expect(html).toContain('aria-label="활동: 투고 발표"');
     expect(html).not.toContain("2장 초안");
     expect(html).not.toContain("지난 일");
     expect(html).toContain('aria-label="Google 일정: 14시, 연구실 회의, Google 캘린더에서 열기"');
@@ -129,7 +129,7 @@ describe("CalendarView (month)", () => {
     };
     const html = render({ items: [...items, seminar] });
     expect(html).toContain('aria-label="11월 5일 항목 2개 더 보기"');
-    expect(html).toContain('aria-label="세미나: 투고 발표"');
+    expect(html).toContain('aria-label="활동: 투고 발표"');
   });
 
   it("hides papers by default (표시)", () => {
@@ -238,7 +238,7 @@ describe("TodayPanel (13.3)", () => {
     expect(panel).toContain(">내일<");
     expect(panel.indexOf("연구실 회의")).toBeLessThan(panel.indexOf("투고 발표"));
     expect(panel).toContain(">14:00<");
-    expect(panel).toContain(">세미나<");
+    expect(panel).toContain(">활동<");
     expect(panel).not.toContain(">Google<"); // the blue dot already says Google
     expect(panel).not.toContain("주간 회고");
     expect(panel).not.toContain("논문 2장");

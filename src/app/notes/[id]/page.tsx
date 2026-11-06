@@ -64,7 +64,6 @@ export default async function NoteDetailPage({ params }: Props) {
             values={{
               title: note.title,
               sourceKind: NOTE_SOURCE_KIND.is(note.sourceKind) ? note.sourceKind : null,
-              sourceTitle: note.sourceTitle ?? "",
               sourceUrl: note.sourceUrl ?? "",
               areaId: note.areaId,
               body: note.body,

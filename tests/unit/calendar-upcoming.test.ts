@@ -109,7 +109,7 @@ describe("headings and origin", () => {
       "학위 논문",
     );
     expect(originLabel(item("a", TODAY, { source: "task" }))).toBe("");
-    expect(originLabel(item("s", TODAY, { source: "seminar" }))).toBe("세미나");
+    expect(originLabel(item("s", TODAY, { source: "seminar" }))).toBe("활동");
     expect(originLabel(item("g", TODAY, { source: "google" }))).toBe("Google");
   });
 });

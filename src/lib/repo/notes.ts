@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
-import { links, notes } from "@/db/schema";
+import { links, notes, projects } from "@/db/schema";
 import { NOTE_SOURCE_KIND, noteSourceKind, type NoteSourceKind } from "@/lib/enums";
 import { isAssignable } from "./areas";
 import { linkWith, removeLinksFor, syncBodyLinks } from "./links";
@@ -222,4 +222,51 @@ export async function remove(id: string): Promise<boolean> {
     await removeTagsFor(tx, ref(id));
     return true;
   });
+}
+
+/** A project offered or chosen in a note's 프로젝트 field. */
+export type NoteProject = { id: string; title: string; archived: boolean };
+
+/**
+ * Projects for a note's 프로젝트 field: `linked` are the projects connected to the note
+ * by any link (either direction, archived ones too, same rule as {@link listForItem});
+ * `options` are the non-archived projects, by title.
+ */
+export async function projectChoices(
+  noteId: string,
+): Promise<{ linked: NoteProject[]; options: NoteProject[] }> {
+  const me = ref(noteId);
+  assertItemRef(me);
+  const rows = await db()
+    .select()
+    .from(links)
+    .where(
+      or(
+        and(
+          eq(links.sourceType, "note"),
+          eq(links.sourceId, noteId),
+          eq(links.targetType, "project"),
+        ),
+        and(
+          eq(links.targetType, "note"),
+          eq(links.targetId, noteId),
+          eq(links.sourceType, "project"),
+        ),
+      ),
+    );
+  const ids = [...new Set(rows.map((l) => (l.sourceType === "project" ? l.sourceId : l.targetId)))];
+  const all = await db()
+    .select({ id: projects.id, title: projects.title, archivedAt: projects.archivedAt })
+    .from(projects)
+    .orderBy(asc(projects.title));
+  const toChoice = (p: (typeof all)[number]): NoteProject => ({
+    id: p.id,
+    title: p.title,
+    archived: Boolean(p.archivedAt),
+  });
+  const linkedSet = new Set(ids);
+  return {
+    linked: all.filter((p) => linkedSet.has(p.id)).map(toChoice),
+    options: all.filter((p) => !p.archivedAt).map(toChoice),
+  };
 }

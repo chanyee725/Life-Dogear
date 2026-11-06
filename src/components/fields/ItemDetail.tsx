@@ -72,7 +72,15 @@ export function TitleInput({
   );
 }
 
-/** Body area under the properties, separated by a thin rule. */
+/**
+ * Body area under the properties, separated by a thin rule. Marks the page as a detail page
+ * (`Page` widens for it). The editor runs the full column width, matching the title and
+ * properties above it; `min-w-0` keeps long code lines scrolling inside their box.
+ */
 export function DetailBody({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("border-t border-border pt-6", className)}>{children}</div>;
+  return (
+    <div data-detail-body className={cn("min-w-0 border-t border-border pt-6", className)}>
+      {children}
+    </div>
+  );
 }

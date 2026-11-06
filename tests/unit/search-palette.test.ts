@@ -43,6 +43,15 @@ describe("isPaletteShortcut", () => {
     expect(isPaletteShortcut(key({ metaKey: true, key: "ㅏ", code: "KeyK" }))).toBe(true);
   });
 
+  it("accepts Cmd+/ and Ctrl+/, but not a bare / (home quick-input shortcut)", () => {
+    expect(isPaletteShortcut(key({ ctrlKey: true, key: "/" }))).toBe(true);
+    expect(isPaletteShortcut(key({ metaKey: true, key: "/" }))).toBe(true);
+    expect(isPaletteShortcut(key({ ctrlKey: true, shiftKey: true, key: "?", code: "Slash" }))).toBe(false);
+    expect(isPaletteShortcut(key({ ctrlKey: true, key: "x", code: "Slash" }))).toBe(true);
+    expect(isPaletteShortcut(key({ key: "/" }))).toBe(false);
+    expect(isPaletteShortcut(key({ ctrlKey: true, altKey: true, key: "/" }))).toBe(false);
+  });
+
   it("rejects plain K and other modifier combos", () => {
     expect(isPaletteShortcut(key({}))).toBe(false);
     expect(isPaletteShortcut(key({ metaKey: true, shiftKey: true }))).toBe(false);
@@ -114,7 +123,7 @@ describe("SearchButton", () => {
   it("renders a Korean label with the shortcut hint", () => {
     const html = renderToStaticMarkup(createElement(SearchButton));
     expect(html).toContain("검색");
-    expect(html).toContain('aria-label="단축키 Ctrl K"');
+    expect(html).toContain('aria-label="단축키 Ctrl /"');
   });
 });
 

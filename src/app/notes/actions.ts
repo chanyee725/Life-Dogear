@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { formText, parseId, parseItemRef } from "@/app/_actions/parse";
 import { runAction, type ActionResult } from "@/app/_actions/result";
-import { notes, RepoError, type ItemRef } from "@/lib/repo";
+import { links, notes, RepoError, type ItemRef } from "@/lib/repo";
 import { parseNoteForm } from "./form";
 import { itemRoutePattern } from "@/lib/item-href";
 
@@ -63,6 +63,35 @@ export async function deleteNote(id: unknown): Promise<ActionResult<null>> {
     const noteId = parseId(id);
     if (!(await notes.remove(noteId))) throw new RepoError("not_found", NOT_FOUND);
     revalidate(noteId);
+    return null;
+  });
+}
+
+/** Projects for the note's 프로젝트 field (linked ones + non-archived choices). */
+export async function loadNoteProjects(
+  noteId: unknown,
+): Promise<ActionResult<Awaited<ReturnType<typeof notes.projectChoices>>>> {
+  return runAction(async () => notes.projectChoices(parseId(noteId)));
+}
+
+/**
+ * Links (`on`) or unlinks the note and a project through `links`, the same relation the
+ * project's 노트 section reads, so both pages stay in step.
+ */
+export async function setNoteProject(
+  noteId: unknown,
+  projectId: unknown,
+  on: unknown,
+): Promise<ActionResult<null>> {
+  return runAction(async () => {
+    const note: ItemRef = { type: "note", id: parseId(noteId) };
+    const project: ItemRef = { type: "project", id: parseId(projectId, "프로젝트") };
+    if (on === true) await links.link(note, project);
+    else if (on === false) await links.unlink(note, project);
+    else throw new RepoError("invalid", "연결 값이 올바르지 않습니다.");
+    revalidatePath(itemRoutePattern("note"), "page");
+    revalidatePath(itemRoutePattern("project"), "page");
+    revalidatePath("/notes");
     return null;
   });
 }

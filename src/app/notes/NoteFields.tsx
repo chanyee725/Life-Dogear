@@ -7,12 +7,12 @@ import { TagInput } from "@/components/fields/TagInput";
 import { buttonClass } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { NOTE_SOURCE_KIND, type NoteSourceKind } from "@/lib/enums";
+import { NoteProjectsField } from "./NoteProjectsField";
 import { isHttpUrl } from "./source";
 
 export type NoteFormValues = {
   title: string;
   sourceKind: NoteSourceKind | null;
-  sourceTitle: string;
   sourceUrl: string;
   areaId: string | null;
   body: string;
@@ -55,14 +55,6 @@ export function NoteFields({
             className="w-auto"
           />
         </Property>
-        <Property label="출처 이름" htmlFor="note-source-title">
-          <Input
-            id="note-source-title"
-            name="sourceTitle"
-            defaultValue={values.sourceTitle}
-            placeholder="책 제목, 강의 이름…"
-          />
-        </Property>
         <Property label="출처 링크" htmlFor="note-source-url">
           <div className="flex items-center gap-2">
             <Input
@@ -94,6 +86,8 @@ export function NoteFields({
             className="w-auto"
           />
         </Property>
+        {/* Saved notes only: links to projects (the project's 노트 section). */}
+        {created && doc ? <NoteProjectsField noteId={doc.id} /> : null}
         <Property label="태그" htmlFor="note-tags">
           <TagInput
             id="note-tags"

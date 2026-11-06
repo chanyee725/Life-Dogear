@@ -89,14 +89,6 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
       ),
     },
     {
-      key: "sourceTitle",
-      header: "출처",
-      hideBelow: "lg",
-      className: "text-muted",
-      render: (n) =>
-        n.sourceTitle ? <span className="block max-w-[14rem] truncate">{n.sourceTitle}</span> : "",
-    },
-    {
       key: "area",
       header: "영역",
       hideBelow: "lg",
@@ -179,9 +171,6 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
             renderCard={(n) => (
               <>
                 <span className="font-medium">{n.title}</span>
-                {n.sourceTitle ? (
-                  <span className="truncate text-[13px] text-muted">{n.sourceTitle}</span>
-                ) : null}
                 {bodyPreview(n.body) ? (
                   <p className="line-clamp-3 text-[13px] text-muted">{bodyPreview(n.body)}</p>
                 ) : null}

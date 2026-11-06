@@ -24,7 +24,7 @@ export const GRAPH_TYPE_LABEL: Record<GraphNodeType, string> = {
   area: "영역",
   project: "프로젝트",
   paper: "논문",
-  seminar: "세미나",
+  seminar: "활동",
   thought: "생각",
   note: "노트",
   review: "회고",

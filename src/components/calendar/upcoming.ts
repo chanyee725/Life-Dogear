@@ -88,13 +88,13 @@ export function groupHeading(day: string, today: string): string {
   return `${m}월 ${d}일(${WEEKDAYS[weekdayIndex(day)]})`;
 }
 
-/** Right column of a row: the task's parent, "세미나", "Google". */
+/** Right column of a row: the task's parent, "활동", "Google". */
 export function originLabel(item: CalendarItem): string {
   switch (item.source) {
     case "task":
       return item.parent ?? "";
     case "seminar":
-      return "세미나";
+      return "활동";
     case "google":
       return "Google";
     default:

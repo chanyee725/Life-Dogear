@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
   <style>
-    .ink { stroke: #4f5bd5; } .flap { fill: #4f5bd5; }
-    @media (prefers-color-scheme: dark) { .ink { stroke: #8b94f0; } .flap { fill: #8b94f0; } }
+    svg { color: #2f2e2a; }
+    @media (prefers-color-scheme: dark) { svg { color: #e6e5e3; } }
   </style>
-  <path class="ink" fill="#ffffff" stroke-width="1.5" d="M5 2.75h6.25l4.75 4.75v9.25a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3.25a.5.5 0 0 1 .5-.5Z"/>
-  <path class="ink flap" stroke-width="1.5" d="M11.25 2.75 16 7.5h-4.25a.5.5 0 0 1-.5-.5Z"/>
+  <path d="M8.5 3H15.5V12.5H25.5V27A2 2 0 0 1 23.5 29H8.5A2 2 0 0 1 6.5 27V5A2 2 0 0 1 8.5 3Z"/>
+  <path d="M17 3L25.5 11.5H18A1 1 0 0 1 17 10.5Z" opacity=".45"/>
 </svg>

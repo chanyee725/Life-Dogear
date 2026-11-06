@@ -32,7 +32,7 @@ export async function updateSeminar(
   return runAction(async () => {
     const seminarId = parseId(id);
     const updated = await seminars.update(seminarId, parseSeminarForm(form));
-    if (!updated) throw new RepoError("not_found", "세미나를 찾을 수 없습니다.");
+    if (!updated) throw new RepoError("not_found", "활동을 찾을 수 없습니다.");
     revalidate(seminarId);
     return { id: seminarId };
   });
@@ -42,7 +42,7 @@ export async function deleteSeminar(id: unknown): Promise<ActionResult<null>> {
   return runAction(async () => {
     const seminarId = parseId(id);
     if (!(await seminars.remove(seminarId)))
-      throw new RepoError("not_found", "세미나를 찾을 수 없습니다.");
+      throw new RepoError("not_found", "활동을 찾을 수 없습니다.");
     revalidate(seminarId);
     return null;
   });

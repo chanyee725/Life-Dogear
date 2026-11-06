@@ -9,6 +9,7 @@ import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { CodeBlock, CodeBlockClipboard } from "./code-block";
+import { BlockDragHandle } from "./drag-handle";
 import { WikiLink } from "./WikiLink";
 
 /**
@@ -122,6 +123,7 @@ export function createExtensions(placeholder: string) {
     Image.configure({ inline: false, allowBase64: false }),
     Placeholder.configure({ placeholder }),
     WikiLink,
+    BlockDragHandle,
     Markdown.configure({
       html: false,
       tightLists: true,

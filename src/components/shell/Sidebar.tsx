@@ -36,7 +36,7 @@ async function loadSidebarData(): Promise<SidebarData> {
  * `connection()` defers the database reads to request time, so `next build` never
  * queries the database (prerendering, e.g. /_not-found, would otherwise need a migrated DB).
  *
- * `searchSlot`: reserved for the 2팀 "검색 ⌘K" button (rendered under the app name).
+ * `searchSlot`: reserved for the 2팀 "검색 ⌘/" button (rendered under the app name).
  * In login mode the footer gets a "로그아웃" button.
  */
 export async function Sidebar({ searchSlot }: { searchSlot?: ReactNode } = {}) {
