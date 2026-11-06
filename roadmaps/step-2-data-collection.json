@@ -27,19 +27,87 @@
               "title": "관절 공간 vs 작업 공간 명령",
               "priority": "essential",
               "description": "관절각을 그대로 보내는 joint mirroring과 엔드이펙터 포즈(SE(3))를 보내고 로봇 쪽에서 IK를 푸는 방식의 장단점",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "관절 미러링의 기구학 동형 조건",
+                  "priority": "essential",
+                  "description": "리더·팔로워의 DH 파라미터(링크 길이·관절 축 순서)가 같거나 비례할 때만 관절각 복사가 같은 EE 궤적을 만든다는 조건, 다르면 FK→IK 재계산이 필요 — Lynch & Park, Modern Robotics 4장"
+                },
+                {
+                  "title": "작업 공간 명령과 IK 해 연속성",
+                  "priority": "essential",
+                  "description": "SE(3) 목표를 매 주기 IK로 풀 때 해 분기(elbow up/down) 점프, 이전 해를 초기값으로 쓰는 웜스타트, 도달 불가 목표 처리 — Modern Robotics 6장"
+                }
+              ]
             },
             {
               "title": "지연과 제어 주기",
               "priority": "essential",
               "description": "입력 샘플링·네트워크·제어 루프 주기(예: 50Hz)가 합쳐진 end-to-end 지연, 지연이 크면 생기는 과보정·진동",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "end-to-end 지연 예산 분해",
+                  "priority": "essential",
+                  "description": "입력 샘플링(1/f_in) + 직렬화·전송 + 제어 주기 대기 + 서보 응답 + 카메라 노출·인코딩·표시 지연을 합산하는 예산표, 각 항의 측정 방법 — Springer Handbook of Robotics, Telerobotics 장"
+                },
+                {
+                  "title": "지연 하 조작 성능",
+                  "priority": "recommended",
+                  "description": "Fitts 법칙(MT = a + b·log2(2D/W))과 지연이 1초 근처를 넘으면 나타나는 move-and-wait 전략, 예측 디스플레이(predictive display) — Springer Handbook of Robotics, Telerobotics 장"
+                }
+              ]
             },
             {
               "title": "햅틱·힘 피드백 유무",
               "priority": "recommended",
               "description": "단방향(unilateral) vs 양방향(bilateral) 원격 조작, 힘 반영(force reflection)과 안정성 문제 — Springer Handbook of Robotics의 Telerobotics 장",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "양방향 제어 아키텍처",
+                  "priority": "recommended",
+                  "description": "위치-위치(position-position), 힘-위치(force-position), Lawrence의 4채널 구조와 2포트 하이브리드 행렬 H로 표현한 마스터-슬레이브 시스템 — Springer Handbook of Robotics, Telerobotics 장"
+                },
+                {
+                  "title": "투명성과 안정성 트레이드오프",
+                  "priority": "recommended",
+                  "description": "투명성 = 조작자가 느끼는 임피던스 Z_t가 환경 임피던스 Z_e와 같아지는 정도, 지연·게인 증가 시 안정 여유 감소, Llewellyn 무조건 안정 조건 — Springer Handbook of Robotics, Telerobotics 장"
+                },
+                {
+                  "title": "수동성과 웨이브 변수",
+                  "priority": "optional",
+                  "description": "수동성(passivity) 정의(저장 에너지 ≤ 공급 에너지), 통신 지연 채널을 수동으로 만드는 산란 변환·웨이브 변수(Anderson–Spong, Niemeyer–Slotine) — Springer Handbook of Robotics, Telerobotics 장"
+                },
+                {
+                  "title": "시간 영역 수동성 제어",
+                  "priority": "optional",
+                  "description": "수동성 관찰기(PO)로 에너지 흐름을 실시간 계산하고 수동성 제어기(PC)가 가변 감쇠로 초과 에너지를 소산(TDPA, Hannaford–Ryu) — Springer Handbook of Robotics, Telerobotics 장"
+                }
+              ]
+            },
+            {
+              "title": "공유 제어(shared autonomy)",
+              "priority": "recommended",
+              "description": "조작자 명령과 자율 정책 출력을 섞는 구조: 선형 블렌딩 u = α·u_h + (1−α)·u_r, 의도 추론 기반 α 조정 — Dragan & Srinivasa 2013 \"A policy-blending formalism for shared control\"",
+              "children": [
+                {
+                  "title": "가상 고정구(virtual fixture)",
+                  "priority": "optional",
+                  "description": "작업 공간에 금지 영역·안내 경로를 두고 명령을 투영·제한하는 방식(Rosenberg), 가이던스형 vs 금지형 — Springer Handbook of Robotics, Telerobotics 장"
+                },
+                {
+                  "title": "정책 보조 수집",
+                  "priority": "optional",
+                  "description": "학습된 정책이 대부분 움직이고 사람이 실패 직전에 개입(intervention)하는 HG-DAgger 방식 수집과 개입 라벨 기록 — HG-DAgger 논문(Kelly et al. 2019)"
+                }
+              ]
+            },
+            {
+              "title": "조작자 인간공학과 피로",
+              "priority": "optional",
+              "description": "팔을 든 자세의 피로(gorilla arm), 세션 길이·휴식 주기, 시연 품질 저하 신호(작업 시간 증가·재시도) — Springer Handbook of Robotics, Telerobotics 장"
             }
           ]
         },
@@ -80,13 +148,53 @@
                   "url": "https://arxiv.org/abs/2309.13037",
                   "kind": "paper"
                 }
+              ],
+              "children": [
+                {
+                  "title": "영점 캘리브레이션 절차",
+                  "priority": "essential",
+                  "description": "알려진 자세(예: 모든 관절 0 또는 수직 자세)에서 리더 엔코더값을 읽어 offset을 구하고 π/2 배수로 반올림해 저장하는 GELLO 방식 — GELLO 논문 3장",
+                  "resources": [
+                    {
+                      "title": "GELLO: A General, Low-Cost, and Intuitive Teleoperation Framework",
+                      "url": "https://arxiv.org/abs/2309.13037",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "엔코더 분해능과 랩어라운드",
+                  "priority": "recommended",
+                  "description": "12비트 절대 엔코더(4096 tick/rev)의 각도 변환, 0↔2π 경계 넘을 때 unwrap 처리, 멀티턴 모드 — DYNAMIXEL Protocol 2.0 컨트롤 테이블 Present Position",
+                  "resources": [
+                    {
+                      "title": "DYNAMIXEL Protocol 2.0",
+                      "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
               ]
             },
             {
               "title": "그리퍼 매핑",
               "priority": "essential",
               "description": "리더 트리거 각도를 팔로워 그리퍼 개폐량으로 선형/비선형 정규화",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "그리퍼 전류 제한과 파지력",
+                  "priority": "recommended",
+                  "description": "팔로워 그리퍼를 전류 기반 위치 제어로 두고 Goal Current로 파지력을 제한해 물체·모터 과부하 방지 — DYNAMIXEL Protocol 2.0 Operating Mode(5)",
+                  "resources": [
+                    {
+                      "title": "DYNAMIXEL Protocol 2.0",
+                      "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "title": "양팔·모바일 확장",
@@ -96,6 +204,87 @@
                 {
                   "title": "Mobile ALOHA",
                   "url": "https://arxiv.org/abs/2401.02117",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "양팔 좌표계 정합",
+                  "priority": "recommended",
+                  "description": "두 팔의 base 프레임 간 외부 파라미터 측정, 공통 world 프레임에서 action·관측 표현, 좌우 팔 관절 순서 규약 — ALOHA 2 논문"
+                }
+              ]
+            },
+            {
+              "title": "Dynamixel 통신과 SDK",
+              "priority": "essential",
+              "description": "DYNAMIXEL Protocol 2.0 패킷 구조(Header·ID·Length·Instruction·CRC), 컨트롤 테이블 주소, 통신 속도(baud)와 Return Delay Time — DYNAMIXEL Protocol 2.0 e-Manual",
+              "resources": [
+                {
+                  "title": "DYNAMIXEL Protocol 2.0",
+                  "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Sync Read/Write와 Bulk Read",
+                  "priority": "essential",
+                  "description": "여러 모터를 한 패킷으로 읽고 쓰는 Sync Read(동일 주소)·Bulk Read(다른 주소), 한 주기 왕복 시간 계산으로 최대 제어 주기 추정 — DYNAMIXEL Protocol 2.0 Instruction 장",
+                  "resources": [
+                    {
+                      "title": "DYNAMIXEL Protocol 2.0",
+                      "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "Operating Mode",
+                  "priority": "recommended",
+                  "description": "전류 제어(0)·속도(1)·위치(3)·확장 위치(4)·전류 기반 위치(5)·PWM(16) 모드 차이, 리더는 토크 off 또는 약한 전류 모드 — DYNAMIXEL e-Manual 컨트롤 테이블",
+                  "resources": [
+                    {
+                      "title": "DYNAMIXEL Protocol 2.0",
+                      "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "리더 팔 중력 보상",
+              "priority": "recommended",
+              "description": "리더 팔이 손을 놓으면 처지는 문제, 스프링·카운터웨이트 기구 보상 vs 모터 전류로 τ = g(q) 보상, 중력 토크 g(q) 계산 — Modern Robotics 8장, GELLO 논문",
+              "resources": [
+                {
+                  "title": "GELLO: A General, Low-Cost, and Intuitive Teleoperation Framework",
+                  "url": "https://arxiv.org/abs/2309.13037",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "팔로워 추종 제어",
+              "priority": "essential",
+              "description": "팔로워 위치 제어 PID 게인(P·I·D Gain) 설정, 추종 지연과 오버슈트, 큰 명령 점프 시 속도 제한(Profile Velocity/Acceleration) — DYNAMIXEL e-Manual Profile 항목",
+              "resources": [
+                {
+                  "title": "DYNAMIXEL Protocol 2.0",
+                  "url": "https://emanual.robotis.com/docs/en/dxl/protocol2/",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "기구학 상사 설계",
+              "priority": "recommended",
+              "description": "리더를 팔로워의 축소/동일 비율 복제로 만드는 설계 원칙, 3D 프린팅 링크와 관절 축 정렬 오차가 매핑에 미치는 영향 — GELLO 논문 3장",
+              "resources": [
+                {
+                  "title": "GELLO: A General, Low-Cost, and Intuitive Teleoperation Framework",
+                  "url": "https://arxiv.org/abs/2309.13037",
                   "kind": "paper"
                 }
               ]
@@ -118,13 +307,77 @@
               "title": "클러치(clutch)와 상대 이동",
               "priority": "essential",
               "description": "버튼을 누르는 동안만 상대 변위를 로봇에 적용하는 clutch 방식, 작업 공간 스케일링",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "클러치 재결합 시 기준 갱신",
+                  "priority": "essential",
+                  "description": "클러치를 누른 순간의 컨트롤러 포즈 T_c0와 로봇 EE 포즈 T_e0를 저장하고 T_e = T_e0·(T_c0⁻¹·T_c)로 상대 변위만 적용(프레임 정렬 포함) — Modern Robotics 3장"
+                }
+              ]
             },
             {
               "title": "핸드 트래킹 노이즈 처리",
               "priority": "recommended",
               "description": "랜드마크 지터, 저역통과·One Euro 필터, 트래킹 손실 시 정지 처리",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "One Euro 필터",
+                  "priority": "recommended",
+                  "description": "속도에 따라 차단 주파수를 바꾸는 1€ 필터: f_c = f_cmin + β·|ẋ|, min_cutoff·beta·d_cutoff 튜닝 순서 — Casiez et al. CHI 2012",
+                  "resources": [
+                    {
+                      "title": "1€ Filter",
+                      "url": "https://gery.casiez.net/1euro/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "OpenXR 포즈 API",
+              "priority": "recommended",
+              "description": "OpenXR 런타임에서 포즈를 얻는 구조: XrSession·XrSpace(reference space LOCAL/STAGE), xrLocateSpace와 예측 표시 시각(predictedDisplayTime) — OpenXR Specification",
+              "resources": [
+                {
+                  "title": "The OpenXR Specification",
+                  "url": "https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "XR_EXT_hand_tracking",
+                  "priority": "optional",
+                  "description": "손 관절 26개(XrHandJointEXT) 포즈와 반경, xrLocateHandJointsEXT, 손목·손끝 관절을 로봇 손 리타게팅 입력으로 쓰기 — OpenXR Specification 확장 장",
+                  "resources": [
+                    {
+                      "title": "The OpenXR Specification",
+                      "url": "https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "스테레오 영상 스트리밍",
+              "priority": "recommended",
+              "description": "로봇 머리 스테레오 카메라 영상을 헤드셋에 보내는 경로(WebRTC 등), 인코딩 지연과 motion-to-photon 지연이 멀미에 주는 영향 — Open-TeleVision 논문 4장",
+              "children": [
+                {
+                  "title": "motion-to-photon 지연",
+                  "priority": "recommended",
+                  "description": "머리 움직임부터 화면 갱신까지 지연(VR 권장 20ms 이하), 원격 카메라 경로에서 늘어나는 이유와 시간 왜곡(timewarp)으로 줄이는 방법 — Open-TeleVision 논문"
+                }
+              ]
+            },
+            {
+              "title": "능동 시각(active vision)",
+              "priority": "optional",
+              "description": "헤드 트래킹으로 로봇 목·카메라 짐벌을 움직여 시야를 바꾸는 방식, 시점 변화가 데이터 분포에 주는 영향 — Open-TeleVision 논문 3장"
             }
           ]
         },
@@ -138,6 +391,56 @@
               "url": "https://arxiv.org/abs/2307.04577",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "광학 마커 모션캡처",
+              "priority": "optional",
+              "description": "반사 마커와 다중 IR 카메라 삼각측량, 강체 정의와 6DoF 추적, 가림(occlusion) 처리, 지연·정확도 수준 — Springer Handbook of Robotics"
+            },
+            {
+              "title": "IMU 모션캡처 수트",
+              "priority": "optional",
+              "description": "관절별 IMU 자세 추정(상보·칼만 필터)과 골격 모델 합성, 요(yaw) 드리프트와 자기 교란 문제 — DexCap 논문",
+              "resources": [
+                {
+                  "title": "DexCap: Scalable and Portable Mocap Data Collection System for Dexterous Manipulation",
+                  "url": "https://arxiv.org/abs/2403.07788",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "단일 카메라 손 포즈 추정",
+              "priority": "optional",
+              "description": "RGB 영상에서 손 키포인트를 추정해 조작 입력으로 쓰기, 깊이 모호성과 가림 — AnyTeleop 논문 3장",
+              "children": [
+                {
+                  "title": "MediaPipe Hands 랜드마크",
+                  "priority": "optional",
+                  "description": "손 21개 랜드마크(손목 0, 손끝 4·8·12·16·20) 정의, 정규화 이미지 좌표와 world 좌표 출력 — MediaPipe Hands 문서",
+                  "resources": [
+                    {
+                      "title": "google-ai-edge/mediapipe",
+                      "url": "https://github.com/google-ai-edge/mediapipe",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "MANO 손 모델",
+                  "priority": "optional",
+                  "description": "형상 β·포즈 θ 파라미터로 메시를 만드는 MANO 모델, 관절 15개+손목 회전, 손 포즈 추정 결과의 표준 표현 — Romero et al. 2017 MANO 논문",
+                  "resources": [
+                    {
+                      "title": "MANO",
+                      "url": "https://mano.is.tue.mpg.de/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
@@ -149,6 +452,269 @@
               "title": "Universal Manipulation Interface (UMI)",
               "url": "https://arxiv.org/abs/2402.10329",
               "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "UMI 하드웨어 구성",
+              "priority": "optional",
+              "description": "어안(fisheye) 손목 카메라, 측면 거울로 만든 암시적 스테레오, 그리퍼 폭 측정용 마커 — UMI 논문 3장",
+              "resources": [
+                {
+                  "title": "Universal Manipulation Interface (UMI)",
+                  "url": "https://arxiv.org/abs/2402.10329",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "SLAM 기반 궤적 복원",
+              "priority": "optional",
+              "description": "손목 카메라 영상+IMU로 ORB-SLAM3 등 visual-inertial SLAM을 돌려 EE 6DoF 궤적을 복원, 스케일 모호성과 실패 구간 필터링 — UMI 논문 3장",
+              "resources": [
+                {
+                  "title": "Universal Manipulation Interface (UMI)",
+                  "url": "https://arxiv.org/abs/2402.10329",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "로봇 비의존 행동 표현",
+              "priority": "optional",
+              "description": "절대 포즈 대신 상대 궤적(relative trajectory)·EE 기준 행동을 써서 다른 로봇에 이식, 지연 정합(latency matching) — UMI 논문 4장",
+              "resources": [
+                {
+                  "title": "Universal Manipulation Interface (UMI)",
+                  "url": "https://arxiv.org/abs/2402.10329",
+                  "kind": "paper"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "스페이스마우스(6DoF 입력 장치)",
+          "priority": "recommended",
+          "description": "6축 입력 장치의 변위를 EE 속도(twist)로 해석하는 속도 제어형 텔레옵, 위치 제어형 장치와의 차이 — MoveIt Servo 튜토리얼",
+          "resources": [
+            {
+              "title": "MoveIt Servo tutorial",
+              "url": "https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "속도 명령 적분과 데드존",
+              "priority": "essential",
+              "description": "입력 v를 ΔT마다 적분해 목표 포즈 갱신, 데드존·스케일·비선형 게인 곡선, 축 간 크로스토크 제거 — Modern Robotics 3장(twist)"
+            },
+            {
+              "title": "MoveIt Servo 연동",
+              "priority": "recommended",
+              "description": "MoveIt Servo 노드에 TwistStamped·JointJog 명령을 보내 실시간 관절 명령으로 변환하는 구조와 주요 파라미터 — MoveIt Servo 튜토리얼",
+              "resources": [
+                {
+                  "title": "MoveIt Servo tutorial",
+                  "url": "https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Servo 입력 타입",
+                  "priority": "recommended",
+                  "description": "TwistStamped(작업 공간 속도)·JointJog(관절 속도)·PoseStamped(포즈 추종) 명령 타입과 command frame 설정 — MoveIt Servo 튜토리얼",
+                  "resources": [
+                    {
+                      "title": "MoveIt Servo tutorial",
+                      "url": "https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "특이점·충돌 감속",
+                  "priority": "recommended",
+                  "description": "조작성(조건수) 임계값에 따른 감속·정지(lower/hard_stop_singularity_threshold), 충돌 근접 시 속도 스케일링 — MoveIt Servo 튜토리얼",
+                  "resources": [
+                    {
+                      "title": "MoveIt Servo tutorial",
+                      "url": "https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "게임패드·키보드 조작",
+          "priority": "optional",
+          "description": "joy 노드가 sensor_msgs/Joy(axes·buttons)를 발행하고 teleop_twist_joy가 축 매핑·enable 버튼으로 Twist를 만드는 구조, 이산 입력의 한계 — teleop_twist_joy README",
+          "resources": [
+            {
+              "title": "ros2/teleop_twist_joy",
+              "url": "https://github.com/ros2/teleop_twist_joy",
+              "kind": "code"
+            },
+            {
+              "title": "ros-drivers/joystick_drivers",
+              "url": "https://github.com/ros-drivers/joystick_drivers",
+              "kind": "code"
+            }
+          ]
+        },
+        {
+          "title": "햅틱 장치 조작",
+          "priority": "optional",
+          "description": "Phantom/Touch류 직렬 햅틱 장치를 마스터로 쓰는 방식 — Springer Handbook of Robotics, Telerobotics 장",
+          "children": [
+            {
+              "title": "임피던스형 vs 어드미턴스형 장치",
+              "priority": "optional",
+              "description": "임피던스형(위치 측정→힘 출력, 저관성 백드라이브)과 어드미턴스형(힘 측정→위치 출력)의 구조·렌더링 가능한 강성 범위 — Springer Handbook of Robotics, Telerobotics 장"
+            },
+            {
+              "title": "작업 공간 매핑과 인덱싱",
+              "priority": "optional",
+              "description": "작은 장치 작업 공간을 큰 로봇 작업 공간에 매핑: 위치 스케일링, 속도(rate) 모드 전환, 클러치 인덱싱 — Springer Handbook of Robotics, Telerobotics 장"
+            }
+          ]
+        },
+        {
+          "title": "외골격·착용형 조작 장치",
+          "priority": "optional",
+          "description": "팔에 착용하는 관절 측정 외골격으로 전팔(whole-arm) 동작을 받는 방식 — AirExo 논문",
+          "resources": [
+            {
+              "title": "AirExo: Low-Cost Exoskeletons for Learning Whole-Arm Manipulation in the Wild",
+              "url": "https://arxiv.org/abs/2309.14975",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "외골격 기구학 정렬",
+              "priority": "optional",
+              "description": "사람 어깨·팔꿈치 회전 중심과 장치 관절축 불일치(misalignment)로 생기는 오차와 수동 보상 관절 — AirExo 논문 3장",
+              "resources": [
+                {
+                  "title": "AirExo: Low-Cost Exoskeletons for Learning Whole-Arm Manipulation in the Wild",
+                  "url": "https://arxiv.org/abs/2309.14975",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "로봇 없는 야외 수집",
+              "priority": "optional",
+              "description": "외골격만 착용하고 로봇 없이 시연을 모은 뒤 로봇 관절 공간으로 변환해 사전학습에 쓰는 흐름 — AirExo 논문 4장",
+              "resources": [
+                {
+                  "title": "AirExo: Low-Cost Exoskeletons for Learning Whole-Arm Manipulation in the Wild",
+                  "url": "https://arxiv.org/abs/2309.14975",
+                  "kind": "paper"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "데이터 글러브",
+          "priority": "optional",
+          "description": "손가락 관절각을 직접 재는 착용형 입력, 다지 로봇 손 조작에 쓰임 — DexCap 논문",
+          "resources": [
+            {
+              "title": "DexCap: Scalable and Portable Mocap Data Collection System for Dexterous Manipulation",
+              "url": "https://arxiv.org/abs/2403.07788",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "글러브 센서 방식",
+              "priority": "optional",
+              "description": "굴곡(flex) 센서·IMU·전자기 트래킹 글러브의 측정 원리와 오차, 손가락 외전(abduction) 측정 한계 — DexCap 논문 3장",
+              "resources": [
+                {
+                  "title": "DexCap: Scalable and Portable Mocap Data Collection System for Dexterous Manipulation",
+                  "url": "https://arxiv.org/abs/2403.07788",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "글러브 캘리브레이션",
+              "priority": "optional",
+              "description": "주먹·편 손 등 기준 자세로 센서값→관절각 선형 매핑을 사용자별로 추정 — DexCap 논문"
+            },
+            {
+              "title": "촉각·힘 피드백 글러브",
+              "priority": "optional",
+              "description": "진동 액추에이터·건(tendon) 브레이크로 접촉을 전달하는 글러브, 피드백 유무가 시연 품질에 주는 영향 — Springer Handbook of Robotics, Telerobotics 장"
+            }
+          ]
+        },
+        {
+          "title": "원격 조작 품질 평가",
+          "priority": "recommended",
+          "description": "텔레옵 시스템을 비교하는 정량 지표 — GELLO 논문 실험 장",
+          "children": [
+            {
+              "title": "성공률·작업 시간·처리량",
+              "priority": "recommended",
+              "description": "과제 성공률, 평균 완료 시간, 시간당 수집 가능한 에피소드 수(throughput) 측정 프로토콜 — GELLO 논문 4장",
+              "resources": [
+                {
+                  "title": "GELLO: A General, Low-Cost, and Intuitive Teleoperation Framework",
+                  "url": "https://arxiv.org/abs/2309.13037",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "NASA-TLX 작업 부하",
+              "priority": "optional",
+              "description": "정신·신체·시간 요구, 수행도, 노력, 좌절 6개 척도로 조작자 부하를 측정하는 설문 — Hart & Staveland 1988"
+            },
+            {
+              "title": "시연 품질과 다양성",
+              "priority": "recommended",
+              "description": "멈칫거림(pause)·재시도 비율, 궤적 평활도(jerk), 초기 상태 다양성이 정책 학습에 주는 영향 — ACT 논문 실험 장",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "텔레옵 소프트웨어 루프",
+          "priority": "recommended",
+          "description": "고정 주기 루프(리더 읽기→매핑→팔로워 쓰기→관측 기록)의 구조, 주기 지터 측정과 실시간 스케줄링(SCHED_FIFO) — lerobot 저장소 teleoperate/record 스크립트",
+          "children": [
+            {
+              "title": "LeRobot 텔레옵·기록 루프",
+              "priority": "recommended",
+              "description": "lerobot의 Robot·Teleoperator 추상화, get_action/send_action/get_observation 호출 순서와 fps 고정 — lerobot 저장소",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "ROS 2 텔레옵 노드 구성",
+              "priority": "recommended",
+              "description": "입력 장치 노드 → 매핑 노드 → ros2_control 컨트롤러(forward_command·joint_trajectory) 토픽 체인, 타이머 콜백 주기 — ros2_control 문서"
             }
           ]
         }
@@ -166,6 +732,30 @@
               "title": "AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System",
               "url": "https://arxiv.org/abs/2307.04577",
               "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "형태 차이(embodiment gap) 유형",
+              "priority": "essential",
+              "description": "링크 길이 비율, 자유도 수, 관절 축 배치, 관절 한계, 손가락 수·엄지 위치 차이를 분류하고 각각이 매핑 오차로 나타나는 방식 — AnyTeleop 논문 4장",
+              "resources": [
+                {
+                  "title": "AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System",
+                  "url": "https://arxiv.org/abs/2307.04577",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "대응 문제(correspondence problem)",
+              "priority": "recommended",
+              "description": "사람 시연의 어떤 특징(관절각·키포인트·EE 포즈·접촉점)을 로봇에서 보존할지 고르는 문제, 모방 학습에서의 정의 — Nehaniv & Dautenhahn, Imitation in Animals and Artifacts"
+            },
+            {
+              "title": "운동학적 vs 동역학적 리타게팅",
+              "priority": "recommended",
+              "description": "기하 정보만 맞추는 kinematic retargeting과 접촉력·균형·토크 한계까지 맞추는 dynamic retargeting의 차이와 적용 범위 — Springer Handbook of Robotics, Humanoids 장"
             }
           ]
         },
@@ -191,13 +781,139 @@
                   "url": "https://docs.ros.org/en/rolling/ROS-Framework/interfaces/About-Tf2/About-Tf2.html",
                   "kind": "doc"
                 }
+              ],
+              "children": [
+                {
+                  "title": "회전 표현 변환",
+                  "priority": "essential",
+                  "description": "회전행렬 SO(3)·쿼터니언(x,y,z,w 순서 주의)·오일러 각 사이 변환, 오른손/왼손 좌표계 변환 시 축 반전과 행렬식 −1 문제 — Lynch & Park, Modern Robotics 3장"
+                },
+                {
+                  "title": "트래커-로봇 캘리브레이션",
+                  "priority": "recommended",
+                  "description": "트래커 프레임과 로봇 base 간 고정 변환을 여러 자세 쌍으로 추정하는 AX=XB/AX=YB 문제, Tsai–Lenz·Park–Martin 풀이 — Lynch & Park, Modern Robotics 3장, Park & Martin 1994"
+                }
               ]
             },
             {
               "title": "작업 공간 스케일링",
               "priority": "recommended",
               "description": "사람 팔 길이와 로봇 도달 범위 비율로 위치 스케일링, 회전은 스케일하지 않음",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "비등방 스케일과 도달 영역 클리핑",
+                  "priority": "recommended",
+                  "description": "축별 다른 스케일, 로봇 도달 구(reachability) 밖 목표를 가장 가까운 도달점으로 투영, 클리핑 경계의 불연속 처리 — Lynch & Park, Modern Robotics 6장"
+                }
+              ]
+            },
+            {
+              "title": "자코비안과 미분 IK",
+              "priority": "essential",
+              "description": "ẋ = J(q)·q̇ 관계로 속도 수준 IK를 푸는 방법, 주기마다 q ← q + J⁺·e·Δt 반복 — Lynch & Park, Modern Robotics 5~6장",
+              "children": [
+                {
+                  "title": "공간 자코비안 vs 물체 자코비안",
+                  "priority": "essential",
+                  "description": "space Jacobian J_s와 body Jacobian J_b, 해석적 자코비안과의 차이, 어떤 프레임에서 오차를 표현해야 하는지 — Lynch & Park, Modern Robotics 5.1장"
+                },
+                {
+                  "title": "의사역행렬과 영공간 투영",
+                  "priority": "essential",
+                  "description": "무어-펜로즈 의사역행렬 J⁺ = Jᵀ(JJᵀ)⁻¹, 영공간 투영 (I − J⁺J)·q̇₀으로 보조 목표(관절 중앙 유지) 달성 — Lynch & Park, Modern Robotics 6.3장"
+                },
+                {
+                  "title": "감쇠 최소제곱 계수 선택",
+                  "priority": "essential",
+                  "description": "J* = Jᵀ(JJᵀ + λ²I)⁻¹에서 λ가 정확도와 특이점 근처 관절 속도 폭주 사이를 조절, 최소 특이값 기반 가변 λ(Nakamura–Hanafusa) — Buss, \"Introduction to Inverse Kinematics with Jacobian Transpose, Pseudoinverse and DLS\""
+                }
+              ]
+            },
+            {
+              "title": "특이점 처리",
+              "priority": "essential",
+              "description": "특이 자세에서 J의 랭크 감소, 손목·어깨·팔꿈치 특이점 분류 — Lynch & Park, Modern Robotics 5.3장",
+              "children": [
+                {
+                  "title": "조작성 지표",
+                  "priority": "recommended",
+                  "description": "Yoshikawa 조작성 w = √det(JJᵀ), 조건수 κ = σ_max/σ_min, 조작성 타원체 해석 — Lynch & Park, Modern Robotics 5.4장"
+                },
+                {
+                  "title": "특이점 근처 명령 감속",
+                  "priority": "recommended",
+                  "description": "조건수 임계값으로 명령 속도를 줄이거나 정지, 특이 방향 성분만 제거하는 SVD 기반 처리 — Lynch & Park, Modern Robotics 6장"
+                }
+              ]
+            },
+            {
+              "title": "수치 IK 솔버",
+              "priority": "essential",
+              "description": "반복 수치 해법의 수렴·실시간성 비교 — Lynch & Park, Modern Robotics 6.2장",
+              "children": [
+                {
+                  "title": "Newton–Raphson IK",
+                  "priority": "essential",
+                  "description": "오차 V_b = log(T_sb⁻¹·T_sd)로 정의한 SE(3) 오차를 J⁺로 반복 감소, 수렴 조건과 초기값 의존성 — Lynch & Park, Modern Robotics 6.2장"
+                },
+                {
+                  "title": "Levenberg–Marquardt IK",
+                  "priority": "recommended",
+                  "description": "감쇠 계수를 오차에 따라 조절하는 LM 방식, Gauss–Newton과 경사하강 사이 보간 — Sugihara 2011 \"Solvability-unconcerned inverse kinematics\""
+                },
+                {
+                  "title": "KDL·TRAC-IK",
+                  "priority": "optional",
+                  "description": "KDL 의사역행렬 솔버의 관절 한계 문제, TRAC-IK의 SQP+랜덤 재시작 병렬 구조 — Beeson & Ames 2015 TRAC-IK 논문"
+                },
+                {
+                  "title": "Pinocchio로 IK 구현",
+                  "priority": "recommended",
+                  "description": "pinocchio의 forwardKinematics·computeFrameJacobian·log6로 CLIK 루프 작성, 프레임 기준(LOCAL/WORLD/LOCAL_WORLD_ALIGNED) — Pinocchio 문서",
+                  "resources": [
+                    {
+                      "title": "stack-of-tasks/pinocchio",
+                      "url": "https://github.com/stack-of-tasks/pinocchio",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "QP 기반 IK",
+              "priority": "recommended",
+              "description": "min ‖J·q̇ − v_d‖² + λ‖q̇‖² 를 관절 위치·속도 한계 부등식 아래 QP로 풀기 — Kanoun et al. 2011 \"Kinematic control of redundant manipulators\"",
+              "children": [
+                {
+                  "title": "작업 우선순위와 계층 QP",
+                  "priority": "recommended",
+                  "description": "여러 작업(EE 포즈, 자세 유지, 충돌 회피)을 엄격 우선순위로 푸는 계층 QP와 가중 합의 차이 — Escande et al. 2014 HQP 논문"
+                },
+                {
+                  "title": "관절 한계 제약",
+                  "priority": "essential",
+                  "description": "위치 한계를 속도 제약으로 바꾸는 (q_min − q)/Δt ≤ q̇ ≤ (q_max − q)/Δt, 감속 거리를 고려한 보수적 한계 — Lynch & Park, Modern Robotics 6장"
+                }
+              ]
+            },
+            {
+              "title": "여유자유도 활용",
+              "priority": "recommended",
+              "description": "7축 팔의 1자유도 여유를 쓰는 방법, 사람 팔 자세를 닮게 하는 보조 목표 — Lynch & Park, Modern Robotics 6.3장",
+              "children": [
+                {
+                  "title": "팔꿈치 swivel 각 매핑",
+                  "priority": "recommended",
+                  "description": "어깨–손목 축 둘레 팔꿈치 회전각(swivel angle)을 사람 팔에서 측정해 로봇 영공간 목표로 쓰는 방법 — Kreutz-Delgado et al. 1992"
+                }
+              ]
+            },
+            {
+              "title": "포즈 오차 정의",
+              "priority": "essential",
+              "description": "위치 오차와 회전 오차를 합치는 방식: SE(3) 로그 맵 트위스트, 축-각 오차, 쿼터니언 오차의 부호 처리, 위치·회전 가중치 — Lynch & Park, Modern Robotics 3.3장"
             }
           ]
         },
@@ -216,13 +932,218 @@
               "url": "https://arxiv.org/abs/2307.04577",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "벡터 리타게팅",
+              "priority": "recommended",
+              "description": "손목→손끝·손끝↔손끝 벡터의 차이 Σ‖α·v_h − f(q)‖²을 최소화, 스케일 α와 정규화 항 — dex-retargeting README, AnyTeleop 4장",
+              "resources": [
+                {
+                  "title": "dexsuite/dex-retargeting",
+                  "url": "https://github.com/dexsuite/dex-retargeting",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "위치 리타게팅",
+              "priority": "recommended",
+              "description": "손끝 3D 위치를 직접 맞추는 목적함수, 오프라인 모캡 데이터에 적합한 이유 — dex-retargeting README",
+              "resources": [
+                {
+                  "title": "dexsuite/dex-retargeting",
+                  "url": "https://github.com/dexsuite/dex-retargeting",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "DexPilot 방식",
+              "priority": "recommended",
+              "description": "손끝 간 거리가 가까울 때 핀치를 강조하는 가중 벡터·거리 스위칭 항으로 집기 동작 보존 — DexPilot 논문 4장",
+              "resources": [
+                {
+                  "title": "DexPilot: Vision Based Teleoperation of Dexterous Robotic Hand-Arm System",
+                  "url": "https://arxiv.org/abs/1910.03135",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "손 키포인트 정규화",
+              "priority": "recommended",
+              "description": "손목 기준 로컬 프레임(손바닥 법선·중지 방향)으로 키포인트를 회전 정규화, MediaPipe·MANO 프레임 차이 — AnyTeleop 논문 4장",
+              "resources": [
+                {
+                  "title": "AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System",
+                  "url": "https://arxiv.org/abs/2307.04577",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "엄지 대립 매핑",
+              "priority": "optional",
+              "description": "사람 엄지 CMC 관절과 로봇 엄지 축 배치 차이, 대립(opposition) 동작 보존을 위한 별도 가중치 — DexPilot 논문"
+            },
+            {
+              "title": "최적화 실시간성",
+              "priority": "recommended",
+              "description": "NLopt SLSQP로 매 프레임 최적화, 이전 해 웜스타트, 저역통과 후처리로 지터 억제 — dex-retargeting README",
+              "resources": [
+                {
+                  "title": "dexsuite/dex-retargeting",
+                  "url": "https://github.com/dexsuite/dex-retargeting",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "로봇 손 URDF와 관절 커플링",
+              "priority": "recommended",
+              "description": "mimic 관절(multiplier·offset)로 표현되는 건 구동 커플링, 리타게팅 변수에서 종속 관절 제거 — URDF 명세 mimic 태그"
+            }
           ]
         },
         {
           "title": "리타게팅 후 동작 필터링",
           "priority": "recommended",
           "description": "관절 속도·가속도 제한, 시간적 평활화(저역통과), 충돌 회피 검사를 명령 전에 적용",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "속도·가속도 제한 방식",
+              "priority": "essential",
+              "description": "성분별 clamping은 방향을 바꾸고, 시간 스케일링(전체 벡터를 같은 비율로 축소)은 경로를 보존한다는 차이 — Lynch & Park, Modern Robotics 9장"
+            },
+            {
+              "title": "저역통과 필터 지연",
+              "priority": "recommended",
+              "description": "1차 IIR 필터 y_k = α·x_k + (1−α)·y_{k−1}의 차단 주파수와 군지연, 지연이 조작감에 주는 영향 — Oppenheim, Discrete-Time Signal Processing"
+            },
+            {
+              "title": "자기충돌·환경 충돌 검사",
+              "priority": "recommended",
+              "description": "명령 직전 FCL 기반 충돌 검사, 충돌 시 정지 vs 마지막 안전 자세 유지 — MoveIt 문서 Planning Scene"
+            }
+          ]
+        },
+        {
+          "title": "관절 매핑 리타게팅",
+          "priority": "essential",
+          "description": "사람·리더 장치 관절각을 로봇 관절각으로 직접 바꾸는 방법 — AnyTeleop 논문",
+          "children": [
+            {
+              "title": "선형 관절 매핑",
+              "priority": "essential",
+              "description": "q_r = A·q_h + b 형태 매핑, 부호·오프셋·스케일 행렬 A를 캘리브레이션 자세로 추정 — GELLO 논문 3장",
+              "resources": [
+                {
+                  "title": "GELLO: A General, Low-Cost, and Intuitive Teleoperation Framework",
+                  "url": "https://arxiv.org/abs/2309.13037",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "관절 한계 정규화 매핑",
+              "priority": "recommended",
+              "description": "사람 관절 가동 범위 [h_min, h_max]를 로봇 한계 [r_min, r_max]로 선형 정규화, 범위 비대칭 처리 — AnyTeleop 논문"
+            },
+            {
+              "title": "자유도 불일치 매핑",
+              "priority": "recommended",
+              "description": "사람 관절 여러 개를 로봇 관절 하나로 합치거나(커플링) 나누는 규칙, 손가락 수가 적은 로봇 손 매핑 — DexPilot 논문"
+            }
+          ]
+        },
+        {
+          "title": "회전 표현과 보간",
+          "priority": "essential",
+          "description": "리타게팅·필터링에서 쓰는 회전 수학 — Lynch & Park, Modern Robotics 3장",
+          "children": [
+            {
+              "title": "쿼터니언 이중 덮개",
+              "priority": "essential",
+              "description": "q와 −q가 같은 회전, 연속 궤적에서 부호 뒤집힘 방지(내적 < 0이면 부호 반전) — Lynch & Park, Modern Robotics 부록 B"
+            },
+            {
+              "title": "SLERP",
+              "priority": "essential",
+              "description": "구면 선형 보간 slerp(q0,q1,t) = q0·(q0⁻¹q1)^t, 짧은 경로 선택과 작은 각도에서 수치 안정성 — Shoemake 1985 \"Animating rotation with quaternion curves\""
+            },
+            {
+              "title": "지수 좌표와 축-각",
+              "priority": "essential",
+              "description": "so(3) 지수 좌표 ω̂θ, 로드리게스 공식, 회전 오차·속도 표현에 쓰이는 이유 — Lynch & Park, Modern Robotics 3.2장"
+            }
+          ]
+        },
+        {
+          "title": "전신·휴머노이드 리타게팅",
+          "priority": "optional",
+          "description": "사람 전신 모션을 휴머노이드로 옮기는 문제 — Springer Handbook of Robotics, Humanoids 장",
+          "children": [
+            {
+              "title": "SMPL 인체 모델",
+              "priority": "optional",
+              "description": "형상 β·포즈 θ(관절 24개 축-각)로 메시를 만드는 SMPL, 모캡 데이터셋의 표준 표현 — Loper et al. 2015 SMPL 논문",
+              "resources": [
+                {
+                  "title": "SMPL",
+                  "url": "https://smpl.is.tue.mpg.de/",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "접촉 보존 최적화",
+              "priority": "optional",
+              "description": "발·손 접촉 시점 위치 고정, 미끄러짐(foot skating) 제거를 위한 제약 최적화 — Gleicher 1998 \"Retargetting motion to new characters\""
+            },
+            {
+              "title": "균형 제약",
+              "priority": "optional",
+              "description": "ZMP가 지지 다각형 안에 있도록 하는 제약, CoM 궤적 조정 — Kajita, Introduction to Humanoid Robotics"
+            }
+          ]
+        },
+        {
+          "title": "학습 기반 리타게팅",
+          "priority": "optional",
+          "description": "쌍(paired) 데이터 없이 사람↔로봇 자세 공간을 잇는 신경망 매핑, 자기지도 손실(키포인트 일치·충돌 페널티) — AnyTeleop·DexPilot 관련 연구 장"
+        },
+        {
+          "title": "리타게팅 검증",
+          "priority": "recommended",
+          "description": "리타게팅 결과를 정량·시각적으로 확인하는 방법 — dex-retargeting 예제",
+          "children": [
+            {
+              "title": "추적 오차 지표",
+              "priority": "recommended",
+              "description": "EE 위치 오차(mm)·회전 오차(deg), 손끝 거리 오차, 관절 한계 포화 비율 계산 — AnyTeleop 논문 실험 장",
+              "resources": [
+                {
+                  "title": "AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System",
+                  "url": "https://arxiv.org/abs/2307.04577",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "시각화 검증",
+              "priority": "recommended",
+              "description": "RViz·meshcat에 사람 키포인트와 로봇 모델을 겹쳐 그려 프레임 오류(축 반전·단위 오류) 찾기 — Pinocchio meshcat 예제",
+              "resources": [
+                {
+                  "title": "stack-of-tasks/pinocchio",
+                  "url": "https://github.com/stack-of-tasks/pinocchio",
+                  "kind": "code"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -239,6 +1160,28 @@
               "url": "https://docs.ros.org/en/rolling/",
               "kind": "doc"
             }
+          ],
+          "children": [
+            {
+              "title": "POSIX 시계",
+              "priority": "essential",
+              "description": "CLOCK_REALTIME(NTP로 점프 가능)·CLOCK_MONOTONIC(slew만 반영)·CLOCK_MONOTONIC_RAW(보정 없음)·CLOCK_TAI의 차이와 clock_gettime 사용 — Linux man page clock_gettime(2)"
+            },
+            {
+              "title": "ROS 2 Clock과 /clock",
+              "priority": "essential",
+              "description": "rclcpp::Clock 타입 RCL_ROS_TIME·RCL_SYSTEM_TIME·RCL_STEADY_TIME, use_sim_time 파라미터가 /clock(rosgraph_msgs/Clock) 구독으로 바뀌는 동작, 시간 점프 콜백 — ROS 2 문서 Clock and Time 설계 문서"
+            },
+            {
+              "title": "Time·Duration API",
+              "priority": "essential",
+              "description": "rclcpp::Time/rclpy.time.Time의 nanoseconds 표현, builtin_interfaces/Time(sec, nanosec) 변환, 서로 다른 clock_type 간 연산 시 예외 — rclcpp·rclpy API 문서"
+            },
+            {
+              "title": "시계 드리프트·스큐 모델",
+              "priority": "recommended",
+              "description": "로컬 시계 C(t) = (1+ρ)·t + θ 모델의 오프셋 θ·스큐 ρ, 수정 발진기 ppm 오차로 하루 오차 계산 — Kopetz, Real-Time Systems 3장"
+            }
           ]
         },
         {
@@ -251,13 +1194,154 @@
               "url": "https://github.com/realsenseai/librealsense",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "노출 시작 vs 노출 중간",
+              "priority": "essential",
+              "description": "긴 노출에서 프레임 시각을 노출 중간으로 잡아야 하는 이유, 자동 노출 변화가 시각 오프셋을 바꾸는 문제 — librealsense frame metadata 문서",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "롤링 셔터 시간 오프셋",
+              "priority": "recommended",
+              "description": "행별 노출 시각 t_row = t_0 + row·t_line, 빠른 움직임에서 생기는 왜곡과 연속시간 모델 보정 — Kalibr 위키 rolling shutter",
+              "resources": [
+                {
+                  "title": "ethz-asl/kalibr",
+                  "url": "https://github.com/ethz-asl/kalibr",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "수신 시각 지터",
+              "priority": "essential",
+              "description": "드라이버가 프레임을 받는 시각에 USB 전송·스케줄링 지터가 섞이는 문제, 하드웨어 카운터를 호스트 시간으로 바꾸는 global time 보정(선형 회귀) — librealsense global time 설정",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "header.stamp 관례",
+              "priority": "essential",
+              "description": "std_msgs/Header의 stamp는 데이터가 측정된 시각, frame_id는 측정 좌표계라는 관례, 가공 노드가 입력 stamp를 유지해야 하는 이유 — REP 103·ROS 2 메시지 문서"
+            },
+            {
+              "title": "관절 상태 타임스탬프",
+              "priority": "recommended",
+              "description": "모터 버스 Sync Read 한 번에 읽은 여러 관절의 측정 시각 차이, 제어 루프 시작 시각 vs 읽기 완료 시각 중 무엇을 stamp로 쓸지 — ros2_control 문서"
+            }
           ]
         },
         {
           "title": "머신 간 시계 동기화",
           "priority": "essential",
           "description": "NTP/chrony와 PTP(IEEE 1588)의 정밀도 차이, 여러 PC·카메라를 쓰는 리그에서 오프셋 측정·모니터링",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "NTP 동작 원리",
+              "priority": "essential",
+              "description": "4개 타임스탬프 T1~T4로 오프셋 θ = ((T2−T1)+(T3−T4))/2, 왕복 지연 δ = (T4−T1)−(T3−T2), stratum 계층과 클럭 필터 — RFC 5905",
+              "resources": [
+                {
+                  "title": "RFC 5905: Network Time Protocol Version 4",
+                  "url": "https://www.rfc-editor.org/rfc/rfc5905",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "비대칭 경로 오차",
+                  "priority": "recommended",
+                  "description": "왕복 경로가 비대칭이면 오프셋 오차가 (지연 차)/2만큼 생긴다는 한계, 무선망에서 커지는 이유 — RFC 5905",
+                  "resources": [
+                    {
+                      "title": "RFC 5905: Network Time Protocol Version 4",
+                      "url": "https://www.rfc-editor.org/rfc/rfc5905",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "chrony 설정과 모니터링",
+              "priority": "essential",
+              "description": "chrony.conf의 server/pool·makestep·local stratum, 로컬 PC를 서버로 쓰는 리그 구성, chronyc tracking·sources -v 출력 해석(System time, Root delay) — chrony 문서",
+              "resources": [
+                {
+                  "title": "chrony documentation",
+                  "url": "https://chrony-project.org/documentation.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "PTP(IEEE 1588)",
+              "priority": "recommended",
+              "description": "마스터-슬레이브 정밀 시간 프로토콜, 서브마이크로초 동기 — IEEE 1588-2019 표준, linuxptp 문서",
+              "children": [
+                {
+                  "title": "PTP 메시지 교환",
+                  "priority": "recommended",
+                  "description": "Sync·Follow_Up·Delay_Req·Delay_Resp로 오프셋·경로 지연 계산, one-step vs two-step 클럭 — IEEE 1588 표준"
+                },
+                {
+                  "title": "하드웨어 타임스탬핑",
+                  "priority": "recommended",
+                  "description": "NIC PHC(PTP Hardware Clock)가 패킷 송수신 시각을 찍는 방식, ethtool -T로 지원 확인, 소프트웨어 타임스탬핑과 정밀도 차이 — linuxptp 문서",
+                  "resources": [
+                    {
+                      "title": "The Linux PTP Project",
+                      "url": "https://linuxptp.nwtime.org/",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "ptp4l·phc2sys",
+                  "priority": "recommended",
+                  "description": "ptp4l로 PHC를 마스터에 맞추고 phc2sys로 시스템 시계를 PHC에 맞추는 2단 구성, pmc로 상태 조회 — linuxptp 문서",
+                  "resources": [
+                    {
+                      "title": "The Linux PTP Project",
+                      "url": "https://linuxptp.nwtime.org/",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "Best Master Clock 알고리즘",
+                  "priority": "optional",
+                  "description": "priority1·clockClass·clockAccuracy·priority2 순서로 그랜드마스터를 고르는 BMCA — IEEE 1588 표준"
+                }
+              ]
+            },
+            {
+              "title": "동기 상태 점검",
+              "priority": "recommended",
+              "description": "PC 간 오프셋을 기록 전 체크리스트로 확인(chronyc tracking 오프셋 임계값), 기록 중 오프셋 로그를 메타데이터로 저장 — chrony 문서",
+              "resources": [
+                {
+                  "title": "chrony documentation",
+                  "url": "https://chrony-project.org/documentation.html",
+                  "kind": "doc"
+                }
+              ]
+            }
+          ]
         },
         {
           "title": "하드웨어 트리거·동기화",
@@ -268,6 +1352,54 @@
               "title": "realsenseai/librealsense",
               "url": "https://github.com/realsenseai/librealsense",
               "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "외부 트리거 배선",
+              "priority": "recommended",
+              "description": "GPIO 트리거 펄스(상승 에지·펄스 폭), 마스터 카메라가 펄스를 내보내고 슬레이브가 받는 구성, 케이블·접지 — librealsense multi-camera 화이트페이퍼",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "RealSense inter_cam_sync_mode",
+              "priority": "recommended",
+              "description": "inter_cam_sync_mode 값(0 기본, 1 마스터, 2 슬레이브)과 realsense-ros 파라미터 설정, 슬레이브 프레임레이트 제약 — realsense-ros README",
+              "resources": [
+                {
+                  "title": "realsenseai/realsense-ros",
+                  "url": "https://github.com/realsenseai/realsense-ros",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "글로벌 셔터 vs 롤링 셔터",
+              "priority": "recommended",
+              "description": "모든 화소 동시 노출(글로벌)과 행 순차 노출(롤링)의 차이, 트리거 동기가 의미 있는 조건 — Szeliski, Computer Vision: Algorithms and Applications 2장"
+            },
+            {
+              "title": "PPS 신호",
+              "priority": "optional",
+              "description": "GNSS 수신기의 1PPS 펄스로 여러 장치 시계를 맞추는 방식, 라이다·카메라 동기화에서의 사용 — linuxptp·chrony 문서(refclock PPS)",
+              "resources": [
+                {
+                  "title": "chrony documentation",
+                  "url": "https://chrony-project.org/documentation.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "프레임 정렬 오차 측정",
+              "priority": "recommended",
+              "description": "고속 LED 카운터나 화면 타이머를 동시에 촬영해 카메라 간 프레임 시각 차를 직접 측정 — librealsense multi-camera 화이트페이퍼"
             }
           ]
         },
@@ -281,6 +1413,83 @@
               "url": "https://github.com/ros2/message_filters",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "ExactTime 정책",
+              "priority": "essential",
+              "description": "header.stamp가 정확히 같은 메시지만 묶는 정책, 같은 드라이버가 낸 토픽(color/depth 정렬 출력)에서만 쓸 수 있는 이유 — message_filters README",
+              "resources": [
+                {
+                  "title": "ros2/message_filters",
+                  "url": "https://github.com/ros2/message_filters",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "ApproximateTime 정책",
+              "priority": "essential",
+              "description": "큐에서 stamp 간 최대 간격이 최소인 집합을 고르는 알고리즘, queue_size·max_interval_duration·age_penalty 파라미터 — message_filters 문서",
+              "resources": [
+                {
+                  "title": "ros2/message_filters",
+                  "url": "https://github.com/ros2/message_filters",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "고정 주기 리샘플링",
+              "priority": "essential",
+              "description": "학습용 고정 fps 격자 t_k = t_0 + k/f에 각 센서 값을 배치하는 방법 — Oppenheim, Discrete-Time Signal Processing 4장",
+              "children": [
+                {
+                  "title": "최근접 샘플 선택",
+                  "priority": "essential",
+                  "description": "|t_i − t_k| 최소 샘플 선택, 허용 오차를 넘으면 해당 프레임 버림 — LeRobot 데이터셋 tolerance_s 처리",
+                  "resources": [
+                    {
+                      "title": "huggingface/lerobot",
+                      "url": "https://github.com/huggingface/lerobot",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "ZOH(직전 값 유지)",
+                  "priority": "essential",
+                  "description": "t_k 이전 마지막 값을 쓰는 zero-order hold, 미래 정보 누설(causality)이 없다는 장점 — Oppenheim 4장"
+                },
+                {
+                  "title": "선형 보간과 SLERP",
+                  "priority": "recommended",
+                  "description": "관절각은 선형 보간, 회전은 SLERP, 이산값(그리퍼 버튼)은 보간 금지 — Shoemake 1985"
+                },
+                {
+                  "title": "다운샘플링과 앨리어싱",
+                  "priority": "recommended",
+                  "description": "고주파 신호(F/T·촉각)를 낮은 주기로 줄일 때 저역통과 후 decimation해야 하는 이유, 나이퀴스트 주파수 — Oppenheim 4장"
+                }
+              ]
+            },
+            {
+              "title": "message_filters Cache",
+              "priority": "recommended",
+              "description": "Cache 필터로 시간 구간 질의(getInterval·getElemBeforeTime), 늦게 도착하는 메시지 처리 — message_filters 문서",
+              "resources": [
+                {
+                  "title": "ros2/message_filters",
+                  "url": "https://github.com/ros2/message_filters",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "tf2 시간 조회",
+              "priority": "essential",
+              "description": "lookupTransform(target, source, time)의 시간 의미, ExtrapolationException(미래·과거 외삽), buffer 길이와 canTransform 대기 — tf2 문서"
+            }
           ]
         },
         {
@@ -292,6 +1501,35 @@
               "title": "ros2/ros2_tracing",
               "url": "https://github.com/ros2/ros2_tracing",
               "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "이벤트 기반 지연 측정",
+              "priority": "recommended",
+              "description": "LED 점등 명령 시각과 영상에서 밝기 변화가 보이는 프레임 시각 차로 카메라 경로 지연 측정 — ALOHA 2 논문 참고"
+            },
+            {
+              "title": "교차 상관 오프셋 추정",
+              "priority": "recommended",
+              "description": "관절 속도 크기와 영상 광류(optical flow) 크기 신호의 교차 상관 피크로 고정 지연 τ 추정, 부분 샘플 보간 — Oppenheim, Discrete-Time Signal Processing"
+            },
+            {
+              "title": "ros2_tracing 지연 분석",
+              "priority": "optional",
+              "description": "LTTng 기반 ros2_tracing으로 publish→callback 지연을 트레이스, tracetools_analysis로 콜백 시간 분포 계산 — ros2_tracing README",
+              "resources": [
+                {
+                  "title": "ros2/ros2_tracing",
+                  "url": "https://github.com/ros2/ros2_tracing",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "지터 통계",
+              "priority": "recommended",
+              "description": "주기 지터의 평균·표준편차·p99·최대값, 히스토그램으로 기록 루프 품질 판정 — Kopetz, Real-Time Systems"
             }
           ]
         },
@@ -305,7 +1543,31 @@
               "url": "https://github.com/ethz-asl/kalibr",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "연속시간 B-spline 궤적 모델",
+              "priority": "optional",
+              "description": "IMU 궤적을 B-spline으로 표현하고 카메라 관측과 IMU 측정을 함께 최적화해 시간 오프셋 t_d를 추정하는 Kalibr 방식 — Furgale et al. 2013 \"Unified temporal and spatial calibration\"",
+              "resources": [
+                {
+                  "title": "ethz-asl/kalibr",
+                  "url": "https://github.com/ethz-asl/kalibr",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "시간 오프셋 온라인 추정",
+              "priority": "optional",
+              "description": "VIO 상태에 t_d를 넣어 실행 중 추정하는 방법(VINS-Mono 등) — Qin & Shen 2018 \"Online temporal calibration\""
+            }
           ]
+        },
+        {
+          "title": "동기화 검증 절차",
+          "priority": "recommended",
+          "description": "기록 직후 토픽별 주기·간격 분포, 센서 간 stamp 차이 분포, 누락 프레임 비율을 자동 리포트로 만드는 점검 절차 — rosbag2 README(ros2 bag info), message_filters 문서"
         }
       ]
     },
@@ -328,7 +1590,31 @@
               "title": "카메라 내부·외부 파라미터",
               "priority": "essential",
               "description": "camera_info(K, D)와 카메라→로봇 base 외부 파라미터를 에피소드와 함께 저장해야 하는 이유, 핸드-아이 캘리브레이션",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "핀홀·왜곡 모델",
+                  "priority": "essential",
+                  "description": "내부 행렬 K(fx, fy, cx, cy), plumb_bob(k1,k2,p1,p2,k3)·equidistant(어안) 왜곡 모델, sensor_msgs/CameraInfo의 K·D·R·P 필드 — Hartley & Zisserman, Multiple View Geometry 6장"
+                },
+                {
+                  "title": "체커보드 내부 캘리브레이션",
+                  "priority": "essential",
+                  "description": "Zhang 방법(호모그래피 기반 초기값+비선형 최적화), 재투영 오차 해석, ROS camera_calibration 패키지 사용 — Zhang 2000 \"A flexible new technique for camera calibration\""
+                },
+                {
+                  "title": "핸드-아이 캘리브레이션",
+                  "priority": "essential",
+                  "description": "eye-in-hand(AX=XB)와 eye-to-hand 구성, Tsai–Lenz·Park–Martin·Daniilidis 풀이, 자세 다양성 조건 — easy_handeye2 README, Park & Martin 1994",
+                  "resources": [
+                    {
+                      "title": "marcoesposito1988/easy_handeye2",
+                      "url": "https://github.com/marcoesposito1988/easy_handeye2",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "title": "영상 압축과 저장",
@@ -338,6 +1624,162 @@
                 {
                   "title": "huggingface/lerobot",
                   "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "H.264 GOP와 랜덤 접근",
+                  "priority": "recommended",
+                  "description": "I/P/B 프레임, GOP 길이(g)와 키프레임 간격이 임의 프레임 디코딩 비용에 주는 영향 — FFmpeg Codecs 문서 libx264",
+                  "resources": [
+                    {
+                      "title": "FFmpeg Codecs Documentation",
+                      "url": "https://www.ffmpeg.org/ffmpeg-codecs.html",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "AV1과 CRF",
+                  "priority": "recommended",
+                  "description": "libsvtav1의 crf·preset 옵션, 품질-용량 곡선, 학습 로더에서의 디코딩 속도 — FFmpeg Codecs 문서, LeRobot 비디오 인코딩 설정",
+                  "resources": [
+                    {
+                      "title": "FFmpeg Codecs Documentation",
+                      "url": "https://www.ffmpeg.org/ffmpeg-codecs.html",
+                      "kind": "doc"
+                    },
+                    {
+                      "title": "huggingface/lerobot",
+                      "url": "https://github.com/huggingface/lerobot",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "픽셀 포맷과 색 손실",
+                  "priority": "optional",
+                  "description": "yuv420p 크로마 서브샘플링으로 생기는 색 번짐, 색 공간(BT.709)·range 플래그 — FFmpeg Codecs 문서",
+                  "resources": [
+                    {
+                      "title": "FFmpeg Codecs Documentation",
+                      "url": "https://www.ffmpeg.org/ffmpeg-codecs.html",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "무손실 vs 손실 압축",
+                  "priority": "recommended",
+                  "description": "PNG(무손실)·JPEG(quality 파라미터) 비교, 압축 아티팩트가 학습된 정책 성능에 주는 영향 — LeRobot 데이터셋 문서",
+                  "resources": [
+                    {
+                      "title": "huggingface/lerobot",
+                      "url": "https://github.com/huggingface/lerobot",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "노출·화이트밸런스 고정",
+              "priority": "essential",
+              "description": "auto exposure·auto white balance가 에피소드 간 색·밝기 분포를 흔드는 문제, 수동 노출 시간·게인 설정과 조명 고정, 플리커(50/60Hz) 대응 — librealsense 옵션 문서",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "카메라 배치 설계",
+              "priority": "essential",
+              "description": "손목 카메라(근거리·가림 적음)와 고정 카메라(전역 맥락)의 역할, 시야각·작업 영역 커버리지, 에피소드 간 위치 고정 — ACT 논문 3장, ALOHA 2 논문",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "RGB-D 깊이 원리",
+              "priority": "recommended",
+              "description": "깊이 카메라의 측정 원리와 오차 특성 — Szeliski, Computer Vision: Algorithms and Applications 12장",
+              "children": [
+                {
+                  "title": "능동 스테레오 깊이",
+                  "priority": "recommended",
+                  "description": "IR 프로젝터 패턴+스테레오 IR 카메라 디스패리티 d로 Z = f·B/d, 깊이 오차가 Z²에 비례하는 이유 — Szeliski, Computer Vision: Algorithms and Applications 12장, librealsense 깊이 화이트페이퍼",
+                  "resources": [
+                    {
+                      "title": "realsenseai/librealsense",
+                      "url": "https://github.com/realsenseai/librealsense",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "ToF 깊이",
+                  "priority": "optional",
+                  "description": "연속파 위상차 방식 d = c·Δφ/(4π·f_mod), 다중 경로 간섭·반사율 의존 오차 — Szeliski, Computer Vision: Algorithms and Applications 12장"
+                },
+                {
+                  "title": "깊이 노이즈와 무효 화소",
+                  "priority": "recommended",
+                  "description": "반사·투명 물체에서 생기는 0값(무효) 화소, 가장자리 flying pixel — librealsense 문서"
+                }
+              ]
+            },
+            {
+              "title": "깊이-컬러 정렬",
+              "priority": "essential",
+              "description": "깊이 화소를 depth 내부 파라미터로 3D 역투영→외부 파라미터 변환→color로 재투영하는 정렬 과정, rs2::align과 realsense-ros align_depth.enable — librealsense 예제 rs-align",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                },
+                {
+                  "title": "realsenseai/realsense-ros",
+                  "url": "https://github.com/realsenseai/realsense-ros",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "깊이 단위와 저장 형식",
+                  "priority": "essential",
+                  "description": "16UC1(mm, depth_scale 0.001)과 32FC1(m) 인코딩, 0을 무효로 쓰는 관례, PNG16 무손실 저장 — REP 118 Depth Images"
+                }
+              ]
+            },
+            {
+              "title": "깊이 후처리 필터",
+              "priority": "optional",
+              "description": "decimation·spatial(edge-preserving)·temporal·hole-filling 필터 순서와 파라미터, 학습 데이터에 필터를 적용할지 판단 — librealsense post-processing 문서",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "이미지 메시지와 image_transport",
+              "priority": "essential",
+              "description": "sensor_msgs/Image(encoding, step, data)·CompressedImage(format, data), image_transport 플러그인 compressed·compressedDepth·theora, 기록 토픽 선택 — image_common README",
+              "resources": [
+                {
+                  "title": "ros-perception/image_common",
+                  "url": "https://github.com/ros-perception/image_common",
                   "kind": "code"
                 }
               ]
@@ -365,13 +1807,56 @@
               "title": "명령과 측정의 구분",
               "priority": "essential",
               "description": "명령 관절각(commanded)과 실제 측정 관절각(measured)의 추종 오차, 학습 시 action은 보통 명령(리더) 값",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "action 시점 정의",
+                  "priority": "essential",
+                  "description": "관측 o_t와 짝지을 action을 같은 시각의 명령 a_t로 할지 다음 측정 q_{t+1}로 할지, action chunk(k스텝) 정의 — ACT 논문 3장",
+                  "resources": [
+                    {
+                      "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                      "url": "https://arxiv.org/abs/2304.13705",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "title": "엔드이펙터 포즈 기록",
               "priority": "recommended",
               "description": "순기구학으로 계산한 EE 포즈(위치+쿼터니언)를 함께 저장해 작업 공간 행동 표현도 쓸 수 있게 함",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "/tf와 /tf_static 기록",
+                  "priority": "recommended",
+                  "description": "tf2_msgs/TFMessage, 동적 변환(/tf)과 고정 변환(/tf_static, transient_local)을 함께 기록해야 재생 시 프레임 조회가 되는 이유 — tf2 문서"
+                }
+              ]
+            },
+            {
+              "title": "JointState 필드 규약",
+              "priority": "essential",
+              "description": "name 배열 순서와 position·velocity·effort 인덱스 대응, 비어 있는 배열 허용, 단위(rad, rad/s, N·m) — sensor_msgs/JointState 메시지 정의"
+            },
+            {
+              "title": "joint_state_broadcaster",
+              "priority": "essential",
+              "description": "ros2_control 상태 인터페이스를 /joint_states와 /dynamic_joint_states로 발행하는 컨트롤러, joints·interfaces 파라미터 — joint_state_broadcaster 문서",
+              "resources": [
+                {
+                  "title": "joint_state_broadcaster",
+                  "url": "https://control.ros.org/rolling/doc/ros2_controllers/joint_state_broadcaster/doc/userdoc.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "ros2_control 인터페이스",
+              "priority": "recommended",
+              "description": "StateInterface·CommandInterface, hardware_interface의 read()/write() 주기와 기록 토픽의 관계 — ros2_control 문서"
             }
           ]
         },
@@ -379,19 +1864,241 @@
           "title": "힘·토크·촉각 센서 기록",
           "priority": "recommended",
           "description": "손목 6축 F/T 센서(geometry_msgs/WrenchStamped)의 바이어스 제거·중력 보상, 관절 토크(effort) 추정값, 촉각 센서의 고주파 샘플링과 다운샘플링",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "6축 F/T 센서 원리",
+              "priority": "recommended",
+              "description": "스트레인 게이지 브리지 신호를 보정 행렬(6×6)로 Fx,Fy,Fz,Tx,Ty,Tz로 변환, 과부하·크로스토크 — Siciliano et al., Robotics: Modelling, Planning and Control 5장"
+            },
+            {
+              "title": "바이어스와 온도 드리프트",
+              "priority": "recommended",
+              "description": "무부하 상태에서 영점(bias) 측정·차감, 시간·온도에 따른 드리프트로 에피소드마다 재영점이 필요한 이유 — Siciliano et al. 5장"
+            },
+            {
+              "title": "중력·관성 보상",
+              "priority": "recommended",
+              "description": "툴 질량 m·질량중심 c를 여러 자세의 측정으로 최소제곱 추정하고 F_ext = F_meas − R ᵀ·m·g 보상 — Siciliano et al. 9장",
+              "children": [
+                {
+                  "title": "툴 파라미터 최소제곱 추정",
+                  "priority": "recommended",
+                  "description": "자세별 측정을 쌓은 선형식 A·[m, m·c]ᵀ = b를 최소제곱으로 풀기, 자세 다양성 조건 — Siciliano et al. 9장"
+                }
+              ]
+            },
+            {
+              "title": "WrenchStamped 프레임 규약",
+              "priority": "recommended",
+              "description": "geometry_msgs/WrenchStamped의 frame_id(센서 프레임) 명시, 툴 중심점으로 렌치 변환(어드조인트 Ad_Tᵀ) — Lynch & Park, Modern Robotics 3.4장"
+            },
+            {
+              "title": "촉각 센서 종류",
+              "priority": "recommended",
+              "description": "다지 손·그리퍼 촉각 센서의 원리 비교",
+              "children": [
+                {
+                  "title": "저항·정전용량 배열",
+                  "priority": "optional",
+                  "description": "taxel 배열의 압력→저항/정전용량 변화, 공간 해상도·히스테리시스 — Springer Handbook of Robotics, Force and Tactile Sensing 장"
+                },
+                {
+                  "title": "광학식 촉각 센서",
+                  "priority": "recommended",
+                  "description": "젤 표면 변형을 내부 카메라로 촬영(GelSight·DIGIT), 영상으로 기록되는 촉각 데이터 — DIGIT 논문",
+                  "resources": [
+                    {
+                      "title": "DIGIT: A Novel Design for a Low-Cost Compact High-Resolution Tactile Sensor with Application to In-Hand Manipulation",
+                      "url": "https://arxiv.org/abs/2005.14679",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "자기식 촉각 센서",
+                  "priority": "optional",
+                  "description": "자성 엘라스토머 변형을 자력계로 측정하는 ReSkin, 교체 가능성과 캘리브레이션 — ReSkin 논문",
+                  "resources": [
+                    {
+                      "title": "ReSkin: versatile, replaceable, lasting tactile skins",
+                      "url": "https://arxiv.org/abs/2111.00071",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "관절 토크 추정",
+              "priority": "optional",
+              "description": "모터 전류 i로 τ ≈ k_t·i·N 추정, 마찰·기어 효율로 생기는 오차 — Siciliano et al. 8장"
+            }
+          ]
         },
         {
           "title": "기타 상태 기록",
           "priority": "optional",
           "description": "모바일 베이스 odometry, 그리퍼 상태, 조작자 입력 원본(버튼·트리거), 오디오",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "odometry 기록",
+              "priority": "optional",
+              "description": "nav_msgs/Odometry의 pose·twist·covariance 필드와 frame_id(odom)·child_frame_id(base_link) 규약 — REP 105"
+            },
+            {
+              "title": "그리퍼 상태 기록",
+              "priority": "recommended",
+              "description": "개폐 위치·전류·접촉 여부, 정규화(0~1) 저장 규약 — ACT 논문"
+            },
+            {
+              "title": "조작자 입력 원본",
+              "priority": "optional",
+              "description": "리타게팅 전 원본 입력(VR 포즈·버튼)을 함께 기록해 나중에 매핑을 바꿔 재생성할 수 있게 함 — Open-TeleVision 논문"
+            },
+            {
+              "title": "오디오 기록",
+              "priority": "optional",
+              "description": "audio_common 메시지·샘플링 레이트, 접촉음을 관측으로 쓰는 연구 맥락 — audio_common README"
+            }
+          ]
         },
         {
           "title": "기록 주기와 대역폭 계획",
           "priority": "essential",
           "description": "센서별 주기(카메라 30Hz, 관절 100~500Hz 등), 초당 데이터량 계산, 디스크 쓰기 속도와 드롭 프레임 감시",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "데이터량 계산",
+              "priority": "essential",
+              "description": "RGB 640×480×3×30fps ≈ 27.6MB/s, 깊이 16비트 ≈ 18.4MB/s 같은 원본 계산, 압축률 가정과 시간당 디스크 사용량 — 기본 산술"
+            },
+            {
+              "title": "USB 대역폭 한계",
+              "priority": "recommended",
+              "description": "USB 3 Gen1 실효 대역폭, 같은 컨트롤러에 여러 카메라를 연결할 때 프레임 드롭, lsusb -t로 허브 구조 확인 — librealsense 멀티 카메라 문서",
+              "resources": [
+                {
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "디스크 쓰기와 버퍼",
+              "priority": "recommended",
+              "description": "NVMe 순차 쓰기 속도, recorder 메모리 캐시(--max-cache-size)와 쓰기 스레드, 페이지 캐시 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "드롭 프레임 감시",
+              "priority": "essential",
+              "description": "ros2 topic hz·카메라 frame counter 메타데이터로 누락 검출, 에피소드 중 누락률 기준 — librealsense 메타데이터 문서"
+            }
+          ]
+        },
+        {
+          "title": "IMU 기록",
+          "priority": "optional",
+          "description": "IMU 데이터를 함께 기록할 때 필요한 지식 — Kalibr 위키 IMU noise model",
+          "children": [
+            {
+              "title": "sensor_msgs/Imu 필드",
+              "priority": "optional",
+              "description": "orientation·angular_velocity·linear_acceleration과 각 공분산, 공분산 [0]=−1로 \"없음\" 표시 규약 — sensor_msgs/Imu 메시지 정의"
+            },
+            {
+              "title": "IMU 노이즈 모델",
+              "priority": "optional",
+              "description": "백색 잡음 밀도·랜덤 워크(바이어스 불안정성), Allan 분산 그래프에서 파라미터 읽기 — Kalibr 위키 IMU Noise Model",
+              "resources": [
+                {
+                  "title": "ethz-asl/kalibr",
+                  "url": "https://github.com/ethz-asl/kalibr",
+                  "kind": "code"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "점군 기록",
+          "priority": "optional",
+          "description": "sensor_msgs/PointCloud2의 fields(x,y,z,rgb)·point_step·row_step·is_dense, 깊이 이미지 대비 용량 차이와 깊이 원본 저장이 유리한 이유 — sensor_msgs/PointCloud2 메시지 정의"
+        },
+        {
+          "title": "에피소드 수집 워크플로",
+          "priority": "essential",
+          "description": "에피소드 단위로 시작·종료·리셋·라벨링을 하는 수집 절차 — LeRobot record 문서, ACT 논문",
+          "children": [
+            {
+              "title": "시작·종료 트리거",
+              "priority": "essential",
+              "description": "페달·버튼으로 기록 시작/정지, 고정 길이 vs 가변 길이 에피소드, 시작 전 대기 시간 — LeRobot record 스크립트",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "리셋 절차",
+              "priority": "recommended",
+              "description": "물체 초기 위치 무작위화 범위, 리셋 시간을 기록에서 제외하는 방법 — ACT 논문 실험 장",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "에피소드 메타데이터",
+              "priority": "essential",
+              "description": "작업 지시문(language instruction), 조작자 ID, 성공/실패 라벨, 하드웨어 설정 버전 기록 — LeRobot 데이터셋 info.json·tasks 구조",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "실패 에피소드 처리",
+              "priority": "recommended",
+              "description": "실패·중단 에피소드를 지울지 라벨을 붙여 남길지, 재기록 정책 — LeRobot 문서"
+            }
+          ]
+        },
+        {
+          "title": "기록 노드 설계",
+          "priority": "recommended",
+          "description": "자체 기록 노드를 만들 때의 실행 구조 — ROS 2 문서 Executors 개념",
+          "children": [
+            {
+              "title": "executor와 콜백 그룹",
+              "priority": "recommended",
+              "description": "SingleThreaded/MultiThreadedExecutor, MutuallyExclusive·Reentrant 콜백 그룹으로 카메라 콜백이 관절 콜백을 막지 않게 하기 — ROS 2 문서 Executors"
+            },
+            {
+              "title": "intra-process와 zero-copy",
+              "priority": "optional",
+              "description": "컴포넌트 컨테이너에서 use_intra_process_comms로 큰 이미지 메시지 복사 줄이기, unique_ptr 발행 — ROS 2 문서 Intra-process communication 데모"
+            }
+          ]
         }
       ]
     },
@@ -412,6 +2119,99 @@
               "title": "ROS 2 Documentation (Rolling)",
               "url": "https://docs.ros.org/en/rolling/",
               "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "ros2 bag record 토픽 선택",
+              "priority": "essential",
+              "description": "토픽 나열, -a(전체), -e/--regex 정규식, --exclude-regex·--exclude-topics로 제외, --include-hidden-topics·--include-unpublished-topics의 의미 — rosbag2 README Recording 절",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "출력 경로와 스토리지 지정",
+              "priority": "essential",
+              "description": "-o 출력 디렉터리, -s mcap|sqlite3 스토리지 선택, --node-name, --custom-data key=value로 메타데이터에 사용자 정보 추가 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "metadata.yaml 구조",
+              "priority": "essential",
+              "description": "rosbag2_bagfile_information 아래 version·storage_identifier·duration·starting_time·message_count·topics_with_message_count(topic_metadata: name·type·serialization_format·offered_qos_profiles)·relative_file_paths·files — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "metadata 재생성",
+                  "priority": "recommended",
+                  "description": "metadata.yaml이 깨지거나 기록이 비정상 종료됐을 때 ros2 bag reindex로 스토리지 파일에서 메타데이터를 다시 만드는 방법 — rosbag2 README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "rosbag2 내부 구조",
+              "priority": "recommended",
+              "description": "계층 구조: rosbag2_transport(Recorder/Player 노드) → rosbag2_cpp(Writer/Reader, 캐시·변환) → rosbag2_storage(플러그인 인터페이스) → 스토리지 구현 — rosbag2 README",
+              "children": [
+                {
+                  "title": "직렬화 형식 CDR",
+                  "priority": "recommended",
+                  "description": "메시지를 DDS CDR(serialization_format \"cdr\")로 그대로 저장해 기록 시 역직렬화 비용이 없는 구조, 다른 형식으로의 converter 플러그인 — rosbag2 README"
+                },
+                {
+                  "title": "Recorder 컴포넌트 노드",
+                  "priority": "optional",
+                  "description": "rosbag2_transport::Recorder를 컴포넌트로 띄워 같은 프로세스에서 intra-process로 기록, 파라미터 파일(record.yaml) 구성 — rosbag2 README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "기록 제어 서비스",
+              "priority": "recommended",
+              "description": "recorder의 ~/pause·~/resume·~/is_paused·~/split_bagfile·~/snapshot 서비스, --start-paused로 대기 후 에피소드 시작 시 resume — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "launch에서 기록 실행",
+              "priority": "recommended",
+              "description": "ExecuteProcess로 ros2 bag record 실행 또는 Recorder 노드 컴포넌트 로드, 종료 시 SIGINT로 정상 마무리해야 metadata가 써진다는 점 — ROS 2 launch 문서"
             }
           ]
         },
@@ -435,6 +2235,96 @@
               "url": "https://github.com/foxglove/mcap",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "MCAP 레코드 구조",
+              "priority": "essential",
+              "description": "Header·Schema·Channel·Message 레코드, Chunk(압축 단위)와 Message Index, Summary 섹션의 Chunk Index·Statistics, Footer — MCAP Specification",
+              "resources": [
+                {
+                  "title": "MCAP Specification",
+                  "url": "https://mcap.dev/spec",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Schema와 메시지 정의 저장",
+                  "priority": "essential",
+                  "description": "Schema 레코드에 ros2msg 인코딩 메시지 정의를 저장해 ROS 설치 없이도 디코딩 가능한 자기 기술(self-describing) 파일 — MCAP Specification",
+                  "resources": [
+                    {
+                      "title": "MCAP Specification",
+                      "url": "https://mcap.dev/spec",
+                      "kind": "doc"
+                    }
+                  ]
+                },
+                {
+                  "title": "인덱스와 시간 범위 탐색",
+                  "priority": "recommended",
+                  "description": "Chunk Index의 message_start_time/end_time으로 필요한 청크만 읽는 시간 범위 질의, 인덱스 없는 파일의 선형 스캔 — MCAP Specification",
+                  "resources": [
+                    {
+                      "title": "MCAP Specification",
+                      "url": "https://mcap.dev/spec",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "MCAP 스토리지 설정",
+              "priority": "recommended",
+              "description": "--storage-preset-profile(fastwrite·zstd_fast·zstd_small)과 --storage-config-file YAML(chunk_size, compression, noChunkCRC 등) — rosbag2_storage_mcap README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "fastwrite 프리셋",
+                  "priority": "recommended",
+                  "description": "청크·CRC·인덱스 생략으로 쓰기 처리량 최대화, 나중에 mcap 도구로 재처리하는 흐름 — rosbag2_storage_mcap README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "SQLite3 플러그인",
+              "priority": "recommended",
+              "description": "messages(id, topic_id, timestamp, data)·topics 테이블 스키마, 트랜잭션·WAL과 쓰기 성능, 비정상 종료 내성 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "mcap CLI",
+              "priority": "recommended",
+              "description": "mcap info·doctor(무결성 검사)·filter(토픽·시간 필터)·merge·compress·recover 명령 — foxglove/mcap 저장소 go/cli",
+              "resources": [
+                {
+                  "title": "foxglove/mcap",
+                  "url": "https://github.com/foxglove/mcap",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -446,6 +2336,47 @@
               "title": "About Quality of Service settings",
               "url": "https://docs.ros.org/en/rolling/ROS-Framework/interfaces/topics/About-Quality-of-Service-Settings.html",
               "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "QoS 정책 항목",
+              "priority": "essential",
+              "description": "reliability(RELIABLE/BEST_EFFORT)·durability(VOLATILE/TRANSIENT_LOCAL)·history(KEEP_LAST/KEEP_ALL)·depth와 deadline·lifespan·liveliness, 요청-제공 호환 규칙 — ROS 2 QoS 문서"
+            },
+            {
+              "title": "recorder QoS 적응 규칙",
+              "priority": "essential",
+              "description": "recorder가 발행자들의 offered QoS를 보고 구독 QoS를 정하는 규칙(모든 발행자가 reliable일 때만 reliable 등), 발행자가 늦게 뜰 때의 문제 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "QoS override YAML",
+              "priority": "essential",
+              "description": "--qos-profile-overrides-path 파일 형식: 토픽명 아래 reliability·durability·history·depth 키, 기록과 재생 양쪽에 쓰기 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "/tf_static과 transient_local",
+              "priority": "essential",
+              "description": "/tf_static은 TRANSIENT_LOCAL로 한 번만 발행되므로 recorder가 늦게 시작하면 놓치는 문제, durability override와 재생 시 latching — tf2 문서"
+            },
+            {
+              "title": "기록 누락 진단",
+              "priority": "recommended",
+              "description": "ros2 topic info --verbose로 발행자 QoS 확인, 기록 메시지 수와 발행 주기×시간 비교, 큐 depth 부족으로 인한 드롭 — ROS 2 QoS 문서"
             }
           ]
         },
@@ -459,6 +2390,56 @@
               "url": "https://github.com/ros2/rosbag2",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "분할 옵션",
+              "priority": "recommended",
+              "description": "-b/--max-bag-size(바이트)·-d/--max-bag-duration(초) 분할, 분할 파일 이름 규칙(_0, _1…)과 metadata의 relative_file_paths — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "캐시와 쓰기 스레드",
+              "priority": "recommended",
+              "description": "--max-cache-size 이중 버퍼 캐시, 캐시가 꽉 차면 메시지 드롭, 드롭 이벤트 확인 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "압축 모드",
+              "priority": "recommended",
+              "description": "--compression-mode none|file|message와 --compression-format zstd, --compression-queue-size·--compression-threads, MCAP 청크 압축과 중복 적용하지 말아야 하는 이유 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "스냅샷 모드",
+              "priority": "optional",
+              "description": "--snapshot-mode에서 --max-cache-size 크기의 순환 버퍼만 유지하다 ~/snapshot 서비스 호출 시 기록, 사건 직전 데이터 보존 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -471,6 +2452,66 @@
               "url": "https://github.com/ros2/rosbag2",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "SequentialReader 사용법",
+              "priority": "essential",
+              "description": "StorageOptions(uri, storage_id)·ConverterOptions, open → get_all_topics_and_types → has_next/read_next가 (topic, data, t) 반환, seek(t) — rosbag2_py 소스·테스트",
+              "resources": [
+                {
+                  "title": "rosbag2_py",
+                  "url": "https://github.com/ros2/rosbag2/tree/rolling/rosbag2_py",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "토픽 필터",
+              "priority": "essential",
+              "description": "StorageFilter(topics=[...])로 필요한 토픽만 읽기, MCAP 인덱스와 결합한 성능 — rosbag2_py 소스",
+              "resources": [
+                {
+                  "title": "rosbag2_py",
+                  "url": "https://github.com/ros2/rosbag2/tree/rolling/rosbag2_py",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "메시지 역직렬화",
+              "priority": "essential",
+              "description": "rosidl_runtime_py.utilities.get_message(type_str)로 클래스 얻기, rclpy.serialization.deserialize_message(data, cls) — rclpy API 문서"
+            },
+            {
+              "title": "SequentialWriter로 bag 쓰기",
+              "priority": "recommended",
+              "description": "create_topic(TopicMetadata)·write(topic, serialize_message(msg), t)로 후처리 결과를 새 bag으로 저장 — rosbag2_py 소스",
+              "resources": [
+                {
+                  "title": "rosbag2_py",
+                  "url": "https://github.com/ros2/rosbag2/tree/rolling/rosbag2_py",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "ROS 비의존 읽기",
+              "priority": "recommended",
+              "description": "ROS 설치 없이 bag을 읽는 라이브러리: rosbags(AnyReader·typestore), mcap-ros2-support(read_ros2_messages) — 각 저장소 README",
+              "resources": [
+                {
+                  "title": "ternaris/rosbags",
+                  "url": "https://gitlab.com/ternaris/rosbags",
+                  "kind": "code"
+                },
+                {
+                  "title": "mcap-ros2-support",
+                  "url": "https://github.com/foxglove/mcap/tree/main/python/mcap-ros2-support",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -482,6 +2523,183 @@
               "title": "ros2/rosbag2",
               "url": "https://github.com/ros2/rosbag2",
               "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "ros2 bag play 옵션",
+              "priority": "recommended",
+              "description": "재생 제어 옵션 — rosbag2 README",
+              "children": [
+                {
+                  "title": "속도·반복·시작 위치",
+                  "priority": "recommended",
+                  "description": "-r/--rate, -l/--loop, --start-offset, --playback-duration, --start-paused, --delay — rosbag2 README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "--clock과 use_sim_time",
+                  "priority": "essential",
+                  "description": "--clock [Hz]로 /clock 발행, 재생을 받는 노드에 use_sim_time:=true 설정, bag 시간과 header.stamp 관계 — rosbag2 README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                },
+                {
+                  "title": "토픽 선택과 리매핑",
+                  "priority": "recommended",
+                  "description": "--topics로 일부만 재생, --remap old:=new, --qos-profile-overrides-path로 재생 QoS 지정 — rosbag2 README",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "재생 제어 서비스",
+              "priority": "optional",
+              "description": "player의 ~/pause·~/resume·~/toggle_paused·~/play_next·~/set_rate·~/seek 서비스로 프레임 단위 검사 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "시각화 도구",
+              "priority": "recommended",
+              "description": "Foxglove(MCAP 직접 열기, 이미지·3D·plot 패널)와 PlotJuggler(시계열 비교)로 동기·누락 눈 검사 — Foxglove Docs, PlotJuggler README",
+              "resources": [
+                {
+                  "title": "Foxglove Docs",
+                  "url": "https://docs.foxglove.dev/",
+                  "kind": "doc"
+                },
+                {
+                  "title": "facontidavide/PlotJuggler",
+                  "url": "https://github.com/facontidavide/PlotJuggler",
+                  "kind": "code"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "bag 타임스탬프",
+          "priority": "essential",
+          "description": "bag에 저장되는 시각과 메시지 안 시각의 차이 — rosbag2 README",
+          "children": [
+            {
+              "title": "recv_timestamp vs send_timestamp",
+              "priority": "essential",
+              "description": "recorder 수신 시각(recv_timestamp)과 발행 시각(send_timestamp, Jazzy 이후 기록), 메시지 정렬·재생에 쓰이는 기준 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "header.stamp와의 차이",
+              "priority": "essential",
+              "description": "bag 타임스탬프는 수신 시각이므로 센서 측정 시각(header.stamp)과 지연만큼 다르다는 점, 학습 데이터 정렬은 header.stamp 기준으로 해야 하는 이유 — std_msgs/Header 문서"
+            }
+          ]
+        },
+        {
+          "title": "bag 변환과 편집",
+          "priority": "recommended",
+          "description": "기록 후 bag을 바꾸는 도구 — rosbag2 README",
+          "children": [
+            {
+              "title": "ros2 bag convert",
+              "priority": "recommended",
+              "description": "-i 입력 bag, -o 출력 옵션 YAML(output_bags: uri·storage_id·topics·start_time_ns·end_time_ns·compression)로 포맷 변환·토픽/시간 범위 잘라내기·병합 — rosbag2 README",
+              "resources": [
+                {
+                  "title": "ros2/rosbag2",
+                  "url": "https://github.com/ros2/rosbag2",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "ROS 1 bag 변환",
+              "priority": "optional",
+              "description": "rosbags-convert로 ROS 1 .bag ↔ ROS 2 bag 변환, 메시지 타입 이름 매핑 — rosbags 문서",
+              "resources": [
+                {
+                  "title": "ternaris/rosbags",
+                  "url": "https://gitlab.com/ternaris/rosbags",
+                  "kind": "code"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "bag에서 학습 데이터셋으로",
+          "priority": "essential",
+          "description": "기록한 bag을 학습 포맷 에피소드로 바꾸는 파이프라인 — LeRobot 데이터셋 문서, ACT 저장소",
+          "children": [
+            {
+              "title": "에피소드 경계 추출",
+              "priority": "essential",
+              "description": "기록 제어 서비스·이벤트 토픽·분할 파일로 에피소드 경계를 정하고 무효 구간(리셋)을 자르는 방법 — LeRobot 문서",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "LeRobot 데이터셋 구조",
+              "priority": "essential",
+              "description": "LeRobotDataset의 parquet(관측·action·timestamp·episode_index·frame_index)과 mp4 비디오, meta/info.json의 features·fps — lerobot 저장소",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "HDF5 에피소드 구조",
+              "priority": "recommended",
+              "description": "ACT 저장소의 episode_N.hdf5: /observations/qpos·qvel·images/<cam>, /action 데이터셋, 압축 옵션 — ACT 저장소(tonyzhaozh/act)",
+              "resources": [
+                {
+                  "title": "tonyzhaozh/act",
+                  "url": "https://github.com/tonyzhaozh/act",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "변환 결과 검증",
+              "priority": "recommended",
+              "description": "에피소드 길이·fps 일치, action과 다음 관측의 상관 확인, 영상 프레임 수와 테이블 행 수 일치 검사 — LeRobot 문서"
             }
           ]
         }
@@ -505,13 +2723,166 @@
               "url": "https://github.com/google-research/rlds",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "MDP와 궤적 표기",
+              "priority": "essential",
+              "description": "상태 s_t·행동 a_t·보상 r_t·전이 확률 P(s'|s,a), 궤적 τ=(s_0,a_0,…,s_T)와 시연 데이터셋 D={τ_i} 표기 — Sutton & Barto 『Reinforcement Learning: An Introduction』 3장",
+              "children": [
+                {
+                  "title": "POMDP와 관측 이력",
+                  "priority": "recommended",
+                  "description": "카메라 관측 o_t는 상태의 일부만 보여 주므로 정책 입력에 관측 이력 h_t=(o_{t-k..t})를 쓰는 근거, belief state 개념 — Kaelbling·Littman·Cassandra 1998 POMDP 논문, Thrun 『Probabilistic Robotics』 15장"
+                },
+                {
+                  "title": "시연 데이터에서 보상의 부재",
+                  "priority": "recommended",
+                  "description": "시연은 보통 보상이 없고 마지막 스텝에만 성공 보상 1을 주는 희소 보상 관례, reward·discount 필드를 0/1로 채우는 이유 — RLDS 논문 3장",
+                  "resources": [
+                    {
+                      "title": "RLDS: an Ecosystem to Generate, Share and Use Datasets in Reinforcement Learning",
+                      "url": "https://arxiv.org/abs/2111.02767",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "스텝 필드 정렬 규칙",
+              "priority": "essential",
+              "description": "같은 인덱스 t에 o_t와 그 관측을 보고 내린 a_t를 둔다, 다음 관측은 t+1 스텝에, 마지막 스텝의 action은 무효(패딩)로 처리 — RLDS 논문 3장",
+              "children": [
+                {
+                  "title": "is_first·is_last·is_terminal 차이",
+                  "priority": "essential",
+                  "description": "is_first=에피소드 첫 스텝, is_last=마지막 스텝(잘림 포함), is_terminal=MDP 종료 상태 도달(성공·실패로 끝남); 부트스트랩 여부가 갈림 — RLDS 논문 3장",
+                  "resources": [
+                    {
+                      "title": "RLDS: an Ecosystem to Generate, Share and Use Datasets in Reinforcement Learning",
+                      "url": "https://arxiv.org/abs/2111.02767",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "종료(terminated)와 잘림(truncated)",
+                  "priority": "recommended",
+                  "description": "시간 한도로 끊긴 에피소드는 truncated, 목표 달성·실패는 terminated로 구분하는 Gymnasium step API 규약과 value 부트스트랩 영향 — Gymnasium 문서 Env.step",
+                  "resources": [
+                    {
+                      "title": "Gymnasium documentation",
+                      "url": "https://gymnasium.farama.org/",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "고정 주기 스텝과 이벤트 기반 기록",
+              "priority": "recommended",
+              "description": "제어 주기 fps 격자로 저장하는 스텝 데이터와 센서마다 다른 주기로 쌓이는 이벤트 로그(rosbag)의 차이, 변환 시 리샘플링 필요성 — LeRobot 문서 데이터셋 절",
+              "resources": [
+                {
+                  "title": "LeRobot documentation",
+                  "url": "https://huggingface.co/docs/lerobot",
+                  "kind": "doc"
+                }
+              ]
+            }
           ]
         },
         {
           "title": "에피소드 경계와 리셋",
           "priority": "essential",
           "description": "시작/종료 트리거(페달·버튼), 리셋 시간 분리, 시작 자세 통일, 에피소드 길이 상한",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "태스크 정의서 작성",
+              "priority": "essential",
+              "description": "목표 상태·허용 전략·금지 행동·시간 한도·성공 조건·초기 상태 범위를 한 장 문서로 고정해 조작자 간 해석 차이를 줄이기 — DROID 논문 데이터 수집 프로토콜 절",
+              "resources": [
+                {
+                  "title": "DROID: A Large-Scale In-The-Wild Robot Manipulation Dataset",
+                  "url": "https://arxiv.org/abs/2403.12945",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "성공 판정 기준",
+                  "priority": "essential",
+                  "description": "이진 성공 vs 부분 점수(하위 작업 진행도), 판정 시점(종료 후 n초 유지), 판정 주체(조작자·별도 검수자·자동 판정 스크립트)와 판정 일관성"
+                },
+                {
+                  "title": "하위 작업(subtask) 분해",
+                  "priority": "recommended",
+                  "description": "접근→파지→운반→놓기처럼 단계를 정의하고 각 단계 성공 조건을 별도로 둠, 장기 작업(long-horizon)의 단계별 성공률 기록 — RT-1 논문 작업 정의 절",
+                  "resources": [
+                    {
+                      "title": "RT-1: Robotics Transformer for Real-World Control at Scale",
+                      "url": "https://arxiv.org/abs/2212.06817",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "시간 한도 설정",
+                  "priority": "recommended",
+                  "description": "숙련 조작자 평균 소요 시간의 1.5~2배 같은 상한, 초과 시 truncated로 종료하고 별도 태그"
+                }
+              ]
+            },
+            {
+              "title": "리셋 절차 표준화",
+              "priority": "essential",
+              "description": "사람 리셋 vs 스크립트 자동 리셋, 리셋 중 녹화 중지, 리셋 체크리스트(물체 배치·로봇 홈 자세·그리퍼 개방), 리셋 시간 기록",
+              "children": [
+                {
+                  "title": "초기 상태 분포 설계",
+                  "priority": "essential",
+                  "description": "물체 위치를 격자 또는 균등 분포에서 샘플링, 위치·자세 범위를 메타데이터에 기록, 학습 분포와 평가 분포를 맞추기"
+                },
+                {
+                  "title": "리셋 구간 잘라내기",
+                  "priority": "recommended",
+                  "description": "리셋 동작이 학습 데이터에 섞이지 않도록 녹화 상태 머신으로 분리하거나 사후에 구간을 잘라냄"
+                }
+              ]
+            },
+            {
+              "title": "녹화 트리거와 상태 머신",
+              "priority": "recommended",
+              "description": "풋페달·조이스틱 버튼을 ROS 2 서비스 호출로 연결, idle→recording→saving→reset 상태 전이와 각 상태의 허용 입력 — LeRobot record 스크립트 키보드 제어",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "폐기와 실패 라벨 구분",
+                  "priority": "essential",
+                  "description": "조작 실수·장비 문제로 무효인 에피소드는 즉시 폐기(discard), 작업 자체를 실패한 에피소드는 success=false로 보존 — 두 경우를 섞지 않기"
+                },
+                {
+                  "title": "저장 중 다음 에피소드 차단",
+                  "priority": "optional",
+                  "description": "인코딩·디스크 쓰기 중 새 녹화 시작을 막아 프레임 누락 방지, 비동기 이미지 쓰기 큐"
+                }
+              ]
+            },
+            {
+              "title": "에피소드 길이 분포 관리",
+              "priority": "optional",
+              "description": "길이 히스토그램으로 이상치(너무 짧음=조기 종료, 너무 김=망설임) 확인, 정책의 시간 지평 설정 근거"
+            }
+          ]
         },
         {
           "title": "에피소드 메타데이터",
@@ -529,13 +2900,126 @@
               "title": "조작자 식별자는 익명 ID로",
               "priority": "essential",
               "description": "조작자 실명·얼굴·음성 대신 익명 operator_id만 저장, 영상에 사람이 찍히면 블러 처리 등 개인정보 최소 수집",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "개인정보 보관·삭제 정책",
+                  "priority": "recommended",
+                  "description": "익명 ID↔실명 대응표는 데이터셋과 분리 보관, 접근 권한 최소화, 보관 기간과 삭제 요청 처리 절차 — 개인정보 보호법 개념 수준"
+                }
+              ]
             },
             {
               "title": "데이터셋 카드",
               "priority": "recommended",
               "description": "수집 목적·장비·작업 목록·라이선스·알려진 한계를 데이터셋 README(dataset card)로 기록 — Hugging Face Hub 데이터셋 카드",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "Datasheets for Datasets 항목",
+                  "priority": "optional",
+                  "description": "동기·구성·수집 과정·전처리·사용·배포·유지보수 7개 질문 묶음으로 카드 작성 — Gebru 등 Datasheets for Datasets",
+                  "resources": [
+                    {
+                      "title": "Datasheets for Datasets",
+                      "url": "https://arxiv.org/abs/1803.09010",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "라이선스 선택",
+                  "priority": "optional",
+                  "description": "CC BY 4.0 등 데이터 라이선스와 코드 라이선스 구분, 카드의 license 메타데이터 필드",
+                  "resources": [
+                    {
+                      "title": "Hugging Face Hub: Dataset Cards",
+                      "url": "https://huggingface.co/docs/hub/datasets-cards",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "언어 지시 어노테이션",
+              "priority": "essential",
+              "description": "에피소드마다 language_instruction 문자열, 동사+목적어+위치 형식, 같은 작업의 표현 다양화 — Open X-Embodiment·BridgeData V2 데이터셋 구성",
+              "resources": [
+                {
+                  "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models",
+                  "url": "https://arxiv.org/abs/2310.08864",
+                  "kind": "paper"
+                },
+                {
+                  "title": "BridgeData V2: A Dataset for Robot Learning at Scale",
+                  "url": "https://arxiv.org/abs/2308.12952",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "템플릿 지시와 자유 서술",
+                  "priority": "recommended",
+                  "description": "\"pick up the {object} and place it in the {target}\" 템플릿은 일관성, 자유 서술은 언어 일반화에 유리 — BridgeData V2 논문",
+                  "resources": [
+                    {
+                      "title": "BridgeData V2: A Dataset for Robot Learning at Scale",
+                      "url": "https://arxiv.org/abs/2308.12952",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "사후 재라벨링",
+                  "priority": "optional",
+                  "description": "녹화 후 실제로 일어난 일에 맞춰 지시를 다시 붙이는 hindsight relabeling, 실패 시연을 다른 작업의 성공으로 재사용"
+                },
+                {
+                  "title": "패러프레이즈 증강",
+                  "priority": "optional",
+                  "description": "LLM으로 지시 문장을 여러 표현으로 바꿔 학습 시 무작위 선택, 의미 보존 검수"
+                }
+              ]
+            },
+            {
+              "title": "구간 라벨(segment annotation)",
+              "priority": "recommended",
+              "description": "시작·종료 frame_index와 라벨(접근·파지·운반·놓기·실패 복구)을 붙여 단계별 분석과 계층 정책 학습에 사용",
+              "children": [
+                {
+                  "title": "구간 라벨 저장 형식",
+                  "priority": "optional",
+                  "description": "에피소드별 [{start, end, label}] JSON 또는 프레임별 정수 라벨 열, 겹침 허용 여부 규칙"
+                },
+                {
+                  "title": "라벨러 간 일치도",
+                  "priority": "optional",
+                  "description": "Cohen's kappa로 범주 일치, 경계 프레임 허용 오차(±k 프레임) 내 일치율"
+                }
+              ]
+            },
+            {
+              "title": "하드웨어·캘리브레이션 메타데이터",
+              "priority": "essential",
+              "description": "robot_type, URDF 파일 해시, 카메라 내부 파라미터(K, 왜곡 계수 D, 해상도), 외부 파라미터(T_base_camera), 그리퍼 개폐 범위와 단위",
+              "children": [
+                {
+                  "title": "캘리브레이션 버전 관리",
+                  "priority": "recommended",
+                  "description": "캘리브레이션 날짜·버전 ID를 에피소드에 연결, 카메라를 옮기면 새 버전으로 기록"
+                }
+              ]
+            },
+            {
+              "title": "환경·장면 메타데이터",
+              "priority": "recommended",
+              "description": "장소 ID, 조명 조건, 테이블 높이·재질, 등장 물체 목록, 방해물 유무를 정해진 어휘로 기록해 나중에 분할·필터에 사용 — DROID 논문 장면 메타데이터"
+            },
+            {
+              "title": "메타데이터 스키마 고정",
+              "priority": "recommended",
+              "description": "JSON Schema 또는 pydantic 모델로 필수·선택 필드와 타입·단위를 고정, 녹화 시점 검증으로 누락 방지"
             }
           ]
         },
@@ -543,7 +3027,41 @@
           "title": "디렉터리·명명 규칙",
           "priority": "recommended",
           "description": "날짜/작업/세션/에피소드 인덱스 기반 경로, 불변(immutable) 원본과 변환본 분리, 체크섬 기록",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "원본과 파생 데이터 분리",
+              "priority": "essential",
+              "description": "raw(bag·원본 영상)는 읽기 전용, 변환본은 변환 스크립트 git 커밋과 함께 저장해 언제든 재생성 가능하게"
+            },
+            {
+              "title": "체크섬과 매니페스트",
+              "priority": "recommended",
+              "description": "파일별 sha256과 크기를 manifest 파일로 기록, 복사·업로드 후 재검증"
+            },
+            {
+              "title": "데이터셋 버전 관리",
+              "priority": "recommended",
+              "description": "데이터셋 버전 태그(semver), 변경 로그, DVC 또는 Hugging Face Hub revision으로 특정 버전 고정 — DVC 문서",
+              "resources": [
+                {
+                  "title": "DVC documentation",
+                  "url": "https://dvc.org/doc",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "에피소드 인덱스 규칙",
+              "priority": "recommended",
+              "description": "episode_index는 0부터 연속 정수, 에피소드 삭제 시 재인덱싱이 메타데이터·통계에 주는 영향"
+            },
+            {
+              "title": "저장 용량 추정",
+              "priority": "optional",
+              "description": "해상도×채널×fps×카메라 수×시간으로 원시 크기 계산, 비디오 압축률(H.264·AV1)로 실제 용량 가늠"
+            }
+          ]
         },
         {
           "title": "통계 정보",
@@ -554,6 +3072,98 @@
               "title": "huggingface/lerobot",
               "url": "https://github.com/huggingface/lerobot",
               "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "z-score와 min-max 정규화",
+              "priority": "essential",
+              "description": "x̂=(x−μ)/σ vs x̂=2(x−min)/(max−min)−1, 행동은 [-1,1] min-max(Diffusion Policy), 상태는 mean/std가 흔한 이유 — Diffusion Policy 논문 부록",
+              "resources": [
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "분위수 기반 통계",
+              "priority": "recommended",
+              "description": "q01·q99로 클리핑 후 정규화해 이상치에 강하게 — Octo·OpenVLA 행동 정규화",
+              "resources": [
+                {
+                  "title": "Octo: An Open-Source Generalist Robot Policy",
+                  "url": "https://arxiv.org/abs/2405.12213",
+                  "kind": "paper"
+                },
+                {
+                  "title": "OpenVLA: An Open-Source Vision-Language-Action Model",
+                  "url": "https://arxiv.org/abs/2406.09246",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "이미지 통계",
+              "priority": "optional",
+              "description": "채널별 mean/std를 데이터셋에서 계산할지 ImageNet 통계를 쓸지, 사전학습 인코더와의 정합"
+            },
+            {
+              "title": "통계 재계산과 누수",
+              "priority": "recommended",
+              "description": "에피소드 추가·필터링 후 재계산, 평가 전용 에피소드를 통계에 섞지 않기"
+            },
+            {
+              "title": "온라인 통계 계산",
+              "priority": "optional",
+              "description": "대용량 데이터에서 한 번에 평균·분산을 구하는 Welford 알고리즘과 수치 안정성 — Knuth 『The Art of Computer Programming』 2권 4.2.2"
+            }
+          ]
+        },
+        {
+          "title": "학습·검증 분할",
+          "priority": "essential",
+          "description": "프레임이 아니라 에피소드 단위로 분할(인접 프레임 누수 방지), 장면·물체 홀드아웃 분할로 일반화 평가, split 정보를 메타데이터에 기록",
+          "children": [
+            {
+              "title": "에피소드 단위 분할",
+              "priority": "essential",
+              "description": "같은 에피소드의 프레임이 학습·검증에 동시에 들어가면 검증 손실이 과소평가되는 이유"
+            },
+            {
+              "title": "홀드아웃 분할 설계",
+              "priority": "recommended",
+              "description": "새 물체·새 장면·새 조작자를 검증 전용으로 남겨 분포 밖 일반화 측정"
+            }
+          ]
+        },
+        {
+          "title": "수집 계획과 커버리지 매트릭스",
+          "priority": "essential",
+          "description": "요인(물체×위치×조명×조작자)을 표로 만들고 셀마다 에피소드 수 할당, 수집 진행률 추적 — Montgomery 『Design and Analysis of Experiments』 5장 요인 설계",
+          "children": [
+            {
+              "title": "요인 설계",
+              "priority": "recommended",
+              "description": "완전 요인 설계와 부분 요인 설계, 요인 수가 많을 때 셀 수 폭발 관리 — Montgomery 『Design and Analysis of Experiments』 5·8장"
+            },
+            {
+              "title": "층화 샘플링",
+              "priority": "recommended",
+              "description": "요인 조합별 층에서 균등하게 뽑아 특정 조건 쏠림 방지 — Cochran 『Sampling Techniques』 5장"
+            },
+            {
+              "title": "조작자 다양성",
+              "priority": "recommended",
+              "description": "여러 조작자 시연을 섞을 때 전략 차이(다중 모드)와 일반화 이득의 균형 — robomimic 논문 다중 조작자 데이터 결과",
+              "resources": [
+                {
+                  "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+                  "url": "https://arxiv.org/abs/2108.03298",
+                  "kind": "paper"
+                }
+              ]
             }
           ]
         }
@@ -589,6 +3199,18 @@
                   "url": "https://github.com/huggingface/lerobot",
                   "kind": "code"
                 }
+              ],
+              "children": [
+                {
+                  "title": "dtype 선택",
+                  "priority": "recommended",
+                  "description": "float32 상태·행동, video vs image dtype(저장 방식 차이), string·int64 열"
+                },
+                {
+                  "title": "names로 차원 의미 기록",
+                  "priority": "essential",
+                  "description": "shape [7]인 action에 [\"x\",\"y\",\"z\",\"roll\",\"pitch\",\"yaw\",\"gripper\"]처럼 이름을 달아 다른 로봇과 매핑 가능하게"
+                }
               ]
             },
             {
@@ -601,6 +3223,117 @@
                   "url": "https://github.com/ros2/rosbag2",
                   "kind": "code"
                 },
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "리샘플링 방법",
+                  "priority": "essential",
+                  "description": "fps 격자 시각마다 최근접(nearest)·0차 유지(ZOH)·선형 보간 선택, 이미지는 최근접, 연속 상태는 보간, 행동 명령은 ZOH가 자연스러운 이유"
+                },
+                {
+                  "title": "이미지 토픽 디코딩",
+                  "priority": "recommended",
+                  "description": "sensor_msgs/CompressedImage를 cv2.imdecode, Image는 cv_bridge로 ndarray 변환, 인코딩(bgr8·rgb8) 확인"
+                }
+              ]
+            },
+            {
+              "title": "meta/info.json",
+              "priority": "essential",
+              "description": "codebase_version, robot_type, fps, total_episodes, total_frames, total_tasks, chunks_size, data_path·video_path 경로 템플릿, splits, features 정의를 담는 최상위 메타 — lerobot 저장소 lerobot_dataset.py",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "meta/episodes",
+              "priority": "essential",
+              "description": "에피소드별 episode_index, tasks 목록, length(프레임 수), 해당 데이터·비디오 파일 위치와 프레임 범위 — LeRobot 문서 데이터셋 포맷",
+              "resources": [
+                {
+                  "title": "LeRobot documentation",
+                  "url": "https://huggingface.co/docs/lerobot",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "meta/tasks",
+              "priority": "essential",
+              "description": "task_index ↔ 자연어 task 문자열 대응표, 프레임의 task_index로 언어 지시 조회"
+            },
+            {
+              "title": "meta/stats.json",
+              "priority": "essential",
+              "description": "feature 키별 mean·std·min·max(+count), 이미지 키는 채널별 통계, 학습 시 정규화 모듈이 읽는 위치"
+            },
+            {
+              "title": "data parquet 열 구성",
+              "priority": "essential",
+              "description": "index(전역), frame_index(에피소드 내), episode_index, timestamp(초), task_index, observation.state, action, next.done 열 — lerobot 저장소",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "timestamp와 frame_index 관계",
+                  "priority": "essential",
+                  "description": "timestamp ≈ frame_index/fps 를 만족해야 하며 로딩 시 tolerance_s 범위로 검사, 위반 시 원인은 프레임 드롭·잘못된 리샘플링"
+                },
+                {
+                  "title": "next.reward·next.done 열",
+                  "priority": "optional",
+                  "description": "강화학습 호환용 열, 시연 데이터에서는 마지막 프레임만 done=True"
+                }
+              ]
+            },
+            {
+              "title": "비디오 인코딩 설정",
+              "priority": "recommended",
+              "description": "카메라 스트림을 MP4로 저장, 코덱(AV1 libsvtav1·H.264), pix_fmt yuv420p, GOP 크기 g, CRF, 디코딩 백엔드(torchcodec·pyav)",
+              "children": [
+                {
+                  "title": "GOP와 랜덤 접근 비용",
+                  "priority": "recommended",
+                  "description": "키프레임 간격이 길면 임의 프레임 디코딩 시 앞 키프레임부터 디코드해야 해 데이터로더가 느려짐"
+                },
+                {
+                  "title": "손실 압축이 학습에 주는 영향",
+                  "priority": "optional",
+                  "description": "압축 아티팩트·색 손실이 정책 성능에 주는 영향 확인법(무압축 PNG 대비 비교 실험)"
+                }
+              ]
+            },
+            {
+              "title": "v2.x와 v3.0 포맷 차이",
+              "priority": "recommended",
+              "description": "에피소드당 파일 1개(v2) vs 여러 에피소드를 묶은 청크 파일과 parquet 에피소드 메타(v3), 버전 변환 스크립트 — LeRobot 문서",
+              "resources": [
+                {
+                  "title": "LeRobot documentation",
+                  "url": "https://huggingface.co/docs/lerobot",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "LeRobotDataset 로딩 API",
+              "priority": "recommended",
+              "description": "LeRobotDataset(repo_id, root=, episodes=, delta_timestamps=), __getitem__이 돌려주는 dict 키, 메타만 여는 LeRobotDatasetMetadata",
+              "resources": [
                 {
                   "title": "huggingface/lerobot",
                   "url": "https://github.com/huggingface/lerobot",
@@ -630,6 +3363,80 @@
               "url": "https://www.tensorflow.org/datasets",
               "kind": "doc"
             }
+          ],
+          "children": [
+            {
+              "title": "episode·steps 중첩 구조",
+              "priority": "essential",
+              "description": "episode는 episode_metadata dict와 steps(중첩 tf.data.Dataset)로 구성, 에피소드 단위 셔플과 스텝 단위 배치 — RLDS 논문 3장",
+              "resources": [
+                {
+                  "title": "RLDS: an Ecosystem to Generate, Share and Use Datasets in Reinforcement Learning",
+                  "url": "https://arxiv.org/abs/2111.02767",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "step 필드 명세",
+              "priority": "essential",
+              "description": "observation(dict: image, wrist_image, state), action, reward, discount, is_first, is_last, is_terminal, language_instruction(OXE 관례)",
+              "resources": [
+                {
+                  "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models",
+                  "url": "https://arxiv.org/abs/2310.08864",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "TFDS DatasetBuilder 작성",
+              "priority": "recommended",
+              "description": "_info()에서 FeaturesDict 정의, _split_generators, _generate_examples에서 (key, episode dict) yield — TFDS 문서 Writing custom datasets",
+              "resources": [
+                {
+                  "title": "TFDS: Writing custom datasets",
+                  "url": "https://www.tensorflow.org/datasets/add_dataset",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "FeaturesDict 텐서 명세",
+                  "priority": "recommended",
+                  "description": "tfds.features.Tensor(shape, dtype), Image(shape, encoding_format='jpeg'), Text, Scalar로 스텝 필드 선언"
+                },
+                {
+                  "title": "TFRecord 샤딩",
+                  "priority": "optional",
+                  "description": "샤드 크기·수, 병렬 읽기(interleave)와 셔플 버퍼의 관계"
+                }
+              ]
+            },
+            {
+              "title": "RLDS 변환 패턴",
+              "priority": "optional",
+              "description": "rlds.transformations로 스텝 배치·윈도우 만들기, episode→steps flat_map 후 학습 샘플 구성",
+              "resources": [
+                {
+                  "title": "RLDS: an Ecosystem to Generate, Share and Use Datasets in Reinforcement Learning",
+                  "url": "https://arxiv.org/abs/2111.02767",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "EnvLogger",
+              "priority": "optional",
+              "description": "환경 step 호출을 가로채 RLDS 형식으로 바로 기록하는 로거, 시뮬레이션 수집에서의 사용",
+              "resources": [
+                {
+                  "title": "google-deepmind/envlogger",
+                  "url": "https://github.com/google-deepmind/envlogger",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -647,6 +3454,44 @@
               "url": "https://github.com/google-deepmind/open_x_embodiment",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "행동 공간 표준화",
+              "priority": "essential",
+              "description": "EE 델타 (Δx,Δy,Δz,Δroll,Δpitch,Δyaw,gripper) 7차원으로 맞추는 방식과 좌표계·단위 차이 처리 — Open X-Embodiment 논문 3장",
+              "resources": [
+                {
+                  "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models",
+                  "url": "https://arxiv.org/abs/2310.08864",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "카메라 키 통일",
+              "priority": "recommended",
+              "description": "데이터셋마다 다른 카메라를 primary(3인칭)·wrist(손목) 역할로 매핑, 없는 카메라는 패딩·마스크 — Octo 논문 데이터 전처리",
+              "resources": [
+                {
+                  "title": "Octo: An Open-Source Generalist Robot Policy",
+                  "url": "https://arxiv.org/abs/2405.12213",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "데이터셋 혼합 가중치",
+              "priority": "optional",
+              "description": "데이터셋 크기·품질에 따른 샘플링 비율 설정, 큰 데이터셋 지배 방지 — Octo 논문 데이터 혼합 절",
+              "resources": [
+                {
+                  "title": "Octo: An Open-Source Generalist Robot Policy",
+                  "url": "https://arxiv.org/abs/2405.12213",
+                  "kind": "paper"
+                }
+              ]
+            }
           ]
         },
         {
@@ -658,6 +3503,61 @@
               "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
               "url": "https://arxiv.org/abs/2303.04137",
               "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "관절 공간과 작업 공간",
+              "priority": "essential",
+              "description": "관절각 행동은 역기구학 불필요·특이점 무관, EE 포즈 행동은 로봇 간 이전성 — Lynch & Park 『Modern Robotics』 4·6장"
+            },
+            {
+              "title": "절대 행동과 델타 행동",
+              "priority": "essential",
+              "description": "절대 목표는 누적 오차 없음, 델타는 위치 불변성과 일반화에 유리하지만 적분 오차 누적",
+              "children": [
+                {
+                  "title": "델타 기준 프레임",
+                  "priority": "recommended",
+                  "description": "base 프레임 델타 vs 현재 EE 프레임 델타(상대 궤적), UMI의 상대 EE 포즈 표현 — UMI 논문",
+                  "resources": [
+                    {
+                      "title": "Universal Manipulation Interface",
+                      "url": "https://arxiv.org/abs/2402.10329",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "회전 표현",
+              "priority": "essential",
+              "description": "쿼터니언(q와 −q 이중 피복), 오일러각(짐벌락·불연속), 축-각, 회전행렬 앞 두 열의 6D 연속 표현과 그람-슈미트 복원 — Zhou 등 2019",
+              "resources": [
+                {
+                  "title": "On the Continuity of Rotation Representations in Neural Networks",
+                  "url": "https://arxiv.org/abs/1812.07035",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "그리퍼 행동 표현",
+              "priority": "recommended",
+              "description": "연속 개폐 폭(m) vs 이진 open/close, 이진은 BCE 손실·임계값, 연속은 정규화 범위 주의"
+            },
+            {
+              "title": "명령값과 측정값 구분",
+              "priority": "essential",
+              "description": "action은 리더 장치 명령(목표), observation.state는 팔로워 측정값으로 저장해야 지연·추종 오차가 학습에 반영됨 — ACT 논문 데이터 수집 절",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
             }
           ]
         },
@@ -676,7 +3576,137 @@
               "url": "https://arxiv.org/abs/2108.03298",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "HDF5 기본 개념",
+              "priority": "essential",
+              "description": "파일·그룹·데이터셋·속성(attrs), 청크 저장과 압축 필터(gzip·lzf), h5py의 create_dataset·슬라이싱 읽기 — h5py 문서 Quick Start",
+              "resources": [
+                {
+                  "title": "h5py documentation",
+                  "url": "https://docs.h5py.org/en/stable/",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "ACT 에피소드 HDF5 레이아웃",
+              "priority": "recommended",
+              "description": "episode_N.hdf5 안에 /observations/qpos, /observations/qvel, /observations/images/<cam>, /action, 루트 attrs['sim'] — act 저장소 record_sim_episodes.py",
+              "resources": [
+                {
+                  "title": "tonyzhaozh/act",
+                  "url": "https://github.com/tonyzhaozh/act",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "robomimic HDF5 레이아웃",
+              "priority": "recommended",
+              "description": "data/demo_i/{obs/<key>, actions, rewards, dones, states}, data attrs의 env_args, mask/<filter_key>로 부분 집합 정의 — robomimic 데이터셋 문서",
+              "resources": [
+                {
+                  "title": "robomimic: Datasets overview",
+                  "url": "https://robomimic.github.io/docs/datasets/overview.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "동시 쓰기와 SWMR",
+              "priority": "optional",
+              "description": "단일 writer·다중 reader 모드, 녹화 중 파일 손상 위험과 에피소드별 파일 분리 이유 — h5py 문서 SWMR",
+              "resources": [
+                {
+                  "title": "h5py documentation",
+                  "url": "https://docs.h5py.org/en/stable/",
+                  "kind": "doc"
+                }
+              ]
+            }
           ]
+        },
+        {
+          "title": "Zarr 포맷",
+          "priority": "recommended",
+          "description": "청크 단위 N차원 배열 저장, 그룹·attrs, 압축기(Blosc·zstd), 디렉터리·ZIP 스토어, 클라우드 객체 저장소 친화성 — Zarr 문서",
+          "resources": [
+            {
+              "title": "Zarr documentation",
+              "url": "https://zarr.readthedocs.io/",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "ReplayBuffer 구조",
+              "priority": "essential",
+              "description": "Diffusion Policy·UMI가 쓰는 data/<key> (전체 스텝을 이어 붙인 배열)와 meta/episode_ends 누적 인덱스로 에피소드 경계를 표현하는 방식 — diffusion_policy 저장소 replay_buffer.py",
+              "resources": [
+                {
+                  "title": "real-stanford/diffusion_policy",
+                  "url": "https://github.com/real-stanford/diffusion_policy",
+                  "kind": "code"
+                },
+                {
+                  "title": "real-stanford/universal_manipulation_interface",
+                  "url": "https://github.com/real-stanford/universal_manipulation_interface",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "청크 크기 설계",
+              "priority": "recommended",
+              "description": "시간축 청크 길이와 이미지 청크 모양이 랜덤 접근·압축률에 주는 영향"
+            },
+            {
+              "title": "Zarr v2와 v3",
+              "priority": "optional",
+              "description": "메타데이터 파일(.zarray·zarr.json) 차이와 라이브러리 호환성"
+            }
+          ]
+        },
+        {
+          "title": "Parquet·Arrow 기초",
+          "priority": "recommended",
+          "description": "열 지향 저장, row group·page, 압축 코덱(snappy·zstd), 스키마와 중첩 타입(list<float>), PyArrow Table↔pandas 변환 — Apache Parquet·Arrow 문서",
+          "resources": [
+            {
+              "title": "Apache Parquet documentation",
+              "url": "https://parquet.apache.org/docs/",
+              "kind": "doc"
+            },
+            {
+              "title": "Apache Arrow Python (PyArrow)",
+              "url": "https://arrow.apache.org/docs/python/",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "포맷 간 변환과 검증",
+          "priority": "essential",
+          "description": "HDF5·Zarr·RLDS·LeRobot 사이 변환 시 필드 매핑표를 먼저 작성하고 왕복 검증",
+          "children": [
+            {
+              "title": "필드 매핑표 작성",
+              "priority": "essential",
+              "description": "원본 키→대상 키, dtype·shape·단위·좌표계·정규화 여부를 표로 정리 (예: /observations/qpos → observation.state)"
+            },
+            {
+              "title": "변환 후 검증",
+              "priority": "essential",
+              "description": "에피소드 수·프레임 수 일치, 키별 통계 비교, 무작위 프레임 이미지 대조, 행동 재생(replay)으로 궤적 확인"
+            }
+          ]
+        },
+        {
+          "title": "포맷 선택 기준",
+          "priority": "recommended",
+          "description": "랜덤 접근 속도, 스트리밍 가능 여부, 비디오 압축 지원, 프레임워크 생태계(PyTorch·TensorFlow·JAX), 공유·Hub 업로드 편의를 기준으로 비교"
         }
       ]
     },
@@ -693,6 +3723,49 @@
               "url": "https://arxiv.org/abs/2403.12945",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "초기 상태 커버리지 측정",
+              "priority": "essential",
+              "description": "물체 초기 위치 산점도와 격자 셀 커버율, 비어 있는 영역을 다음 수집 계획에 반영"
+            },
+            {
+              "title": "시각적 다양성",
+              "priority": "recommended",
+              "description": "조명·배경·테이블 천·카메라 위치 변화가 시각 정책 강건성에 주는 영향 — BridgeData V2 논문",
+              "resources": [
+                {
+                  "title": "BridgeData V2: A Dataset for Robot Learning at Scale",
+                  "url": "https://arxiv.org/abs/2308.12952",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "물체 인스턴스 다양성",
+              "priority": "recommended",
+              "description": "같은 범주의 서로 다른 물체(색·크기·재질)를 섞어 범주 수준 일반화 — Data Scaling Laws 논문",
+              "resources": [
+                {
+                  "title": "Data Scaling Laws in Imitation Learning for Robotic Manipulation",
+                  "url": "https://arxiv.org/abs/2410.18647",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "환경·물체 수와 시연 수의 교환",
+              "priority": "recommended",
+              "description": "환경·물체 다양성을 늘리는 것이 같은 조건 시연 수를 늘리는 것보다 일반화에 유리하다는 멱법칙 결과 — Data Scaling Laws in Imitation Learning 논문",
+              "resources": [
+                {
+                  "title": "Data Scaling Laws in Imitation Learning for Robotic Manipulation",
+                  "url": "https://arxiv.org/abs/2410.18647",
+                  "kind": "paper"
+                }
+              ]
+            }
           ]
         },
         {
@@ -705,13 +3778,61 @@
               "url": "https://arxiv.org/abs/2108.03298",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "다중 모드 시연 문제",
+              "priority": "essential",
+              "description": "왼쪽·오른쪽으로 돌아가는 두 전략이 섞이면 MSE 회귀가 평균(가운데 충돌)을 출력하는 이유, 해결책(GMM·이산화·확산 모델) — Behavior Transformers 논문 1~2장",
+              "resources": [
+                {
+                  "title": "Behavior Transformers: Cloning k modes with one stone",
+                  "url": "https://arxiv.org/abs/2206.11251",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "시연 속도와 망설임",
+              "priority": "recommended",
+              "description": "정지 구간 비율·평균 속도 편차로 망설임 측정, 느린 시연이 정책의 정지 행동을 유발"
+            },
+            {
+              "title": "조작자 간 편차",
+              "priority": "recommended",
+              "description": "조작자별 성공률·소요 시간·궤적 통계 비교, 숙련도 낮은 조작자 데이터의 영향 — robomimic 논문 MH 데이터셋 결과",
+              "resources": [
+                {
+                  "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+                  "url": "https://arxiv.org/abs/2108.03298",
+                  "kind": "paper"
+                }
+              ]
+            }
           ]
         },
         {
           "title": "실패 시연과 라벨",
           "priority": "essential",
           "description": "실패 에피소드를 버리지 않고 success=false로 라벨, 실패 원인 태그(미끄러짐·충돌·시간 초과), 학습 데이터에서 필터링 기준",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "실패 원인 분류 체계",
+              "priority": "recommended",
+              "description": "파지 실패·미끄러짐·충돌·시간 초과·조작 실수 등 고정 어휘 태그, 다중 태그 허용 규칙"
+            },
+            {
+              "title": "부분 성공 라벨",
+              "priority": "optional",
+              "description": "하위 작업 몇 단계까지 성공했는지 정수 진행도로 기록"
+            },
+            {
+              "title": "실패 데이터 활용",
+              "priority": "optional",
+              "description": "성공만 쓰는 필터링 BC, 성공 가중 BC, 실패를 음성 예제로 쓰는 방법의 차이"
+            }
+          ]
         },
         {
           "title": "인간 개입 표시",
@@ -728,13 +3849,119 @@
               "url": "https://arxiv.org/abs/1011.0686",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "개입 플래그 기록",
+              "priority": "recommended",
+              "description": "정책 실행/사람 제어 전환 시각을 bool 열로 기록, 개입 직전 구간 표시"
+            },
+            {
+              "title": "DAgger 알고리즘",
+              "priority": "recommended",
+              "description": "정책 롤아웃 상태에서 전문가 라벨을 모아 집계, β 혼합 정책, no-regret 보장과 O(Tε) 오차 경계 — DAgger 논문 3~4장",
+              "resources": [
+                {
+                  "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning (DAgger)",
+                  "url": "https://arxiv.org/abs/1011.0686",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "HG-DAgger 게이팅",
+              "priority": "optional",
+              "description": "사람이 위험할 때만 개입하는 게이팅, 개입 구간만 학습 데이터로 추가 — HG-DAgger 논문 3장",
+              "resources": [
+                {
+                  "title": "HG-DAgger: Interactive Imitation Learning with Human Experts",
+                  "url": "https://arxiv.org/abs/1810.02890",
+                  "kind": "paper"
+                }
+              ]
+            }
           ]
         },
         {
           "title": "품질 검사 자동화",
           "priority": "recommended",
           "description": "드롭 프레임·타임스탬프 역전·관절 점프·정지 구간 탐지, 행동 분포 히스토그램, 에피소드 길이 분포, 무작위 샘플 영상 리뷰",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "지연 측정",
+              "priority": "essential",
+              "description": "센서 헤더 stamp와 수신 시각 차이 분포, 명령→실행 지연, 리더-팔로워 추종 지연을 상호상관으로 추정",
+              "children": [
+                {
+                  "title": "종단 간 지연 측정법",
+                  "priority": "recommended",
+                  "description": "LED 점등이나 화면 타임코드를 카메라로 찍어 실제 지연을 측정"
+                },
+                {
+                  "title": "지연 지터",
+                  "priority": "recommended",
+                  "description": "지연의 분산·최대값, 지터가 크면 고정 오프셋 보정이 안 되는 이유"
+                }
+              ]
+            },
+            {
+              "title": "프레임 드롭 탐지",
+              "priority": "essential",
+              "description": "기대 프레임 수 = 길이×fps 대비 실제 수, 연속 timestamp 간격 > 1.5/fps 를 드롭으로 판정, 카메라별 드롭률",
+              "children": [
+                {
+                  "title": "드롭 허용 기준",
+                  "priority": "recommended",
+                  "description": "에피소드당 드롭률·최대 연속 드롭 길이 임계값 정하기, 초과 시 폐기 또는 보간"
+                }
+              ]
+            },
+            {
+              "title": "궤적 부드러움 지표",
+              "priority": "essential",
+              "description": "유한차분 속도·가속도·저크, 무차원 정규화 저크(dimensionless jerk), 스펙트럼 호 길이 SPARC — Balasubramanian 등 movement smoothness 논문",
+              "children": [
+                {
+                  "title": "유한차분과 노이즈 증폭",
+                  "priority": "recommended",
+                  "description": "차분 차수가 오를수록 고주파 노이즈 증폭, Savitzky-Golay 필터로 미분 추정 — Oppenheim 『Discrete-Time Signal Processing』"
+                },
+                {
+                  "title": "관절 점프 탐지",
+                  "priority": "essential",
+                  "description": "한 스텝 관절각 변화가 최대 속도×dt를 넘으면 점프로 판정, ±π 래핑 처리"
+                }
+              ]
+            },
+            {
+              "title": "타임스탬프 단조성 검사",
+              "priority": "essential",
+              "description": "timestamp 역전·중복 탐지, 시계 동기화(chrony·PTP) 실패 징후"
+            },
+            {
+              "title": "정지 구간 탐지",
+              "priority": "recommended",
+              "description": "속도 노름이 임계값 이하로 n초 이상 유지된 구간 탐지, 시작·끝 정지 구간 잘라내기"
+            },
+            {
+              "title": "중복 에피소드 탐지",
+              "priority": "recommended",
+              "description": "파일 해시로 완전 중복, 궤적 거리·이미지 임베딩 유사도로 근사 중복 탐지",
+              "children": [
+                {
+                  "title": "DTW 궤적 거리",
+                  "priority": "optional",
+                  "description": "길이가 다른 두 궤적을 정렬해 비교하는 동적 시간 워핑, O(nm) 동적 계획법 — Müller 『Information Retrieval for Music and Motion』 4장"
+                }
+              ]
+            },
+            {
+              "title": "QA 리포트",
+              "priority": "recommended",
+              "description": "에피소드별 지표 표와 임계값 초과 플래그를 자동 생성, 수집 당일 확인 루틴"
+            }
+          ]
         },
         {
           "title": "데이터 양 가늠",
@@ -751,7 +3978,77 @@
               "url": "https://arxiv.org/abs/2303.04137",
               "kind": "paper"
             }
+          ],
+          "children": [
+            {
+              "title": "데이터 스케일링 곡선",
+              "priority": "recommended",
+              "description": "시연 수 대비 성공률 곡선의 포화 지점 찾기, 로그 축 그래프 해석 — Data Scaling Laws 논문",
+              "resources": [
+                {
+                  "title": "Data Scaling Laws in Imitation Learning for Robotic Manipulation",
+                  "url": "https://arxiv.org/abs/2410.18647",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "작업 난이도와 필요 시연 수",
+              "priority": "optional",
+              "description": "정밀 삽입·양팔 작업처럼 어려운 작업일수록 필요한 시연 수가 늘어나는 사례 비교 — ACT 논문 실험 절",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            }
           ]
+        },
+        {
+          "title": "성공률 측정과 통계",
+          "priority": "essential",
+          "description": "성공률을 이항 비율로 보고 신뢰구간 함께 보고, 롤아웃 수에 따른 불확실성 — Wasserman 『All of Statistics』 6~10장",
+          "children": [
+            {
+              "title": "Wilson 신뢰구간",
+              "priority": "essential",
+              "description": "작은 표본(20~50회 롤아웃)에서 정규 근사 대신 Wilson 점수 구간 사용 — Wasserman 『All of Statistics』"
+            },
+            {
+              "title": "두 정책 비교 검정",
+              "priority": "recommended",
+              "description": "성공 횟수 비교에 Fisher 정확 검정·카이제곱 검정, 같은 초기 상태로 짝지은 평가 — Wasserman 『All of Statistics』 10장"
+            },
+            {
+              "title": "수집 성공률 모니터링",
+              "priority": "recommended",
+              "description": "조작자·조건별 수집 중 성공률을 추적해 어려운 조건 조기 발견"
+            }
+          ]
+        },
+        {
+          "title": "시연 품질 점수화",
+          "priority": "optional",
+          "description": "길이·부드러움·성공·개입 여부로 시연별 점수를 매겨 상위 k% 필터링 또는 가중 샘플링, 혼합 품질 데이터에서의 효과 — robomimic 논문",
+          "resources": [
+            {
+              "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+              "url": "https://arxiv.org/abs/2108.03298",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "센서 데이터 이상 탐지",
+          "priority": "recommended",
+          "description": "과노출·저노출(히스토그램), 모션 블러(라플라시안 분산), 렌즈 가림, 깊이 결측 비율, 관절 상태 NaN 검사"
+        },
+        {
+          "title": "라벨 품질 검수",
+          "priority": "recommended",
+          "description": "언어 지시 오탈자·실제 행동과 불일치, 성공 라벨 재검수 표본 추출(무작위 n%)과 오류율 추정"
         }
       ]
     },
@@ -762,7 +4059,34 @@
           "title": "작업 전 점검",
           "priority": "essential",
           "description": "비상정지(E-stop) 버튼 동작 확인, 작업 영역 표시와 출입 통제, 케이블·삼각대 걸림 확인, 로봇 관절 한계·속도 제한 설정 확인",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "E-stop 기능 시험",
+              "priority": "essential",
+              "description": "매 세션 시작 전 모든 비상정지 버튼을 실제로 눌러 정지·리셋 동작 확인, 결과를 점검표에 기록"
+            },
+            {
+              "title": "작업 영역 표시와 출입 통제",
+              "priority": "essential",
+              "description": "로봇 최대 도달 거리+여유를 바닥 테이프로 표시, 녹화 중 출입 금지 표지, 관찰자 위치 지정"
+            },
+            {
+              "title": "개인 보호구(PPE)",
+              "priority": "recommended",
+              "description": "보안경, 안전화, 긴 머리·헐렁한 옷·장신구 정리, 끼임 위험 부위 주의 — 실험실 안전 지침 수준"
+            },
+            {
+              "title": "케이블·전원 점검",
+              "priority": "recommended",
+              "description": "바닥 케이블 커버, 전원 차단 위치 확인, 리더 장치 케이블 장력"
+            },
+            {
+              "title": "점검표 문서화",
+              "priority": "recommended",
+              "description": "날짜·점검자·항목별 통과 여부를 남기는 체크리스트 양식, 불합격 항목이 있으면 수집 중단"
+            }
+          ]
         },
         {
           "title": "로봇 측 안전 제한",
@@ -774,19 +4098,128 @@
               "url": "https://control.ros.org/",
               "kind": "doc"
             }
+          ],
+          "children": [
+            {
+              "title": "관절 위치·속도·가속도 한계",
+              "priority": "essential",
+              "description": "URDF <limit lower upper velocity effort>와 <safety_controller> 소프트 리밋, MoveIt joint_limits.yaml의 가속도 한계 — ROS Wiki urdf/XML/joint",
+              "resources": [
+                {
+                  "title": "ROS Wiki: urdf/XML/joint",
+                  "url": "https://wiki.ros.org/urdf/XML/joint",
+                  "kind": "doc"
+                }
+              ],
+              "children": [
+                {
+                  "title": "소프트 리밋과 하드 리밋",
+                  "priority": "recommended",
+                  "description": "기계적 정지 이전에 소프트웨어 한계로 먼저 감속·정지시키는 k_position·k_velocity 개념",
+                  "resources": [
+                    {
+                      "title": "ROS Wiki: urdf/XML/joint",
+                      "url": "https://wiki.ros.org/urdf/XML/joint",
+                      "kind": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "작업 공간 경계(가상 펜스)",
+              "priority": "essential",
+              "description": "EE 위치를 축 정렬 경계 상자에 클리핑하거나 위반 시 정지, 테이블 아래 진입 금지 평면"
+            },
+            {
+              "title": "리더-팔로워 오차 감시",
+              "priority": "essential",
+              "description": "관절별 |q_leader − q_follower| 임계값 초과 시 정지, 갑작스러운 큰 명령 차단"
+            },
+            {
+              "title": "통신 watchdog",
+              "priority": "essential",
+              "description": "명령 메시지가 timeout 이상 끊기면 정지 또는 현재 자세 유지, 하트비트 토픽 — ros2_control 컨트롤러 timeout 파라미터",
+              "resources": [
+                {
+                  "title": "ros2_control documentation",
+                  "url": "https://control.ros.org/",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "충돌 감지와 힘 제한",
+              "priority": "recommended",
+              "description": "모터 전류·관절 토크 추정 기반 외력 감지, 운동량 관측기(momentum observer) 개념, 그리퍼 파지력 제한 — Siciliano 『Robotics: Modelling, Planning and Control』 9장"
+            },
+            {
+              "title": "감속 모드",
+              "priority": "recommended",
+              "description": "수집 초기·새 작업에서 속도 스케일링(예: 최대의 25~50%), 산업용 로봇의 감속 모드(TCP 250 mm/s) 개념 — ISO 10218-1"
+            }
           ]
         },
         {
           "title": "협동 로봇 안전 표준 개념",
           "priority": "recommended",
           "description": "ISO 10218 산업용 로봇 안전, ISO/TS 15066 협동 운전(속도·분리 감시, 힘·압력 제한) 개념 수준 이해",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "ISO 10218-1·-2 구성",
+              "priority": "recommended",
+              "description": "1부는 로봇 제조사 요구사항, 2부는 시스템 통합·설치 요구사항, 보호 정지·감속·작동 모드 개념 — ISO 10218"
+            },
+            {
+              "title": "협동 운전 4가지 방식",
+              "priority": "essential",
+              "description": "안전 정격 감시 정지, 핸드 가이딩, 속도·분리 감시(SSM), 동력·힘 제한(PFL)의 정의와 적용 조건 — ISO/TS 15066"
+            },
+            {
+              "title": "SSM 보호 분리 거리",
+              "priority": "recommended",
+              "description": "S_p = S_h + S_r + S_s + C + Z_d + Z_r 각 항(사람 이동·로봇 반응·정지 거리·침입 거리·불확도)의 의미 — ISO/TS 15066 5.5.4"
+            },
+            {
+              "title": "PFL 신체 부위별 한계",
+              "priority": "optional",
+              "description": "신체 부위별 허용 준정적 접촉력·압력 표와 과도 접촉 계수 개념 — ISO/TS 15066 부속서 A"
+            },
+            {
+              "title": "위험성 평가 절차",
+              "priority": "essential",
+              "description": "위험원 식별→위험 추정(심각도·빈도·회피 가능성)→평가→감소(본질 안전 설계→방호→정보 제공) 3단계 방법 — ISO 12100"
+            }
+          ]
         },
         {
           "title": "조작자 피로와 교대",
           "priority": "recommended",
           "description": "세션 길이 제한·휴식, VR 멀미, 반복 동작 부담 관리",
-          "resources": []
+          "resources": [],
+          "children": [
+            {
+              "title": "세션 길이와 휴식",
+              "priority": "recommended",
+              "description": "연속 조작 시간 상한과 정기 휴식, 교대 시 인수인계 항목"
+            },
+            {
+              "title": "VR 멀미",
+              "priority": "recommended",
+              "description": "시각-전정 불일치, 모션-투-포톤 지연과 낮은 프레임률이 원인, 증상 체크(SSQ 설문) — Kennedy 등 Simulator Sickness Questionnaire"
+            },
+            {
+              "title": "근골격계 부담",
+              "priority": "optional",
+              "description": "리더 장치 조작 자세의 어깨·손목 부담, RULA로 자세 점수 평가 — McAtamney & Corlett 1993 RULA 논문"
+            },
+            {
+              "title": "피로와 데이터 품질",
+              "priority": "recommended",
+              "description": "세션 후반 성공률 하락·소요 시간 증가를 지표로 피로 감지, 조작자별 시간대 분석"
+            }
+          ]
         },
         {
           "title": "안전 이벤트 기록",
@@ -810,15 +4243,100 @@
                   "url": "https://github.com/ros2/rosbag2",
                   "kind": "code"
                 }
+              ],
+              "children": [
+                {
+                  "title": "스냅샷 트리거 연결",
+                  "priority": "optional",
+                  "description": "E-stop·충돌 이벤트에서 rosbag2 snapshot 서비스를 호출해 링버퍼를 파일로 저장",
+                  "resources": [
+                    {
+                      "title": "ros2/rosbag2",
+                      "url": "https://github.com/ros2/rosbag2",
+                      "kind": "code"
+                    }
+                  ]
+                }
               ]
             },
             {
               "title": "안전 이벤트 에피소드 처리",
               "priority": "essential",
               "description": "학습 데이터에서 제외하거나 별도 태그로 분리, 원인 분석 후 재발 방지 조치 기록",
-              "resources": []
+              "resources": [],
+              "children": [
+                {
+                  "title": "근본 원인 분석",
+                  "priority": "recommended",
+                  "description": "5 Whys·피시본 다이어그램으로 원인 추적, 조치 항목과 담당·기한 기록"
+                }
+              ]
+            },
+            {
+              "title": "아차사고 기록",
+              "priority": "recommended",
+              "description": "실제 사고가 없어도 위험했던 상황(near miss)을 같은 양식으로 기록해 추세 파악"
             }
           ]
+        },
+        {
+          "title": "비상정지 체계",
+          "priority": "essential",
+          "description": "E-stop과 보호 정지(protective stop)의 차이, 정지 신호 우선순위, 해제 후 재시작 절차 — IEC 60204-1, ISO 13850",
+          "children": [
+            {
+              "title": "정지 카테고리 0·1·2",
+              "priority": "essential",
+              "description": "0=즉시 전원 차단, 1=제어 감속 후 전원 차단, 2=제어 정지 후 전원 유지; 원격 조작 수집에 맞는 선택 — IEC 60204-1 9.2.2"
+            },
+            {
+              "title": "E-stop 배치와 접근성",
+              "priority": "essential",
+              "description": "조작자와 관찰자 모두 손이 닿는 위치, 무선 E-stop의 통신 끊김 시 정지(fail-safe) 동작 — ISO 13850"
+            },
+            {
+              "title": "소프트웨어 정지와 하드웨어 정지",
+              "priority": "essential",
+              "description": "ROS 토픽 기반 정지는 소프트웨어 장애 시 동작하지 않을 수 있어 하드웨어 안전 회로와 구분해야 하는 이유"
+            },
+            {
+              "title": "재시작 절차",
+              "priority": "recommended",
+              "description": "원인 확인→영역 확인→E-stop 해제→저속으로 홈 복귀→수집 재개 순서, 자동 재시작 금지"
+            }
+          ]
+        },
+        {
+          "title": "원격 조작 특유 위험",
+          "priority": "essential",
+          "description": "카메라 시야 제한·깊이 지각 부족, 지연으로 인한 오버슈트, 리더 장치 놓침, 제어 모드 혼동",
+          "children": [
+            {
+              "title": "인에이블 장치(dead-man 스위치)",
+              "priority": "essential",
+              "description": "3단 인에이블 스위치 개념: 놓거나 꽉 쥐면 정지, 중간에서만 동작 — ISO 10218-1"
+            },
+            {
+              "title": "지연과 오버슈트",
+              "priority": "recommended",
+              "description": "왕복 지연이 클 때 조작자가 과보정하는 move-and-wait 현상, 지연 표시와 속도 제한으로 완화 — Sheridan 『Telerobotics, Automation, and Human Supervisory Control』"
+            },
+            {
+              "title": "모드 표시",
+              "priority": "recommended",
+              "description": "녹화·정책 실행·사람 제어 모드를 화면·조명으로 명확히 표시해 모드 혼동 방지"
+            }
+          ]
+        },
+        {
+          "title": "기계적 위험원",
+          "priority": "recommended",
+          "description": "끼임점(pinch point)·그리퍼 손가락 끼임, 파지물 낙하, 날카로운 물체, 백드라이브 시 팔 처짐 — ISO 12100 위험원 목록"
+        },
+        {
+          "title": "관찰자·외부인 관리",
+          "priority": "recommended",
+          "description": "견학·촬영 인원의 대기 위치, 녹화 중 영역 진입 금지, 출입 기록과 사전 안전 안내"
         }
       ]
     },
@@ -834,6 +4352,80 @@
               "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning (DAgger)",
               "url": "https://arxiv.org/abs/1011.0686",
               "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "BC 손실 함수",
+              "priority": "essential",
+              "description": "MSE·L1 회귀, 가우시안·GMM 음의 로그우도, 행동 이산화 후 교차 엔트로피, 각 손실이 가정하는 행동 분포 — robomimic 논문 4장",
+              "resources": [
+                {
+                  "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+                  "url": "https://arxiv.org/abs/2108.03298",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "오차 누적 경계",
+              "priority": "essential",
+              "description": "BC의 기대 비용 J(π) ≤ J(π*) + T²ε (오차가 시간에 대해 제곱으로 누적)와 DAgger의 Tε 경계 비교 — DAgger 논문 2장",
+              "resources": [
+                {
+                  "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning (DAgger)",
+                  "url": "https://arxiv.org/abs/1011.0686",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "다중 모드 행동 모델링",
+              "priority": "essential",
+              "description": "단봉 회귀의 평균화 실패와 대안",
+              "children": [
+                {
+                  "title": "GMM 출력 헤드",
+                  "priority": "recommended",
+                  "description": "K개 가우시안 혼합의 가중치·평균·분산을 출력, robomimic BC-RNN-GMM — robomimic 논문",
+                  "resources": [
+                    {
+                      "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+                      "url": "https://arxiv.org/abs/2108.03298",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "행동 이산화 토큰",
+                  "priority": "recommended",
+                  "description": "차원별 256 구간 분할(RT-1), k-means 행동 클러스터+잔차 오프셋(BeT)",
+                  "resources": [
+                    {
+                      "title": "RT-1: Robotics Transformer for Real-World Control at Scale",
+                      "url": "https://arxiv.org/abs/2212.06817",
+                      "kind": "paper"
+                    },
+                    {
+                      "title": "Behavior Transformers: Cloning k modes with one stone",
+                      "url": "https://arxiv.org/abs/2206.11251",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "에너지 기반 암시적 정책",
+                  "priority": "optional",
+                  "description": "argmin_a E(o,a)로 행동을 고르는 Implicit BC, InfoNCE 학습 — Implicit Behavioral Cloning 논문",
+                  "resources": [
+                    {
+                      "title": "Implicit Behavioral Cloning",
+                      "url": "https://arxiv.org/abs/2109.00137",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -857,6 +4449,44 @@
               "url": "https://github.com/huggingface/lerobot",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "CVAE 인코더와 잠재 변수 z",
+              "priority": "essential",
+              "description": "학습 시 (행동 시퀀스, qpos)로 z의 사후분포를 추정, 추론 시 z=0(사전 평균) 사용 — ACT 논문 4장",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "KL 가중치 β와 L1 손실",
+              "priority": "recommended",
+              "description": "재구성 L1 손실 + β·KL, β=10, L1이 L2보다 정밀 작업에 유리했던 결과 — ACT 논문 실험 절",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "ACT 하이퍼파라미터",
+              "priority": "recommended",
+              "description": "chunk_size(k=100), hidden_dim, dim_feedforward, 인코더·디코더 층 수, lr과 backbone lr 분리 — act 저장소 README",
+              "resources": [
+                {
+                  "title": "tonyzhaozh/act",
+                  "url": "https://github.com/tonyzhaozh/act",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -879,6 +4509,61 @@
               "url": "https://github.com/huggingface/lerobot",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "DDPM 순방향·역방향 과정",
+              "priority": "essential",
+              "description": "q(x_t|x_0)=N(√ᾱ_t x_0,(1−ᾱ_t)I), 노이즈 예측 ε_θ 학습 목표 ||ε−ε_θ(x_t,t)||², 분산 스케줄(β_t, cosine) — Ho 등 DDPM 논문 2~3장",
+              "resources": [
+                {
+                  "title": "Denoising Diffusion Probabilistic Models",
+                  "url": "https://arxiv.org/abs/2006.11239",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "DDIM 빠른 샘플링",
+              "priority": "recommended",
+              "description": "비마르코프 결정적 샘플링으로 추론 스텝을 100→10 수준으로 줄이기, 실시간 제어에 필요한 이유 — DDIM 논문",
+              "resources": [
+                {
+                  "title": "Denoising Diffusion Implicit Models",
+                  "url": "https://arxiv.org/abs/2010.02502",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "관측 조건화",
+              "priority": "essential",
+              "description": "관측 특징을 FiLM으로 1D 시간 U-Net 각 층에 주입(CNN 버전) vs cross-attention(Transformer 버전) — Diffusion Policy 논문 3장",
+              "resources": [
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                },
+                {
+                  "title": "FiLM: Visual Reasoning with a General Conditioning Layer",
+                  "url": "https://arxiv.org/abs/1709.07871",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "T_o·T_p·T_a 설정",
+              "priority": "recommended",
+              "description": "관측 2프레임, 예측 16스텝, 실행 8스텝 같은 기본값과 각 값의 트레이드오프(반응성 vs 시간 일관성) — diffusion_policy 저장소 config",
+              "resources": [
+                {
+                  "title": "real-stanford/diffusion_policy",
+                  "url": "https://github.com/real-stanford/diffusion_policy",
+                  "kind": "code"
+                }
+              ]
+            }
           ]
         },
         {
@@ -891,6 +4576,42 @@
               "url": "https://github.com/huggingface/lerobot",
               "kind": "code"
             }
+          ],
+          "children": [
+            {
+              "title": "delta_timestamps 사용법",
+              "priority": "essential",
+              "description": "{\"observation.image\": [-0.1, 0.0], \"action\": [0.0, 0.1, …]}처럼 키별 상대 시각 목록을 주면 해당 프레임을 묶어 반환, fps의 배수여야 하는 이유 — LeRobot 문서",
+              "resources": [
+                {
+                  "title": "LeRobot documentation",
+                  "url": "https://huggingface.co/docs/lerobot",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "에피소드 경계 패딩과 마스크",
+              "priority": "essential",
+              "description": "에피소드 끝을 넘는 행동은 마지막 값 복제 후 action_is_pad 마스크로 손실에서 제외 — lerobot 저장소",
+              "resources": [
+                {
+                  "title": "huggingface/lerobot",
+                  "url": "https://github.com/huggingface/lerobot",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "샘플러와 에피소드 가중",
+              "priority": "optional",
+              "description": "긴 에피소드가 과대 표집되는 문제, 에피소드 균등 샘플러·가중 샘플러"
+            },
+            {
+              "title": "데이터로더 성능",
+              "priority": "recommended",
+              "description": "비디오 디코딩이 병목, num_workers·prefetch·persistent_workers 조정, 디코딩 프레임 캐시"
+            }
           ]
         },
         {
@@ -902,6 +4623,309 @@
               "title": "huggingface/lerobot",
               "url": "https://github.com/huggingface/lerobot",
               "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "학습 설정 구성",
+              "priority": "recommended",
+              "description": "policy.type, dataset.repo_id, batch_size, steps, 정책별 n_obs_steps·chunk_size·n_action_steps 설정 — LeRobot 문서",
+              "resources": [
+                {
+                  "title": "LeRobot documentation",
+                  "url": "https://huggingface.co/docs/lerobot",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "평가 지표와 롤아웃 수",
+              "priority": "essential",
+              "description": "성공률·완료 시간·개입 횟수, 고정 초기 상태 세트로 n회 롤아웃, 신뢰구간과 함께 보고"
+            },
+            {
+              "title": "체크포인트 선택",
+              "priority": "recommended",
+              "description": "검증 손실과 실제 성공률의 상관이 약하다는 결과, 여러 체크포인트를 롤아웃으로 비교 — robomimic 논문 결과",
+              "resources": [
+                {
+                  "title": "What Matters in Learning from Offline Human Demonstrations for Robot Manipulation (robomimic)",
+                  "url": "https://arxiv.org/abs/2108.03298",
+                  "kind": "paper"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "관측 표현과 스택",
+          "priority": "essential",
+          "description": "정책 입력 dict 구성: 이미지 여러 장, proprioception, 언어; 관측 지평 n_obs_steps만큼 과거 프레임 스택",
+          "children": [
+            {
+              "title": "프레임 스택과 관측 지평",
+              "priority": "essential",
+              "description": "과거 n프레임을 쌓아 속도 정보 제공, 지평이 길수록 인과 혼동(causal confusion)·과적합 위험 — Diffusion Policy 논문 관측 지평 실험",
+              "resources": [
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "proprioception 구성",
+              "priority": "essential",
+              "description": "관절각 qpos, 그리퍼 폭, EE 포즈, (선택) 관절 속도; 행동과 같은 좌표계·단위로 맞추기"
+            },
+            {
+              "title": "이미지 전처리",
+              "priority": "essential",
+              "description": "리사이즈·센터/랜덤 크롭, [0,1] 스케일과 채널 정규화, CHW 변환, 카메라별 해상도"
+            },
+            {
+              "title": "다중 카메라 결합",
+              "priority": "recommended",
+              "description": "카메라별 독립 인코더 vs 공유 인코더, 특징 연결(concat)·토큰 나열, 손목 카메라의 기여 — ACT·Diffusion Policy 구현",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                },
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "시각 인코더 선택",
+              "priority": "recommended",
+              "description": "ResNet18+spatial softmax 키포인트, BatchNorm→GroupNorm 교체(EMA와 호환), 사전학습 표현(R3M) — Diffusion Policy 논문 부록",
+              "resources": [
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "spatial softmax",
+                  "priority": "optional",
+                  "description": "특징 맵 채널별 softmax 기대 좌표로 2D 키포인트를 뽑는 층 — Deep Spatial Autoencoders 논문",
+                  "resources": [
+                    {
+                      "title": "Deep Spatial Autoencoders for Visuomotor Learning",
+                      "url": "https://arxiv.org/abs/1509.06113",
+                      "kind": "paper"
+                    }
+                  ]
+                },
+                {
+                  "title": "사전학습 시각 표현",
+                  "priority": "optional",
+                  "description": "Ego4D로 학습한 R3M 등 고정 인코더 vs end-to-end 학습 비교 — R3M 논문",
+                  "resources": [
+                    {
+                      "title": "R3M: A Universal Visual Representation for Robot Manipulation",
+                      "url": "https://arxiv.org/abs/2203.12601",
+                      "kind": "paper"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "언어 조건 입력",
+              "priority": "recommended",
+              "description": "문장 임베딩(USE·CLIP·T5)을 FiLM으로 시각 특징에 주입 — RT-1 논문, FiLM 논문",
+              "resources": [
+                {
+                  "title": "RT-1: Robotics Transformer for Real-World Control at Scale",
+                  "url": "https://arxiv.org/abs/2212.06817",
+                  "kind": "paper"
+                },
+                {
+                  "title": "FiLM: Visual Reasoning with a General Conditioning Layer",
+                  "url": "https://arxiv.org/abs/1709.07871",
+                  "kind": "paper"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Action chunking",
+          "priority": "essential",
+          "description": "한 번에 k스텝 행동 시퀀스를 예측해 실효 지평을 k배 줄이고 일시정지·비마르코프 시연에 강건 — ACT 논문 4장",
+          "resources": [
+            {
+              "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+              "url": "https://arxiv.org/abs/2304.13705",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "청크 길이 선택",
+              "priority": "recommended",
+              "description": "k가 작으면 오차 누적, 크면 반응성 저하; 제어 주기와 작업 속도로 정하기 — ACT 논문 ablation",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "temporal ensembling",
+              "priority": "essential",
+              "description": "같은 시각에 대한 여러 청크 예측을 w_i=exp(−m·i) 가중 평균, m이 클수록 새 예측 비중 — ACT 논문 4장",
+              "resources": [
+                {
+                  "title": "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT/ALOHA)",
+                  "url": "https://arxiv.org/abs/2304.13705",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "receding horizon 실행",
+              "priority": "essential",
+              "description": "T_p 예측 중 T_a만 실행하고 다시 추론하는 방식, 청크 경계 불연속(jerk) 문제 — Diffusion Policy 논문 3장",
+              "resources": [
+                {
+                  "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+                  "url": "https://arxiv.org/abs/2303.04137",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "추론 지연과 비동기 실행",
+              "priority": "optional",
+              "description": "추론 시간 동안 이전 청크를 계속 실행하고 지연만큼 새 청크 앞부분을 건너뛰는 처리"
+            }
+          ]
+        },
+        {
+          "title": "정규화 실전",
+          "priority": "essential",
+          "description": "상태·행동·이미지 정규화를 어디서 하고 언제 되돌리는지 일관되게 관리",
+          "children": [
+            {
+              "title": "정규화와 역정규화 위치",
+              "priority": "essential",
+              "description": "데이터로더 vs 정책 내부 정규화 모듈, 추론 출력 역정규화 누락 시 증상(로봇이 거의 안 움직임)"
+            },
+            {
+              "title": "확산 모델과 [-1,1] 범위",
+              "priority": "recommended",
+              "description": "가우시안 노이즈 스케일과 맞추려 행동을 [-1,1]로 min-max 정규화하는 이유 — Diffusion Policy 구현",
+              "resources": [
+                {
+                  "title": "real-stanford/diffusion_policy",
+                  "url": "https://github.com/real-stanford/diffusion_policy",
+                  "kind": "code"
+                }
+              ]
+            },
+            {
+              "title": "상수·이진 차원 처리",
+              "priority": "recommended",
+              "description": "std≈0인 차원의 0 나눗셈 방지(ε 추가), 그리퍼 이진 차원은 정규화 제외"
+            }
+          ]
+        },
+        {
+          "title": "데이터 증강",
+          "priority": "recommended",
+          "description": "시각 정책의 과적합 방지를 위한 이미지·언어 증강과 행동 일관성 유지",
+          "children": [
+            {
+              "title": "random crop·shift",
+              "priority": "essential",
+              "description": "패딩 후 무작위 이동(±4px)·무작위 크롭, 평가 시 센터 크롭 — DrQ·RAD 논문",
+              "resources": [
+                {
+                  "title": "Image Augmentation Is All You Need (DrQ)",
+                  "url": "https://arxiv.org/abs/2004.13649",
+                  "kind": "paper"
+                },
+                {
+                  "title": "Reinforcement Learning with Augmented Data (RAD)",
+                  "url": "https://arxiv.org/abs/2004.14990",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "색상 지터",
+              "priority": "recommended",
+              "description": "밝기·대비·채도·색조 변화로 조명 강건성, 과하면 색 기반 작업 실패"
+            },
+            {
+              "title": "기하 증강과 행동 일관성",
+              "priority": "recommended",
+              "description": "좌우 반전·회전은 행동 좌표도 같이 바꿔야 하므로 조작 정책에선 보통 피하는 이유"
+            },
+            {
+              "title": "언어 지시 증강",
+              "priority": "optional",
+              "description": "패러프레이즈 지시 무작위 선택으로 언어 일반화"
+            }
+          ]
+        },
+        {
+          "title": "VLA 입력 형태 맛보기",
+          "priority": "optional",
+          "description": "사전학습 VLM 위에 행동 출력을 붙이는 방식: 이미지+언어 → 행동 토큰 또는 연속 행동 청크",
+          "children": [
+            {
+              "title": "행동 토큰화(binning)",
+              "priority": "optional",
+              "description": "차원별 256 구간 분할을 언어 토큰으로 매핑, q01~q99 범위 사용 — OpenVLA 논문 3장",
+              "resources": [
+                {
+                  "title": "OpenVLA: An Open-Source Vision-Language-Action Model",
+                  "url": "https://arxiv.org/abs/2406.09246",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "FAST 토크나이저",
+              "priority": "optional",
+              "description": "행동 청크에 DCT 후 양자화·BPE 압축으로 토큰 수 줄이기 — FAST 논문",
+              "resources": [
+                {
+                  "title": "FAST: Efficient Action Tokenization for Vision-Language-Action Models",
+                  "url": "https://arxiv.org/abs/2501.09747",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "flow matching 행동 헤드",
+              "priority": "optional",
+              "description": "VLM 옆 action expert가 flow matching으로 50스텝 연속 행동 청크 생성 — π0 논문, Flow Matching 논문",
+              "resources": [
+                {
+                  "title": "π0: A Vision-Language-Action Flow Model for General Robot Control",
+                  "url": "https://arxiv.org/abs/2410.24164",
+                  "kind": "paper"
+                },
+                {
+                  "title": "Flow Matching for Generative Modeling",
+                  "url": "https://arxiv.org/abs/2210.02747",
+                  "kind": "paper"
+                }
+              ]
             }
           ]
         }
