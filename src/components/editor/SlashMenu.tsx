@@ -19,6 +19,7 @@ import {
 } from "./slash-commands";
 import { invalidateWikiTitles } from "./wiki-resolver";
 import { insertWikiLink } from "./WikiLink";
+import { useFollowScroll } from "./use-follow-scroll";
 import type { SuggestKeyHandler } from "./WikiSuggest";
 
 /** Applies a block command at the cursor (the `/query` is already removed). */
@@ -147,6 +148,9 @@ export function SlashMenu({
     };
   });
 
+  // The page title prompt follows the scroll itself.
+  useFollowScroll(open && pageAt === null);
+
   const picker = (
     <input
       ref={fileInput}
@@ -228,6 +232,7 @@ function PageTitlePrompt({
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  useFollowScroll(true);
   const coords = editor.view.coordsAtPos(Math.min(at, editor.state.doc.content.size));
 
   const back = () => {
