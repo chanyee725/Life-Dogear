@@ -1,0 +1,603 @@
+/* ==== Roadmap tree (RoadmapTree.tsx, rt- prefix) ====
+ * Path layout: stages are yellow topic boxes on a thick curved centre path (one SVG per gap,
+ * geometry from path-layout.ts); each stage's items sit in a left and a right column, tied to
+ * the topic box by a dotted link, a dotted spine and one dotted stub per item. Five or more
+ * items on a side become one stacked bundle with a single link. Children open in place below
+ * their item box as smaller boxes.
+ *
+ * Fills match the legend (roadmap-chrome.css): 필수 yellow, 추천 beige, 선택 white + dashed
+ * border; yellow/beige keep dark text in dark mode too. Never colour alone: priority also gets a
+ * letter badge (필/추/선), status a badge shape (empty ring, half ring, ring with check) and a
+ * strike-through when done. No blurred shadows or filters, so ~1000 boxes stay cheap; stages use content-visibility.
+ * Under 720px of tree width (container query) the tree turns into one vertical list.
+ */
+@layer components {
+  .rt-wrap {
+    /* palette, light — same values as the legend/panel (roadmap-chrome.css --rc-*) */
+    --rt-ink: #1d1b16;
+    --rt-on-fill: #1d1b16; /* text on yellow/beige, both themes */
+    --rt-muted: #66635a;
+    --rt-paper: #ffffff;
+    --rt-yellow: #ffe24a; /* topic + 필수 */
+    --rt-beige: #f6e7b6; /* 추천 */
+    --rt-path: #2b62c4;
+    --rt-link: #3a6fcf;
+    --rt-todo: #66635a;
+    --rt-doing: #6a3fcf;
+    --rt-done: #20793a;
+    --rt-shadow: 3px 3px 0 var(--rt-ink);
+    --rt-focus: #1d1b16;
+    --rt-select: #2b62c4;
+
+    /* geometry */
+    --rt-center: 232px; /* topic column */
+    --rt-gap: 64px; /* topic column ↔ item columns; the stage sway (32px) eats into it */
+    --rt-stub: 18px; /* item box ↔ spine */
+    --rt-mid: 19px; /* y of a one-line item box's centre inside its li */
+    --rt-line-w: 2px;
+    --rt-path-w: 5px;
+    /* slightly uneven corners read as hand-drawn */
+    --rt-radius: 7px 5px 8px 5px / 5px 8px 5px 7px;
+
+    container: rt / inline-size;
+    color: var(--rt-ink);
+  }
+  :where(.dark) .rt-wrap {
+    --rt-ink: #ece2bd;
+    --rt-muted: #aaa597;
+    --rt-paper: #1f1e1b;
+    --rt-yellow: #f2d03a;
+    --rt-beige: #d9c78e;
+    --rt-path: #6f9de6;
+    --rt-link: #7ea6e6;
+    --rt-todo: #aaa597;
+    --rt-doing: #b9a2ff;
+    --rt-done: #63c27e;
+    --rt-shadow: 3px 3px 0 #000;
+    --rt-focus: #ece2bd;
+    --rt-select: #8fb4f0;
+  }
+
+  :where(.rt-tree, .rt-tree ul) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .rt-tree {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding: 8px 0 24px;
+  }
+  .rt-node {
+    position: relative;
+    outline: none;
+  }
+
+  /* ---------------------------------------------------------------- stage row */
+  .rt-stage {
+    /* inline padding: room for edge badges, since content-visibility clips at the li */
+    padding: 26px 12px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 220px;
+  }
+
+  /* topic box */
+  .rt-stage-row {
+    position: relative;
+    z-index: 2;
+    border: 2.5px solid var(--rt-ink);
+    border-radius: var(--rt-radius);
+    background: var(--rt-yellow);
+    color: var(--rt-on-fill);
+    box-shadow: var(--rt-shadow);
+  }
+  .rt-stage-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 18px 9px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+  }
+  .rt-stage:not([aria-expanded]) .rt-stage-label {
+    cursor: default;
+  }
+  .rt-stage-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .rt-stage-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt-stage-bar {
+    position: relative;
+    width: 56px;
+    height: 5px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .rt-stage-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform: scaleX(var(--rt-progress, 0));
+    background: currentColor;
+  }
+  .rt-stage-num {
+    position: absolute;
+    top: -11px;
+    left: -11px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--rt-ink);
+    border-radius: 50%;
+    background: var(--rt-paper);
+    color: var(--rt-ink);
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt-chevron {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 140ms ease;
+  }
+  .rt-node[aria-expanded="true"] > .rt-row .rt-chevron {
+    transform: rotate(90deg);
+  }
+
+  /* ---------------------------------------------------------------- wide: path + two columns */
+  @container rt (min-width: 720px) {
+    .rt-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--rt-center) minmax(0, 1fr);
+      column-gap: var(--rt-gap);
+      align-items: center;
+    }
+
+    /* centre path: straight drop into this box from above, curve out of it below */
+    .rt-stage:not([data-first])::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 50%;
+      left: calc(50% + var(--rt-sway, 0px) - var(--rt-path-w) / 2);
+      width: var(--rt-path-w);
+      background: var(--rt-path);
+      border-radius: 3px;
+    }
+    .rt-curve {
+      position: absolute;
+      top: 50%;
+      bottom: 0;
+      left: 50%;
+      width: 240px; /* = CURVE_W, so the viewBox maps 1:1 sideways */
+      height: 50%;
+      transform: translateX(-50%);
+      overflow: visible;
+      pointer-events: none;
+    }
+    .rt-curve path {
+      fill: none;
+      stroke: var(--rt-path);
+      stroke-width: var(--rt-path-w);
+      stroke-linecap: round;
+    }
+    .rt-stage-row {
+      grid-column: 2;
+      grid-row: 1;
+      transform: translateX(var(--rt-sway, 0px));
+    }
+    /* ---------------------------------------------------------------- side columns */
+    .rt-side {
+      position: relative;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .rt-side[data-side="left"] {
+      grid-column: 1;
+      align-items: flex-end;
+      justify-self: end;
+    }
+    .rt-side[data-side="right"] {
+      grid-column: 3;
+      align-items: flex-start;
+      justify-self: start;
+    }
+    /* the spine runs in this margin; stubs reach it from each box */
+    .rt-side[data-side="left"] {
+      margin-right: var(--rt-stub);
+    }
+    .rt-side[data-side="right"] {
+      margin-left: var(--rt-stub);
+    }
+    /* link: spine (or bundle edge) → topic box; the box covers the far end, whatever the sway */
+    .rt-side::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: calc(var(--rt-gap) + var(--rt-center) / 2);
+      border-top: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]::after {
+      left: 100%;
+    }
+    .rt-side[data-side="right"]::after {
+      right: 100%;
+    }
+
+    /* one top-level item */
+    .rt-side > .rt-node {
+      max-width: min(100%, 17.5rem);
+      padding-block: 4px;
+    }
+    /* stub: box edge → spine, at the first line's centre */
+    .rt-side:not([data-many]) > .rt-node::after {
+      content: "";
+      position: absolute;
+      top: var(--rt-mid);
+      width: var(--rt-stub);
+      border-top: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]:not([data-many]) > .rt-node::after {
+      left: 100%;
+    }
+    .rt-side[data-side="right"]:not([data-many]) > .rt-node::after {
+      right: 100%;
+    }
+    /* spine piece per item: first from its stub down, last from top to its stub */
+    .rt-side:not([data-many]) > .rt-node:not(:only-child)::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]:not([data-many]) > .rt-node::before {
+      left: calc(100% + var(--rt-stub) - var(--rt-line-w));
+    }
+    .rt-side[data-side="right"]:not([data-many]) > .rt-node::before {
+      right: calc(100% + var(--rt-stub) - var(--rt-line-w));
+    }
+    .rt-side:not([data-many]) > .rt-node:first-child::before {
+      top: var(--rt-mid);
+    }
+    .rt-side:not([data-many]) > .rt-node:last-child::before {
+      bottom: auto;
+      height: var(--rt-mid);
+    }
+
+    /* 5+ items on a side: one stacked bundle, one link */
+    .rt-side[data-many] {
+      gap: 10px;
+      padding: 10px;
+      border: var(--rt-line-w) dashed color-mix(in srgb, var(--rt-ink) 45%, transparent);
+      border-radius: var(--rt-radius);
+    }
+    .rt-side[data-many] > .rt-node {
+      width: 100%;
+      max-width: 17.5rem;
+      padding-block: 0;
+    }
+    .rt-side[data-many][data-side="left"] {
+      align-items: stretch;
+    }
+  }
+
+  /* ---------------------------------------------------------------- item box */
+  .rt-item > .rt-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    min-height: calc(var(--rt-mid) * 2 - 8px);
+    border: 2px solid var(--rt-ink);
+    border-radius: var(--rt-radius);
+    background: var(--rt-beige);
+    color: var(--rt-on-fill);
+  }
+  .rt-item[data-priority="essential"] > .rt-row {
+    background: var(--rt-yellow);
+  }
+  .rt-item[data-priority="optional"] > .rt-row {
+    border-style: dashed;
+    background: var(--rt-paper);
+    color: var(--rt-ink);
+  }
+  .rt-label {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 28px 6px 11px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+  }
+  .rt-twisty + .rt-label {
+    padding-left: 2px;
+  }
+  .rt-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .rt-item[data-status="done"] > .rt-row .rt-title {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: color-mix(in srgb, currentColor 60%, transparent);
+  }
+  .rt-count {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.72;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt-twisty {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 24px;
+    align-self: stretch;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+  }
+  .rt-twisty .rt-chevron {
+    width: 15px;
+    height: 15px;
+  }
+  .rt-label:hover,
+  .rt-twisty:hover,
+  .rt-stage-label:hover {
+    background: color-mix(in srgb, currentColor 9%, transparent);
+  }
+
+  /* ---------------------------------------------------------------- badges */
+  .rt-badges {
+    position: absolute;
+    top: -12px;
+    right: -10px;
+    z-index: 1;
+    display: flex;
+    pointer-events: none;
+  }
+  .rt-badge {
+    display: grid;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border: 2px solid var(--rt-ink);
+    border-radius: 50%;
+    background: var(--rt-paper);
+    color: var(--rt-ink);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .rt-badge + .rt-badge {
+    margin-left: -5px;
+  }
+  .rt-badge-prio[data-priority="essential"] {
+    background: var(--rt-ink);
+    color: var(--rt-paper);
+  }
+  .rt-badge-prio[data-priority="optional"] {
+    border-style: dashed;
+    border-color: var(--rt-muted);
+    color: var(--rt-muted);
+  }
+  .rt-badge-status[data-status="todo"] {
+    border-color: var(--rt-todo);
+  }
+  .rt-badge-status[data-status="doing"] {
+    border-color: var(--rt-doing);
+    background: linear-gradient(90deg, var(--rt-doing) 50%, var(--rt-paper) 50%);
+  }
+  .rt-badge-status[data-status="done"] {
+    border-color: var(--rt-done);
+    background: var(--rt-done);
+    color: var(--rt-paper);
+  }
+  .rt-badge svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  /* ---------------------------------------------------------------- children, in place */
+  .rt-sub {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 6px 0 2px 12px;
+    padding-left: 14px;
+  }
+  .rt-sub::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    bottom: 14px;
+    left: 0;
+    border-left: var(--rt-line-w) solid color-mix(in srgb, var(--rt-ink) 40%, transparent);
+  }
+  .rt-sub > .rt-node::after {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: -14px;
+    width: 12px;
+    border-top: var(--rt-line-w) solid color-mix(in srgb, var(--rt-ink) 40%, transparent);
+  }
+  .rt-sub .rt-row {
+    min-height: 28px;
+    border-width: 1.5px;
+  }
+  .rt-sub .rt-label {
+    padding: 4px 24px 4px 9px;
+    font-size: 12.5px;
+  }
+  .rt-sub .rt-badge {
+    width: 17px;
+    height: 17px;
+    font-size: 9px;
+  }
+  .rt-sub .rt-badges {
+    top: -9px;
+    right: -8px;
+  }
+
+  /* ---------------------------------------------------------------- selection and focus */
+  .rt-node[aria-selected="true"] > .rt-row {
+    outline: 3px solid var(--rt-select);
+    outline-offset: 2px;
+  }
+  .rt-node:focus-visible > .rt-row {
+    outline: 3px solid var(--rt-focus);
+    outline-offset: 3px;
+  }
+  .rt-label:focus-visible,
+  .rt-stage-label:focus-visible,
+  .rt-twisty:focus-visible {
+    outline: 2px solid var(--rt-focus);
+    outline-offset: -4px;
+  }
+
+  /* ---------------------------------------------------------------- mid: tighter columns */
+  @container rt (max-width: 1023px) {
+    .rt-tree {
+      --rt-center: 184px;
+      --rt-gap: 44px;
+      --rt-stub: 14px;
+    }
+    .rt-stage-label {
+      padding: 10px 12px 8px;
+    }
+    .rt-stage-title {
+      font-size: 14px;
+    }
+    .rt-label {
+      font-size: 13px;
+      padding-left: 9px;
+    }
+  }
+
+  /* ---------------------------------------------------------------- narrow: one list */
+  @container rt (max-width: 719px) {
+    /* trunk down the left edge; stage boxes full width; items listed under them */
+    .rt-stage {
+      padding: 14px 12px 14px 26px;
+    }
+    .rt-stage::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 6px;
+      width: 4px;
+      border-radius: 2px;
+      background: var(--rt-path);
+    }
+    .rt-stage[data-first]::before {
+      top: 36px;
+    }
+    .rt-stage:last-child::before {
+      bottom: auto;
+      height: 36px;
+    }
+    .rt-stage:only-child::before,
+    .rt-curve {
+      display: none;
+    }
+    .rt-stage-label {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      min-height: 44px;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    .rt-side {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0 0 14px;
+      padding-left: 16px;
+    }
+    .rt-side + .rt-side {
+      margin-top: 8px;
+    }
+    .rt-side > .rt-node::before {
+      content: "";
+      position: absolute;
+      top: -8px;
+      bottom: 0;
+      left: -16px;
+      border-left: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side > .rt-node:last-child::before {
+      bottom: auto;
+      height: 30px;
+    }
+    /* left and right groups read as one list: keep the spine running between them */
+    .rt-side:has(+ .rt-side) > .rt-node:last-child::before {
+      bottom: 0;
+      height: auto;
+    }
+    .rt-side + .rt-side > .rt-node:first-child::before {
+      top: -16px;
+    }
+    .rt-side > .rt-node::after {
+      content: "";
+      position: absolute;
+      top: 21px;
+      left: -16px;
+      width: 14px;
+      border-top: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-label {
+      min-height: 40px;
+      padding-block: 9px;
+    }
+    .rt-twisty {
+      width: 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rt-chevron {
+      transition: none;
+    }
+  }
+}
