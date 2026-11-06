@@ -1,7 +1,6 @@
 import { Extension } from "@tiptap/core";
 import Paragraph from "@tiptap/extension-paragraph";
 import type { Node as PMNode } from "@tiptap/pm/model";
-import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
@@ -10,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { CodeBlock, CodeBlockClipboard } from "./code-block";
 import { BlockDragHandle } from "./drag-handle";
+import { CaptionedImage } from "./image-view";
 import { WikiLink } from "./WikiLink";
 
 /**
@@ -119,8 +119,9 @@ export function createExtensions(placeholder: string) {
     TableHeader,
     TableCell,
     // Photos are stored as files and referenced by URL (`![alt](/api/images/…)`), never
-    // inlined as base64: bodies stay small and Markdown stays readable.
-    Image.configure({ inline: false, allowBase64: false }),
+    // inlined as base64: bodies stay small and Markdown stays readable. The alt text is
+    // the caption shown under the photo.
+    CaptionedImage.configure({ inline: false, allowBase64: false }),
     Placeholder.configure({ placeholder }),
     WikiLink,
     BlockDragHandle,

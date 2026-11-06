@@ -402,9 +402,87 @@
     border-radius: 0.5rem;
     border: 1px solid var(--rb-border);
   }
-  .rb-prose img.ProseMirror-selectednode {
+  /* Photo + caption, centred (src/components/editor/image-view.ts). */
+  .rb-prose .rb-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-inline: 0;
+  }
+  .rb-image-frame {
+    position: relative;
+    max-width: 100%;
+  }
+  .rb-prose .rb-image img {
+    margin-inline: auto;
+  }
+  .rb-prose .rb-image.ProseMirror-selectednode img {
     outline: 2px solid var(--rb-accent);
     outline-offset: 2px;
+  }
+  .rb-image-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    padding: 0 0.4rem;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--rb-border);
+    background: var(--rb-bg);
+    color: var(--rb-muted);
+    font-size: 12px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .rb-image-copy:hover {
+    color: var(--rb-fg);
+    background: var(--rb-surface);
+  }
+  .rb-image-frame:hover .rb-image-copy,
+  .rb-image-copy:focus-visible,
+  .rb-image[data-copy] .rb-image-copy {
+    opacity: 1;
+  }
+  .rb-image[data-copy="failed"] .rb-image-copy {
+    color: var(--rb-danger);
+  }
+  .rb-image-copy-status:empty {
+    display: none;
+  }
+  @media (hover: none) {
+    .rb-image-copy {
+      opacity: 1;
+    }
+  }
+  .rb-image-caption,
+  .rb-image-caption-input {
+    width: 100%;
+    max-width: 32rem;
+    margin-top: 0.4rem;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--rb-muted);
+  }
+  .rb-image-caption-input {
+    border: 0;
+    background: transparent;
+    outline: none;
+  }
+  .rb-image-caption-input::placeholder {
+    color: var(--rb-muted);
+    opacity: 0.6;
+  }
+  /* Editing shows the input; reading shows the caption text (none when empty). */
+  .rb-prose[contenteditable="true"] .rb-image-caption,
+  .rb-prose[contenteditable="false"] .rb-image-caption-input {
+    display: none;
   }
 
   .rb-prose > * + * {
