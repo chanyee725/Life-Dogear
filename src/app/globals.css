@@ -968,3 +968,175 @@
     cursor: grabbing !important;
   }
 }
+
+/* ---------- Roadmap node box (app/roadmap/RoadmapNode.tsx) ----------
+   Colours come from the --rb-* tokens, so light / dark follow the theme class. */
+@layer components {
+  .rb-roadmap-node {
+    --rb-roadmap-kind-bg: var(--rb-tone-gray-bg);
+    --rb-roadmap-kind-fg: var(--rb-tone-gray-fg);
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--rb-border);
+    border-left: 3px solid var(--rb-roadmap-kind-fg);
+    border-radius: 8px;
+    background: var(--rb-bg);
+    color: var(--rb-fg);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  .rb-roadmap-node:hover {
+    border-color: var(--rb-border-strong);
+    border-left-color: var(--rb-roadmap-kind-fg);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+  }
+  .rb-roadmap-node--area {
+    --rb-roadmap-kind-bg: var(--rb-tone-violet-bg);
+    --rb-roadmap-kind-fg: var(--rb-tone-violet-fg);
+  }
+  .rb-roadmap-node--goal {
+    --rb-roadmap-kind-bg: var(--rb-tone-rose-bg);
+    --rb-roadmap-kind-fg: var(--rb-tone-rose-fg);
+  }
+  .rb-roadmap-node--project {
+    --rb-roadmap-kind-bg: var(--rb-tone-blue-bg);
+    --rb-roadmap-kind-fg: var(--rb-tone-blue-fg);
+  }
+  .rb-roadmap-node--task {
+    --rb-roadmap-kind-bg: var(--rb-tone-green-bg);
+    --rb-roadmap-kind-fg: var(--rb-tone-green-fg);
+  }
+  .rb-roadmap-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border-radius: 0 7px 7px 0;
+    color: inherit;
+    text-decoration: none;
+    outline: none;
+  }
+  a.rb-roadmap-body {
+    cursor: pointer;
+  }
+  a.rb-roadmap-body:focus-visible {
+    box-shadow: 0 0 0 2px var(--rb-ring);
+  }
+  .rb-roadmap-node--has-toggle .rb-roadmap-body {
+    border-radius: 0;
+  }
+  .rb-roadmap-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--rb-roadmap-kind-bg);
+    color: var(--rb-roadmap-kind-fg);
+  }
+  .rb-roadmap-text {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .rb-roadmap-title {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .rb-roadmap-node[data-done="true"] .rb-roadmap-title {
+    color: var(--rb-muted);
+    text-decoration: line-through;
+  }
+  .rb-roadmap-meta {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--rb-muted);
+  }
+  .rb-roadmap-progress {
+    display: inline-flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+  }
+  .rb-roadmap-progress-track {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 24px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--rb-subtle);
+  }
+  .rb-roadmap-progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 2px;
+    background: var(--rb-roadmap-kind-fg);
+  }
+  .rb-roadmap-progress-label {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .rb-roadmap-due {
+    flex: none;
+    overflow: hidden;
+    max-width: 50%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .rb-roadmap-meta > .rb-roadmap-due:only-child {
+    max-width: none;
+  }
+  .rb-roadmap-toggle {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 36px;
+    padding: 0 6px;
+    border: 0;
+    border-left: 1px solid var(--rb-border);
+    border-radius: 0 7px 7px 0;
+    background: transparent;
+    font-size: 11px;
+    color: var(--rb-muted);
+    cursor: pointer;
+    transition: background-color 120ms, color 120ms;
+  }
+  .rb-roadmap-toggle:hover {
+    background: var(--rb-hover);
+    color: var(--rb-fg);
+  }
+  .rb-roadmap-toggle:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--rb-ring);
+  }
+  .rb-roadmap-toggle svg {
+    transform: rotate(90deg);
+    transition: transform 120ms;
+  }
+  .rb-roadmap-toggle[aria-expanded="false"] svg {
+    transform: none;
+  }
+  .rb-roadmap-toggle-count {
+    font-variant-numeric: tabular-nums;
+  }
+}
