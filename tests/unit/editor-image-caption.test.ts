@@ -72,7 +72,7 @@ describe("image sizes (Markdown image title w=..)", () => {
     expect([...sizes].map((b) => b.textContent)).toEqual(["작게", "중간", "크게", "원본"]);
     expect(figure.querySelector('[aria-pressed="true"]')?.textContent).toBe("원본");
 
-    figure.querySelector<HTMLButtonElement>('.rb-image-size:nth-child(2)')!.click();
+    figure.querySelector<HTMLButtonElement>(".rb-image-size:nth-child(2)")!.click();
     const saved = md(e);
     expect(saved).toBe(`![회의 메모](${SRC} "w=50")`);
     expect(figure.dataset.width).toBe("50");
@@ -86,9 +86,7 @@ describe("image sizes (Markdown image title w=..)", () => {
     expect(image?.attrs?.width).toBe(50);
     expect(image?.attrs?.title).toBeNull();
     expect(again.view.dom.querySelector("img")?.hasAttribute("title")).toBe(false);
-    expect(again.view.dom.querySelector<HTMLElement>("figure.rb-image")?.dataset.width).toBe(
-      "50",
-    );
+    expect(again.view.dom.querySelector<HTMLElement>("figure.rb-image")?.dataset.width).toBe("50");
     expect(md(again)).toBe(saved);
   });
 
