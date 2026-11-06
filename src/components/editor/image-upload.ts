@@ -73,8 +73,9 @@ export async function insertImages(
     try {
       const src = await uploadImage(file);
       if (editor.isDestroyed) return null;
-      const alt = file.name.replace(/\.[^.]+$/, "");
-      const node = { type: "image", attrs: { src, alt } };
+      // The alt text is the caption: new photos start without one (a pasted file is
+      // just "image.png"), and the writer adds it under the photo.
+      const node = { type: "image", attrs: { src, alt: "" } };
       const chain = editor.chain().focus();
       if (at === undefined) chain.insertContent(node).run();
       else {
