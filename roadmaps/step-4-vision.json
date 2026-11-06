@@ -10,7 +10,13 @@
           "title": "빛과 영상 형성",
           "priority": "recommended",
           "description": "복사량(radiance)·조도(irradiance), 램버트 반사와 BRDF, 렌즈의 얇은 렌즈 공식 1/f = 1/z_o + 1/z_i, 피사계 심도와 조리개(f-number), 비네팅을 배운다 — Szeliski 2장",
-          "resources": [],
+          "resources": [
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
+            }
+          ],
           "children": [
             {
               "title": "복사 측정 단위",
@@ -1764,7 +1770,13 @@
           "title": "거리 측정 방식 분류",
           "priority": "essential",
           "description": "능동(ToF·구조광·LiDAR)과 수동(스테레오) 깊이 측정의 원리 차이, 측정 범위·해상도·외광 내성·다중 경로 오차 비교. — Szeliski 12장, Siciliano Handbook of Robotics 'Range Sensing'",
-          "resources": [],
+          "resources": [
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed.",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
+            }
+          ],
           "children": [
             {
               "title": "능동·수동 센싱",
@@ -3655,6 +3667,11 @@
               "title": "COCO Detection Evaluation",
               "url": "https://cocodataset.org/#detection-eval",
               "kind": "doc"
+            },
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
             }
           ],
           "children": [
