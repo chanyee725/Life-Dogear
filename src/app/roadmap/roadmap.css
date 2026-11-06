@@ -854,7 +854,7 @@
     outline-offset: 2px;
   }
 
-  /* <1024px: header stacks, panel becomes a bottom sheet so it stays next to the tree */
+  /* <1024px: header stacks; panel sticks to the bottom of the content column (not over the sidebar) */
   @media (max-width: 1023px) {
     .rv-head {
       grid-template-columns: minmax(0, 1fr);
@@ -863,20 +863,23 @@
     .rv-title {
       font-size: 24px;
     }
+    .rv-body {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
     .rv-panel-col {
-      position: fixed;
-      inset: auto 0 0 0;
-      z-index: 40;
+      position: sticky;
+      top: auto;
+      bottom: 0;
+      z-index: 20;
       width: auto;
       max-height: 65vh;
-      padding: 0 12px 12px;
+      padding: 12px 0;
     }
     .rv-panel-col .ip-root {
       border-radius: 14px;
       box-shadow: 0 -8px 28px rgb(0 0 0 / 0.16);
-    }
-    .rv-body[data-panel="open"] .rv-tree-col {
-      padding-bottom: 65vh;
     }
     .rv-fold-all,
     .rp-tab,
