@@ -1,0 +1,719 @@
+{
+  "slug": "step-1-ros2-moveit",
+  "title": "1단계: ROS 2 · MoveIt 2 빠른 기초",
+  "topic": "ROS 2 · MoveIt 2",
+  "stages": [
+    {
+      "title": "환경 준비와 작업 공간",
+      "items": [
+        {
+          "title": "ROS 2 Jazzy 설치와 환경 설정",
+          "priority": "essential",
+          "description": "Ubuntu 24.04 + ROS 2 Jazzy deb 설치, source /opt/ros/jazzy/setup.bash, ROS_DOMAIN_ID·RMW_IMPLEMENTATION 환경 변수 — ROS 2 docs Installation",
+          "resources": [
+            {
+              "title": "ROS 2 Jazzy Installation",
+              "url": "https://docs.ros.org/en/jazzy/Installation.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "colcon 워크스페이스",
+          "priority": "essential",
+          "description": "src/build/install/log 구조, colcon build --symlink-install, overlay·underlay 와 install/setup.bash, rosdep install --from-paths src — Beginner: Client libraries > Creating a workspace",
+          "resources": [
+            {
+              "title": "Creating a workspace",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "패키지 만들기",
+          "priority": "essential",
+          "description": "ros2 pkg create --build-type ament_python/ament_cmake, package.xml 의존성 태그, setup.py entry_points 와 CMakeLists install() — Creating a package",
+          "resources": [
+            {
+              "title": "Creating a package",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "RViz2 와 rqt 도구",
+          "priority": "recommended",
+          "description": "RViz2 Fixed Frame·디스플레이(RobotModel, TF, Marker) 추가, rqt_graph 로 노드-토픽 연결 확인, rqt_console 로그 레벨 — Beginner: CLI tools",
+          "resources": [
+            {
+              "title": "Beginner: CLI tools",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools.html",
+              "kind": "doc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ROS 2 통신 기본",
+      "items": [
+        {
+          "title": "노드",
+          "priority": "essential",
+          "description": "노드 = 하나의 실행 단위, ros2 run/ros2 node list/info, 네임스페이스와 리매핑(--ros-args -r __ns:=, -r old:=new) — Understanding nodes",
+          "resources": [
+            {
+              "title": "Understanding nodes",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "토픽",
+          "priority": "essential",
+          "description": "publish/subscribe 비동기 통신, ros2 topic list/echo/hz/bw/pub, 메시지 타입(ros2 interface show) — Understanding topics",
+          "resources": [
+            {
+              "title": "Understanding topics",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "rclpy 퍼블리셔·서브스크라이버",
+              "priority": "essential",
+              "description": "create_publisher/create_subscription, create_timer 콜백, rclpy.spin — Writing a simple publisher and subscriber (Python)",
+              "resources": [
+                {
+                  "title": "Writing a simple publisher and subscriber (Python)",
+                  "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "자주 쓰는 메시지 타입",
+              "priority": "essential",
+              "description": "std_msgs/Header(stamp, frame_id), sensor_msgs/JointState·Image·CameraInfo, geometry_msgs/Pose·PoseStamped·Twist·TwistStamped·TransformStamped — ros2 interface show 로 필드 확인",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "title": "서비스",
+          "priority": "essential",
+          "description": "request/response 동기 호출, ros2 service list/type/call, create_service/create_client 와 call_async — Understanding services",
+          "resources": [
+            {
+              "title": "Understanding services",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Writing a simple service and client (Python)",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Service-And-Client.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "액션",
+          "priority": "essential",
+          "description": "goal·feedback·result 3단 구조와 취소(cancel), ros2 action list/info/send_goal, ActionServer/ActionClient — MoveIt·FollowJointTrajectory 가 액션 기반",
+          "resources": [
+            {
+              "title": "Understanding actions",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Writing an action server and client (Python)",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Writing-an-Action-Server-Client/Py.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "커스텀 인터페이스",
+          "priority": "recommended",
+          "description": ".msg/.srv/.action 정의, rosidl_generate_interfaces, 인터페이스 전용 ament_cmake 패키지 — Creating custom msg and srv files",
+          "resources": [
+            {
+              "title": "Creating custom msg and srv files",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "Executor 와 콜백 그룹",
+          "priority": "optional",
+          "description": "SingleThreadedExecutor vs MultiThreadedExecutor, MutuallyExclusive/Reentrant 콜백 그룹 — 서비스 호출 중 데드락 피하기 수준만 — Concepts: Executors",
+          "resources": [
+            {
+              "title": "About Executors",
+              "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Executors.html",
+              "kind": "doc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "QoS · 파라미터 · launch",
+      "items": [
+        {
+          "title": "QoS",
+          "priority": "essential",
+          "description": "reliability(RELIABLE/BEST_EFFORT), durability(VOLATILE/TRANSIENT_LOCAL), history depth, 센서 데이터 프로파일(qos_profile_sensor_data), 퍼블리셔·서브스크라이버 QoS 불일치로 메시지가 안 오는 경우와 ros2 topic info -v 로 확인 — Concepts: Quality of Service settings",
+          "resources": [
+            {
+              "title": "Quality of Service settings",
+              "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Quality-of-Service-Settings.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "/robot_description 의 TRANSIENT_LOCAL",
+              "priority": "recommended",
+              "description": "latched 토픽처럼 늦게 붙은 구독자도 마지막 메시지를 받는 원리 — robot_state_publisher·MoveIt 이 이 방식으로 모델을 받음",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "title": "파라미터",
+          "priority": "essential",
+          "description": "declare_parameter/get_parameter, ros2 param list/get/set/dump/load, YAML 파라미터 파일(노드이름: ros__parameters:) 구조, use_sim_time — Understanding parameters, Using parameters in a class (Python)",
+          "resources": [
+            {
+              "title": "Understanding parameters",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Parameters/Understanding-ROS2-Parameters.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Using parameters in a class (Python)",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Using-Parameters-In-A-Class-Python.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "launch 파일",
+          "priority": "essential",
+          "description": "Python launch: LaunchDescription, Node(package, executable, parameters, remappings, namespace), IncludeLaunchDescription — Intermediate: Launch",
+          "resources": [
+            {
+              "title": "Launch tutorials",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Launch-Main.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Creating a launch file",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Creating-Launch-Files.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "인자와 치환",
+              "priority": "essential",
+              "description": "DeclareLaunchArgument, LaunchConfiguration, PathJoinSubstitution, FindPackageShare, Command(['xacro ', path]) 로 robot_description 만들기 — Using substitutions",
+              "resources": [
+                {
+                  "title": "Using substitutions",
+                  "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Using-Substitutions.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "조건부 실행",
+              "priority": "recommended",
+              "description": "IfCondition/UnlessCondition 으로 use_sim·use_rviz 같은 스위치 처리",
+              "resources": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "로봇 모델: URDF · xacro · SRDF · TF2",
+      "items": [
+        {
+          "title": "URDF 태그",
+          "priority": "essential",
+          "description": "<robot>, <link>(visual/collision/inertial), <joint> type(revolute/continuous/prismatic/fixed), <parent>/<child>/<origin xyz rpy>/<axis>/<limit lower upper effort velocity> — ROS 2 docs Intermediate: URDF, ROS wiki urdf/XML",
+          "resources": [
+            {
+              "title": "URDF tutorials",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/URDF-Main.html",
+              "kind": "doc"
+            },
+            {
+              "title": "urdf/XML specification",
+              "url": "https://wiki.ros.org/urdf/XML",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "링크·조인트 트리 읽기",
+              "priority": "essential",
+              "description": "base_link 부터 tool0/end-effector 까지 체인 따라가기, mimic 조인트(그리퍼), check_urdf·urdf_to_graphviz 로 트리 확인",
+              "resources": []
+            },
+            {
+              "title": "<ros2_control> 태그",
+              "priority": "essential",
+              "description": "URDF 안의 <ros2_control name type=\"system\">, <hardware><plugin>, <joint><command_interface name=\"position\"/><state_interface/> — ros2_control 이 읽는 부분",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "title": "xacro",
+          "priority": "essential",
+          "description": "xacro:property, xacro:macro/params, xacro:include, xacro:arg 와 $(arg), 조건부 xacro:if — 회사 로봇 설명 패키지는 대부분 xacro — Using Xacro to clean up a URDF file",
+          "resources": [
+            {
+              "title": "Using Xacro to clean up a URDF file",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Using-Xacro-to-Clean-Up-a-URDF-File.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "robot_state_publisher 와 joint_state_publisher",
+          "priority": "essential",
+          "description": "/joint_states → robot_state_publisher → /tf·/tf_static, joint_state_publisher_gui 로 조인트 움직여 보기 — Using URDF with robot_state_publisher",
+          "resources": [
+            {
+              "title": "Using URDF with robot_state_publisher (Python)",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Using-URDF-with-Robot-State-Publisher-py.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "SRDF 태그",
+          "priority": "essential",
+          "description": "<group>(chain base_link→tip_link 또는 joint 목록), <group_state>(named pose, 예: home), <end_effector>, <disable_collisions reason=\"Adjacent/Never\">, <virtual_joint> — MoveIt docs URDF and SRDF",
+          "resources": [
+            {
+              "title": "URDF and SRDF (MoveIt)",
+              "url": "https://moveit.picknik.ai/main/doc/examples/urdf_srdf/urdf_srdf_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "TF2",
+          "priority": "essential",
+          "description": "프레임 트리(map/odom/base_link/tool0/camera_link), /tf vs /tf_static, 부모-자식 단방향 트리 — Concepts: tf2, Intermediate: tf2",
+          "resources": [
+            {
+              "title": "About tf2",
+              "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Tf2.html",
+              "kind": "doc"
+            },
+            {
+              "title": "tf2 tutorials",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Tf2-Main.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "TF 조회와 디버깅",
+              "priority": "essential",
+              "description": "tf2_echo src tgt, view_frames 로 frames.pdf, RViz TF 디스플레이, Buffer.lookup_transform 과 시간 인자(rclpy.time.Time()=최신) — Writing a listener (Python)",
+              "resources": [
+                {
+                  "title": "Writing a listener (Python)",
+                  "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Listener-Py.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "static transform",
+              "priority": "essential",
+              "description": "카메라 외부 파라미터 같은 고정 변환: static_transform_publisher CLI 와 StaticTransformBroadcaster — Writing a static broadcaster (Python)",
+              "resources": [
+                {
+                  "title": "Writing a static broadcaster (Python)",
+                  "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Static-Broadcaster-Py.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "자주 보는 TF 오류",
+              "priority": "recommended",
+              "description": "'Could not find a connection between', extrapolation into the future/past, 프레임 이름 오타·use_sim_time 불일치 원인 구분",
+              "resources": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ros2_control",
+      "items": [
+        {
+          "title": "전체 구조",
+          "priority": "essential",
+          "description": "controller_manager ↔ resource manager ↔ hardware interface(SystemInterface), read()/update()/write() 주기 루프 — control.ros.org Getting Started 의 아키텍처 그림",
+          "resources": [
+            {
+              "title": "ros2_control Getting Started",
+              "url": "https://control.ros.org/jazzy/doc/getting_started/getting_started.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "hardware interface",
+          "priority": "essential",
+          "description": "command interface vs state interface(position/velocity/effort), 하드웨어 라이프사이클 상태(unconfigured/inactive/active), mock_components/GenericSystem 으로 가짜 하드웨어 — Hardware interface types",
+          "resources": [
+            {
+              "title": "Hardware Interface Types",
+              "url": "https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/hardware_interface_types_userdoc.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "controller_manager",
+          "priority": "essential",
+          "description": "controllers YAML(update_rate, 컨트롤러 type), spawner 로 load/configure/activate, ros2 control list_controllers/list_hardware_interfaces/switch_controllers — controller_manager userdoc",
+          "resources": [
+            {
+              "title": "Controller Manager",
+              "url": "https://control.ros.org/jazzy/doc/ros2_control/controller_manager/doc/userdoc.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "자주 쓰는 컨트롤러",
+          "priority": "essential",
+          "description": "joint_state_broadcaster(/joint_states 발행), joint_trajectory_controller(FollowJointTrajectory 액션, MoveIt 실행용), forward_command_controller 계열(position/velocity — Servo 연결), gripper_action_controller — ros2_controllers 목록",
+          "resources": [
+            {
+              "title": "ros2_controllers",
+              "url": "https://control.ros.org/jazzy/doc/ros2_controllers/doc/controllers_index.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "ros2_control_demos 실행",
+          "priority": "recommended",
+          "description": "Example 1 RRBot 등 데모로 URDF <ros2_control> 태그 + controllers YAML + launch 연결 직접 따라가기",
+          "resources": [
+            {
+              "title": "ros2_control demos",
+              "url": "https://control.ros.org/jazzy/doc/ros2_control_demos/doc/index.html",
+              "kind": "doc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "MoveIt 2 기초",
+      "items": [
+        {
+          "title": "설치와 RViz 빠른 시작",
+          "priority": "essential",
+          "description": "MoveIt 2 바이너리 설치, Panda 데모 실행, RViz MotionPlanning 패널에서 인터랙티브 마커로 목표 잡고 Plan/Execute — Getting Started, Quickstart in RViz",
+          "resources": [
+            {
+              "title": "Getting Started",
+              "url": "https://moveit.picknik.ai/main/doc/tutorials/getting_started/getting_started.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Quickstart in RViz",
+              "url": "https://moveit.picknik.ai/main/doc/tutorials/quickstart_in_rviz/quickstart_in_rviz_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "move_group 노드",
+          "priority": "essential",
+          "description": "move_group 이 받는 입력(URDF·SRDF·kinematics.yaml·joint_limits.yaml·ompl_planning.yaml·moveit_controllers.yaml), 제공하는 액션/서비스(/move_action, /execute_trajectory, /compute_ik), 출력(FollowJointTrajectory → ros2_control) — Concepts: move_group",
+          "resources": [
+            {
+              "title": "move_group concept",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/move_group.html",
+              "kind": "doc"
+            },
+            {
+              "title": "MoveIt Concepts",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/concepts.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "MoveIt Setup Assistant",
+          "priority": "essential",
+          "description": "URDF 불러오기 → self-collision 행렬, planning group, robot pose, end effector, ros2_control·controllers 설정 → moveit_config 패키지 생성 — Setup Assistant",
+          "resources": [
+            {
+              "title": "MoveIt Setup Assistant",
+              "url": "https://moveit.picknik.ai/main/doc/examples/setup_assistant/setup_assistant_tutorial.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "moveit_configs_utils",
+              "priority": "recommended",
+              "description": "MoveItConfigsBuilder(...).robot_description().robot_description_semantic().to_moveit_configs() 로 launch 에 설정 넘기기",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "title": "RobotModel 과 RobotState",
+          "priority": "essential",
+          "description": "JointModelGroup, 조인트 값 설정 후 getGlobalLinkTransform, 조인트 한계 검사 — Robot Model and Robot State",
+          "resources": [
+            {
+              "title": "Robot Model and Robot State",
+              "url": "https://moveit.picknik.ai/main/doc/examples/robot_model_and_robot_state/robot_model_and_robot_state_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "PlanningScene",
+          "priority": "essential",
+          "description": "월드 충돌 객체(CollisionObject: box/mesh), attached object(잡은 물체), allowed collision matrix, 충돌 검사(checkCollision) — Planning Scene, Planning Scene ROS API",
+          "resources": [
+            {
+              "title": "Planning Scene",
+              "url": "https://moveit.picknik.ai/main/doc/examples/planning_scene/planning_scene_tutorial.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Planning Scene ROS API",
+              "url": "https://moveit.picknik.ai/main/doc/examples/planning_scene_ros_api/planning_scene_ros_api_tutorial.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Planning Scene Monitor",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/planning_scene_monitor.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "IK (역기구학) 사용법",
+          "priority": "essential",
+          "description": "kinematics.yaml 의 kinematics_solver(KDL 기본), timeout, setFromIK, /compute_ik 서비스, IK 실패 원인(도달 범위·자세 제약·timeout) — 수식 유도는 하지 않음 — Kinematics concept, Kinematics configuration",
+          "resources": [
+            {
+              "title": "Kinematics",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/kinematics.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Kinematics Configuration",
+              "url": "https://moveit.picknik.ai/main/doc/examples/kinematics_configuration/kinematics_configuration_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "플래너",
+          "priority": "essential",
+          "description": "OMPL(RRTConnect 기본) 선택과 planning_time·planning_attempts, Pilz(LIN/PTP/CIRC) 와 CHOMP/STOMP 는 이름과 용도만, 경로 제약(orientation constraint) — Motion Planning concept, OMPL Planner",
+          "resources": [
+            {
+              "title": "Motion Planning",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/motion_planning.html",
+              "kind": "doc"
+            },
+            {
+              "title": "OMPL Planner",
+              "url": "https://moveit.picknik.ai/main/doc/examples/ompl_interface/ompl_interface_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "시간 파라미터화",
+          "priority": "recommended",
+          "description": "경로 → 궤적: velocity/acceleration scaling factor, TOTG, joint_limits.yaml — Time Parameterization",
+          "resources": [
+            {
+              "title": "Time Parameterization",
+              "url": "https://moveit.picknik.ai/main/doc/examples/time_parameterization/time_parameterization_tutorial.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Trajectory Processing",
+              "url": "https://moveit.picknik.ai/main/doc/concepts/trajectory_processing.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "MoveGroupInterface 로 코드에서 움직이기",
+          "priority": "essential",
+          "description": "C++ MoveGroupInterface: setPoseTarget/setNamedTarget/setJointValueTarget, plan()/execute(), computeCartesianPath — Your First C++ MoveIt Project, Move Group C++ Interface",
+          "resources": [
+            {
+              "title": "Your First C++ MoveIt Project",
+              "url": "https://moveit.picknik.ai/main/doc/tutorials/your_first_project/your_first_project.html",
+              "kind": "doc"
+            },
+            {
+              "title": "Move Group C++ Interface",
+              "url": "https://moveit.picknik.ai/main/doc/examples/move_group_interface/move_group_interface_tutorial.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "RViz 시각화",
+              "priority": "recommended",
+              "description": "MoveItVisualTools 로 마커·궤적 표시, 단계별 실행 — Visualizing in RViz",
+              "resources": [
+                {
+                  "title": "Visualizing in RViz",
+                  "url": "https://moveit.picknik.ai/main/doc/tutorials/visualizing_in_rviz/visualizing_in_rviz.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "장애물 피해 계획",
+              "priority": "recommended",
+              "description": "PlanningSceneInterface 로 CollisionObject 추가 후 계획 — Planning Around Objects",
+              "resources": [
+                {
+                  "title": "Planning Around Objects",
+                  "url": "https://moveit.picknik.ai/main/doc/tutorials/planning_around_objects/planning_around_objects.html",
+                  "kind": "doc"
+                }
+              ]
+            },
+            {
+              "title": "Python API (moveit_py)",
+              "priority": "optional",
+              "description": "MoveItPy, planning_component.set_goal_state/plan/execute — Motion Planning Python API",
+              "resources": [
+                {
+                  "title": "Motion Planning Python API",
+                  "url": "https://moveit.picknik.ai/main/doc/examples/motion_planning_python_api/motion_planning_python_api_tutorial.html",
+                  "kind": "doc"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "MoveIt 컨트롤러 연결",
+          "priority": "essential",
+          "description": "moveit_controllers.yaml 의 moveit_simple_controller_manager, controller_names, FollowJointTrajectory action_ns — ros2_control 의 joint_trajectory_controller 와 이름 맞추기 — Controller Configuration",
+          "resources": [
+            {
+              "title": "Controller Configuration",
+              "url": "https://moveit.picknik.ai/main/doc/examples/controller_configuration/controller_configuration_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "MoveIt Servo (실시간 텔레오퍼레이션)",
+      "items": [
+        {
+          "title": "Servo 개념",
+          "priority": "essential",
+          "description": "계획 없이 실시간 명령을 조인트 명령으로 변환: TwistStamped(엔드이펙터 속도), JointJog(조인트 속도), PoseStamped(목표 자세) 입력 — Realtime Arm Servoing",
+          "resources": [
+            {
+              "title": "Realtime Arm Servoing",
+              "url": "https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "Servo 설정 파라미터",
+          "priority": "essential",
+          "description": "move_group_name, planning_frame, ee_frame, command_in_type(unitless/speed_units), publish_period, command_out_type(trajectory_msgs/JointTrajectory 또는 Float64MultiArray), command_out_topic — 출력 컨트롤러와 타입 맞추기",
+          "resources": []
+        },
+        {
+          "title": "명령 타입 전환과 상태",
+          "priority": "essential",
+          "description": "~/switch_command_type 서비스, ~/pause_servo, ~/status 토픽(특이점 근접·조인트 한계·충돌로 감속/정지)",
+          "resources": []
+        },
+        {
+          "title": "안전 동작",
+          "priority": "essential",
+          "description": "특이점 근처 감속(lower/hard_stop_singularity_threshold), 충돌 검사 거리 기반 감속, 조인트 위치·속도 한계 처리 — 텔레옵 데이터에 이상 정지 구간이 생기는 이유",
+          "resources": []
+        },
+        {
+          "title": "입력 장치 연결",
+          "priority": "recommended",
+          "description": "joy 노드 → TwistStamped 변환 노드, 스페이스마우스·게임패드 매핑, 데모의 servo_keyboard_input — 회사 텔레옵 장치가 결국 이 입력 토픽으로 들어옴",
+          "resources": []
+        }
+      ]
+    },
+    {
+      "title": "텔레옵 데이터 수집 실습 연결",
+      "items": [
+        {
+          "title": "rosbag2 기록과 재생",
+          "priority": "essential",
+          "description": "ros2 bag record -o name 토픽들 / -a, ros2 bag info, ros2 bag play --clock -r, 저장 포맷(mcap/sqlite3), QoS override — Recording and playing back data",
+          "resources": [
+            {
+              "title": "Recording and playing back data",
+              "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Recording-And-Playing-Back-Data/Recording-And-Playing-Back-Data.html",
+              "kind": "doc"
+            }
+          ]
+        },
+        {
+          "title": "기록할 토픽 고르기",
+          "priority": "essential",
+          "description": "/joint_states, /tf·/tf_static, 카메라 Image·CameraInfo, Servo 입력(TwistStamped) 과 컨트롤러 명령, 그리퍼 상태 — 관측(observation)·행동(action) 쌍이 되도록",
+          "resources": []
+        },
+        {
+          "title": "시간과 동기화",
+          "priority": "essential",
+          "description": "header.stamp vs 수신 시각, use_sim_time 과 /clock, ros2 topic hz 로 주기 확인, message_filters ApproximateTimeSynchronizer 로 카메라-조인트 정렬",
+          "resources": []
+        },
+        {
+          "title": "수집 세션 점검 루틴",
+          "priority": "recommended",
+          "description": "launch 로 로봇·카메라·Servo·bag 녹화 한 번에 띄우기, 시작 전 list_controllers·tf·topic hz 확인, 재생해서 RViz 로 검수",
+          "resources": []
+        }
+      ]
+    }
+  ]
+}
