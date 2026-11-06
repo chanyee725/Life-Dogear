@@ -9,6 +9,7 @@ import {
   stageStatus,
   STATUS_LABEL,
   STATUSES,
+  visibleNodes,
   type LearningRoadmap,
   type RoadmapNode,
 } from "@/app/roadmap/model";
@@ -122,5 +123,21 @@ describe("learning roadmap progress", () => {
 
   it("an empty roadmap has zero progress", () => {
     expect(assembleNodes([])).toEqual({ stages: [], progress: { done: 0, total: 0 } });
+  });
+});
+
+describe("visibleNodes", () => {
+  const tree = [
+    stage([node("a", "todo", [node("a1", "todo", [node("a11", "todo")])]), node("b", "done")], "s1"),
+    stage([node("c", "todo")], "s2"),
+  ];
+  const ids = (folded: string[]) => visibleNodes(tree, new Set(folded)).map((r) => r.id);
+
+  it("walks only unfolded branches", () => {
+    expect(ids(["a"])).toEqual(["s1", "a", "b", "s2", "c"]);
+    expect(ids([])).toEqual(["s1", "a", "a1", "a11", "b", "s2", "c"]);
+    expect(ids(["s1", "s2"])).toEqual(["s1", "s2"]);
+    const a11 = visibleNodes(tree, new Set()).find((r) => r.id === "a11")!;
+    expect([a11.level, a11.parentId, a11.stageIndex]).toEqual([4, "a1", 0]);
   });
 });

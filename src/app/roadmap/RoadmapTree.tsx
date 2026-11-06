@@ -1,257 +1,205 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
-import { cn } from "@/components/ui/cn";
-import { collapseAll, expandAll, toggleCollapsed, type CollapsedSet } from "./collapse";
+import { ChevronRight, Circle, CircleCheck, CircleDot, Diamond } from "lucide-react";
+import { useRef, type CSSProperties } from "react";
+import type { CollapsedSet } from "./collapse";
 import {
   PRIORITY_LABEL,
   STATUS_LABEL,
   ratio,
-  splitSides,
   stageStatus,
   type LearningRoadmap,
-  type Progress,
   type RoadmapNode,
+  type Status,
 } from "./model";
-
-type Side = "left" | "right";
+import { useTreeKeyboard } from "./useTreeKeyboard";
 
 export interface RoadmapTreeProps {
   roadmap: LearningRoadmap;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Folded stage/item ids; owned by RoadmapView (useTreeCollapse). */
+  collapsed: CollapsedSet;
+  onToggle: (id: string) => void;
 }
 
-function ProgressBar({ progress, label }: { progress: Progress; label: string }) {
-  return (
-    <div
-      className="rm-progress flex items-center gap-2"
-      role="progressbar"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={progress.total}
-      aria-valuenow={progress.done}
-      style={{ "--rm-progress": ratio(progress) } as CSSProperties}
-    >
-      <span className="rm-progress-bar block h-1.5 flex-1" />
-      <span className="rm-progress-text text-xs tabular-nums">
-        {progress.done}/{progress.total}
-      </span>
-    </div>
-  );
+/*
+ * DOM contract (keyboard handling lives with the collapse hook, keyed by data-id):
+ *   ul.rt-tree[role=tree]
+ *     li.rt-node[role=treeitem][aria-level][aria-expanded?][aria-selected][data-id][data-kind]
+ *       div.rt-row > button.rt-twisty + (stage: button.rt-stage-label | item: button.rt-label)
+ *       ul.rt-group[role=group] > li.rt-node ...
+ */
+
+const STATUS_ICON: Record<Status, typeof Circle> = {
+  todo: Circle,
+  doing: CircleDot,
+  done: CircleCheck,
+};
+
+function StatusIcon({ status }: { status: Status }) {
+  const Icon = STATUS_ICON[status];
+  return <Icon className="rt-status" aria-hidden="true" strokeWidth={2.25} />;
 }
 
-function ItemButton({
-  item,
-  depth,
-  selected,
-  onSelect,
-}: {
-  item: RoadmapNode;
-  depth: 1 | 2;
-  selected: boolean;
-  onSelect: (id: string) => void;
-}) {
-  const priority = item.priority ? PRIORITY_LABEL[item.priority] : null;
+function Twisty({ node, onToggle }: { node: RoadmapNode; onToggle: (id: string) => void }) {
+  if (node.children.length === 0)
+    return <span className="rt-twisty rt-twisty-leaf" aria-hidden="true" />;
   return (
     <button
       type="button"
-      className="rm-item flex min-w-0 items-center gap-2 text-left"
-      data-testid={`rm-item-${item.id}`}
-      data-priority={item.priority ?? undefined}
-      data-status={item.status}
-      data-depth={depth}
-      aria-pressed={selected}
-      title={[priority, STATUS_LABEL[item.status]].filter(Boolean).join(" · ")}
-      onClick={() => onSelect(item.id)}
+      className="rt-twisty"
+      tabIndex={-1}
+      aria-hidden="true"
+      data-testid={`rt-toggle-${node.id}`}
+      onClick={() => onToggle(node.id)}
     >
-      <span className="rm-item-status shrink-0" aria-hidden="true" />
-      <span className="rm-item-title min-w-0 break-words">{item.title}</span>
-      <span className="sr-only">
-        ({[priority, STATUS_LABEL[item.status]].filter(Boolean).join(", ")})
-      </span>
+      <ChevronRight className="rt-chevron" strokeWidth={2.25} />
     </button>
   );
 }
 
-/** One item plus its children, which sit further from the stem (outward). */
-function Branch({
-  item,
-  side,
-  collapsed,
-  onToggle,
-  selectedId,
-  onSelect,
-}: {
-  item: RoadmapNode;
-  side: Side;
+interface BranchProps {
   collapsed: CollapsedSet;
   onToggle: (id: string) => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
-}) {
-  const hasChildren = item.children.length > 0;
-  const folded = collapsed.has(item.id);
+}
+
+function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; level: number }) {
+  const hasChildren = node.children.length > 0;
+  const folded = collapsed(ctx, node);
+  const priority = node.priority ? PRIORITY_LABEL[node.priority] : null;
+  const meta = [priority, STATUS_LABEL[node.status]].filter(Boolean).join(", ");
   return (
-    <div
-      className={cn(
-        "rm-branch flex items-start gap-3",
-        side === "left" ? "lg:flex-row-reverse" : "lg:flex-row",
-        "max-lg:flex-col max-lg:gap-1.5",
-      )}
-      data-side={side}
+    <li
+      className="rt-node"
+      role="treeitem"
+      tabIndex={-1}
+      aria-level={level}
+      aria-expanded={hasChildren ? !folded : undefined}
+      aria-selected={ctx.selectedId === node.id}
+      data-id={node.id}
+      data-kind="item"
+      data-depth={level}
+      data-priority={node.priority ?? undefined}
+      data-status={node.status}
     >
-      <div className={cn("flex items-center gap-1", side === "left" && "lg:flex-row-reverse")}>
-        <ItemButton
-          item={item}
-          depth={1}
-          selected={selectedId === item.id}
-          onSelect={onSelect}
-        />
+      <div className="rt-row">
+        <Twisty node={node} onToggle={ctx.onToggle} />
+        <button
+          type="button"
+          className="rt-label"
+          tabIndex={-1}
+          data-testid={`rm-item-${node.id}`}
+          title={meta.replace(", ", " · ")}
+          onClick={() => ctx.onSelect(node.id)}
+        >
+          <StatusIcon status={node.status} />
+          {node.priority === "essential" && (
+            <Diamond className="rt-prio" aria-hidden="true" strokeWidth={2.25} />
+          )}
+          <span className="rt-title">{node.title}</span>
+          <span className="sr-only">({meta})</span>
+        </button>
         {hasChildren && (
-          <button
-            type="button"
-            className="rm-toggle shrink-0 px-1 text-xs"
-            data-testid={`rm-toggle-${item.id}`}
-            aria-expanded={!folded}
-            aria-label={folded ? `${item.title} 펼치기` : `${item.title} 접기`}
-            onClick={() => onToggle(item.id)}
-          >
-            {folded ? `+${item.children.length}` : "−"}
-          </button>
+          <span className="rt-count" aria-hidden="true">
+            {node.progress.done}/{node.progress.total}
+          </span>
         )}
       </div>
       {hasChildren && !folded && (
-        <div
-          className={cn(
-            "rm-children flex flex-col gap-1.5",
-            side === "left" ? "lg:items-end" : "lg:items-start",
-            "max-lg:pl-6",
-          )}
-        >
-          {item.children.map((c) => (
-            <ItemButton
-              key={c.id}
-              item={c}
-              depth={2}
-              selected={selectedId === c.id}
-              onSelect={onSelect}
-            />
+        <ul className="rt-group" role="group">
+          {node.children.map((c) => (
+            <ItemNode key={c.id} node={c} level={level + 1} {...ctx} />
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </li>
   );
 }
 
-function StageRow({
-  stage,
-  index,
-  collapsed,
-  onToggle,
+const collapsed = (ctx: BranchProps, node: RoadmapNode) => ctx.collapsed.has(node.id);
+
+function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode; index: number }) {
+  const folded = collapsed(ctx, stage);
+  const hasChildren = stage.children.length > 0;
+  const status = stageStatus(stage);
+  const { done, total } = stage.progress;
+  return (
+    <li
+      className="rt-node rt-stage"
+      role="treeitem"
+      tabIndex={index === 0 ? 0 : -1}
+      aria-level={1}
+      aria-expanded={hasChildren ? !folded : undefined}
+      aria-selected={false}
+      aria-label={`${index + 1}단계 ${stage.title}, ${done}/${total} 완료`}
+      data-id={stage.id}
+      data-kind="stage"
+      data-depth={1}
+      data-status={status}
+      data-testid={`rm-stage-${stage.id}`}
+      style={{ "--rt-progress": ratio(stage.progress) } as CSSProperties}
+    >
+      <div className="rt-row rt-stage-row">
+        <span className="rt-stage-num" aria-hidden="true">
+          {status === "done" ? <CircleCheck strokeWidth={2.5} /> : index + 1}
+        </span>
+        <button
+          type="button"
+          className="rt-stage-label"
+          tabIndex={-1}
+          onClick={() => hasChildren && ctx.onToggle(stage.id)}
+        >
+          <span className="rt-stage-title">{stage.title}</span>
+          {hasChildren && (
+            <ChevronRight className="rt-chevron" aria-hidden="true" strokeWidth={2.25} />
+          )}
+        </button>
+        <span className="rt-stage-meter" aria-hidden="true">
+          <span className="rt-stage-bar" />
+          <span className="rt-stage-count">
+            {done}/{total}
+          </span>
+        </span>
+        {stage.description && !folded && <p className="rt-stage-desc">{stage.description}</p>}
+      </div>
+      {hasChildren && !folded && (
+        <ul className="rt-group" role="group">
+          {stage.children.map((c) => (
+            <ItemNode key={c.id} node={c} level={2} {...ctx} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+/** Stages down a trunk; items branch off with elbow connectors, deeper levels indent further. */
+export default function RoadmapTree({
+  roadmap,
   selectedId,
   onSelect,
-}: {
-  stage: RoadmapNode;
-  index: number;
-  collapsed: CollapsedSet;
-  onToggle: (id: string) => void;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const folded = collapsed.has(stage.id);
-  const { left, right } = splitSides(stage.children);
-  const side = (items: RoadmapNode[], s: Side) => (
-    <div
-      className={cn(
-        "rm-side flex flex-col gap-3",
-        s === "left" ? "lg:items-end" : "lg:items-start",
-        "max-lg:pl-6",
-      )}
-      data-side={s}
+  collapsed,
+  onToggle,
+}: RoadmapTreeProps) {
+  const treeRef = useRef<HTMLUListElement>(null);
+  const { onKeyDown } = useTreeKeyboard({ rootRef: treeRef, collapsed, onToggle, onSelect });
+  const ctx: BranchProps = { collapsed, onToggle, selectedId, onSelect };
+
+  return (
+    <ul
+      ref={treeRef}
+      onKeyDown={onKeyDown}
+      className="rt-tree"
+      role="tree"
+      aria-label={`${roadmap.title} 로드맵`}
+      data-testid="rm-tree"
     >
-      {items.map((item) => (
-        <Branch
-          key={item.id}
-          item={item}
-          side={s}
-          collapsed={collapsed}
-          onToggle={onToggle}
-          selectedId={selectedId}
-          onSelect={onSelect}
-        />
+      {roadmap.stages.map((stage, i) => (
+        <StageNode key={stage.id} stage={stage} index={i} {...ctx} />
       ))}
-    </div>
-  );
-
-  return (
-    <section
-      className={cn(
-        "rm-stage relative grid items-center gap-x-8 gap-y-3",
-        "lg:grid-cols-[minmax(0,1fr)_16rem_minmax(0,1fr)]",
-        "max-lg:grid-cols-1",
-      )}
-      data-testid={`rm-stage-${stage.id}`}
-      data-status={stageStatus(stage)}
-      aria-label={`${index + 1}단계 ${stage.title}`}
-    >
-      {!folded && <div className="max-lg:order-2">{side(left, "left")}</div>}
-      <div
-        className={cn(
-          "rm-stage-node relative z-10 flex flex-col gap-2 lg:col-start-2 max-lg:order-1",
-        )}
-      >
-        <button
-          type="button"
-          className="flex items-baseline gap-2 text-left"
-          aria-expanded={!folded}
-          data-testid={`rm-stage-toggle-${stage.id}`}
-          onClick={() => onToggle(stage.id)}
-        >
-          <span className="rm-stage-index tabular-nums">{String(index + 1).padStart(2, "0")}</span>
-          <span className="rm-stage-title min-w-0 break-words">{stage.title}</span>
-        </button>
-        {stage.description && <p className="rm-desc text-xs">{stage.description}</p>}
-        <ProgressBar progress={stage.progress} label={`${stage.title} 진행률`} />
-      </div>
-      {!folded && (
-        <div className="lg:col-start-3 max-lg:order-3">{side(right, "right")}</div>
-      )}
-    </section>
-  );
-}
-
-/** Stages down a central stem; each stage's items branch left and right, children outward. */
-export default function RoadmapTree({ roadmap, selectedId, onSelect }: RoadmapTreeProps) {
-  const [collapsed, setCollapsed] = useState<CollapsedSet>(expandAll);
-  const onToggle = (id: string) => setCollapsed((c) => toggleCollapsed(c, id));
-  const stageIds = roadmap.stages.map((s) => s.id);
-  const allFolded = stageIds.length > 0 && stageIds.every((id) => collapsed.has(id));
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          className="rm-toggle text-xs"
-          onClick={() => setCollapsed(allFolded ? expandAll() : collapseAll(stageIds))}
-        >
-          {allFolded ? "모두 펼치기" : "모두 접기"}
-        </button>
-      </div>
-      <div className="rm-tree relative flex flex-col gap-10 py-4" data-testid="rm-tree">
-        {roadmap.stages.map((stage, i) => (
-          <StageRow
-            key={stage.id}
-            stage={stage}
-            index={i}
-            collapsed={collapsed}
-            onToggle={onToggle}
-            selectedId={selectedId}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
-    </div>
+    </ul>
   );
 }

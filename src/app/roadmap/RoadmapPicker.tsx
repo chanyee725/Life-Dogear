@@ -13,10 +13,7 @@ export default function RoadmapPicker({ roadmaps, current, className }: RoadmapP
   if (roadmaps.length < 2) return null;
 
   return (
-    <nav
-      aria-label="로드맵 선택"
-      className={cn("flex flex-wrap gap-1 border-b border-[var(--rb-border)]", className)}
-    >
+    <nav aria-label="로드맵 선택" className={cn("rp-root", className)}>
       {roadmaps.map((r) => {
         const selected = r.slug === current;
         return (
@@ -24,12 +21,7 @@ export default function RoadmapPicker({ roadmaps, current, className }: RoadmapP
             key={r.slug}
             href={`/roadmap?r=${encodeURIComponent(r.slug)}`}
             aria-current={selected ? "page" : undefined}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-1.5 text-sm",
-              selected
-                ? "border-[var(--rb-accent)] font-medium text-[var(--rb-fg)]"
-                : "border-transparent text-[var(--rb-muted)] hover:text-[var(--rb-fg)]",
-            )}
+            className="rp-tab"
           >
             {r.title}
           </Link>
