@@ -1,0 +1,633 @@
+/* Roadmap chrome: header (rv-), legend box, picker (rp-), item panel (ip-).
+ * The tree (rt-) lives in roadmap.css / roadmap-tree.css; this file never styles .rt-*.
+ *
+ * Look: hand-drawn chart — thick ink outlines, slightly uneven corners, a hard offset shadow,
+ * yellow / beige node fills. Priority = fill + border style + diamond mark
+ * (필수 yellow + solid + filled ◆, 추천 beige + solid + outline ◇, 선택 paper + dashed),
+ * status = icon (ring, dotted ring, checked ring). Colour is never the only signal.
+ */
+
+@layer components {
+  .rv-root,
+  .ip-root,
+  .rp-root {
+    --rc-ink: #1d1b16;
+    --rc-on-fill: #1d1b16;
+    --rc-paper: #ffffff;
+    --rc-yellow: #ffe24a;
+    --rc-beige: #f6e7b6;
+    --rc-line: 2.5px;
+    --rc-shadow: 3px 3px 0 var(--rc-ink);
+    --rc-radius: 7px 5px 8px 6px;
+    --rc-todo: #66635a;
+    --rc-doing: #6a3fcf;
+    --rc-done: #20793a;
+    --rc-track: #ece6d2;
+  }
+  :where(.dark) :is(.rv-root, .ip-root, .rp-root) {
+    --rc-ink: #ece2bd;
+    --rc-on-fill: #1d1b16;
+    --rc-paper: #1f1e1b;
+    --rc-yellow: #f2d03a;
+    --rc-beige: #d9c78e;
+    --rc-shadow: 3px 3px 0 #000;
+    --rc-todo: #aaa597;
+    --rc-doing: #b9a2ff;
+    --rc-done: #63c27e;
+    --rc-track: #34322b;
+  }
+
+  /* priority fill slots */
+  :is(.rv-root, .ip-root) [data-priority="essential"] {
+    --rc-fill: var(--rc-yellow);
+    --rc-fill-fg: var(--rc-on-fill);
+    --rc-border-style: solid;
+  }
+  :is(.rv-root, .ip-root) [data-priority="recommended"] {
+    --rc-fill: var(--rc-beige);
+    --rc-fill-fg: var(--rc-on-fill);
+    --rc-border-style: solid;
+  }
+  :is(.rv-root, .ip-root) [data-priority="optional"] {
+    --rc-fill: var(--rc-paper);
+    --rc-fill-fg: var(--rb-fg);
+    --rc-border-style: dashed;
+  }
+
+  /* shared glyphs (also used inside the tree, so colour only) */
+  .ip-status-icon {
+    flex-shrink: 0;
+  }
+  .ip-status-icon[data-status="todo"] {
+    color: var(--rc-todo, var(--rb-muted));
+  }
+  .ip-status-icon[data-status="doing"] {
+    color: var(--rc-doing, var(--rb-tone-violet-fg));
+  }
+  .ip-status-icon[data-status="done"] {
+    color: var(--rc-done, var(--rb-tone-green-fg));
+  }
+  .ip-priority-mark {
+    flex-shrink: 0;
+  }
+
+  /* ================= header: legend | title | progress ================= */
+  .rv-head {
+    display: grid;
+    grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr) minmax(16rem, 20rem);
+    align-items: start;
+    gap: 24px 40px;
+    margin-bottom: 32px;
+  }
+  .rv-head-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 6px;
+    min-width: 0;
+    text-align: center;
+  }
+  .rv-title {
+    font-size: 30px;
+    font-weight: 750;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    color: var(--rb-fg);
+    text-wrap: balance;
+  }
+  .rv-summary {
+    max-width: 58ch;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--rb-muted);
+    text-wrap: pretty;
+  }
+
+  /* boxed panels in the two top corners */
+  .rv-legend,
+  .rv-progress {
+    border: var(--rc-line) solid var(--rc-ink);
+    border-radius: var(--rc-radius);
+    background: var(--rc-paper);
+    box-shadow: var(--rc-shadow);
+  }
+
+  /* legend box (top-left) */
+  .rv-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--rb-fg);
+  }
+  .rv-legend-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .rv-legend-group + .rv-legend-group {
+    padding-top: 12px;
+    border-top: 1.5px dashed var(--rc-ink);
+    gap: 6px 14px;
+  }
+  .rv-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rv-legend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 26px;
+    padding: 0 10px;
+    border: 2px var(--rc-border-style, solid) var(--rc-ink);
+    border-radius: 5px 4px 6px 4px;
+    background: var(--rc-fill);
+    color: var(--rc-fill-fg);
+    font-weight: 650;
+  }
+  .rv-legend-item[data-priority="optional"] .rv-legend-badge {
+    font-weight: 500;
+  }
+
+  /* progress box (top-right) */
+  .rv-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px 16px;
+    min-width: 0;
+  }
+  .rv-progress-figure {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rv-progress-percent {
+    font-size: 26px;
+    font-weight: 750;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--rb-fg);
+  }
+  .rv-progress-detail {
+    font-size: 13px;
+    color: var(--rb-muted);
+  }
+
+  /* stage trail: one segment per stage, sized by its item count */
+  .rv-trail {
+    display: flex;
+    gap: 3px;
+    height: 12px;
+    padding: 2px;
+    border: 2px solid var(--rc-ink);
+    border-radius: 999px;
+    background: var(--rc-paper);
+  }
+  .rv-trail-seg {
+    flex-basis: 0;
+    min-width: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(to right, var(--rc-done) calc(var(--rv-fill, 0) * 100%), transparent 0)
+        no-repeat,
+      var(--rc-track);
+  }
+  .rv-trail-seg:first-child {
+    border-radius: 999px 2px 2px 999px;
+  }
+  .rv-trail-seg:last-child {
+    border-radius: 2px 999px 999px 2px;
+  }
+  .rv-trail-seg[data-status="doing"] {
+    box-shadow: inset 0 0 0 1.5px var(--rc-doing);
+  }
+
+  .rv-fold-all {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    margin-top: 2px;
+    padding: 0 12px 0 10px;
+    border: 2px solid var(--rc-ink);
+    border-radius: 6px 5px 7px 5px;
+    background: var(--rc-paper);
+    color: var(--rb-fg);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .rv-fold-all:hover {
+    background: var(--rc-beige);
+    color: var(--rc-on-fill);
+  }
+
+  /* ================= body: tree + side panel ================= */
+  .rv-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  .rv-tree-col {
+    flex: 1;
+    min-width: 0;
+  }
+  .rv-panel-col {
+    position: sticky;
+    top: 24px;
+    flex-shrink: 0;
+    width: 24rem;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* room for the offset shadow inside the scroll box */
+    padding: 0 6px 6px 0;
+  }
+  .rv-error {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border: 2px solid var(--rb-tone-red-fg);
+    border-radius: var(--rc-radius);
+    background: var(--rb-tone-red-bg);
+    color: var(--rb-tone-red-fg);
+    font-size: 13px;
+  }
+
+  /* ================= picker ================= */
+  .rp-root {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 10px;
+    padding: 0 4px 4px 0;
+  }
+  .rp-tab {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border: 2px dashed var(--rc-ink);
+    border-radius: 6px 5px 7px 5px;
+    background: var(--rc-paper);
+    color: var(--rb-fg);
+    font-size: 13.5px;
+  }
+  .rp-tab:hover {
+    border-style: solid;
+    background: var(--rc-beige);
+    color: var(--rc-on-fill);
+  }
+  .rp-tab[aria-current="page"] {
+    border-style: solid;
+    background: var(--rc-yellow);
+    color: var(--rc-on-fill);
+    font-weight: 700;
+    box-shadow: var(--rc-shadow);
+  }
+
+  /* ================= item panel ================= */
+  .ip-root {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 0 0 18px;
+    border: var(--rc-line) solid var(--rc-ink);
+    border-radius: var(--rc-radius);
+    background: var(--rc-paper);
+    box-shadow: 4px 4px 0 var(--rc-ink);
+    color: var(--rb-fg);
+  }
+  :where(.dark) .ip-root {
+    box-shadow: 4px 4px 0 #000;
+  }
+  /* head reads like the selected node: its fill, its border style */
+  .ip-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 14px 14px 16px;
+    border-bottom: var(--rc-line) solid var(--rc-ink);
+    border-radius: 5px 3px 0 0;
+    background: var(--rc-fill, var(--rc-paper));
+    color: var(--rc-fill-fg, var(--rb-fg));
+  }
+  .ip-root[data-priority="optional"] .ip-head {
+    border-bottom-style: dashed;
+  }
+  .ip-head-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+  .ip-title {
+    font-size: 18px;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .ip-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 9px 0 8px;
+    border: 2px var(--rc-border-style, solid) currentColor;
+    border-radius: 999px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 20px;
+  }
+  .ip-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    margin: -4px -4px 0 0;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    color: inherit;
+  }
+  .ip-close:hover {
+    border-color: currentColor;
+  }
+
+  .ip-root > :not(.ip-head) {
+    margin-inline: 16px;
+  }
+
+  /* status: three outlined buttons, the current one filled with ink */
+  .ip-status {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .ip-status-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 8px;
+    border: 2px solid var(--rc-ink);
+    border-radius: 6px 5px 7px 5px;
+    background: var(--rc-paper);
+    color: var(--rb-fg);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .ip-status-btn:hover:not(:disabled) {
+    background: var(--rc-beige);
+    color: var(--rc-on-fill);
+  }
+  .ip-status-btn[aria-checked="true"] {
+    background: var(--rc-ink);
+    color: var(--rc-paper);
+    font-weight: 700;
+  }
+  .ip-status-btn[aria-checked="true"] .ip-status-icon {
+    color: inherit;
+  }
+  .ip-status-btn:disabled {
+    cursor: default;
+  }
+  .ip-root[aria-busy="true"] .ip-status {
+    opacity: 0.6;
+  }
+
+  .ip-desc {
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--rb-fg);
+  }
+
+  .ip-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rb-fg);
+  }
+
+  /* children + grandchildren, drawn as a small tree with dashed elbows */
+  .ip-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--rc-ink);
+  }
+  .ip-sub-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ip-sub-list .ip-sub-list {
+    margin: 2px 0 4px 11px;
+    padding-left: 14px;
+    border-left: 1.5px dashed var(--rc-ink);
+  }
+  .ip-sub-node {
+    position: relative;
+  }
+  .ip-sub-list .ip-sub-list > .ip-sub-node::before {
+    content: "";
+    position: absolute;
+    left: -14px;
+    top: 17px;
+    width: 11px;
+    border-top: 1.5px dashed var(--rc-ink);
+  }
+  .ip-sub-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 34px;
+    padding: 5px 8px;
+    border: 2px var(--rc-border-style, solid) transparent;
+    border-radius: 5px 4px 6px 4px;
+    color: var(--rb-fg);
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .ip-sub-list[data-depth="1"] > .ip-sub-node > .ip-sub-row {
+    border-color: var(--rc-ink);
+    background: var(--rc-fill, var(--rc-paper));
+    color: var(--rc-fill-fg, var(--rb-fg));
+  }
+  .ip-sub-list[data-depth="1"] > .ip-sub-node > .ip-sub-row .ip-status-icon {
+    color: currentColor;
+  }
+  button.ip-sub-row {
+    cursor: pointer;
+  }
+  button.ip-sub-row:hover {
+    border-color: var(--rc-ink);
+  }
+  .ip-sub-node[data-priority="essential"] > .ip-sub-row .ip-sub-title {
+    font-weight: 650;
+  }
+  .ip-sub-node[data-status="done"] > .ip-sub-row .ip-sub-title {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
+  .ip-sub-title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .ip-sub-more {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--rb-muted);
+  }
+
+  /* resources */
+  .ip-resources {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--rc-ink);
+  }
+  .ip-res-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 -8px;
+    padding: 0;
+    list-style: none;
+  }
+  .ip-res {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 2px solid transparent;
+    border-radius: 6px 5px 7px 5px;
+    color: var(--rb-fg);
+  }
+  .ip-res:hover {
+    border-color: var(--rc-ink);
+  }
+  .ip-res-kind {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--rc-ink);
+    border-radius: 6px 5px 7px 5px;
+    background: var(--rc-beige);
+    color: var(--rc-on-fill);
+  }
+  .ip-res-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .ip-res-title {
+    font-size: 13.5px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .ip-res-host {
+    font-size: 12px;
+    color: var(--rb-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ip-res-out {
+    color: var(--rb-muted);
+    opacity: 0;
+  }
+  .ip-res:hover .ip-res-out,
+  .ip-res:focus-visible .ip-res-out {
+    opacity: 1;
+  }
+
+  /* keyboard focus: ink ring with a gap, visible on yellow, beige and paper */
+  .rv-fold-all:focus-visible,
+  .rp-tab:focus-visible,
+  .ip-close:focus-visible,
+  .ip-status-btn:focus-visible,
+  .ip-sub-row:focus-visible,
+  .ip-res:focus-visible {
+    outline: 3px solid var(--rc-doing);
+    outline-offset: 2px;
+  }
+
+  /* <1280px: legend and progress share a row under the title */
+  @media (max-width: 1279px) {
+    .rv-head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .rv-head-main {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+  }
+
+  /* <1024px: stacked header; panel sticks to the bottom of the content column */
+  @media (max-width: 1023px) {
+    .rv-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+    .rv-title {
+      font-size: 24px;
+    }
+    .rv-body {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+    .rv-panel-col {
+      position: sticky;
+      top: auto;
+      bottom: 0;
+      z-index: 20;
+      width: auto;
+      max-height: 65vh;
+      padding: 12px 6px 6px 0;
+    }
+    .rv-fold-all,
+    .rp-tab,
+    .ip-status-btn,
+    .ip-sub-row,
+    .ip-close {
+      min-height: 44px;
+    }
+    .ip-close {
+      width: 44px;
+      height: 44px;
+      margin: -8px -8px 0 0;
+    }
+  }
+}

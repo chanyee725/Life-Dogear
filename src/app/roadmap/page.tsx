@@ -6,6 +6,7 @@ import RoadmapEmpty from "./RoadmapEmpty";
 import RoadmapPicker from "./RoadmapPicker";
 import RoadmapView from "./RoadmapView";
 import "./roadmap.css";
+import "./roadmap-chrome.css";
 
 export const metadata: Metadata = { title: "로드맵" };
 export const dynamic = "force-dynamic";
