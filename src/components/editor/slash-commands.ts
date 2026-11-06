@@ -59,7 +59,8 @@ const squash = (s: string) => s.toLowerCase().replace(/\s+/g, "");
 
 /**
  * Commands matching the typed query: label or alias starting with it (spaces ignored,
- * so "할일" finds 할 일), then any containing it. Without `page`, 페이지 is left out.
+ * so "할일" finds 할 일), then any containing it — except digit-only queries, which
+ * match by prefix only so /2 opens 2열 and not 제목 2. Without `page`, 페이지 is left out.
  */
 export function filterSlashCommands(query: string, { page }: { page: boolean }): SlashCommand[] {
   const q = squash(query);
@@ -67,6 +68,7 @@ export function filterSlashCommands(query: string, { page }: { page: boolean }):
   if (!q) return pool;
   const words = (c: SlashCommand) => [c.label, ...c.aliases].map(squash);
   const starts = pool.filter((c) => words(c).some((w) => w.startsWith(q)));
+  if (/^\d+$/.test(q)) return starts;
   const contains = pool.filter((c) => !starts.includes(c) && words(c).some((w) => w.includes(q)));
   return [...starts, ...contains];
 }

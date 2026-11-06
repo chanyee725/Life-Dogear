@@ -43,6 +43,13 @@ function at(doc: PmNode) {
 const ids = (q: string, page = true) => filterSlashCommands(q, { page }).map((c) => c.id);
 
 describe("filterSlashCommands", () => {
+  it("digit-only queries match by prefix only, not 제목 2/3", () => {
+    expect(ids("2")).toEqual(["columns2"]);
+    expect(ids("3")).toEqual(["columns3"]);
+    expect(ids("h2")[0]).toBe("h2");
+    expect(ids("제목2")[0]).toBe("h2");
+  });
+
   it("lists everything for an empty query, without 페이지 when there is no document", () => {
     expect(ids("")).toEqual([
       "page",
