@@ -1,30 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { progressOf, splitSides, stageStatus, type RoadmapItem } from "@/app/roadmap/model";
+import { splitSides, stageStatus, type RoadmapNode } from "@/app/roadmap/model";
 
-const item = (id: string, status: RoadmapItem["status"], children: RoadmapItem[] = []): RoadmapItem => ({
+const node = (id: string, status: RoadmapNode["status"], children: RoadmapNode[] = []): RoadmapNode => ({
   id,
+  kind: "item",
   title: id,
-  description: null,
+  description: "",
   priority: "essential",
-  status,
   resources: [],
+  status,
+  progress: { done: 0, total: 0 },
   children,
 });
+const stage = (children: RoadmapNode[]) => ({ ...node("s", "todo", children), kind: "stage" as const });
 
 describe("learning roadmap model", () => {
-  it("counts children in progress", () => {
-    expect(progressOf([item("a", "done", [item("b", "todo")]), item("c", "done")])).toEqual({
-      done: 2,
-      total: 3,
-    });
-  });
-
-  it("derives stage status", () => {
-    expect(stageStatus([])).toBe("todo");
-    expect(stageStatus([item("a", "todo")])).toBe("todo");
-    expect(stageStatus([item("a", "doing")])).toBe("doing");
-    expect(stageStatus([item("a", "done", [item("b", "todo")])])).toBe("doing");
-    expect(stageStatus([item("a", "done", [item("b", "done")])])).toBe("done");
+  it("derives stage status from its items", () => {
+    expect(stageStatus(stage([]))).toBe("todo");
+    expect(stageStatus(stage([node("a", "todo")]))).toBe("todo");
+    expect(stageStatus(stage([node("a", "doing")]))).toBe("doing");
+    expect(stageStatus(stage([node("a", "done", [node("b", "todo")])]))).toBe("doing");
+    expect(stageStatus(stage([node("a", "done", [node("b", "done")])]))).toBe("done");
   });
 
   it("puts the extra item on the left", () => {

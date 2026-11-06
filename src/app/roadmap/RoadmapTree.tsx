@@ -6,14 +6,12 @@ import { collapseAll, expandAll, toggleCollapsed, type CollapsedSet } from "./co
 import {
   PRIORITY_LABEL,
   STATUS_LABEL,
-  progressOf,
   ratio,
   splitSides,
   stageStatus,
   type LearningRoadmap,
   type Progress,
-  type RoadmapItem,
-  type RoadmapStage,
+  type RoadmapNode,
 } from "./model";
 
 type Side = "left" | "right";
@@ -49,27 +47,28 @@ function ItemButton({
   selected,
   onSelect,
 }: {
-  item: RoadmapItem;
+  item: RoadmapNode;
   depth: 1 | 2;
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
+  const priority = item.priority ? PRIORITY_LABEL[item.priority] : null;
   return (
     <button
       type="button"
       className="rm-item flex min-w-0 items-center gap-2 text-left"
       data-testid={`rm-item-${item.id}`}
-      data-priority={item.priority}
+      data-priority={item.priority ?? undefined}
       data-status={item.status}
       data-depth={depth}
       aria-pressed={selected}
-      title={`${PRIORITY_LABEL[item.priority]} · ${STATUS_LABEL[item.status]}`}
+      title={[priority, STATUS_LABEL[item.status]].filter(Boolean).join(" · ")}
       onClick={() => onSelect(item.id)}
     >
       <span className="rm-item-status shrink-0" aria-hidden="true" />
       <span className="rm-item-title min-w-0 break-words">{item.title}</span>
       <span className="sr-only">
-        ({PRIORITY_LABEL[item.priority]}, {STATUS_LABEL[item.status]})
+        ({[priority, STATUS_LABEL[item.status]].filter(Boolean).join(", ")})
       </span>
     </button>
   );
@@ -84,7 +83,7 @@ function Branch({
   selectedId,
   onSelect,
 }: {
-  item: RoadmapItem;
+  item: RoadmapNode;
   side: Side;
   collapsed: CollapsedSet;
   onToggle: (id: string) => void;
@@ -153,7 +152,7 @@ function StageRow({
   selectedId,
   onSelect,
 }: {
-  stage: RoadmapStage;
+  stage: RoadmapNode;
   index: number;
   collapsed: CollapsedSet;
   onToggle: (id: string) => void;
@@ -161,9 +160,8 @@ function StageRow({
   onSelect: (id: string) => void;
 }) {
   const folded = collapsed.has(stage.id);
-  const { left, right } = splitSides(stage.items);
-  const progress = progressOf(stage.items);
-  const side = (items: RoadmapItem[], s: Side) => (
+  const { left, right } = splitSides(stage.children);
+  const side = (items: RoadmapNode[], s: Side) => (
     <div
       className={cn(
         "rm-side flex flex-col gap-3",
@@ -194,7 +192,7 @@ function StageRow({
         "max-lg:grid-cols-1",
       )}
       data-testid={`rm-stage-${stage.id}`}
-      data-status={stageStatus(stage.items)}
+      data-status={stageStatus(stage)}
       aria-label={`${index + 1}단계 ${stage.title}`}
     >
       {!folded && <div className="max-lg:order-2">{side(left, "left")}</div>}
@@ -214,7 +212,7 @@ function StageRow({
           <span className="rm-stage-title min-w-0 break-words">{stage.title}</span>
         </button>
         {stage.description && <p className="rm-desc text-xs">{stage.description}</p>}
-        <ProgressBar progress={progress} label={`${stage.title} 진행률`} />
+        <ProgressBar progress={stage.progress} label={`${stage.title} 진행률`} />
       </div>
       {!folded && (
         <div className="lg:col-start-3 max-lg:order-3">{side(right, "right")}</div>
