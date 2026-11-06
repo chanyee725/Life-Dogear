@@ -40,12 +40,17 @@ const HIDE_BELOW: Record<"md" | "lg", string> = {
 };
 
 /**
- * Title cell width: its text's width up to 36rem (narrower on small screens), so short
- * titles don't push the meta columns to the far edge. Long titles wrap.
+ * Column widths. The title column takes a fixed share of the table (long titles wrap inside
+ * it); the meta columns split the rest by their content, so they spread across the table
+ * instead of bunching up after the title and leaving the right side empty.
  */
-const TITLE_WIDTH = "w-max max-w-[min(36rem,calc(100vw-5rem))]";
-/** Empty last column that takes the leftover width, keeping the table full width. */
-const FILLER = "w-full p-0";
+const TITLE_COL = "w-[40%] min-w-56";
+const META_COL = "whitespace-nowrap [&_.flex-wrap]:flex-nowrap";
+/**
+ * The last column, when always visible, sits flush with the table's right edge (header too),
+ * so every row ends at the edge. Flex children (tag lists, badge rows) are pushed right as well.
+ */
+const END_COL = "text-right [&>*]:justify-end [&>*]:ml-auto";
 
 const isBlank = (v: ReactNode) => v === null || v === undefined || v === false || v === "";
 
@@ -82,6 +87,12 @@ export function ItemTable<T>({
     (c) => c.primary || items.some((i) => !(c.isEmpty ? c.isEmpty(i) : isBlank(c.render(i)))),
   );
 
+  const last = columns[columns.length - 1];
+  // Only right-align a column that never hides; otherwise the "last" column changes with width.
+  const endKey = last && !last.primary && !last.hideBelow ? last.key : undefined;
+  const colClass = (c: Column<T>) =>
+    cn(hideClass(c), c.primary ? TITLE_COL : META_COL, c.key === endKey && END_COL);
+
   const rows = (list: readonly T[]) =>
     list.map((item) => {
       const href = getHref?.(item);
@@ -90,16 +101,10 @@ export function ItemTable<T>({
           {columns.map((c) => (
             <Td
               key={c.key}
-              className={cn(
-                hideClass(c),
-                // Every column shrinks to its content; the filler cell below takes the slack.
-                c.primary ? "min-w-56" : "w-px whitespace-nowrap [&_.flex-wrap]:flex-nowrap",
-                c.className,
-              )}
+              className={cn(colClass(c), c.className)}
             >
               {c.primary ? (
-                // Title as wide as its text, capped so the meta columns stay next to it.
-                <div className={TITLE_WIDTH}>
+                <>
                   {href ? (
                     // Stretched link: the ::after covers the row so the whole row is clickable.
                     <Link
@@ -111,13 +116,12 @@ export function ItemTable<T>({
                   ) : (
                     c.render(item)
                   )}
-                </div>
+                </>
               ) : (
                 c.render(item)
               )}
             </Td>
           ))}
-          <Td aria-hidden className={FILLER} />
         </Tr>
       );
     });
@@ -127,11 +131,10 @@ export function ItemTable<T>({
       <THead>
         <tr>
           {columns.map((c) => (
-            <Th key={c.key} className={cn(hideClass(c), !c.primary && "w-px", c.headerClassName)}>
+            <Th key={c.key} className={cn(colClass(c), c.headerClassName)}>
               {c.header}
             </Th>
           ))}
-          <Th aria-hidden className={FILLER} />
         </tr>
       </THead>
       {groups ? (
@@ -144,7 +147,7 @@ export function ItemTable<T>({
             <tr className="bg-subtle">
               <th
                 scope="rowgroup"
-                colSpan={columns.length + 1}
+                colSpan={columns.length}
                 className="h-8 px-3 text-left text-xs font-medium text-fg"
               >
                 {group.label}
