@@ -32,6 +32,8 @@ const DRAG_SLOP = 4;
 /** Touch hold (ms) before the grip drags, so a swipe over it still scrolls the page. */
 const LONG_PRESS_MS = 300;
 const HANDLE_SIZE = 20;
+/** The column width bar in the gap between two columns (columns-resize.ts). */
+const RESIZE_BAR_CLASS = "rb-column-resize";
 
 export type Block = { pos: number; node: PMNode };
 
@@ -298,7 +300,8 @@ class DragHandleView {
     clearTimeout(this.hideTimer);
     const content = this.view.dom.getBoundingClientRect();
     // The margin left of the text maps to the block beside it, so the grip stays reachable.
-    const left = Math.max(event.clientX, content.left + 1);
+    const left =
+      this.gapSide(event.clientX, event.clientY) ?? Math.max(event.clientX, content.left + 1);
     const hit = this.view.posAtCoords({ left, top: event.clientY });
     const { doc } = this.view.state;
     let block = hit && blockAt(doc, hit.pos, hit.inside);
@@ -312,12 +315,73 @@ class DragHandleView {
     this.place(block);
   };
 
-  /** Leaving the text for the grip crosses a small gap, so hiding waits a moment. */
+  /**
+   * In the gap between two side-by-side columns, the x to look up instead: right of the
+   * width bar (where the right column's grips sit) maps to that column, left of it to the
+   * left one, so walking from a block to its grip never jumps the grip to the other column.
+   */
+  private gapSide(x: number, y: number): number | null {
+    const under = document.elementFromPoint(x, y);
+    const columns = under instanceof HTMLElement && under.closest('[data-type="columns"]');
+    if (!columns || !this.view.dom.contains(columns)) return null;
+    const cols = [...columns.children].filter(
+      (c): c is HTMLElement => c instanceof HTMLElement && c.dataset.type === COLUMN,
+    );
+    for (let i = 0; i + 1 < cols.length; i++) {
+      const a = cols[i].getBoundingClientRect();
+      const b = cols[i + 1].getBoundingClientRect();
+      if (b.left <= a.right || x <= a.right || x >= b.left) continue;
+      const split = this.barIn(a, b)?.right ?? (a.right + b.left) / 2;
+      return x >= split ? b.left + 1 : a.right - 1;
+    }
+    return null;
+  }
+
+  /**
+   * Leaving the text for the grip crosses a small gap, so hiding waits a moment. Passing
+   * over a column width bar keeps the grip: hiding waits until the pointer leaves the bar.
+   */
   private onLeave = (event: MouseEvent) => {
-    if (this.drag || this.handle.contains(event.relatedTarget as Node | null)) return;
+    const to = event.relatedTarget;
+    if (this.drag || this.handle.contains(to as Node | null)) return;
+    if (to instanceof HTMLElement && to.classList.contains(RESIZE_BAR_CLASS)) {
+      clearTimeout(this.hideTimer);
+      to.addEventListener("mouseleave", this.onLeave, { once: true });
+      return;
+    }
+    if (to instanceof Node && this.view.dom.contains(to)) return;
     clearTimeout(this.hideTimer);
     this.hideTimer = setTimeout(() => this.hide(), 400);
   };
+
+  /**
+   * The width bar's box in the gap between columns `a` and `b` (client px), if one is
+   * there: it sits beside the editor in the same wrapper as the grip.
+   */
+  private barIn(a: DOMRect, b: DOMRect): DOMRect | null {
+    for (const el of this.host.querySelectorAll(`.${RESIZE_BAR_CLASS}`)) {
+      const r = el.getBoundingClientRect();
+      if (r.left >= a.right - 1 && r.right <= b.left + 1 && r.top < b.bottom && r.bottom > b.top)
+        return r;
+    }
+    return null;
+  }
+
+  /**
+   * Leftmost grip position (client px) for a block in a column after the first: right of
+   * the width bar in the gap (columns-resize.ts), so the grip never sits under it.
+   */
+  private minLeft(dom: HTMLElement): number {
+    const column = dom.closest('[data-type="column"]');
+    const prev = column?.previousElementSibling;
+    if (!(column instanceof HTMLElement) || !(prev instanceof HTMLElement)) return -Infinity;
+    const a = prev.getBoundingClientRect();
+    const b = column.getBoundingClientRect();
+    // Stacked columns (narrow screens) have no bar between them.
+    if (b.left <= a.right) return -Infinity;
+    const bar = this.barIn(a, b);
+    return bar ? bar.right + 1 : -Infinity;
+  }
 
   private place(block: Block) {
     const dom = this.blockDom(block);
@@ -331,7 +395,8 @@ class DragHandleView {
     const parent = this.view.state.doc.resolve(block.pos).parent.type.name;
     const marker = parent === "bulletList" || parent === "orderedList" ? 18 : 0;
     this.handle.style.top = `${rect.top - host.top + firstLine / 2 - HANDLE_SIZE / 2}px`;
-    this.handle.style.left = `${rect.left - host.left - marker - HANDLE_SIZE - 4}px`;
+    const left = Math.max(rect.left - marker - HANDLE_SIZE - 4, this.minLeft(dom));
+    this.handle.style.left = `${left - host.left}px`;
     this.handle.hidden = false;
   }
 
