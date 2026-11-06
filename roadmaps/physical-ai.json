@@ -201,7 +201,7 @@
               "resources": [
                 {
                   "title": "About Quality of Service settings",
-                  "url": "https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Quality-of-Service-Settings.html",
+                  "url": "https://docs.ros.org/en/rolling/ROS-Framework/interfaces/topics/About-Quality-of-Service-Settings.html",
                   "kind": "doc"
                 }
               ],
@@ -300,7 +300,7 @@
               "resources": [
                 {
                   "title": "About Executors",
-                  "url": "https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Executors.html",
+                  "url": "https://docs.ros.org/en/rolling/ROS-Framework/client-libraries/About-Executors/About-Executors.html",
                   "kind": "doc"
                 }
               ],
@@ -519,7 +519,7 @@
               "resources": [
                 {
                   "title": "About Composition",
-                  "url": "https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Composition.html",
+                  "url": "https://docs.ros.org/en/rolling/ROS-Framework/nodes/About-Composition.html",
                   "kind": "doc"
                 }
               ],
@@ -1088,7 +1088,7 @@
               "resources": [
                 {
                   "title": "About tf2",
-                  "url": "https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Tf2.html",
+                  "url": "https://docs.ros.org/en/rolling/ROS-Framework/interfaces/About-Tf2/About-Tf2.html",
                   "kind": "doc"
                 },
                 {
@@ -5877,9 +5877,9 @@
               "description": "정렬된 스테레오의 깊이식 Z = f·B/d, 시차 정밀도에서 깊이 오차 δZ ≈ Z²/(f·B)·δd 유도, IR 프로젝터로 텍스처를 보탠 능동 스테레오(RealSense D400). — Szeliski 12장",
               "resources": [
                 {
-                  "title": "Intel RealSense Developer Documentation",
-                  "url": "https://dev.intelrealsense.com/docs",
-                  "kind": "doc"
+                  "title": "realsenseai/librealsense",
+                  "url": "https://github.com/realsenseai/librealsense",
+                  "kind": "code"
                 }
               ]
             },
@@ -6312,7 +6312,7 @@
               "resources": [
                 {
                   "title": "MediaPipe Solutions Guide",
-                  "url": "https://developers.google.com/mediapipe/solutions",
+                  "url": "https://developers.google.com/edge/mediapipe/solutions",
                   "kind": "doc"
                 }
               ]
