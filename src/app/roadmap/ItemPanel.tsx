@@ -122,7 +122,12 @@ function SubTree({
           </>
         );
         return (
-          <li key={n.id} className="ip-sub-node" data-priority={n.priority ?? undefined} data-status={n.status}>
+          <li
+            key={n.id}
+            className="ip-sub-node"
+            data-priority={n.priority ?? undefined}
+            data-status={n.status}
+          >
             {onSelect ? (
               <button type="button" className="ip-sub-row" onClick={() => onSelect(n.id)}>
                 {body}
