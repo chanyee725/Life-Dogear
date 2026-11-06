@@ -1,0 +1,5043 @@
+{
+  "slug": "step-4-vision",
+  "title": "4단계: 비전",
+  "topic": "로봇 비전",
+  "stages": [
+    {
+      "title": "영상 형성과 영상 처리 기초",
+      "items": [
+        {
+          "title": "빛과 영상 형성",
+          "priority": "recommended",
+          "description": "복사량(radiance)·조도(irradiance), 램버트 반사와 BRDF, 렌즈의 얇은 렌즈 공식 1/f = 1/z_o + 1/z_i, 피사계 심도와 조리개(f-number), 비네팅을 배운다 — Szeliski 2장",
+          "resources": [
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
+            }
+          ],
+          "children": [
+            {
+              "title": "복사 측정 단위",
+              "priority": "optional",
+              "description": "radiance·irradiance·BRDF 의 정의와 단위, 이미지 밝기가 장면 복사량에 비례하는 관계 — Szeliski 2.2절"
+            },
+            {
+              "title": "얇은 렌즈와 피사계 심도",
+              "priority": "recommended",
+              "description": "얇은 렌즈 공식, 착란원(circle of confusion), f-number 와 피사계 심도의 관계 — Szeliski 2.2.3절"
+            },
+            {
+              "title": "비네팅과 렌즈 수차",
+              "priority": "optional",
+              "description": "자연 비네팅(cos⁴ 법칙), 색수차·구면수차가 캘리브레이션에 주는 영향 — Szeliski 2.2.3절"
+            }
+          ]
+        },
+        {
+          "title": "디지털 카메라와 센서",
+          "priority": "recommended",
+          "description": "CCD/CMOS 센서, 노출·게인·셔터, 롤링 셔터와 글로벌 셔터의 차이, 베이어 패턴과 디모자이킹, 감마·응답 곡선, 센서 잡음 모델(샷 노이즈·읽기 잡음)을 배운다 — Szeliski 2.3절",
+          "children": [
+            {
+              "title": "롤링 셔터 왜곡",
+              "priority": "recommended",
+              "description": "행마다 노출 시각이 다를 때 빠른 움직임(로봇 팔·머리 회전)에서 생기는 기울어짐·젤로 효과와 그 모델링 — Szeliski 2장",
+              "children": [
+                {
+                  "title": "롤링 셔터 운동 모델",
+                  "priority": "optional",
+                  "description": "행별 노출 시각 t_r = t_0 + r·Δt 로 카메라 자세를 보간하는 연속시간 모델 — 롤링 셔터 SfM 문헌"
+                },
+                {
+                  "title": "글로벌 셔터 선택 기준",
+                  "priority": "recommended",
+                  "description": "로봇 팔·고속 이동 플랫폼에서 글로벌 셔터 센서를 고르는 기준과 비용"
+                }
+              ]
+            },
+            {
+              "title": "색 공간과 화이트 밸런스",
+              "priority": "optional",
+              "description": "RGB·XYZ·HSV·Lab 색 공간 변환과 화이트 밸런스 보정 — Szeliski 2.3절",
+              "children": [
+                {
+                  "title": "베이어 디모자이킹",
+                  "priority": "optional",
+                  "description": "RGGB 패턴의 쌍선형·에지 적응 보간과 지퍼 아티팩트 — Szeliski 2.3.2절"
+                },
+                {
+                  "title": "감마와 HDR",
+                  "priority": "optional",
+                  "description": "감마 보정, 카메라 응답 곡선 복원, HDR 합성 — Szeliski 10.2절"
+                }
+              ]
+            },
+            {
+              "title": "센서 잡음 모델",
+              "priority": "recommended",
+              "description": "샷 노이즈(포아송)·읽기 잡음(가우시안)·암전류, 노출·게인에 따른 SNR 변화 — Szeliski 2.3.3절"
+            },
+            {
+              "title": "노출 제어와 자동 노출",
+              "priority": "optional",
+              "description": "자동 노출(AE)·자동 게인의 모션 블러·잡음 트레이드오프, 로봇 인식에서 고정 노출을 쓰는 이유"
+            }
+          ]
+        },
+        {
+          "title": "샘플링과 앨리어싱",
+          "priority": "recommended",
+          "description": "나이퀴스트 샘플링 정리, 앨리어싱과 안티앨리어싱 필터, 2D 푸리에 변환과 주파수 영역 해석을 배운다 — Szeliski 2.3·3.4절",
+          "children": [
+            {
+              "title": "나이퀴스트 표본화 정리",
+              "priority": "essential",
+              "description": "표본화 주파수가 최고 주파수의 두 배 이상이어야 하는 조건과 모아레 — Szeliski 2.3.1절"
+            },
+            {
+              "title": "안티앨리어싱 전처리",
+              "priority": "recommended",
+              "description": "축소 전에 가우시안 저역통과 필터를 거는 이유와 시그마 선택 — Szeliski 3.5절"
+            },
+            {
+              "title": "푸리에 변환 기초",
+              "priority": "recommended",
+              "description": "2D DFT, 합성곱 정리, 주파수 영역 필터링 — Szeliski 3.4절"
+            }
+          ]
+        },
+        {
+          "title": "선형 필터링과 합성곱",
+          "priority": "essential",
+          "description": "2D 합성곱·상관, 박스·가우시안 필터, 분리 가능 필터, 경계 처리(padding), 컨볼루션 정리와 FFT 기반 필터링을 배운다 — Szeliski 3.2·3.4절",
+          "children": [
+            {
+              "title": "분리 가능 필터",
+              "priority": "essential",
+              "description": "가우시안 등 분리 가능한 커널을 행·열 1D 필터로 나눠 O(k²)→O(2k)로 줄이는 방법 — Szeliski 3.2.1절"
+            },
+            {
+              "title": "경계 처리 방식",
+              "priority": "recommended",
+              "description": "zero·replicate·reflect·wrap 패딩의 차이와 OpenCV BORDER_* 플래그 — Szeliski 3.2절"
+            },
+            {
+              "title": "상관과 합성곱의 차이",
+              "priority": "essential",
+              "description": "커널 뒤집기 여부, 템플릿 매칭(NCC)과의 관계 — Szeliski 3.2절"
+            },
+            {
+              "title": "적분 영상",
+              "priority": "recommended",
+              "description": "summed area table 로 박스 필터를 O(1)로 계산, Viola-Jones 특징 — Szeliski 3.2.3절"
+            }
+          ]
+        },
+        {
+          "title": "비선형 필터와 형태학 연산",
+          "priority": "optional",
+          "description": "미디언·양방향(bilateral) 필터, 침식·팽창·열림·닫힘, 거리 변환, 연결 요소 레이블링을 배운다 — Szeliski 3.3절",
+          "children": [
+            {
+              "title": "중앙값 필터",
+              "priority": "recommended",
+              "description": "소금-후추 잡음 제거, 깊이 영상 구멍 메우기에 쓰는 중앙값 필터 — Szeliski 3.3.1절"
+            },
+            {
+              "title": "양방향 필터",
+              "priority": "recommended",
+              "description": "공간·밝기 두 가우시안 가중으로 에지를 보존하는 평활화, 깊이 영상 정제에 활용 — Szeliski 3.3.2절"
+            },
+            {
+              "title": "팽창·침식·열림·닫힘",
+              "priority": "essential",
+              "description": "이진 마스크의 형태학 연산과 구조 요소, 분할 마스크 정리 — Szeliski 3.3.3절"
+            },
+            {
+              "title": "거리 변환과 연결 요소",
+              "priority": "recommended",
+              "description": "거리 변환(chamfer), 연결 요소 레이블링 — Szeliski 3.3.3~3.3.4절"
+            }
+          ]
+        },
+        {
+          "title": "영상 기울기와 에지 검출",
+          "priority": "essential",
+          "description": "소벨·DoG 미분 필터, 기울기 크기·방향, 라플라시안 영교차, Canny 에지 검출(비최대 억제·이력 임계값)을 배운다 — Szeliski 7.2절",
+          "children": [
+            {
+              "title": "Canny 에지 검출",
+              "priority": "essential",
+              "description": "가우시안 평활 → 기울기 → 비최대 억제 → 이중 임계값 연결의 4단계와 최적성 기준 — Szeliski 7.2절",
+              "children": [
+                {
+                  "title": "비최대 억제",
+                  "priority": "essential",
+                  "description": "기울기 방향을 따라 국소 최대만 남기는 에지 세선화"
+                },
+                {
+                  "title": "이력 임계값",
+                  "priority": "essential",
+                  "description": "높은·낮은 두 임계값으로 에지를 연결하는 hysteresis thresholding"
+                }
+              ]
+            },
+            {
+              "title": "허프 변환",
+              "priority": "recommended",
+              "description": "직선·원 검출을 위한 매개변수 공간 투표, (ρ, θ) 표현과 누적 배열 — Szeliski 7.4절",
+              "children": [
+                {
+                  "title": "직선 허프 변환",
+                  "priority": "recommended",
+                  "description": "(ρ, θ) 매개변수 공간 투표와 누적기 해상도 — Szeliski 7.4.2절"
+                },
+                {
+                  "title": "원 허프 변환",
+                  "priority": "optional",
+                  "description": "기울기 방향을 이용한 원 검출과 cv::HoughCircles"
+                }
+              ]
+            },
+            {
+              "title": "Sobel·Scharr 연산자",
+              "priority": "essential",
+              "description": "미분+평활 결합 커널, Scharr 의 회전 불변성 개선 — OpenCV Imgproc 튜토리얼"
+            },
+            {
+              "title": "LoG와 DoG",
+              "priority": "recommended",
+              "description": "라플라시안 오브 가우시안 영교차, DoG 근사 — Szeliski 7.2.1절"
+            }
+          ]
+        },
+        {
+          "title": "영상 피라미드와 스케일 공간",
+          "priority": "essential",
+          "description": "가우시안·라플라시안 피라미드, 다운샘플링·업샘플링, 스케일 공간 이론(가우시안 커널의 유일성), 정규화된 LoG 를 배운다 — Szeliski 3.5절",
+          "children": [
+            {
+              "title": "가우시안 피라미드",
+              "priority": "essential",
+              "description": "평활 후 2배 축소를 반복하는 다해상도 표현 — Szeliski 3.5.3절"
+            },
+            {
+              "title": "라플라시안 피라미드",
+              "priority": "recommended",
+              "description": "대역통과 분해와 영상 블렌딩 복원 — Szeliski 3.5.3절"
+            },
+            {
+              "title": "스케일 공간 이론",
+              "priority": "optional",
+              "description": "가우시안 스케일 공간 L(x,y,σ)과 스케일 정규화 미분(Lindeberg)"
+            }
+          ]
+        },
+        {
+          "title": "기하 변환과 영상 와핑",
+          "priority": "essential",
+          "description": "평행이동·유클리드·닮음·아핀·사영 변환의 계층과 자유도, 순방향/역방향 와핑, 쌍선형·쌍삼차 보간을 배운다 — Szeliski 3.6절, Hartley & Zisserman 2장",
+          "children": [
+            {
+              "title": "순방향·역방향 와핑",
+              "priority": "essential",
+              "description": "역방향 매핑으로 구멍 없이 와핑하는 이유 — Szeliski 3.6.1절"
+            },
+            {
+              "title": "보간 방법",
+              "priority": "essential",
+              "description": "최근접·쌍선형·쌍삼차 보간과 cv::remap — Szeliski 3.6절"
+            },
+            {
+              "title": "왜곡 보정 맵",
+              "priority": "recommended",
+              "description": "cv::initUndistortRectifyMap 으로 왜곡 보정·정류 맵을 한 번 만들고 재사용"
+            }
+          ]
+        },
+        {
+          "title": "히스토그램과 대비 조정",
+          "priority": "recommended",
+          "description": "히스토그램 평활화, CLAHE, 감마 조정으로 저조도 영상 전처리 — Szeliski 3.1절"
+        },
+        {
+          "title": "영상 잡음 제거",
+          "priority": "optional",
+          "description": "비지역 평균(NLM)·BM3D 등 고전 잡음 제거 — Szeliski 3.3절"
+        }
+      ]
+    },
+    {
+      "title": "사영 기하와 카메라 모델",
+      "items": [
+        {
+          "title": "2D 사영 기하",
+          "priority": "essential",
+          "description": "동차 좌표, 점·직선의 쌍대성(l^T x = 0, 교점 x = l × l'), 무한원점과 무한원직선, 원뿔곡선, 사영 변환 H(3×3, 8 DoF)를 배운다 — Hartley & Zisserman 2장",
+          "resources": [
+            {
+              "title": "Multiple View Geometry in Computer Vision (Hartley & Zisserman)",
+              "url": "https://www.robots.ox.ac.uk/~vgg/hzbook/",
+              "kind": "book"
+            }
+          ],
+          "children": [
+            {
+              "title": "변환 계층과 불변량",
+              "priority": "essential",
+              "description": "유클리드·닮음·아핀·사영 변환 각각에서 보존되는 양(길이·각도·평행·교차비) — Hartley & Zisserman 2.4절",
+              "children": [
+                {
+                  "title": "유클리드·닮음 변환",
+                  "priority": "essential",
+                  "description": "자유도 3·4의 변환과 보존되는 길이·각도 — H&Z 2.4절"
+                },
+                {
+                  "title": "아핀 변환",
+                  "priority": "essential",
+                  "description": "자유도 6, 평행성·면적비 보존 — H&Z 2.4절"
+                },
+                {
+                  "title": "사영 변환",
+                  "priority": "essential",
+                  "description": "자유도 8, 교차비(cross ratio) 보존 — H&Z 2.4절"
+                }
+              ]
+            },
+            {
+              "title": "아핀·메트릭 복원",
+              "priority": "optional",
+              "description": "무한원직선과 원형점(circular points)을 이용한 사영 왜곡 제거 — Hartley & Zisserman 2.7절",
+              "children": [
+                {
+                  "title": "무한원 직선",
+                  "priority": "optional",
+                  "description": "소실선을 이용한 아핀 복원 — H&Z 2.7절"
+                },
+                {
+                  "title": "원형점과 메트릭 복원",
+                  "priority": "optional",
+                  "description": "원형점 쌍대 원뿔 C*∞ 로 각도 복원 — H&Z 2.7절"
+                }
+              ]
+            },
+            {
+              "title": "동차 좌표와 무한원점",
+              "priority": "essential",
+              "description": "점·직선의 동차 표현, 교점 x = l × l', 무한원점 — H&Z 2.2절"
+            },
+            {
+              "title": "원뿔곡선",
+              "priority": "recommended",
+              "description": "원뿔곡선 행렬 C 와 쌍대 원뿔곡선, 변환 규칙 C' = H^{-T} C H^{-1} — H&Z 2.2.3절"
+            }
+          ]
+        },
+        {
+          "title": "3D 사영 기하",
+          "priority": "recommended",
+          "description": "3D 동차 좌표, 평면·직선의 표현(플뤼커 좌표), 무한원평면, 절대 원뿔곡선, 3D 사영 변환(4×4, 15 DoF)을 배운다 — Hartley & Zisserman 3장",
+          "children": [
+            {
+              "title": "3D 점·평면의 동차 표현",
+              "priority": "recommended",
+              "description": "평면 π 와 점의 쌍대성, 세 점을 지나는 평면 — H&Z 3.1~3.2절"
+            },
+            {
+              "title": "플뤼커 좌표",
+              "priority": "optional",
+              "description": "3D 직선의 플뤼커 표현 — H&Z 3.2.2절"
+            },
+            {
+              "title": "무한원 평면과 절대 원뿔곡선",
+              "priority": "optional",
+              "description": "π∞ 와 Ω∞, 자기 캘리브레이션과의 관계 — H&Z 3.6절"
+            }
+          ]
+        },
+        {
+          "title": "강체 변환과 회전 표현",
+          "priority": "essential",
+          "description": "SO(3)·SE(3), 회전 행렬·오일러 각·축-각(로드리게스 공식)·쿼터니언, 지수·로그 사상, 좌표계 변환의 합성과 역변환을 배운다 — Szeliski 2.1절",
+          "children": [
+            {
+              "title": "로드리게스 공식",
+              "priority": "essential",
+              "description": "R = I + sinθ[k]× + (1−cosθ)[k]×² 유도와 회전 벡터 ↔ 회전 행렬 변환 — Szeliski 2.1.4절",
+              "children": [
+                {
+                  "title": "축-각 표현과 지수 사상",
+                  "priority": "essential",
+                  "description": "so(3) 의 hat 연산자와 exp(ω^) — Modern Robotics 3.2.3절"
+                },
+                {
+                  "title": "로그 사상과 특이점",
+                  "priority": "recommended",
+                  "description": "θ ≈ 0, θ ≈ π 근처에서의 수치 처리"
+                }
+              ]
+            },
+            {
+              "title": "쿼터니언",
+              "priority": "essential",
+              "description": "단위 쿼터니언의 곱·켤레, 회전 적용 q v q*, 이중 피복(q, −q), SLERP 보간 — Szeliski 2.1.4절",
+              "children": [
+                {
+                  "title": "쿼터니언 곱과 회전",
+                  "priority": "essential",
+                  "description": "단위 쿼터니언 q 와 회전 v' = q v q*, 이중 피복(q, −q)"
+                },
+                {
+                  "title": "SLERP 보간",
+                  "priority": "recommended",
+                  "description": "구면 선형 보간으로 자세 궤적을 매끄럽게 잇는 방법"
+                },
+                {
+                  "title": "Hamilton·JPL 규약",
+                  "priority": "recommended",
+                  "description": "ROS 2(tf2)·Eigen 의 Hamilton 규약과 JPL 규약의 차이로 생기는 버그"
+                }
+              ]
+            },
+            {
+              "title": "오일러 각과 짐벌 락",
+              "priority": "recommended",
+              "description": "ZYX 오일러 각, 짐벌 락, ROS REP 103 의 roll-pitch-yaw 규약"
+            },
+            {
+              "title": "SE(3) 동차 변환",
+              "priority": "essential",
+              "description": "4×4 동차 변환 T 의 합성과 역행렬 — Modern Robotics 3.3절"
+            }
+          ]
+        },
+        {
+          "title": "핀홀 카메라 모델",
+          "priority": "essential",
+          "description": "중심 투영 x = K[R|t]X, 카메라 행렬 P(3×4, 11 DoF), 카메라 중심 C = 영공간(PC = 0), 주점·주축, 원근 투영과 정사·약원근(weak perspective) 근사를 배운다 — Hartley & Zisserman 6장",
+          "children": [
+            {
+              "title": "투영 방정식",
+              "priority": "essential",
+              "description": "x = K[R|t]X, 원근 나눗셈과 정규화 영상 좌표 — H&Z 6.1절"
+            },
+            {
+              "title": "약원근·아핀 카메라",
+              "priority": "optional",
+              "description": "원거리 물체에서의 아핀 근사 — H&Z 6.3절"
+            }
+          ]
+        },
+        {
+          "title": "내부 파라미터",
+          "priority": "essential",
+          "description": "K 행렬의 초점거리 f_x·f_y, 주점 (c_x, c_y), 비대칭(skew), 픽셀 종횡비, 화각(FOV)과의 관계, 영상 리사이즈·크롭 시 K 변환을 배운다 — Hartley & Zisserman 6.1절",
+          "children": [
+            {
+              "title": "초점 거리와 주점",
+              "priority": "essential",
+              "description": "f_x, f_y, c_x, c_y 와 픽셀 크기의 관계 — H&Z 6.1절"
+            },
+            {
+              "title": "스큐와 종횡비",
+              "priority": "optional",
+              "description": "스큐 s 가 현대 센서에서 0 인 이유"
+            },
+            {
+              "title": "해상도 변경 시 K 조정",
+              "priority": "recommended",
+              "description": "리사이즈·크롭할 때 K 를 같이 바꾸는 방법"
+            }
+          ]
+        },
+        {
+          "title": "외부 파라미터와 좌표계 규약",
+          "priority": "essential",
+          "description": "월드→카메라 변환 [R|t], 카메라 중심 C = −R^T t, OpenCV(x 오른쪽·y 아래·z 앞)와 ROS optical frame 규약, 로봇 base→head→camera TF 체인을 배운다 — Hartley & Zisserman 6장",
+          "children": [
+            {
+              "title": "광학 좌표계 규약",
+              "priority": "essential",
+              "description": "ROS REP 103 의 camera_optical_frame(z 전방, x 오른쪽, y 아래)과 body 프레임 차이"
+            },
+            {
+              "title": "카메라 중심 C = −R^T t",
+              "priority": "essential",
+              "description": "외부 파라미터에서 카메라 위치를 구하는 식 — H&Z 6.1절"
+            }
+          ]
+        },
+        {
+          "title": "카메라 행렬 분해",
+          "priority": "recommended",
+          "description": "P = K[R|t] 를 RQ 분해로 K·R 로 나누기, 부호 모호성 처리, 소실점·소실선과 K 의 관계를 배운다 — Hartley & Zisserman 6.2·8.6절",
+          "children": [
+            {
+              "title": "RQ 분해",
+              "priority": "recommended",
+              "description": "P 의 왼쪽 3×3 을 K R 로 나누는 RQ 분해와 부호 처리 — H&Z 6.2.4절"
+            }
+          ]
+        },
+        {
+          "title": "렌즈 왜곡 모델",
+          "priority": "essential",
+          "description": "방사 왜곡(k1, k2, k3)·접선 왜곡(p1, p2)의 Brown–Conrady 모델, 왜곡 보정(undistort)과 역사상의 반복 해법, 리매핑 테이블을 배운다 — Szeliski 2.1.5절",
+          "resources": [
+            {
+              "title": "OpenCV calib3d module",
+              "url": "https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "어안 렌즈 모델",
+              "priority": "recommended",
+              "description": "등거리(equidistant) 투영 r = fθ, Kannala–Brandt 모델, OpenCV fisheye 모듈 — Szeliski 2.1.5절",
+              "children": [
+                {
+                  "title": "Kannala–Brandt 모델",
+                  "priority": "recommended",
+                  "description": "θ 다항식 θ_d = θ(1+k1θ²+…) 와 OpenCV fisheye 모듈"
+                },
+                {
+                  "title": "등거리·등입체각 투영",
+                  "priority": "optional",
+                  "description": "r = fθ, r = 2f sin(θ/2) 등 어안 투영 종류"
+                }
+              ]
+            },
+            {
+              "title": "전방위 카메라 모델",
+              "priority": "optional",
+              "description": "통합 구면 모델(Mei), Double Sphere 모델 등 광각·전방위 카메라 표현",
+              "children": [
+                {
+                  "title": "Unified Camera Model",
+                  "priority": "optional",
+                  "description": "Mei 모델과 Double Sphere 모델(Usenko 2018)"
+                }
+              ]
+            },
+            {
+              "title": "Brown–Conrady 방사·접선 왜곡",
+              "priority": "essential",
+              "description": "k1,k2,k3 방사 왜곡과 p1,p2 접선 왜곡 — OpenCV calib3d 문서"
+            },
+            {
+              "title": "왜곡 역변환",
+              "priority": "recommended",
+              "description": "왜곡 모델은 역함수가 닫힌 해가 없어 반복법(cv::undistortPoints)으로 푸는 이유"
+            }
+          ]
+        },
+        {
+          "title": "깊이 카메라 원리",
+          "priority": "recommended",
+          "description": "구조광·액티브 스테레오·ToF(위상차) 깊이 측정 원리, 깊이 영상 → 점군 역투영 X = z K^{-1} x, 깊이 잡음의 거리 의존성을 배운다 — Szeliski 13장",
+          "children": [
+            {
+              "title": "깊이 영상 역투영",
+              "priority": "essential",
+              "description": "X = d·K^{-1}[u v 1]^T 로 깊이를 3D 점으로 바꾸는 식"
+            },
+            {
+              "title": "깊이·컬러 정렬",
+              "priority": "recommended",
+              "description": "depth-to-color registration, 두 카메라 외부 파라미터로 재투영"
+            }
+          ]
+        },
+        {
+          "title": "소실점과 단일 시점 기하",
+          "priority": "optional",
+          "description": "소실점으로 초점 거리·회전 추정, 단일 영상 계측 — H&Z 8장"
+        },
+        {
+          "title": "카메라 모델 구현 실습",
+          "priority": "recommended",
+          "description": "numpy 로 투영·역투영·왜곡을 직접 구현해 cv::projectPoints 결과와 비교"
+        }
+      ]
+    },
+    {
+      "title": "카메라 캘리브레이션",
+      "items": [
+        {
+          "title": "DLT 카메라 리섹션",
+          "priority": "essential",
+          "description": "3D–2D 대응점으로 P 를 선형 추정하는 DLT, Ax = 0 의 SVD 해, 데이터 정규화의 필요성, 기하 오차 최소화로의 정제를 배운다 — Hartley & Zisserman 7장",
+          "children": [
+            {
+              "title": "DLT 선형 방정식",
+              "priority": "essential",
+              "description": "점 대응마다 2개 방정식, Ap = 0 을 SVD 로 푸는 방법 — H&Z 7.1절"
+            },
+            {
+              "title": "데이터 정규화",
+              "priority": "essential",
+              "description": "Hartley 정규화(원점 이동, 평균 거리 √2)로 수치 안정성 확보 — H&Z 4.4절"
+            },
+            {
+              "title": "기하 오차 최소화",
+              "priority": "recommended",
+              "description": "대수 오차 대신 재투영 오차를 LM 으로 최소화 — H&Z 7.2절"
+            }
+          ]
+        },
+        {
+          "title": "Zhang 평면 캘리브레이션",
+          "priority": "essential",
+          "description": "평면 체커보드의 호모그래피 H = K[r1 r2 t] 에서 ω = K^{-T}K^{-1} 제약 2개를 얻어 B 를 선형으로 풀고 K·외부 파라미터를 닫힌 해로 구한 뒤 왜곡 포함 LM 으로 정제하는 전 과정을 배운다 — Zhang 2000 논문, Hartley & Zisserman 8.8절",
+          "resources": [
+            {
+              "title": "OpenCV Camera Calibration tutorial",
+              "url": "https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "절대 원뿔곡선의 상",
+              "priority": "recommended",
+              "description": "IAC ω = (KK^T)^{-1} 과 내부 파라미터의 관계, 직교 제약 h1^T ω h2 = 0 — Hartley & Zisserman 8.5절",
+              "children": [
+                {
+                  "title": "호모그래피 제약식",
+                  "priority": "recommended",
+                  "description": "h1^T ω h2 = 0, h1^T ω h1 = h2^T ω h2 로 ω = K^{-T}K^{-1} 를 구하는 식 — Zhang 2000 논문 3절"
+                },
+                {
+                  "title": "닫힌 해와 초기값",
+                  "priority": "recommended",
+                  "description": "B 행렬 6개 미지수를 3장 이상의 영상으로 푸는 닫힌 해"
+                }
+              ]
+            },
+            {
+              "title": "재투영 오차와 캘리브레이션 품질",
+              "priority": "essential",
+              "description": "RMS 재투영 오차의 의미, 파라미터 공분산, 보드 자세 다양성·커버리지·과적합 진단",
+              "children": [
+                {
+                  "title": "RMS 재투영 오차 해석",
+                  "priority": "essential",
+                  "description": "cv::calibrateCamera 반환값 RMS 의 의미와 0.3px 수준 목표"
+                },
+                {
+                  "title": "파라미터 불확실성",
+                  "priority": "recommended",
+                  "description": "stdDeviationsIntrinsics 로 파라미터 표준편차 확인"
+                },
+                {
+                  "title": "자세 다양성",
+                  "priority": "essential",
+                  "description": "기울기·거리·화면 가장자리까지 타깃을 고루 배치해야 하는 이유"
+                }
+              ]
+            },
+            {
+              "title": "OpenCV calibrateCamera 실습",
+              "priority": "essential",
+              "description": "체커보드 영상으로 K·왜곡 계수를 구하고 undistort 결과 확인 — OpenCV calib3d 튜토리얼"
+            },
+            {
+              "title": "ROS 2 camera_calibration",
+              "priority": "recommended",
+              "description": "ros2 run camera_calibration cameracalibrator 로 camera_info YAML 생성"
+            }
+          ]
+        },
+        {
+          "title": "캘리브레이션 타깃과 검출",
+          "priority": "recommended",
+          "description": "체커보드 코너 서브픽셀 정제(cornerSubPix), 원형 격자, ArUco·ChArUco·AprilTag 마커의 부호화와 자세 추정을 배운다",
+          "resources": [
+            {
+              "title": "AprilTag",
+              "url": "https://april.eecs.umich.edu/software/apriltag",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "체커보드 코너 검출",
+              "priority": "essential",
+              "description": "findChessboardCorners + cornerSubPix 부분 픽셀 정제"
+            },
+            {
+              "title": "ChArUco 보드",
+              "priority": "recommended",
+              "description": "ArUco 마커+체커보드로 가림·부분 시야에서도 검출, cv::aruco 모듈"
+            },
+            {
+              "title": "AprilTag",
+              "priority": "recommended",
+              "description": "AprilTag 패밀리(36h11)와 태그 자세 추정, Kalibr aprilgrid"
+            },
+            {
+              "title": "원형 격자 타깃",
+              "priority": "optional",
+              "description": "원 중심 검출과 원근 편향 문제"
+            }
+          ]
+        },
+        {
+          "title": "스테레오 캘리브레이션",
+          "priority": "essential",
+          "description": "두 카메라 간 상대 자세 (R, T) 추정, 공동 최적화, 베이스라인 정확도와 깊이 오차의 관계를 배운다 — Szeliski 12.1절",
+          "children": [
+            {
+              "title": "stereoCalibrate와 R, T",
+              "priority": "essential",
+              "description": "두 카메라 사이 R, T 및 E, F 동시 추정 — OpenCV calib3d"
+            },
+            {
+              "title": "정류 변환 stereoRectify",
+              "priority": "essential",
+              "description": "R1,R2,P1,P2,Q 행렬과 시차→깊이 Q 재투영"
+            },
+            {
+              "title": "베이스라인 검증",
+              "priority": "recommended",
+              "description": "구한 T 의 크기를 설계 베이스라인과 비교해 캘리브레이션 오류 감지"
+            }
+          ]
+        },
+        {
+          "title": "핸드-아이 캘리브레이션",
+          "priority": "essential",
+          "description": "AX = XB 문제(eye-in-hand)와 AX = YB(eye-to-hand), Tsai–Lenz·Park–Martin 해법, 회전·이동 분리 추정, 로봇 손목·머리 카메라 정렬을 배운다",
+          "children": [
+            {
+              "title": "AX = XB 해법",
+              "priority": "essential",
+              "description": "Tsai–Lenz, Park–Martin(리 대수 기반), Daniilidis(이중 쿼터니언) 방법 비교",
+              "children": [
+                {
+                  "title": "Tsai–Lenz 방법",
+                  "priority": "essential",
+                  "description": "회전을 먼저, 이어서 평행이동을 푸는 분리 해법 — Tsai & Lenz 1989"
+                },
+                {
+                  "title": "Park–Martin 방법",
+                  "priority": "recommended",
+                  "description": "리 군 로그를 이용한 최소제곱 회전 해 — Park & Martin 1994"
+                },
+                {
+                  "title": "Daniilidis 이중 쿼터니언",
+                  "priority": "optional",
+                  "description": "회전·평행이동 동시 해법"
+                },
+                {
+                  "title": "cv::calibrateHandEye",
+                  "priority": "essential",
+                  "description": "OpenCV 구현과 CALIB_HAND_EYE_* 방법 비교"
+                }
+              ]
+            },
+            {
+              "title": "데이터 수집 조건",
+              "priority": "recommended",
+              "description": "회전축 다양성 요구, 퇴화 조건(평행 회전축), 자세 개수와 오차 전파",
+              "children": [
+                {
+                  "title": "회전축 다양성",
+                  "priority": "essential",
+                  "description": "서로 평행하지 않은 회전축 2개 이상이 필요한 이유"
+                },
+                {
+                  "title": "eye-in-hand 와 eye-to-hand",
+                  "priority": "essential",
+                  "description": "카메라가 손목에 붙은 경우와 고정된 경우의 식 차이"
+                }
+              ]
+            },
+            {
+              "title": "easy_handeye2·MoveIt 캘리브레이션",
+              "priority": "recommended",
+              "description": "ROS 2 에서 핸드-아이 캘리브레이션 도구 사용 흐름"
+            }
+          ]
+        },
+        {
+          "title": "카메라–IMU 캘리브레이션",
+          "priority": "recommended",
+          "description": "카메라–IMU 외부 파라미터와 시간 오프셋을 연속시간 B-스플라인 궤적으로 함께 추정하는 방법(Kalibr)을 배운다 — Furgale et al. 2013",
+          "resources": [
+            {
+              "title": "Kalibr",
+              "url": "https://github.com/ethz-asl/kalibr",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "Kalibr 사용법",
+              "priority": "recommended",
+              "description": "aprilgrid 타깃, 카메라·IMU 노이즈 파라미터 입력, 시간 오프셋 추정 — Kalibr wiki"
+            },
+            {
+              "title": "연속시간 B-스플라인 궤적",
+              "priority": "optional",
+              "description": "Furgale 2013 의 연속시간 배치 추정"
+            },
+            {
+              "title": "IMU 노이즈 파라미터",
+              "priority": "recommended",
+              "description": "Allan 분산으로 가속도·자이로 white noise·random walk 구하기"
+            }
+          ]
+        },
+        {
+          "title": "시간 동기화",
+          "priority": "recommended",
+          "description": "하드웨어 트리거·PTP·타임스탬프 지연 추정, 다중 카메라·관절 엔코더와의 동기 오차가 3D 추정에 미치는 영향을 배운다",
+          "children": [
+            {
+              "title": "하드웨어 트리거",
+              "priority": "recommended",
+              "description": "외부 트리거·PPS 로 다중 카메라 노출 동기화"
+            },
+            {
+              "title": "PTP와 소프트웨어 타임스탬프",
+              "priority": "recommended",
+              "description": "IEEE 1588 PTP, ROS 2 메시지 header.stamp 와 지연 보정"
+            },
+            {
+              "title": "message_filters 근사 동기화",
+              "priority": "essential",
+              "description": "ROS 2 ApproximateTimeSynchronizer 로 컬러·깊이 토픽 맞추기"
+            }
+          ]
+        },
+        {
+          "title": "자가 캘리브레이션",
+          "priority": "optional",
+          "description": "체커보드 없이 장면만으로 K 를 구하는 Kruppa 방정식, 절대 이차곡면(absolute dual quadric) 기반 메트릭 업그레이드를 배운다 — Hartley & Zisserman 19장",
+          "children": [
+            {
+              "title": "Kruppa 방정식",
+              "priority": "optional",
+              "description": "기본 행렬만으로 K 를 구하는 고전 방법 — H&Z 19.10절"
+            },
+            {
+              "title": "온라인 캘리브레이션 감시",
+              "priority": "optional",
+              "description": "운용 중 재투영 오차 추이로 캘리브레이션 틀어짐 감지"
+            }
+          ]
+        },
+        {
+          "title": "다중 카메라 리그 캘리브레이션",
+          "priority": "recommended",
+          "description": "3대 이상 카메라의 공동 외부 파라미터 추정과 겹침 시야 부족 문제"
+        },
+        {
+          "title": "카메라–LiDAR 캘리브레이션",
+          "priority": "optional",
+          "description": "평면 타깃·가장자리 정렬 기반 외부 파라미터 추정"
+        }
+      ]
+    },
+    {
+      "title": "특징점 검출·기술·매칭",
+      "items": [
+        {
+          "title": "Harris 코너 검출",
+          "priority": "essential",
+          "description": "자기상관 함수와 구조 텐서 M = Σ w [Ix² IxIy; IxIy Iy²], 고유값 해석, 응답 R = det M − k(tr M)², Shi–Tomasi min(λ1, λ2) 기준, 비최대 억제를 배운다 — Szeliski 7.1.1절",
+          "children": [
+            {
+              "title": "구조 텐서",
+              "priority": "essential",
+              "description": "M = Σ w[Ix² IxIy; IxIy Iy²] 와 고유값 해석 — Szeliski 7.1.1절"
+            },
+            {
+              "title": "Shi–Tomasi 기준",
+              "priority": "essential",
+              "description": "min(λ1, λ2) 기준과 goodFeaturesToTrack"
+            },
+            {
+              "title": "적응적 비최대 억제",
+              "priority": "optional",
+              "description": "ANMS 로 특징점을 영상 전체에 고르게 분포 — Szeliski 7.1.1절"
+            }
+          ]
+        },
+        {
+          "title": "스케일 불변 검출",
+          "priority": "essential",
+          "description": "스케일 정규화 LoG, DoG 근사, 스케일 공간 극값 탐색, Harris-Laplace, Hessian 행렬식 기반 검출을 배운다 — Szeliski 7.1.1절",
+          "children": [
+            {
+              "title": "DoG 극값 검출",
+              "priority": "essential",
+              "description": "DoG 피라미드 26-이웃 극값과 부분 픽셀 보간 — Lowe 2004 3~4절"
+            },
+            {
+              "title": "Hessian 기반 검출과 SURF",
+              "priority": "recommended",
+              "description": "det(H) 블롭 검출과 박스 필터 근사(SURF)"
+            },
+            {
+              "title": "아핀 불변 영역",
+              "priority": "optional",
+              "description": "Harris-Affine, MSER — Szeliski 7.1.1절"
+            }
+          ]
+        },
+        {
+          "title": "SIFT",
+          "priority": "essential",
+          "description": "DoG 극값 검출 → 테일러 전개로 서브픽셀 위치 정제 → 에지 응답 제거 → 기울기 방향 히스토그램으로 방향 할당 → 4×4×8 = 128차원 기술자 생성의 전 과정을 배운다 — Lowe 2004, Szeliski 7.1.2절",
+          "resources": [
+            {
+              "title": "Distinctive Image Features from Scale-Invariant Keypoints (Lowe, 2004)",
+              "url": "https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "방향 할당",
+              "priority": "essential",
+              "description": "기울기 방향 36-빈 히스토그램으로 주 방향 결정 — Lowe 2004 5절"
+            },
+            {
+              "title": "128차원 기술자",
+              "priority": "essential",
+              "description": "4×4 셀 × 8방향 히스토그램과 정규화·클리핑 — Lowe 2004 6절"
+            },
+            {
+              "title": "RootSIFT",
+              "priority": "optional",
+              "description": "L1 정규화 후 제곱근으로 Hellinger 거리 근사 — Arandjelović 2012"
+            }
+          ]
+        },
+        {
+          "title": "이진 특징점: FAST·BRIEF·ORB",
+          "priority": "essential",
+          "description": "FAST 세그먼트 테스트, BRIEF 이진 비교 기술자와 해밍 거리, ORB 의 강도 중심(intensity centroid) 방향과 rBRIEF 를 배운다 — Rublee et al. 2011, Szeliski 7.1.2절",
+          "children": [
+            {
+              "title": "FAST",
+              "priority": "essential",
+              "description": "반지름 3 원 위 16픽셀 세그먼트 테스트와 고속 결정 트리",
+              "children": [
+                {
+                  "title": "세그먼트 테스트",
+                  "priority": "essential",
+                  "description": "반지름 3 원 위 16픽셀 중 연속 N개 밝기 비교"
+                },
+                {
+                  "title": "FAST 비최대 억제",
+                  "priority": "recommended",
+                  "description": "코너 점수 기반 억제"
+                }
+              ]
+            },
+            {
+              "title": "BRIEF와 해밍 거리",
+              "priority": "essential",
+              "description": "무작위 쌍 비교 이진 문자열, XOR + popcount 매칭, 회전 취약성"
+            },
+            {
+              "title": "ORB",
+              "priority": "essential",
+              "description": "oFAST(방향 추가) + rBRIEF(학습된 비교 쌍), 피라미드로 스케일 대응, ORB-SLAM 에서의 사용",
+              "children": [
+                {
+                  "title": "oFAST 방향",
+                  "priority": "essential",
+                  "description": "intensity centroid 로 방향 계산"
+                },
+                {
+                  "title": "rBRIEF",
+                  "priority": "essential",
+                  "description": "방향 보정·학습된 비교쌍으로 상관을 줄인 BRIEF"
+                },
+                {
+                  "title": "ORB-SLAM 의 ORB 사용",
+                  "priority": "recommended",
+                  "description": "격자별 균등 추출과 스케일 피라미드 설정 — ORB-SLAM 논문"
+                }
+              ]
+            },
+            {
+              "title": "AKAZE",
+              "priority": "optional",
+              "description": "비선형 스케일 공간 기반 이진 특징 — OpenCV features2d"
+            }
+          ]
+        },
+        {
+          "title": "기술자 매칭",
+          "priority": "essential",
+          "description": "최근접 이웃 매칭, Lowe 비율 테스트, 상호 일치(cross-check), 정밀도-재현율·ROC 평가를 배운다 — Szeliski 7.1.3절",
+          "children": [
+            {
+              "title": "근사 최근접 이웃 탐색",
+              "priority": "recommended",
+              "description": "kd-트리, 다중 무작위 kd-트리·계층 k-means(FLANN), 이진 기술자용 LSH",
+              "children": [
+                {
+                  "title": "k-d 트리와 FLANN",
+                  "priority": "recommended",
+                  "description": "고차원 실수 기술자용 randomized k-d tree"
+                },
+                {
+                  "title": "LSH",
+                  "priority": "optional",
+                  "description": "이진 기술자용 locality sensitive hashing"
+                }
+              ]
+            },
+            {
+              "title": "Bag of Visual Words",
+              "priority": "optional",
+              "description": "어휘 트리와 TF-IDF 로 장소 인식(DBoW2) — Szeliski 6.2절",
+              "children": [
+                {
+                  "title": "DBoW2 어휘 트리",
+                  "priority": "optional",
+                  "description": "계층 k-means 어휘와 TF-IDF, 루프 감지 — Gálvez-López 2012"
+                }
+              ]
+            },
+            {
+              "title": "Lowe 비율 검사",
+              "priority": "essential",
+              "description": "1-NN/2-NN 거리비 0.7~0.8 로 모호한 매칭 제거 — Lowe 2004 7.1절"
+            },
+            {
+              "title": "교차 검사",
+              "priority": "essential",
+              "description": "양방향 최근접 일치만 남기는 cross check"
+            },
+            {
+              "title": "기하 검증",
+              "priority": "essential",
+              "description": "매칭 후 RANSAC 으로 F·H 를 맞춰 외점을 거르는 단계"
+            }
+          ]
+        },
+        {
+          "title": "부분 픽셀 정밀도와 특징 추적",
+          "priority": "recommended",
+          "description": "포물선 보간·2차 함수 적합으로 서브픽셀 위치 추정, 템플릿 매칭(SSD·NCC)과 정규화 상호상관의 조명 불변성을 배운다 — Szeliski 9.1절",
+          "children": [
+            {
+              "title": "cornerSubPix",
+              "priority": "essential",
+              "description": "기울기 직교 조건으로 코너를 부분 픽셀로 정제"
+            },
+            {
+              "title": "순방향-역방향 추적 검사",
+              "priority": "recommended",
+              "description": "LK 로 앞뒤 추적해 오차 큰 트랙 제거"
+            }
+          ]
+        },
+        {
+          "title": "직선·에지 특징",
+          "priority": "optional",
+          "description": "LSD 직선 검출, LBD 직선 기술자, 텍스처 부족 실내 환경에서의 직선 특징 활용을 배운다 — Szeliski 7.4절",
+          "children": [
+            {
+              "title": "LSD 직선 검출",
+              "priority": "optional",
+              "description": "Line Segment Detector 와 a-contrario 검증"
+            },
+            {
+              "title": "LBD 직선 기술자",
+              "priority": "optional",
+              "description": "직선 매칭과 PL-SLAM 계열 활용"
+            }
+          ]
+        },
+        {
+          "title": "학습 기반 특징점과 매칭",
+          "priority": "recommended",
+          "description": "자기지도 학습 검출·기술자 SuperPoint(호모그래피 적응), 그래프 신경망 매칭 SuperGlue, 경량화한 LightGlue 를 고전 기법과 비교해 배운다",
+          "resources": [
+            {
+              "title": "SuperPoint: Self-Supervised Interest Point Detection and Description",
+              "url": "https://arxiv.org/abs/1712.07629",
+              "kind": "paper"
+            },
+            {
+              "title": "SuperGlue: Learning Feature Matching with Graph Neural Networks",
+              "url": "https://arxiv.org/abs/1911.11763",
+              "kind": "paper"
+            },
+            {
+              "title": "LightGlue: Local Feature Matching at Light Speed",
+              "url": "https://arxiv.org/abs/2306.13643",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "SuperPoint",
+              "priority": "recommended",
+              "description": "호모그래피 적응 자기지도 학습 검출기·기술자 — DeTone 2018"
+            },
+            {
+              "title": "SuperGlue와 LightGlue",
+              "priority": "recommended",
+              "description": "그래프 어텐션 매처와 적응적 깊이의 경량 매처"
+            },
+            {
+              "title": "LoFTR 검출기 없는 매칭",
+              "priority": "optional",
+              "description": "트랜스포머로 조밀 매칭 후 정제 — Sun 2021"
+            },
+            {
+              "title": "DISK·ALIKED",
+              "priority": "optional",
+              "description": "강화학습·변형 합성곱 기반 경량 특징점"
+            }
+          ]
+        },
+        {
+          "title": "특징점 평가 지표",
+          "priority": "recommended",
+          "description": "반복성(repeatability)·매칭 점수, HPatches 벤치마크"
+        },
+        {
+          "title": "템플릿 매칭",
+          "priority": "optional",
+          "description": "NCC·SSD 기반 cv::matchTemplate 와 스케일·회전 한계"
+        }
+      ]
+    },
+    {
+      "title": "다중 시점 기하와 강건 추정",
+      "items": [
+        {
+          "title": "호모그래피 추정",
+          "priority": "essential",
+          "description": "4점 이상 대응으로 H 를 구하는 DLT(Ax = 0, SVD), Hartley 정규화(중심 이동·평균거리 √2), 대수 오차 vs 기하 오차·Sampson 오차, 비선형 정제를 배운다 — Hartley & Zisserman 4장",
+          "children": [
+            {
+              "title": "평면 호모그래피 H = K(R − t n^T/d)K^{-1}",
+              "priority": "essential",
+              "description": "평면을 보는 두 카메라 사이 호모그래피 유도, 순수 회전 시 H = K R K^{-1} — Hartley & Zisserman 13장",
+              "children": [
+                {
+                  "title": "평면 유도 호모그래피 유도",
+                  "priority": "recommended",
+                  "description": "평면 n^T X = d 위 점의 두 시점 대응식 유도 — H&Z 13.1절"
+                },
+                {
+                  "title": "순수 회전 호모그래피",
+                  "priority": "essential",
+                  "description": "t = 0 일 때 H = K R K^{-1} 로 회전만 추정"
+                }
+              ]
+            },
+            {
+              "title": "호모그래피 분해",
+              "priority": "recommended",
+              "description": "H 에서 (R, t/d, n) 의 최대 4개 해 복원과 양의 깊이·가시성으로 해 선택(Faugeras, Malis–Vargas)",
+              "children": [
+                {
+                  "title": "Faugeras·Malis 분해",
+                  "priority": "recommended",
+                  "description": "최대 4개 해(R, t/d, n)와 물리 제약으로 해 고르기, cv::decomposeHomographyMat"
+                }
+              ]
+            },
+            {
+              "title": "파노라마 스티칭",
+              "priority": "optional",
+              "description": "회전 카메라 정렬, 원통·구면 투영, 블렌딩 — Szeliski 8장",
+              "children": [
+                {
+                  "title": "원통·구면 투영",
+                  "priority": "optional",
+                  "description": "회전 파노라마의 투영면 선택 — Szeliski 8.2절"
+                },
+                {
+                  "title": "블렌딩과 이음매",
+                  "priority": "optional",
+                  "description": "페더링·다중대역 블렌딩 — Szeliski 8.4절"
+                }
+              ]
+            },
+            {
+              "title": "4점 DLT 호모그래피",
+              "priority": "essential",
+              "description": "정규화 DLT 와 cv::findHomography — H&Z 4.1절"
+            },
+            {
+              "title": "대칭 전이 오차",
+              "priority": "recommended",
+              "description": "양방향 전이 오차와 Sampson 오차 — H&Z 4.2절"
+            }
+          ]
+        },
+        {
+          "title": "에피폴라 기하",
+          "priority": "essential",
+          "description": "에피폴, 에피폴라 선 l' = Fx, 에피폴라 제약 x'^T F x = 0, 기본 행렬 F 의 성질(rank 2, 7 DoF, F e = 0)과 카메라 행렬로부터의 유도 F = [e']× P' P⁺ 를 배운다 — Hartley & Zisserman 9장",
+          "resources": [
+            {
+              "title": "Stanford CS231A: Computer Vision, From 3D Reconstruction to Recognition",
+              "url": "https://web.stanford.edu/class/cs231a/",
+              "kind": "course"
+            }
+          ],
+          "children": [
+            {
+              "title": "기본 행렬 F",
+              "priority": "essential",
+              "description": "x'^T F x = 0, rank 2, 에피폴 Fe = 0 — H&Z 9.2절"
+            },
+            {
+              "title": "에피폴라 선 시각화",
+              "priority": "essential",
+              "description": "cv::computeCorrespondEpilines 로 매칭 검증"
+            },
+            {
+              "title": "F 로부터 카메라 행렬",
+              "priority": "recommended",
+              "description": "사영 모호성과 P' = [[e']×F | e'] — H&Z 9.5절"
+            }
+          ]
+        },
+        {
+          "title": "필수 행렬",
+          "priority": "essential",
+          "description": "보정된 좌표에서의 E = [t]× R, F = K'^{-T} E K^{-1}, E 의 특이값 조건(σ1 = σ2, σ3 = 0, 5 DoF), SVD 로 (R, t) 4개 해 복원과 치랄리티(cheirality) 검사를 배운다 — Hartley & Zisserman 9.6절",
+          "children": [
+            {
+              "title": "E = [t]×R 와 특이값 조건",
+              "priority": "essential",
+              "description": "두 특이값이 같고 하나는 0 — H&Z 9.6절"
+            },
+            {
+              "title": "E 분해와 4중 모호성",
+              "priority": "essential",
+              "description": "SVD 로 (R, t) 4개 후보 얻고 치어럴리티(cheirality)로 선택 — H&Z 9.6.2절"
+            },
+            {
+              "title": "cv::recoverPose 실습",
+              "priority": "essential",
+              "description": "findEssentialMat + recoverPose 로 두 영상 상대 자세 추정"
+            }
+          ]
+        },
+        {
+          "title": "8점 알고리즘",
+          "priority": "essential",
+          "description": "정규화 8점 알고리즘: 좌표 정규화 → Af = 0 의 SVD 해 → rank-2 강제(최소 특이값 0) → 역정규화, 정규화가 조건수를 개선하는 이유를 배운다 — Hartley 1997 'In Defense of the Eight-Point Algorithm', Hartley & Zisserman 11장",
+          "children": [
+            {
+              "title": "7점 알고리즘",
+              "priority": "recommended",
+              "description": "2차원 영공간 F = αF1 + (1−α)F2 와 det F = 0 3차 방정식으로 최대 3해 — Hartley & Zisserman 11.1.2절",
+              "children": [
+                {
+                  "title": "3차 방정식 해",
+                  "priority": "recommended",
+                  "description": "det(αF1+(1−α)F2)=0 의 1~3개 실근 — H&Z 11.1.2절"
+                }
+              ]
+            },
+            {
+              "title": "5점 알고리즘",
+              "priority": "recommended",
+              "description": "보정 카메라에서 E 를 5점으로 푸는 Nistér 방법(최대 10해), RANSAC 과 결합한 상대 자세 추정",
+              "children": [
+                {
+                  "title": "Nistér 5점 해법",
+                  "priority": "recommended",
+                  "description": "10차 다항식, 최대 10개 해 — Nistér 2004"
+                }
+              ]
+            },
+            {
+              "title": "퇴화 구성",
+              "priority": "recommended",
+              "description": "모든 점이 한 평면에 있거나 순수 회전일 때 F 가 결정되지 않는 이유와 H/F 모델 선택(GRIC)",
+              "children": [
+                {
+                  "title": "평면 장면과 순수 회전",
+                  "priority": "recommended",
+                  "description": "평면·순수 회전에서 F 가 정해지지 않는 이유와 H/F 모델 선택(ORB-SLAM 초기화)"
+                }
+              ]
+            },
+            {
+              "title": "rank-2 강제",
+              "priority": "essential",
+              "description": "SVD 로 가장 작은 특이값을 0 으로 만드는 단계 — H&Z 11.1.1절"
+            },
+            {
+              "title": "정규화 8점법",
+              "priority": "essential",
+              "description": "Hartley 정규화의 효과 — H&Z 11.2절"
+            }
+          ]
+        },
+        {
+          "title": "삼각측량",
+          "priority": "essential",
+          "description": "선형 삼각측량(DLT), 중점법, 재투영 오차를 최소화하는 최적 삼각측량(Hartley–Sturm 6차 다항식), 시차각과 깊이 불확실성을 배운다 — Hartley & Zisserman 12장",
+          "children": [
+            {
+              "title": "선형 삼각측량",
+              "priority": "essential",
+              "description": "DLT 로 AX = 0 풀기, cv::triangulatePoints — H&Z 12.2절"
+            },
+            {
+              "title": "최적 삼각측량",
+              "priority": "recommended",
+              "description": "재투영 오차 최소화와 다항식 해법 — H&Z 12.5절"
+            },
+            {
+              "title": "시차각과 깊이 불확실성",
+              "priority": "essential",
+              "description": "기선·시차각이 작을 때 깊이 오차가 커지는 이유"
+            }
+          ]
+        },
+        {
+          "title": "PnP 자세 추정",
+          "priority": "essential",
+          "description": "알려진 3D 점과 2D 투영으로 카메라 자세를 구하는 문제: P3P(Grunert, Kneip), EPnP(4개 제어점 표현), DLT, 반복 LM 정제, 평면 타깃용 IPPE 를 배운다 — Szeliski 11.2절",
+          "children": [
+            {
+              "title": "P3P",
+              "priority": "essential",
+              "description": "코사인 법칙으로 얻는 4차 방정식과 최대 4해, 4번째 점으로 모호성 해소",
+              "children": [
+                {
+                  "title": "Grunert·Kneip P3P",
+                  "priority": "recommended",
+                  "description": "최대 4해와 4번째 점으로 해 선택 — Kneip 2011"
+                }
+              ]
+            },
+            {
+              "title": "EPnP",
+              "priority": "essential",
+              "description": "점들을 4개 가상 제어점의 무게중심 좌표로 표현해 O(n) 선형 해를 얻는 방법 — Lepetit et al. 2009",
+              "children": [
+                {
+                  "title": "제어점 4개 표현",
+                  "priority": "recommended",
+                  "description": "세계 점을 4개 가상 제어점의 가중합으로 표현해 O(n) 풀이 — Lepetit 2009"
+                }
+              ]
+            },
+            {
+              "title": "PnP 정제와 불확실성",
+              "priority": "recommended",
+              "description": "가우스-뉴턴·LM 으로 재투영 오차 최소화, 자세 공분산 추정",
+              "children": [
+                {
+                  "title": "solvePnPRefineLM",
+                  "priority": "recommended",
+                  "description": "LM 으로 재투영 오차 최소화"
+                },
+                {
+                  "title": "자세 공분산",
+                  "priority": "optional",
+                  "description": "야코비안 J 로 (J^T J)^{-1} 공분산 근사"
+                }
+              ]
+            },
+            {
+              "title": "solvePnPRansac 실습",
+              "priority": "essential",
+              "description": "외점이 섞인 2D-3D 대응에서 자세 추정 — OpenCV calib3d"
+            },
+            {
+              "title": "평면 물체 PnP(IPPE)",
+              "priority": "recommended",
+              "description": "평면 마커용 IPPE 해와 자세 모호성(flip)"
+            }
+          ]
+        },
+        {
+          "title": "RANSAC과 강건 추정",
+          "priority": "essential",
+          "description": "RANSAC 의 가설-검증 루프, 필요 반복 수 N = log(1−p)/log(1−w^s), 인라이어 임계값 선택, 최종 재추정을 배운다 — Fischler & Bolles 1981, Hartley & Zisserman 4.7절",
+          "children": [
+            {
+              "title": "RANSAC 변형",
+              "priority": "recommended",
+              "description": "MSAC·MLESAC(비용 함수 개선), PROSAC(품질 순 샘플링), LO-RANSAC(지역 최적화), USAC·MAGSAC++",
+              "children": [
+                {
+                  "title": "PROSAC",
+                  "priority": "recommended",
+                  "description": "매칭 품질 순서로 표본을 뽑는 progressive sampling"
+                },
+                {
+                  "title": "LO-RANSAC",
+                  "priority": "recommended",
+                  "description": "좋은 가설마다 국소 최적화"
+                },
+                {
+                  "title": "MAGSAC++",
+                  "priority": "optional",
+                  "description": "임계값 없이 σ 를 주변화하는 방법, cv::USAC_MAGSAC"
+                }
+              ]
+            },
+            {
+              "title": "M-추정기",
+              "priority": "recommended",
+              "description": "Huber·Cauchy·Tukey 손실, 반복 재가중 최소제곱(IRLS) — Szeliski 8.1.4절",
+              "children": [
+                {
+                  "title": "Huber·Cauchy·Tukey 손실",
+                  "priority": "recommended",
+                  "description": "영향 함수와 외점 둔감도 비교"
+                },
+                {
+                  "title": "IRLS",
+                  "priority": "recommended",
+                  "description": "반복 재가중 최소제곱 풀이"
+                }
+              ]
+            },
+            {
+              "title": "반복 횟수 공식",
+              "priority": "essential",
+              "description": "N = log(1−p)/log(1−w^s) 로 필요 반복 수 계산 — H&Z 4.7절"
+            },
+            {
+              "title": "임계값 설정",
+              "priority": "essential",
+              "description": "잡음 σ 와 χ² 분포로 내점 임계값 정하기 — H&Z 4.7.1절"
+            }
+          ]
+        },
+        {
+          "title": "비선형 최소제곱",
+          "priority": "essential",
+          "description": "가우스-뉴턴, Levenberg–Marquardt, 야코비안 계산, 정규방정식과 감쇠 계수, 기하 오차 최소화를 위한 매개변수화(회전의 리 대수 증분)를 배운다 — Hartley & Zisserman 부록 6, Szeliski 부록 A",
+          "children": [
+            {
+              "title": "Gauss–Newton",
+              "priority": "essential",
+              "description": "정규방정식 J^T J Δ = −J^T r — Nocedal & Wright 10장"
+            },
+            {
+              "title": "Levenberg–Marquardt",
+              "priority": "essential",
+              "description": "감쇠 계수 λ 조절 — H&Z 부록 A6"
+            },
+            {
+              "title": "매니폴드 위 갱신",
+              "priority": "recommended",
+              "description": "SO(3)·SE(3) 에서 국소 섭동 ⊞ 로 갱신 — Sola 'A micro Lie theory'"
+            },
+            {
+              "title": "Ceres Solver 실습",
+              "priority": "recommended",
+              "description": "AutoDiffCostFunction 과 LocalParameterization/Manifold 사용 — Ceres 튜토리얼"
+            }
+          ]
+        },
+        {
+          "title": "번들 조정 입문",
+          "priority": "recommended",
+          "description": "카메라 자세와 3D 점을 재투영 오차로 동시 최적화, 희소 구조와 슈어 보수(Schur complement), 게이지 자유도를 배운다 — Hartley & Zisserman 18.1절, Triggs et al. 'Bundle Adjustment — A Modern Synthesis'",
+          "children": [
+            {
+              "title": "재투영 오차 비용",
+              "priority": "recommended",
+              "description": "카메라·점 동시 최적화 비용 함수 — Triggs 2000 'Bundle Adjustment — A Modern Synthesis'"
+            },
+            {
+              "title": "희소 구조와 Schur 보완",
+              "priority": "recommended",
+              "description": "점 블록을 소거해 카메라 축소 시스템 풀기 — H&Z 부록 A6.3"
+            },
+            {
+              "title": "게이지 자유도",
+              "priority": "optional",
+              "description": "전역 7자유도(스케일 포함) 고정 방법"
+            }
+          ]
+        },
+        {
+          "title": "Structure from Motion 파이프라인",
+          "priority": "optional",
+          "description": "특징 매칭 → 상대 자세 → 삼각측량 → 증분 PnP 등록 → 번들 조정으로 이어지는 증분 SfM 흐름과 COLMAP 구조를 배운다 — Szeliski 11장",
+          "resources": [
+            {
+              "title": "COLMAP",
+              "url": "https://github.com/colmap/colmap",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "증분 SfM",
+              "priority": "optional",
+              "description": "초기 쌍 선택, 영상 등록, 삼각측량, BA 반복 — COLMAP 논문(Schönberger 2016)"
+            },
+            {
+              "title": "전역 SfM",
+              "priority": "optional",
+              "description": "회전 평균·평행이동 평균 기반 전역 방법"
+            },
+            {
+              "title": "COLMAP 실습",
+              "priority": "recommended",
+              "description": "automatic_reconstructor 로 사진 묶음에서 희소 복원"
+            }
+          ]
+        },
+        {
+          "title": "삼중 시점 기하",
+          "priority": "optional",
+          "description": "삼중 초점 텐서(trifocal tensor)와 점·선 전달 관계, 세 시점 제약을 배운다 — Hartley & Zisserman 15장",
+          "children": [
+            {
+              "title": "삼중 초점 텐서",
+              "priority": "optional",
+              "description": "3×3×3 텐서와 점·직선 전이 — H&Z 15장"
+            }
+          ]
+        },
+        {
+          "title": "시각 오도메트리 개요",
+          "priority": "recommended",
+          "description": "특징 기반 VO 의 프레임 간 추적·자세 추정 흐름 — Scaramuzza & Fraundorfer 'Visual Odometry Tutorial'"
+        },
+        {
+          "title": "Visual SLAM 연결",
+          "priority": "optional",
+          "description": "키프레임·루프 클로저·지도 관리로 이어지는 SLAM 구조 — 'SLAM 14강(Gao Xiang)'"
+        }
+      ]
+    },
+    {
+      "title": "스테레오 비전과 광학 흐름",
+      "items": [
+        {
+          "title": "스테레오 정류",
+          "priority": "essential",
+          "description": "에피폴라 선을 수평 주사선으로 만드는 정류 변환, Bouguet·Fusiello 알고리즘, 정류 후 투영 행렬과 재투영 행렬 Q 를 배운다 — Szeliski 12.1절, Hartley & Zisserman 11.12절",
+          "children": [
+            {
+              "title": "Bouguet 정류",
+              "priority": "essential",
+              "description": "회전을 반씩 나눠 공통 평면으로 정렬 — OpenCV stereoRectify"
+            },
+            {
+              "title": "비보정 정류",
+              "priority": "optional",
+              "description": "F 만으로 정류하는 Hartley 방법 — H&Z 11.12절"
+            }
+          ]
+        },
+        {
+          "title": "시차와 깊이",
+          "priority": "essential",
+          "description": "Z = f·B/d, 깊이 오차 δZ ≈ Z²/(fB)·δd 로 본 거리 제곱 비례 오차, 베이스라인·초점거리 설계 트레이드오프를 배운다 — Szeliski 12.1절",
+          "children": [
+            {
+              "title": "Z = f·B/d",
+              "priority": "essential",
+              "description": "시차-깊이 반비례 관계"
+            },
+            {
+              "title": "깊이 오차 ΔZ ≈ Z²/(fB)·Δd",
+              "priority": "essential",
+              "description": "거리 제곱에 비례하는 깊이 오차와 베이스라인 설계"
+            }
+          ]
+        },
+        {
+          "title": "지역 스테레오 매칭",
+          "priority": "essential",
+          "description": "매칭 비용(SAD·SSD·NCC·Census), 비용 집계 윈도우, 승자독식(WTA), 좌우 일관성 검사, 서브픽셀 시차 보간을 배운다 — Szeliski 12.3·12.4절, Scharstein & Szeliski 2002 분류",
+          "children": [
+            {
+              "title": "매칭 비용",
+              "priority": "essential",
+              "description": "SAD·SSD·NCC·Census 변환 비교 — Scharstein & Szeliski 2002"
+            },
+            {
+              "title": "좌우 일관성 검사",
+              "priority": "essential",
+              "description": "가림 영역·잘못된 매칭 제거"
+            },
+            {
+              "title": "부분 픽셀 시차",
+              "priority": "recommended",
+              "description": "포물선 보간"
+            }
+          ]
+        },
+        {
+          "title": "전역·준전역 스테레오",
+          "priority": "recommended",
+          "description": "MRF 에너지 E = Σ 데이터 + λ Σ 평활, 동적 계획법, 그래프 컷, 다방향 경로 집계 SGM(Hirschmüller 2008)을 배운다 — Szeliski 12.5절",
+          "children": [
+            {
+              "title": "Semi-Global Matching",
+              "priority": "recommended",
+              "description": "8·16방향 1D 동적 계획 경로 비용 L_r 의 합, 벌점 P1·P2 의 역할",
+              "children": [
+                {
+                  "title": "경로별 동적 계획법",
+                  "priority": "recommended",
+                  "description": "8/16 방향 비용 집계와 P1, P2 벌점 — Hirschmüller 2008"
+                },
+                {
+                  "title": "StereoSGBM 파라미터",
+                  "priority": "essential",
+                  "description": "numDisparities·blockSize·uniquenessRatio 조정 — OpenCV"
+                }
+              ]
+            },
+            {
+              "title": "학습 기반 스테레오",
+              "priority": "optional",
+              "description": "비용 볼륨 + 3D 합성곱(GC-Net, PSMNet), 반복 정제(RAFT-Stereo)의 구조",
+              "children": [
+                {
+                  "title": "RAFT-Stereo",
+                  "priority": "optional",
+                  "description": "반복 갱신 기반 스테레오 — Lipson 2021"
+                },
+                {
+                  "title": "FoundationStereo",
+                  "priority": "optional",
+                  "description": "대규모 합성 데이터 제로샷 스테레오 — NVIDIA 2025"
+                }
+              ]
+            },
+            {
+              "title": "그래프 컷과 MRF",
+              "priority": "optional",
+              "description": "에너지 최소화 스테레오 — Szeliski 12.5절"
+            }
+          ]
+        },
+        {
+          "title": "다시점 스테레오",
+          "priority": "optional",
+          "description": "평면 스위프(plane sweep), 깊이 맵 융합, TSDF 볼륨 통합을 배운다 — Szeliski 12.7·13.2절",
+          "children": [
+            {
+              "title": "PatchMatch MVS",
+              "priority": "optional",
+              "description": "COLMAP MVS 의 PatchMatch 깊이 추정"
+            },
+            {
+              "title": "MVSNet",
+              "priority": "optional",
+              "description": "비용 볼륨 기반 학습 MVS — Yao 2018"
+            }
+          ]
+        },
+        {
+          "title": "광학 흐름의 기본 방정식",
+          "priority": "essential",
+          "description": "밝기 항상성 가정에서 광학 흐름 제약식 I_x u + I_y v + I_t = 0 유도, 조리개 문제(aperture problem), 운동장(motion field)과 광학 흐름의 차이를 배운다 — Szeliski 9.3절",
+          "children": [
+            {
+              "title": "밝기 항상성 가정",
+              "priority": "essential",
+              "description": "Ix u + Iy v + It = 0 유도 — Szeliski 9.3절"
+            },
+            {
+              "title": "조리개 문제",
+              "priority": "essential",
+              "description": "방정식 하나에 미지수 둘, 에지에 수직 성분만 정해짐"
+            }
+          ]
+        },
+        {
+          "title": "Lucas–Kanade 방법",
+          "priority": "essential",
+          "description": "지역 윈도우 내 상수 흐름 가정의 최소제곱 해 (A^T A) v = −A^T b, 구조 텐서 조건과 Harris 와의 연결, 반복 정제와 피라미드 coarse-to-fine 을 배운다 — Szeliski 9.1·9.3절",
+          "resources": [
+            {
+              "title": "OpenCV Optical Flow tutorial",
+              "url": "https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "KLT 특징 추적",
+              "priority": "essential",
+              "description": "Shi–Tomasi 'Good Features to Track' 선택 + 피라미드 LK 추적 + 순방향-역방향 검증",
+              "children": [
+                {
+                  "title": "피라미드 LK",
+                  "priority": "essential",
+                  "description": "coarse-to-fine 으로 큰 움직임 추적, cv::calcOpticalFlowPyrLK — Bouguet 기술 보고서"
+                },
+                {
+                  "title": "트랙 관리",
+                  "priority": "recommended",
+                  "description": "소실 트랙 보충과 최소 특징 수 유지"
+                }
+              ]
+            },
+            {
+              "title": "역합성 정합",
+              "priority": "recommended",
+              "description": "Baker & Matthews 'Lucas-Kanade 20 Years On' 의 순방향 가산·순방향 합성·역합성 알고리즘 비교",
+              "children": [
+                {
+                  "title": "Baker–Matthews 정리",
+                  "priority": "recommended",
+                  "description": "forward additive / inverse compositional 비교 — 'Lucas-Kanade 20 Years On'"
+                }
+              ]
+            },
+            {
+              "title": "창 내 최소제곱 해",
+              "priority": "essential",
+              "description": "구조 텐서 역행렬로 (u, v) 계산과 신뢰도 조건"
+            }
+          ]
+        },
+        {
+          "title": "Horn–Schunck와 변분법",
+          "priority": "recommended",
+          "description": "전역 평활 항을 더한 에너지 범함수, 오일러–라그랑주 방정식과 반복 해법, TV-L1 강건 흐름을 배운다 — Szeliski 9.3절",
+          "children": [
+            {
+              "title": "평활성 정규화",
+              "priority": "recommended",
+              "description": "데이터항+평활항 에너지와 오일러-라그랑주 방정식"
+            },
+            {
+              "title": "TV-L1 흐름",
+              "priority": "optional",
+              "description": "L1 데이터항·TV 정규화로 경계 보존"
+            },
+            {
+              "title": "Farnebäck 조밀 흐름",
+              "priority": "recommended",
+              "description": "다항식 확장 기반 cv::calcOpticalFlowFarneback"
+            }
+          ]
+        },
+        {
+          "title": "학습 기반 광학 흐름",
+          "priority": "optional",
+          "description": "FlowNet 의 상관층, RAFT 의 전쌍 상관 볼륨과 GRU 반복 갱신 구조를 고전 방법과 비교해 배운다",
+          "resources": [
+            {
+              "title": "RAFT: Recurrent All-Pairs Field Transforms for Optical Flow",
+              "url": "https://arxiv.org/abs/2003.12039",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "FlowNet·PWC-Net",
+              "priority": "optional",
+              "description": "비용 볼륨·워핑 기반 CNN 흐름"
+            },
+            {
+              "title": "RAFT",
+              "priority": "recommended",
+              "description": "전쌍 상관 볼륨과 GRU 반복 갱신 — Teed & Deng 2020"
+            }
+          ]
+        },
+        {
+          "title": "자기 운동과 충돌까지 시간",
+          "priority": "optional",
+          "description": "광학 흐름에서 카메라 자기 운동(ego-motion) 분해, 확장 초점(FOE), 충돌까지 시간(time-to-contact) τ = Z/Ż 추정을 배운다 — Szeliski 9장",
+          "children": [
+            {
+              "title": "FOE와 TTC",
+              "priority": "optional",
+              "description": "확장 초점과 τ = Z/Ż 추정, 접근 물체 경고"
+            }
+          ]
+        },
+        {
+          "title": "장면 흐름",
+          "priority": "optional",
+          "description": "3D 운동장(scene flow) 추정과 RGB-D·스테레오 활용"
+        },
+        {
+          "title": "이벤트 카메라",
+          "priority": "optional",
+          "description": "비동기 밝기 변화 센서와 고속·고동적 범위 인식 — Gallego 2020 서베이"
+        }
+      ]
+    },
+    {
+      "title": "깊이 센서 원리",
+      "items": [
+        {
+          "title": "거리 측정 방식 분류",
+          "priority": "essential",
+          "description": "능동(ToF·구조광·LiDAR)과 수동(스테레오) 깊이 측정의 원리 차이, 측정 범위·해상도·외광 내성·다중 경로 오차 비교. — Szeliski 12장, Siciliano Handbook of Robotics 'Range Sensing'",
+          "resources": [
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed.",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
+            }
+          ],
+          "children": [
+            {
+              "title": "능동·수동 센싱",
+              "priority": "essential",
+              "description": "투사광 유무에 따른 분류와 실내외 적합성"
+            },
+            {
+              "title": "삼각측량 대 비행시간",
+              "priority": "essential",
+              "description": "거리에 따른 오차 증가 양상 비교(Z² 대 상수)"
+            }
+          ]
+        },
+        {
+          "title": "Time-of-Flight(ToF) 카메라",
+          "priority": "essential",
+          "description": "직접 ToF(dToF, SPAD 펄스 계수)와 간접 ToF(iToF, 연속파 위상 변조)의 측정식 d = c·φ/(4π·f_mod), 위상 모호성과 다중 주파수 언래핑. — Hansard et al. 'Time-of-Flight Cameras'",
+          "children": [
+            {
+              "title": "연속파 위상 측정과 4-위상 샘플링",
+              "priority": "essential",
+              "description": "네 번의 상관 샘플로 위상·진폭·오프셋을 구하는 식, 변조 주파수와 최대 측정 거리의 관계.",
+              "children": [
+                {
+                  "title": "위상-거리 변환",
+                  "priority": "essential",
+                  "description": "d = c·φ/(4πf) 와 최대 비모호 거리 c/(2f)"
+                },
+                {
+                  "title": "다중 주파수 위상 펼침",
+                  "priority": "recommended",
+                  "description": "두 변조 주파수로 비모호 거리 확장"
+                }
+              ]
+            },
+            {
+              "title": "ToF 오차 요인",
+              "priority": "recommended",
+              "description": "다중 경로 간섭(MPI), flying pixel, 반사율·온도 의존 오차, 모션 블러, 여러 대 간 간섭.",
+              "children": [
+                {
+                  "title": "다중 경로 간섭",
+                  "priority": "recommended",
+                  "description": "모서리·반사면에서 깊이가 커지는 MPI"
+                },
+                {
+                  "title": "플라잉 픽셀",
+                  "priority": "essential",
+                  "description": "물체 경계에서 전경·배경이 섞인 가짜 점, 에지 필터로 제거"
+                },
+                {
+                  "title": "온도 드리프트와 적분 시간",
+                  "priority": "optional",
+                  "description": "온도·노출 시간에 따른 바이어스"
+                }
+              ]
+            },
+            {
+              "title": "직접 ToF(dToF)",
+              "priority": "recommended",
+              "description": "SPAD·히스토그램 기반 펄스 비행시간 측정"
+            }
+          ]
+        },
+        {
+          "title": "구조광(Structured Light)",
+          "priority": "essential",
+          "description": "프로젝터-카메라 삼각측량, 패턴 코딩(그레이 코드·위상 천이·스페클 의사랜덤 패턴), Kinect v1 방식, 깊이 해상도가 거리 제곱에 비례하는 이유. — Szeliski 13장, Geng 'Structured-light 3D surface imaging: a tutorial'",
+          "children": [
+            {
+              "title": "코드 패턴 방식",
+              "priority": "recommended",
+              "description": "그레이 코드·위상 천이 시간 다중화 패턴"
+            },
+            {
+              "title": "의사 무작위 점 패턴",
+              "priority": "essential",
+              "description": "Kinect v1 류 단일 샷 점 패턴과 블록 매칭"
+            },
+            {
+              "title": "햇빛 간섭",
+              "priority": "essential",
+              "description": "실외에서 적외선 패턴이 묻히는 문제"
+            }
+          ]
+        },
+        {
+          "title": "능동 스테레오와 수동 스테레오",
+          "priority": "essential",
+          "description": "정렬된 스테레오의 깊이식 Z = f·B/d, 시차 정밀도에서 깊이 오차 δZ ≈ Z²/(f·B)·δd 유도, IR 프로젝터로 텍스처를 보탠 능동 스테레오(RealSense D400). — Szeliski 12장",
+          "resources": [
+            {
+              "title": "Intel RealSense Developer Documentation",
+              "url": "https://dev.intelrealsense.com/docs",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "IR 프로젝터 텍스처",
+              "priority": "essential",
+              "description": "무늬 없는 벽에 텍스처를 더해 매칭 성공률을 올리는 원리 — Intel RealSense D400 문서"
+            },
+            {
+              "title": "RealSense 깊이 설정",
+              "priority": "recommended",
+              "description": "preset, laser power, depth units 조정 — librealsense 문서"
+            }
+          ]
+        },
+        {
+          "title": "스테레오 정합 알고리즘",
+          "priority": "recommended",
+          "description": "매칭 비용(SAD·NCC·Census), 비용 집계, WTA, Semi-Global Matching(SGM)의 경로별 동적 계획법, 좌우 일관성 검사, 서브픽셀 보간. — Szeliski 12장, Scharstein & Szeliski 2002 taxonomy",
+          "children": [
+            {
+              "title": "Semi-Global Matching",
+              "priority": "recommended",
+              "description": "8~16 방향 1D 경로 비용 누적, 패널티 P1·P2의 의미. — Hirschmüller 2008",
+              "children": [
+                {
+                  "title": "센서 내장 SGM",
+                  "priority": "optional",
+                  "description": "ASIC 내장 스테레오 엔진의 시차 범위·해상도 제약"
+                }
+              ]
+            },
+            {
+              "title": "딥러닝 스테레오",
+              "priority": "optional",
+              "description": "cost volume 기반 GC-Net·PSMNet, 반복 갱신형 RAFT-Stereo.",
+              "resources": [
+                {
+                  "title": "RAFT-Stereo: Multilevel Recurrent Field Transforms for Stereo Matching",
+                  "url": "https://arxiv.org/abs/2109.07547",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "엣지 기기 추론 제약",
+                  "priority": "optional",
+                  "description": "Jetson 에서 학습 스테레오 지연·전력 트레이드오프"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "LiDAR 원리",
+          "priority": "recommended",
+          "description": "펄스 ToF와 FMCW LiDAR, 기계식 회전·MEMS·Flash 방식, 빔 발산과 각해상도, 반사 강도, 링 구조 스캔 패턴과 모션 왜곡(de-skew). — Siciliano Handbook 'Range Sensing'",
+          "children": [
+            {
+              "title": "기계식 회전 LiDAR",
+              "priority": "recommended",
+              "description": "채널 수·수직 해상도·회전 주파수 사양 읽기"
+            },
+            {
+              "title": "솔리드 스테이트·MEMS LiDAR",
+              "priority": "optional",
+              "description": "비반복 스캔 패턴(Livox)과 FOV"
+            },
+            {
+              "title": "FMCW LiDAR",
+              "priority": "optional",
+              "description": "주파수 변조로 거리와 속도를 동시에 측정"
+            },
+            {
+              "title": "모션 왜곡 보정",
+              "priority": "recommended",
+              "description": "스캔 중 이동으로 생기는 왜곡을 IMU 로 deskew"
+            }
+          ]
+        },
+        {
+          "title": "깊이 센서 노이즈 모델",
+          "priority": "essential",
+          "description": "거리·입사각에 따른 축 방향·측면 노이즈 모델(Nguyen et al. 2012 Kinect 노이즈 모델), 결측(hole)과 경계 노이즈, 안전 판단 시 불확실성으로 반영하는 법. — Nguyen, Izadi, Lovell 2012",
+          "children": [
+            {
+              "title": "축 방향 노이즈",
+              "priority": "essential",
+              "description": "σ_z ∝ Z² (스테레오·구조광) 모델 — Nguyen 2012 Kinect 노이즈 모델"
+            },
+            {
+              "title": "측면 노이즈와 입사각",
+              "priority": "recommended",
+              "description": "표면 기울기가 클수록 늘어나는 오차"
+            },
+            {
+              "title": "재질 문제",
+              "priority": "essential",
+              "description": "투명·검은·반사 재질에서 깊이 결손"
+            }
+          ]
+        },
+        {
+          "title": "깊이 영상 후처리",
+          "priority": "recommended",
+          "description": "양방향(bilateral) 필터, 시간 필터, hole filling, 데시메이션, RGB-깊이 정렬(registration)과 depth-to-color 재투영. — Szeliski 3장·12장",
+          "children": [
+            {
+              "title": "시간 필터",
+              "priority": "recommended",
+              "description": "프레임 간 지수 평활과 움직임 시 잔상"
+            },
+            {
+              "title": "구멍 메우기",
+              "priority": "recommended",
+              "description": "인접 유효값 채우기와 위험성"
+            },
+            {
+              "title": "decimation·spatial 필터",
+              "priority": "recommended",
+              "description": "librealsense post-processing 필터 체인"
+            }
+          ]
+        },
+        {
+          "title": "RGB-D 외부 보정",
+          "priority": "recommended",
+          "description": "깊이 카메라와 RGB·로봇 사이 외부 파라미터, 핸드-아이 보정 AX = XB(Tsai-Lenz, Park-Martin) 문제 정의와 풀이. — Tsai & Lenz 1989, Park & Martin 1994",
+          "children": [
+            {
+              "title": "깊이-컬러 정렬 오차 확인",
+              "priority": "recommended",
+              "description": "에지 정렬 시각 검사와 재보정"
+            }
+          ]
+        },
+        {
+          "title": "센서 선택과 안전 관점",
+          "priority": "recommended",
+          "description": "근거리 사람 감지용 센서 요구사항(최소 측정 거리, 프레임률, 지연, 시야각), 다중 센서 간섭, 반사·투명 물체에서의 실패 모드 정리.",
+          "children": [
+            {
+              "title": "최소 측정 거리와 사각",
+              "priority": "essential",
+              "description": "근거리 블라인드 존과 로봇 손 근처 인식 공백"
+            },
+            {
+              "title": "다중 센서 간섭",
+              "priority": "recommended",
+              "description": "여러 ToF·구조광 센서 동시 사용 시 간섭과 동기화"
+            },
+            {
+              "title": "안전 인증 센서와의 차이",
+              "priority": "recommended",
+              "description": "일반 깊이 카메라는 안전 기능(PL/SIL) 인증이 없다는 점과 안전 레이저 스캐너 역할 분리"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "포인트 클라우드 처리",
+      "items": [
+        {
+          "title": "포인트 클라우드 표현과 역투영",
+          "priority": "essential",
+          "description": "핀홀 역투영 X = Z·K⁻¹[u,v,1]ᵀ로 깊이 영상을 점군으로 변환, organized/unorganized 점군, 좌표계 변환과 동차 변환 행렬 적용. — Szeliski 13장",
+          "resources": [
+            {
+              "title": "Open3D Documentation",
+              "url": "https://www.open3d.org/docs/release/",
+              "kind": "doc"
+            },
+            {
+              "title": "Point Cloud Library (PCL)",
+              "url": "https://pointclouds.org/",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "조직화·비조직화 점군",
+              "priority": "essential",
+              "description": "organized(H×W) 점군의 이웃 접근 이점"
+            },
+            {
+              "title": "PointCloud2 메시지",
+              "priority": "essential",
+              "description": "ROS 2 sensor_msgs/PointCloud2 필드 레이아웃과 point_cloud2 유틸"
+            },
+            {
+              "title": "Open3D·PCL 자료구조",
+              "priority": "essential",
+              "description": "o3d.geometry.PointCloud 와 pcl::PointCloud<PointXYZRGB>"
+            }
+          ]
+        },
+        {
+          "title": "공간 자료구조",
+          "priority": "essential",
+          "description": "k-d tree 구축·최근접 이웃 탐색 복잡도, octree, 복셀 해시, radius search와 kNN 차이. — de Berg 'Computational Geometry' 5장",
+          "children": [
+            {
+              "title": "k-d 트리",
+              "priority": "essential",
+              "description": "kNN·반경 탐색, nanoflann·FLANN"
+            },
+            {
+              "title": "옥트리",
+              "priority": "essential",
+              "description": "계층 공간 분할과 변화 감지 — PCL octree 튜토리얼"
+            },
+            {
+              "title": "복셀 해시",
+              "priority": "recommended",
+              "description": "희소 복셀 해시맵으로 대규모 장면 처리"
+            }
+          ]
+        },
+        {
+          "title": "다운샘플링과 이상치 제거",
+          "priority": "essential",
+          "description": "복셀 그리드 다운샘플링, 균일·FPS(farthest point sampling), 통계적 이상치 제거(SOR), 반경 이상치 제거. — Rusu 2010 학위논문, PCL 튜토리얼",
+          "children": [
+            {
+              "title": "복셀 그리드 필터",
+              "priority": "essential",
+              "description": "voxel_down_sample 크기 선택 기준"
+            },
+            {
+              "title": "통계적 이상치 제거",
+              "priority": "essential",
+              "description": "kNN 평균 거리 μ+kσ 기준 SOR"
+            },
+            {
+              "title": "반경 이상치 제거",
+              "priority": "recommended",
+              "description": "반경 내 이웃 수 기준"
+            },
+            {
+              "title": "패스스루·크롭 박스",
+              "priority": "essential",
+              "description": "작업 영역 밖 점 제거"
+            }
+          ]
+        },
+        {
+          "title": "법선 추정과 곡률",
+          "priority": "essential",
+          "description": "근방 점 공분산 행렬의 고유값 분해(PCA)로 최소 고유벡터를 법선으로, 고유값 비로 곡률(surface variation) 계산, 법선 방향 일관화(viewpoint 기준, MST 전파). — Hoppe et al. 1992, Rusu 2010",
+          "children": [
+            {
+              "title": "PCA 법선",
+              "priority": "essential",
+              "description": "이웃 공분산 최소 고유벡터 — Rusu 박사논문 4장"
+            },
+            {
+              "title": "법선 방향 일관화",
+              "priority": "recommended",
+              "description": "시점 방향·최소 신장 트리로 방향 맞추기"
+            },
+            {
+              "title": "적분 영상 법선",
+              "priority": "optional",
+              "description": "조직화 점군용 빠른 법선 추정"
+            }
+          ]
+        },
+        {
+          "title": "평면·기하 모델 추정(RANSAC)",
+          "priority": "essential",
+          "description": "RANSAC 반복 횟수 N = log(1−p)/log(1−wˢ) 유도, 평면·원기둥·구 피팅, MSAC·PROSAC, 바닥 평면 제거. — Fischler & Bolles 1981, Hartley & Zisserman 4장",
+          "children": [
+            {
+              "title": "평면 분할로 테이블 제거",
+              "priority": "essential",
+              "description": "segment_plane 으로 지지면 제거 후 물체 분리"
+            },
+            {
+              "title": "원통·구 모델",
+              "priority": "recommended",
+              "description": "SACMODEL_CYLINDER 로 파이프·병 검출"
+            },
+            {
+              "title": "다중 평면 추출",
+              "priority": "recommended",
+              "description": "반복 RANSAC 과 연결성 검사"
+            }
+          ]
+        },
+        {
+          "title": "분할(Segmentation)과 군집화",
+          "priority": "essential",
+          "description": "유클리드 군집화, 영역 성장(법선·곡률 기준), DBSCAN, 테이블 위 물체 분리 파이프라인(평면 제거 → 군집화). — Rusu 2010",
+          "children": [
+            {
+              "title": "유클리드 군집화",
+              "priority": "essential",
+              "description": "거리 임계값 기반 Euclidean Cluster Extraction — PCL 튜토리얼"
+            },
+            {
+              "title": "DBSCAN",
+              "priority": "essential",
+              "description": "밀도 기반 군집화와 eps·min_points 선택"
+            },
+            {
+              "title": "영역 성장",
+              "priority": "recommended",
+              "description": "법선·곡률 기반 region growing"
+            },
+            {
+              "title": "지면 분할",
+              "priority": "recommended",
+              "description": "실외 LiDAR 지면 제거(Patchwork++ 등)"
+            }
+          ]
+        },
+        {
+          "title": "강체 정합의 닫힌 해",
+          "priority": "essential",
+          "description": "대응점이 주어졌을 때 최소제곱 R,t: 무게중심 제거 후 SVD(Arun 1987)·사원수(Horn 1987)·Umeyama(스케일 포함), det(R)=−1 반사 보정. — Arun et al. 1987, Umeyama 1991",
+          "children": [
+            {
+              "title": "Kabsch·Umeyama",
+              "priority": "essential",
+              "description": "SVD 로 최적 R, t (스케일 포함) 구하기 — Umeyama 1991"
+            },
+            {
+              "title": "반사 해 처리",
+              "priority": "essential",
+              "description": "det(R) = −1 이 나올 때 부호 보정"
+            }
+          ]
+        },
+        {
+          "title": "ICP(Iterative Closest Point)",
+          "priority": "essential",
+          "description": "대응 탐색 ↔ 변환 추정 반복과 수렴성, point-to-point vs point-to-plane(선형화 해), Generalized-ICP, 거부 기준과 초기값 의존성. — Besl & McKay 1992, Rusinkiewicz & Levoy 2001",
+          "children": [
+            {
+              "title": "Point-to-point ICP",
+              "priority": "essential",
+              "description": "SVD 닫힌 해를 반복에 쓰는 기본형, 단조 감소 증명 개요.",
+              "children": [
+                {
+                  "title": "대응 탐색과 거부",
+                  "priority": "essential",
+                  "description": "최대 대응 거리·법선 각 기준 거부"
+                },
+                {
+                  "title": "수렴 조건",
+                  "priority": "essential",
+                  "description": "변환 변화량·적합도 기준 종료"
+                }
+              ]
+            },
+            {
+              "title": "Point-to-plane ICP",
+              "priority": "essential",
+              "description": "작은 회전 근사로 6×6 선형 시스템을 세우는 법, 수렴 속도 비교. — Chen & Medioni 1992, Low 2004",
+              "children": [
+                {
+                  "title": "선형화 풀이",
+                  "priority": "recommended",
+                  "description": "소회전 근사로 6×6 선형계 — Low 2004 기술 보고서"
+                }
+              ]
+            },
+            {
+              "title": "Generalized-ICP와 강건 커널",
+              "priority": "recommended",
+              "description": "plane-to-plane 공분산 모델, Huber·Tukey 커널을 쓴 IRLS. — Segal et al. 2009",
+              "children": [
+                {
+                  "title": "plane-to-plane 공분산",
+                  "priority": "optional",
+                  "description": "Segal 2009 GICP 비용"
+                },
+                {
+                  "title": "색 ICP",
+                  "priority": "optional",
+                  "description": "Colored ICP(Park 2017) — Open3D 튜토리얼"
+                }
+              ]
+            },
+            {
+              "title": "KISS-ICP",
+              "priority": "optional",
+              "description": "적응 임계값과 등속 모델을 쓰는 단순 LiDAR 오도메트리.",
+              "resources": [
+                {
+                  "title": "KISS-ICP: In Defense of Point-to-Point ICP",
+                  "url": "https://arxiv.org/abs/2209.15397",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "초기값 민감성",
+              "priority": "essential",
+              "description": "국소 최솟값과 전역 정합으로 초기화하는 이유"
+            },
+            {
+              "title": "정합 품질 평가",
+              "priority": "recommended",
+              "description": "fitness·inlier RMSE 와 정보 행렬"
+            }
+          ]
+        },
+        {
+          "title": "SE(3) 위의 최적화",
+          "priority": "recommended",
+          "description": "리 대수 se(3) 섭동으로 정합 오차의 야코비안 유도, Gauss-Newton·Levenberg-Marquardt 갱신, 지수 사상. — Barfoot 'State Estimation for Robotics' 7장",
+          "resources": [
+            {
+              "title": "A micro Lie theory for state estimation in robotics",
+              "url": "https://arxiv.org/abs/1812.01537",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "리 대수 섭동",
+              "priority": "recommended",
+              "description": "좌·우 섭동 야코비안 — Sola 'A micro Lie theory'"
+            },
+            {
+              "title": "Sophus·manif 라이브러리",
+              "priority": "optional",
+              "description": "SE3 연산 C++ 라이브러리"
+            }
+          ]
+        },
+        {
+          "title": "3D 지역 특징 기술자",
+          "priority": "recommended",
+          "description": "PFH·FPFH(Darboux 프레임 각도 히스토그램), SHOT, 키포인트(ISS), 특징 기반 대응과 비율 검사. — Rusu et al. 2009 FPFH, Tombari et al. 2010 SHOT",
+          "children": [
+            {
+              "title": "FPFH",
+              "priority": "recommended",
+              "description": "SPFH 가중합으로 만든 33차원 기술자 — Rusu 2009"
+            },
+            {
+              "title": "SHOT",
+              "priority": "optional",
+              "description": "지역 기준 프레임 기반 히스토그램 기술자"
+            },
+            {
+              "title": "FCGF",
+              "priority": "optional",
+              "description": "희소 합성곱 학습 기술자 — Choy 2019"
+            }
+          ]
+        },
+        {
+          "title": "전역 정합(Global Registration)",
+          "priority": "recommended",
+          "description": "초기값 없이 정합: FPFH+RANSAC, Fast Global Registration, 이상치 99%에도 강건한 TEASER(절단 최소제곱·최대 클리크). — Zhou et al. 2016 FGR",
+          "resources": [
+            {
+              "title": "TEASER: Fast and Certifiable Point Cloud Registration",
+              "url": "https://arxiv.org/abs/2001.07715",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "RANSAC 기반 특징 정합",
+              "priority": "recommended",
+              "description": "FPFH 대응 + RANSAC — Open3D global registration"
+            },
+            {
+              "title": "Fast Global Registration",
+              "priority": "optional",
+              "description": "Zhou 2016 강건 목적함수"
+            },
+            {
+              "title": "TEASER++",
+              "priority": "optional",
+              "description": "인증 가능한 강건 정합 — Yang 2020"
+            }
+          ]
+        },
+        {
+          "title": "점군 딥러닝",
+          "priority": "recommended",
+          "description": "순서 불변 대칭 함수(max pooling)로 집합을 처리하는 PointNet, 계층형 PointNet++, 그래프 기반 DGCNN의 EdgeConv. — Qi et al. 2017",
+          "children": [
+            {
+              "title": "PointNet",
+              "priority": "recommended",
+              "resources": [
+                {
+                  "title": "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation",
+                  "url": "https://arxiv.org/abs/1612.00593",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "대칭 함수와 순서 불변",
+                  "priority": "recommended",
+                  "description": "max pooling 으로 순서 불변성 확보"
+                },
+                {
+                  "title": "T-Net 정렬",
+                  "priority": "optional",
+                  "description": "입력·특징 변환 네트워크"
+                }
+              ]
+            },
+            {
+              "title": "PointNet++",
+              "priority": "recommended",
+              "resources": [
+                {
+                  "title": "PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space",
+                  "url": "https://arxiv.org/abs/1706.02413",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Set Abstraction",
+                  "priority": "recommended",
+                  "description": "FPS 표본·ball query 그룹·PointNet 계층 구조"
+                }
+              ]
+            },
+            {
+              "title": "DGCNN",
+              "priority": "optional",
+              "resources": [
+                {
+                  "title": "Dynamic Graph CNN for Learning on Point Clouds",
+                  "url": "https://arxiv.org/abs/1801.07829",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "희소 합성곱",
+              "priority": "optional",
+              "description": "MinkowskiEngine·spconv 복셀 희소 합성곱"
+            },
+            {
+              "title": "Point Transformer",
+              "priority": "optional",
+              "description": "벡터 어텐션 기반 점군 트랜스포머 — Zhao 2021"
+            }
+          ]
+        },
+        {
+          "title": "표면 재구성과 메쉬",
+          "priority": "optional",
+          "description": "Poisson 표면 재구성(지시 함수와 포아송 방정식), Ball pivoting, Marching Cubes, 메쉬 단순화. — Kazhdan et al. 2006, Szeliski 13장",
+          "children": [
+            {
+              "title": "Poisson 재구성",
+              "priority": "optional",
+              "description": "지시 함수 푸아송 방정식 — Kazhdan 2006"
+            },
+            {
+              "title": "Ball Pivoting·Alpha shape",
+              "priority": "optional",
+              "description": "점을 직접 잇는 메쉬화"
+            },
+            {
+              "title": "마칭 큐브",
+              "priority": "recommended",
+              "description": "SDF 등위면 추출 — Lorensen 1987"
+            }
+          ]
+        },
+        {
+          "title": "점군 시각화와 디버깅",
+          "priority": "essential",
+          "description": "RViz2 PointCloud2 표시, Open3D visualizer, CloudCompare"
+        },
+        {
+          "title": "GPU 가속 점군 처리",
+          "priority": "optional",
+          "description": "CUDA·cuPCL 로 실시간 필터링"
+        }
+      ]
+    },
+    {
+      "title": "6D 물체 자세 추정",
+      "items": [
+        {
+          "title": "문제 정의와 회전 표현",
+          "priority": "essential",
+          "description": "6D 자세 = SO(3)×R³, 회전 표현(오일러각·축각·사원수·회전행렬·6D 연속 표현)의 특이점과 학습 적합성, 대칭 물체의 자세 모호성. — Zhou et al. 2019 'On the Continuity of Rotation Representations'",
+          "resources": [
+            {
+              "title": "On the Continuity of Rotation Representations in Neural Networks",
+              "url": "https://arxiv.org/abs/1812.07035",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "대칭 물체의 모호성",
+              "priority": "essential",
+              "description": "회전 대칭으로 여러 자세가 같은 영상을 내는 문제"
+            },
+            {
+              "title": "연속 6D 회전 표현",
+              "priority": "recommended",
+              "description": "Gram-Schmidt 6D 표현 — Zhou 2019 'On the Continuity of Rotation Representations'"
+            },
+            {
+              "title": "인스턴스·카테고리 수준 구분",
+              "priority": "essential",
+              "description": "CAD 모델 유무에 따른 문제 설정"
+            }
+          ]
+        },
+        {
+          "title": "PnP와 2D-3D 대응",
+          "priority": "essential",
+          "description": "Perspective-n-Point: DLT, P3P, EPnP(제어점 4개), RANSAC-PnP, 재투영 오차 최소화 정제. — Lepetit et al. 2009 EPnP, Szeliski 11장",
+          "children": [
+            {
+              "title": "키포인트 투표",
+              "priority": "recommended",
+              "description": "PVNet 픽셀별 방향 벡터 투표"
+            },
+            {
+              "title": "조밀 대응 좌표",
+              "priority": "recommended",
+              "description": "NOCS·CDPN 류 픽셀별 3D 좌표 회귀"
+            }
+          ]
+        },
+        {
+          "title": "평가 지표와 벤치마크",
+          "priority": "essential",
+          "description": "ADD·ADD-S(대칭), VSD·MSSD·MSPD, BOP 챌린지와 LineMOD·YCB-Video·T-LESS 데이터셋. — Hodaň et al. BOP",
+          "resources": [
+            {
+              "title": "BOP: Benchmark for 6D Object Pose Estimation",
+              "url": "https://bop.felk.cvut.cz/",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "ADD·ADD-S",
+              "priority": "essential",
+              "description": "평균 모델 점 거리와 대칭용 ADD-S — Hinterstoisser 2012"
+            },
+            {
+              "title": "VSD·MSSD·MSPD",
+              "priority": "recommended",
+              "description": "BOP 챌린지 지표 — Hodaň 2018/2020"
+            },
+            {
+              "title": "BOP 데이터셋",
+              "priority": "recommended",
+              "description": "LM-O·T-LESS·YCB-V 등 표준 데이터셋 구성"
+            }
+          ]
+        },
+        {
+          "title": "고전 방법: 템플릿과 PPF",
+          "priority": "recommended",
+          "description": "LINEMOD 그래디언트·법선 템플릿 매칭, Point Pair Features(PPF) 해시 투표와 자세 클러스터링, ICP 정제. — Hinterstoisser et al. 2012, Drost et al. 2010",
+          "children": [
+            {
+              "title": "LINEMOD 템플릿",
+              "priority": "recommended",
+              "description": "기울기 방향·법선 양자화 템플릿 매칭 — Hinterstoisser 2012"
+            },
+            {
+              "title": "Point Pair Features",
+              "priority": "recommended",
+              "description": "점쌍 4차원 특징 해시 투표 — Drost 2010"
+            }
+          ]
+        },
+        {
+          "title": "직접 회귀 방식",
+          "priority": "recommended",
+          "description": "CNN으로 회전·이동을 직접 회귀하는 PoseCNN(중심 투표 + 깊이), ShapeMatch-Loss, RGB-D 융합 DenseFusion.",
+          "resources": [
+            {
+              "title": "PoseCNN: A Convolutional Neural Network for 6D Object Pose Estimation in Cluttered Scenes",
+              "url": "https://arxiv.org/abs/1711.00199",
+              "kind": "paper"
+            },
+            {
+              "title": "DenseFusion: 6D Object Pose Estimation by Iterative Dense Fusion",
+              "url": "https://arxiv.org/abs/1901.04780",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "PoseCNN",
+              "priority": "recommended",
+              "description": "중심 투표+쿼터니언 회귀 — Xiang 2018"
+            },
+            {
+              "title": "DenseFusion",
+              "priority": "optional",
+              "description": "RGB·깊이 픽셀별 융합 — Wang 2019"
+            }
+          ]
+        },
+        {
+          "title": "키포인트·대응 기반 방식",
+          "priority": "recommended",
+          "description": "2D 키포인트를 픽셀별 벡터장 투표로 찾고 PnP로 푸는 PVNet, 밀집 대응(NOCS·DPOD) 방식.",
+          "resources": [
+            {
+              "title": "PVNet: Pixel-wise Voting Network for 6DoF Pose Estimation",
+              "url": "https://arxiv.org/abs/1812.11788",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "PVNet",
+              "priority": "recommended",
+              "description": "RANSAC 투표 키포인트 — Peng 2019"
+            },
+            {
+              "title": "GDR-Net",
+              "priority": "optional",
+              "description": "기하 유도 직접 회귀 — Wang 2021"
+            }
+          ]
+        },
+        {
+          "title": "렌더-비교 정제와 파운데이션 모델",
+          "priority": "recommended",
+          "description": "렌더링과 관측을 비교해 반복 정제하는 DeepIM·CosyPose, 처음 보는 물체용 MegaPose, CAD/소수 영상만으로 동작하는 FoundationPose.",
+          "resources": [
+            {
+              "title": "MegaPose: 6D Pose Estimation of Novel Objects via Render & Compare",
+              "url": "https://arxiv.org/abs/2212.06870",
+              "kind": "paper"
+            },
+            {
+              "title": "FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects",
+              "url": "https://arxiv.org/abs/2312.08344",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "DeepIM·CosyPose",
+              "priority": "recommended",
+              "description": "렌더링-비교 반복 정제 — Labbé 2020"
+            },
+            {
+              "title": "MegaPose",
+              "priority": "recommended",
+              "description": "새 물체 일반화 렌더-비교 — Labbé 2022"
+            },
+            {
+              "title": "FoundationPose",
+              "priority": "recommended",
+              "description": "모델 기반·모델 프리 통합 자세 추정·추적 — Wen 2024"
+            }
+          ]
+        },
+        {
+          "title": "카테고리 수준 자세 추정",
+          "priority": "optional",
+          "description": "CAD 모델 없이 같은 범주의 새 물체 자세·크기를 추정하는 NOCS(정규화 물체 좌표 공간)와 Umeyama 정합.",
+          "resources": [
+            {
+              "title": "Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation",
+              "url": "https://arxiv.org/abs/1901.02970",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "NOCS 정규 좌표",
+              "priority": "optional",
+              "description": "정규화 물체 좌표 공간 — Wang 2019"
+            }
+          ]
+        },
+        {
+          "title": "자세 추적과 필터링",
+          "priority": "recommended",
+          "description": "프레임 간 자세 추적, SE(3) 위의 칼만 필터·평활화, 추적 실패 감지와 재초기화. — Barfoot 'State Estimation for Robotics'",
+          "children": [
+            {
+              "title": "SE(3) 칼만 필터",
+              "priority": "recommended",
+              "description": "오차 상태 칼만 필터로 자세 평활"
+            },
+            {
+              "title": "추적 실패 감지와 재초기화",
+              "priority": "recommended",
+              "description": "정제 점수 기준 재검출 트리거"
+            }
+          ]
+        },
+        {
+          "title": "자세 불확실성과 안전",
+          "priority": "recommended",
+          "description": "자세 추정의 공분산·신뢰도 추정, 대칭·가림에 의한 다봉 분포, 파지·접촉 전에 불확실성을 안전 여유로 반영하는 법.",
+          "children": [
+            {
+              "title": "자세 신뢰도 임계값",
+              "priority": "recommended",
+              "description": "파지 전에 신뢰도·대칭 모호성을 확인하는 게이트"
+            },
+            {
+              "title": "접근 경로 여유",
+              "priority": "recommended",
+              "description": "자세 오차를 고려한 파지 접근 여유 거리"
+            }
+          ]
+        },
+        {
+          "title": "인스턴스 분할 전처리",
+          "priority": "optional",
+          "description": "자세 추정 전 물체 마스크를 얻는 Mask R-CNN, 프롬프트 분할 Segment Anything과 그 한계.",
+          "resources": [
+            {
+              "title": "Segment Anything",
+              "url": "https://arxiv.org/abs/2304.02643",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "합성 데이터 생성",
+              "priority": "optional",
+              "description": "BlenderProc 물리 기반 렌더링 학습 데이터 — BOP 툴킷"
+            }
+          ]
+        },
+        {
+          "title": "투명·반사 물체 자세",
+          "priority": "optional",
+          "description": "ClearGrasp 깊이 보완, 투명 물체 데이터셋"
+        },
+        {
+          "title": "관절 물체 자세",
+          "priority": "optional",
+          "description": "서랍·문 등 관절 물체의 파트 자세와 관절 매개변수"
+        }
+      ]
+    },
+    {
+      "title": "사람 자세 추정과 모션 캡처",
+      "items": [
+        {
+          "title": "사람 골격 모델과 키포인트 정의",
+          "priority": "essential",
+          "description": "COCO 17점·Body25·Human3.6M 관절 정의, 관절 트리와 순기구학으로 표현한 골격, 관절 회전(축각) 파라미터화.",
+          "children": [
+            {
+              "title": "COCO 17 키포인트",
+              "priority": "essential",
+              "description": "COCO 키포인트 정의와 OKS 지표"
+            },
+            {
+              "title": "Halpe·전신 키포인트",
+              "priority": "optional",
+              "description": "손·발·얼굴 포함 133점 전신 키포인트"
+            },
+            {
+              "title": "관절 트리와 골격 길이",
+              "priority": "essential",
+              "description": "부모-자식 관절 계층과 뼈 길이 제약"
+            }
+          ]
+        },
+        {
+          "title": "2D 자세 추정",
+          "priority": "essential",
+          "description": "히트맵 회귀와 soft-argmax, top-down(SimpleBaseline·HRNet·ViTPose) vs bottom-up(OpenPose PAF) 비교, OKS·PCK 지표.",
+          "children": [
+            {
+              "title": "OpenPose와 Part Affinity Fields",
+              "priority": "recommended",
+              "resources": [
+                {
+                  "title": "OpenPose: Realtime Multi-Person 2D Pose Estimation using Part Affinity Fields",
+                  "url": "https://arxiv.org/abs/1812.08008",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "PAF 매칭",
+                  "priority": "recommended",
+                  "description": "부위 연결 벡터장 적분으로 다인 그룹화 — Cao 2017"
+                }
+              ]
+            },
+            {
+              "title": "HRNet",
+              "priority": "recommended",
+              "resources": [
+                {
+                  "title": "Deep High-Resolution Representation Learning for Human Pose Estimation",
+                  "url": "https://arxiv.org/abs/1902.09212",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "히트맵 회귀와 부분 픽셀 복원",
+                  "priority": "recommended",
+                  "description": "가우시안 히트맵과 DARK 디코딩"
+                }
+              ]
+            },
+            {
+              "title": "ViTPose",
+              "priority": "optional",
+              "resources": [
+                {
+                  "title": "ViTPose: Simple Vision Transformer Baselines for Human Pose Estimation",
+                  "url": "https://arxiv.org/abs/2204.12484",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "상향식·하향식 비교",
+              "priority": "essential",
+              "description": "검출 후 자세(top-down) 대 키포인트 후 그룹화(bottom-up)"
+            },
+            {
+              "title": "RTMPose·MediaPipe Pose",
+              "priority": "recommended",
+              "description": "실시간 경량 자세 추정 — MMPose, MediaPipe 문서"
+            }
+          ]
+        },
+        {
+          "title": "3D 자세 추정",
+          "priority": "essential",
+          "description": "2D→3D lifting, 시간 합성곱 VideoPose3D, 다중 시점 삼각측량(DLT)과 깊이 영상 기반 추정, MPJPE·PA-MPJPE 지표.",
+          "resources": [
+            {
+              "title": "3D human pose estimation in video with temporal convolutions and semi-supervised training",
+              "url": "https://arxiv.org/abs/1811.11742",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "2D→3D 리프팅",
+              "priority": "recommended",
+              "description": "시간 합성곱 리프팅(VideoPose3D) — Pavllo 2019"
+            },
+            {
+              "title": "다시점 삼각측량",
+              "priority": "essential",
+              "description": "보정된 다중 카메라 키포인트 삼각측량"
+            },
+            {
+              "title": "Human3.6M·MPJPE",
+              "priority": "recommended",
+              "description": "표준 데이터셋과 MPJPE·PA-MPJPE 지표"
+            }
+          ]
+        },
+        {
+          "title": "파라메트릭 인체 모델",
+          "priority": "essential",
+          "description": "SMPL의 형상 β(PCA)·자세 θ 파라미터, 선형 블렌드 스키닝(LBS)과 자세 보정 블렌드셰이프, 손 포함 SMPL-X·MANO. — Loper et al. 2015 SMPL",
+          "resources": [
+            {
+              "title": "Expressive Body Capture: 3D Hands, Face, and Body from a Single Image (SMPL-X)",
+              "url": "https://arxiv.org/abs/1904.05866",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "SMPL 형상·자세 파라미터",
+              "priority": "essential",
+              "description": "β(10)·θ(24×3) 와 선형 블렌드 스키닝 — Loper 2015"
+            },
+            {
+              "title": "SMPL-X",
+              "priority": "recommended",
+              "description": "손(MANO)·얼굴 포함 확장 모델 — Pavlakos 2019"
+            }
+          ]
+        },
+        {
+          "title": "인체 메쉬 복원",
+          "priority": "recommended",
+          "description": "단일 영상에서 SMPL 파라미터를 회귀하는 HMR(적대적 사전분포), 최적화 기반 SMPLify, 트랜스포머 기반 4DHumans.",
+          "resources": [
+            {
+              "title": "End-to-end Recovery of Human Shape and Pose (HMR)",
+              "url": "https://arxiv.org/abs/1712.06584",
+              "kind": "paper"
+            },
+            {
+              "title": "Humans in 4D: Reconstructing and Tracking Humans with Transformers",
+              "url": "https://arxiv.org/abs/2305.20091",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "최적화 기반 SMPLify",
+              "priority": "recommended",
+              "description": "2D 키포인트에 SMPL 피팅 — Bogo 2016"
+            },
+            {
+              "title": "회귀 기반 HMR·4DHumans",
+              "priority": "recommended",
+              "description": "단일 영상 메쉬 회귀와 트래킹"
+            }
+          ]
+        },
+        {
+          "title": "손 자세 추정",
+          "priority": "essential",
+          "description": "21점 손 키포인트, MANO 모델 피팅, 자기 가림 문제, MediaPipe Hands 파이프라인(손바닥 검출 → 랜드마크).",
+          "resources": [
+            {
+              "title": "MediaPipe Solutions Guide",
+              "url": "https://developers.google.com/mediapipe/solutions",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "MANO 손 모델",
+              "priority": "essential",
+              "description": "손 형상·관절 파라미터 — Romero 2017"
+            },
+            {
+              "title": "MediaPipe Hands",
+              "priority": "recommended",
+              "description": "21 키포인트 실시간 손 추적"
+            },
+            {
+              "title": "손-물체 상호작용 데이터셋",
+              "priority": "optional",
+              "description": "DexYCB·HO-3D"
+            }
+          ]
+        },
+        {
+          "title": "광학식·관성식 모션 캡처 원리",
+          "priority": "essential",
+          "description": "마커 기반 광학 모캡(다중 카메라 삼각측량, 마커 라벨링), IMU 모캡(자세 추정 필터, 드리프트·자기장 교란), VR 트래커 기반 캡처의 오차 특성. — Kok, Hol, Schön 'Using Inertial Sensors for Position and Orientation Estimation'",
+          "resources": [
+            {
+              "title": "Using Inertial Sensors for Position and Orientation Estimation",
+              "url": "https://arxiv.org/abs/1704.06053",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "마커 기반 광학식 모캡",
+              "priority": "essential",
+              "description": "역반사 마커 삼각측량과 마커 라벨링"
+            },
+            {
+              "title": "IMU 슈트와 드리프트",
+              "priority": "recommended",
+              "description": "자세 융합·자력계 간섭·위치 드리프트"
+            },
+            {
+              "title": "마커리스 모캡",
+              "priority": "optional",
+              "description": "다시점 영상 기반 마커리스 캡처"
+            }
+          ]
+        },
+        {
+          "title": "모션 리타게팅",
+          "priority": "essential",
+          "description": "사람 골격과 로봇 기구학 차이를 메우는 리타게팅: 관절각 매핑, 역기구학 기반 말단 위치 맞춤, 관절 한계·충돌 제약 최적화, 손가락 리타게팅(벡터 최적화). — AnyTeleop",
+          "resources": [
+            {
+              "title": "AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System",
+              "url": "https://arxiv.org/abs/2307.04577",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "골격 비율 차이 보정",
+              "priority": "essential",
+              "description": "사람과 휴머노이드의 링크 길이·관절 한계 차이"
+            },
+            {
+              "title": "역기구학 기반 리타게팅",
+              "priority": "essential",
+              "description": "말단 위치 목표 IK 와 관절 한계 처리"
+            },
+            {
+              "title": "물리 타당성 보정",
+              "priority": "recommended",
+              "description": "발 미끄러짐·자기 충돌·균형 보정"
+            }
+          ]
+        },
+        {
+          "title": "시간 필터링과 지연",
+          "priority": "essential",
+          "description": "키포인트 지터를 줄이는 One Euro 필터(속도 적응 차단 주파수), 칼만 필터, 필터 지연과 텔레오퍼레이션 응답성의 트레이드오프. — Casiez et al. 2012 '1€ Filter'",
+          "children": [
+            {
+              "title": "One Euro 필터",
+              "priority": "essential",
+              "description": "속도 적응 저역통과 필터 — Casiez 2012"
+            },
+            {
+              "title": "지연 예산",
+              "priority": "essential",
+              "description": "카메라→추론→필터→제어 지연 측정"
+            }
+          ]
+        },
+        {
+          "title": "사람 감지와 근접 안전",
+          "priority": "recommended",
+          "description": "로봇 주변 사람 검출·추적, 사람-로봇 최소 거리 계산(캡슐 근사), 속도·분리 감시(SSM)에서 인식 지연·오차를 보호 거리로 반영하는 법. — ISO/TS 15066",
+          "children": [
+            {
+              "title": "분리 거리 계산",
+              "priority": "recommended",
+              "description": "사람 키포인트–로봇 링크 최소 거리 — ISO/TS 15066 속도·분리 감시 개념"
+            },
+            {
+              "title": "인식 실패 처리",
+              "priority": "essential",
+              "description": "사람 검출 소실 시 감속·정지 정책"
+            }
+          ]
+        },
+        {
+          "title": "행동 인식",
+          "priority": "optional",
+          "description": "골격 시퀀스 기반 행동 인식(ST-GCN) — Yan 2018"
+        },
+        {
+          "title": "시선·머리 방향 추정",
+          "priority": "optional",
+          "description": "협업 로봇의 사람 의도 추정 단서"
+        }
+      ]
+    },
+    {
+      "title": "3D 장면 표현",
+      "items": [
+        {
+          "title": "장면 표현 분류",
+          "priority": "essential",
+          "description": "명시적(점군·메쉬·복셀·서펠) vs 암시적(SDF·점유 함수·신경장) 표현의 메모리·질의 속도·충돌 검사 적합성 비교. — Szeliski 13장",
+          "children": [
+            {
+              "title": "명시적·암시적 표현",
+              "priority": "essential",
+              "description": "점·메쉬·복셀 대 SDF·신경장"
+            },
+            {
+              "title": "메모리·질의 비용 비교",
+              "priority": "recommended",
+              "description": "충돌 질의·렌더링 속도·갱신 비용 표"
+            }
+          ]
+        },
+        {
+          "title": "점유 격자와 OctoMap",
+          "priority": "essential",
+          "description": "로그 오즈 베이즈 갱신 l = l + log(p/(1−p)), 역센서 모델, 레이 캐스팅, 팔진 트리 압축과 clamping. — Thrun 'Probabilistic Robotics' 9장, Hornung et al. 2013 OctoMap",
+          "children": [
+            {
+              "title": "로그 오즈 갱신",
+              "priority": "essential",
+              "description": "l = l + log(p/(1−p)) 센서 모델 — Probabilistic Robotics 9장"
+            },
+            {
+              "title": "광선 투사",
+              "priority": "essential",
+              "description": "빈 공간 갱신 Bresenham 3D"
+            },
+            {
+              "title": "OctoMap 해상도와 클램핑",
+              "priority": "recommended",
+              "description": "clamping 임계값과 동적 물체 — Hornung 2013"
+            }
+          ]
+        },
+        {
+          "title": "TSDF 융합",
+          "priority": "essential",
+          "description": "부호 거리 절단과 가중 평균 갱신 D←(WD+wd)/(W+w)(Curless & Levoy 1996), 레이 캐스팅으로 표면 추출, Marching Cubes 메쉬화. — Curless & Levoy 1996",
+          "children": [
+            {
+              "title": "KinectFusion",
+              "priority": "essential",
+              "description": "TSDF + 프레임-모델 point-to-plane ICP 추적을 GPU로 실시간 실행. — Newcombe et al. 2011",
+              "children": [
+                {
+                  "title": "ICP 추적+TSDF 융합 루프",
+                  "priority": "essential",
+                  "description": "프레임-모델 정합과 레이캐스팅 — Newcombe 2011"
+                }
+              ]
+            },
+            {
+              "title": "복셀 해싱과 대규모 TSDF",
+              "priority": "recommended",
+              "description": "희소 블록 할당으로 메모리를 줄이는 Voxel Hashing. — Nießner et al. 2013",
+              "children": [
+                {
+                  "title": "Voxel Hashing",
+                  "priority": "recommended",
+                  "description": "공간 해시 블록 할당 — Nießner 2013"
+                },
+                {
+                  "title": "nvblox",
+                  "priority": "recommended",
+                  "description": "GPU TSDF·ESDF 매핑 라이브러리 — NVIDIA Isaac ROS"
+                }
+              ]
+            },
+            {
+              "title": "ESDF와 충돌 거리",
+              "priority": "recommended",
+              "description": "TSDF에서 ESDF(유클리드 부호 거리)를 증분 계산해 계획·안전 거리 질의에 쓰는 Voxblox.",
+              "resources": [
+                {
+                  "title": "Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning",
+                  "url": "https://arxiv.org/abs/1611.03631",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Voxblox ESDF 갱신",
+                  "priority": "recommended",
+                  "description": "TSDF 에서 증분 ESDF 계산 — Oleynikova 2017"
+                }
+              ]
+            },
+            {
+              "title": "절단 거리와 가중치",
+              "priority": "essential",
+              "description": "truncation 폭·가중 평균 갱신 — Curless & Levoy 1996"
+            }
+          ]
+        },
+        {
+          "title": "볼륨 렌더링 기초",
+          "priority": "essential",
+          "description": "광선을 따라 밀도 σ와 색 c를 적분하는 볼륨 렌더링 방정식, 투과율 T(t)=exp(−∫σ), 구간 근사 α = 1−exp(−σδ)와 알파 합성. — Max 1995 'Optical Models for Direct Volume Rendering'",
+          "children": [
+            {
+              "title": "투과율과 알파 합성",
+              "priority": "essential",
+              "description": "C = Σ T_i α_i c_i, T_i = Π(1−α_j)"
+            },
+            {
+              "title": "광선 샘플링",
+              "priority": "recommended",
+              "description": "계층 샘플링과 중요도 샘플링"
+            }
+          ]
+        },
+        {
+          "title": "NeRF",
+          "priority": "recommended",
+          "description": "위치 인코딩 + MLP로 (x, 방향)→(σ, c) 학습, 계층적 샘플링, 학습 손실과 한계(느린 학습·정적 장면).",
+          "resources": [
+            {
+              "title": "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis",
+              "url": "https://arxiv.org/abs/2003.08934",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Mip-NeRF와 앨리어싱",
+              "priority": "optional",
+              "resources": [
+                {
+                  "title": "Mip-NeRF: A Multiscale Representation for Anti-Aliasing Neural Radiance Fields",
+                  "url": "https://arxiv.org/abs/2103.13415",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "Instant-NGP 해시 인코딩",
+              "priority": "recommended",
+              "resources": [
+                {
+                  "title": "Instant Neural Graphics Primitives with a Multiresolution Hash Encoding",
+                  "url": "https://arxiv.org/abs/2201.05989",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "다해상도 해시 그리드",
+                  "priority": "recommended",
+                  "description": "해시 충돌과 학습 속도 — Müller 2022"
+                }
+              ]
+            },
+            {
+              "title": "위치 인코딩",
+              "priority": "recommended",
+              "description": "푸리에 특징으로 고주파 표현 — Mildenhall 2020"
+            },
+            {
+              "title": "nerfstudio 실습",
+              "priority": "optional",
+              "description": "ns-train nerfacto 로 장면 학습"
+            }
+          ]
+        },
+        {
+          "title": "신경 SDF 표면",
+          "priority": "optional",
+          "description": "SDF를 밀도로 바꿔 볼륨 렌더링하는 NeuS, 에이코널 정규화 |∇f|=1.",
+          "resources": [
+            {
+              "title": "NeuS: Learning Neural Implicit Surfaces by Volume Rendering for Multi-view Reconstruction",
+              "url": "https://arxiv.org/abs/2106.10689",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "NeuS·VolSDF",
+              "priority": "optional",
+              "description": "SDF 를 볼륨 밀도로 바꾸는 방법"
+            }
+          ]
+        },
+        {
+          "title": "3D Gaussian Splatting",
+          "priority": "recommended",
+          "description": "이방성 3D 가우시안(평균·공분산 Σ=RSSᵀRᵀ·불투명도·구면 조화 색), 2D 투영 Σ' = JWΣWᵀJᵀ, 타일 래스터화와 알파 합성, 적응적 밀도 제어.",
+          "resources": [
+            {
+              "title": "3D Gaussian Splatting for Real-Time Radiance Field Rendering",
+              "url": "https://arxiv.org/abs/2308.04079",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "이방성 가우시안과 공분산",
+              "priority": "recommended",
+              "description": "Σ = R S S^T R^T 파라미터화 — Kerbl 2023"
+            },
+            {
+              "title": "적응적 밀도화",
+              "priority": "recommended",
+              "description": "clone·split·prune 규칙"
+            },
+            {
+              "title": "Gaussian Splatting SLAM",
+              "priority": "optional",
+              "description": "SplaTAM·MonoGS 등 SLAM 결합"
+            }
+          ]
+        },
+        {
+          "title": "의미론적 3D 장면 표현",
+          "priority": "optional",
+          "description": "2D 분할 결과를 3D 지도에 투영·융합하는 시맨틱 매핑, 물체 단위 장면 그래프, 언어 특징을 담은 3D 표현 개념.",
+          "children": [
+            {
+              "title": "3D 장면 그래프",
+              "priority": "optional",
+              "description": "물체·방·관계 계층 그래프 — Hydra(Hughes 2022)"
+            },
+            {
+              "title": "개방 어휘 3D 맵",
+              "priority": "optional",
+              "description": "ConceptFusion·OpenScene 처럼 CLIP 특징을 3D 에 융합"
+            }
+          ]
+        },
+        {
+          "title": "로봇용 표현 선택 기준",
+          "priority": "recommended",
+          "description": "충돌 회피·안전 감시에는 ESDF/점유 격자, 시각화·데이터 증강에는 NeRF·3DGS가 맞는 이유, 동적 물체(사람) 처리와 지도 갱신 지연.",
+          "children": [
+            {
+              "title": "플래닝 질의 요구",
+              "priority": "essential",
+              "description": "MoveIt 2 충돌 검사용 OctoMap 입력과 해상도"
+            },
+            {
+              "title": "동적 환경 갱신",
+              "priority": "recommended",
+              "description": "사람·이동 물체 반영 주기와 잔상 제거"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "딥러닝 이미지 분류 아키텍처",
+      "items": [
+        {
+          "title": "ImageNet 분류 문제와 평가 지표",
+          "priority": "essential",
+          "description": "ILSVRC 1000클래스 분류 설정, softmax + cross-entropy 손실, top-1/top-5 정확도, 학습/검증/테스트 분할과 데이터 누수 — d2l 7~8장, CS231n",
+          "resources": [
+            {
+              "title": "Dive into Deep Learning",
+              "url": "https://d2l.ai/",
+              "kind": "book"
+            },
+            {
+              "title": "Stanford CS231n: Deep Learning for Computer Vision",
+              "url": "https://cs231n.stanford.edu/",
+              "kind": "course"
+            }
+          ],
+          "children": [
+            {
+              "title": "Top-1·Top-5 정확도",
+              "priority": "essential",
+              "description": "평가 지표 정의와 ILSVRC 역사"
+            },
+            {
+              "title": "교차 엔트로피와 소프트맥스",
+              "priority": "essential",
+              "description": "분류 손실 유도 — d2l 4.1절"
+            },
+            {
+              "title": "데이터셋 편향과 ImageNet-V2",
+              "priority": "optional",
+              "description": "분포 이동 시 정확도 하락 — Recht 2019"
+            }
+          ]
+        },
+        {
+          "title": "AlexNet에서 VGG까지",
+          "priority": "recommended",
+          "description": "AlexNet(ReLU·드롭아웃·데이터 증강), VGG의 3×3 합성곱 적층과 수용 영역(receptive field) 계산, 파라미터 수·FLOPs 추정 — d2l 8.1~8.2절",
+          "resources": [
+            {
+              "title": "Very Deep Convolutional Networks for Large-Scale Image Recognition (VGG)",
+              "url": "https://arxiv.org/abs/1409.1556",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "ReLU·드롭아웃·데이터 증강",
+              "priority": "recommended",
+              "description": "AlexNet 의 핵심 기법 — d2l 8.1절"
+            },
+            {
+              "title": "3×3 합성곱 쌓기",
+              "priority": "recommended",
+              "description": "VGG 블록과 수용 영역 — d2l 8.2절"
+            }
+          ]
+        },
+        {
+          "title": "GoogLeNet과 배치 정규화",
+          "priority": "recommended",
+          "description": "Inception 모듈의 1×1 병목 합성곱, Batch Normalization의 학습/추론 시 통계 차이와 internal covariate shift 논쟁 — d2l 8.4~8.5절",
+          "resources": [
+            {
+              "title": "Going Deeper with Convolutions (GoogLeNet)",
+              "url": "https://arxiv.org/abs/1409.4842",
+              "kind": "paper"
+            },
+            {
+              "title": "Batch Normalization",
+              "url": "https://arxiv.org/abs/1502.03167",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Inception 블록",
+              "priority": "recommended",
+              "description": "병렬 1×1·3×3·5×5 경로와 1×1 차원 축소 — d2l 8.4절"
+            },
+            {
+              "title": "배치 정규화 동작",
+              "priority": "essential",
+              "description": "학습·추론 모드 차이와 running statistics — d2l 8.5절"
+            },
+            {
+              "title": "GroupNorm·LayerNorm",
+              "priority": "recommended",
+              "description": "작은 배치에서 대안 정규화 — Wu & He 2018"
+            }
+          ]
+        },
+        {
+          "title": "ResNet과 잔차 학습",
+          "priority": "essential",
+          "description": "degradation 문제, 잔차 블록 y = F(x) + x, 병목(bottleneck) 블록, 항등 사상(identity mapping)과 pre-activation, 잔차 연결이 기울기 흐름을 돕는 이유 — d2l 8.6절, Prince UDL 11장",
+          "resources": [
+            {
+              "title": "Deep Residual Learning for Image Recognition",
+              "url": "https://arxiv.org/abs/1512.03385",
+              "kind": "paper"
+            },
+            {
+              "title": "Identity Mappings in Deep Residual Networks",
+              "url": "https://arxiv.org/abs/1603.05027",
+              "kind": "paper"
+            },
+            {
+              "title": "Understanding Deep Learning (Prince)",
+              "url": "https://udlbook.github.io/udlbook/",
+              "kind": "book"
+            }
+          ],
+          "children": [
+            {
+              "title": "ResNeXt와 DenseNet",
+              "priority": "optional",
+              "description": "grouped convolution과 cardinality(ResNeXt), 특징 연결(concatenation) 기반 dense block(DenseNet) — d2l 8.7절",
+              "resources": [
+                {
+                  "title": "Aggregated Residual Transformations (ResNeXt)",
+                  "url": "https://arxiv.org/abs/1611.05431",
+                  "kind": "paper"
+                },
+                {
+                  "title": "Densely Connected Convolutional Networks",
+                  "url": "https://arxiv.org/abs/1608.06993",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "그룹 합성곱과 cardinality",
+                  "priority": "optional",
+                  "description": "ResNeXt 집합 변환 — Xie 2017"
+                },
+                {
+                  "title": "조밀 연결",
+                  "priority": "optional",
+                  "description": "DenseNet 연결 블록 — d2l 8.7절"
+                }
+              ]
+            },
+            {
+              "title": "SENet 채널 어텐션",
+              "priority": "optional",
+              "description": "Squeeze-and-Excitation 블록으로 채널별 가중치를 학습하는 구조",
+              "resources": [
+                {
+                  "title": "Squeeze-and-Excitation Networks",
+                  "url": "https://arxiv.org/abs/1709.01507",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "병목 블록",
+              "priority": "essential",
+              "description": "1×1–3×3–1×1 bottleneck 과 ResNet-50 구성 — d2l 8.6절"
+            },
+            {
+              "title": "pre-activation ResNet",
+              "priority": "recommended",
+              "description": "BN-ReLU-Conv 순서 — He 2016 'Identity Mappings'"
+            },
+            {
+              "title": "torchvision ResNet 실습",
+              "priority": "essential",
+              "description": "torchvision.models.resnet50(weights=...) 로드·추론"
+            }
+          ]
+        },
+        {
+          "title": "경량 백본: MobileNet과 EfficientNet",
+          "priority": "recommended",
+          "description": "depthwise separable convolution 연산량 비교, inverted residual·linear bottleneck(MobileNetV2), compound scaling(EfficientNet) — 로봇 온보드 추론 관점",
+          "resources": [
+            {
+              "title": "MobileNets",
+              "url": "https://arxiv.org/abs/1704.04861",
+              "kind": "paper"
+            },
+            {
+              "title": "MobileNetV2: Inverted Residuals and Linear Bottlenecks",
+              "url": "https://arxiv.org/abs/1801.04381",
+              "kind": "paper"
+            },
+            {
+              "title": "EfficientNet: Rethinking Model Scaling",
+              "url": "https://arxiv.org/abs/1905.11946",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "깊이별 분리 합성곱",
+              "priority": "essential",
+              "description": "depthwise + pointwise 연산량 비교"
+            },
+            {
+              "title": "역잔차 블록",
+              "priority": "recommended",
+              "description": "MobileNetV2 inverted residual·linear bottleneck"
+            },
+            {
+              "title": "복합 스케일링",
+              "priority": "recommended",
+              "description": "EfficientNet 깊이·폭·해상도 동시 스케일"
+            }
+          ]
+        },
+        {
+          "title": "ConvNeXt: 현대화된 CNN",
+          "priority": "optional",
+          "description": "ResNet을 ViT 설계(큰 커널, LayerNorm, 역병목, 학습 레시피)로 단계별 개조해 성능 차이의 원인을 분해한 연구",
+          "resources": [
+            {
+              "title": "A ConvNet for the 2020s",
+              "url": "https://arxiv.org/abs/2201.03545",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "ViT 설계 이식",
+              "priority": "optional",
+              "description": "7×7 depthwise, LayerNorm, GELU, 역병목 — Liu 2022"
+            }
+          ]
+        },
+        {
+          "title": "학습 레시피와 정규화 기법",
+          "priority": "essential",
+          "description": "데이터 증강(RandomResizedCrop, mixup, CutMix), label smoothing, 가중치 감쇠, cosine 학습률·warmup, 대형 배치 학습률 스케일링 — Bag of Tricks 논문",
+          "resources": [
+            {
+              "title": "Bag of Tricks for Image Classification with CNNs",
+              "url": "https://arxiv.org/abs/1812.01187",
+              "kind": "paper"
+            },
+            {
+              "title": "mixup: Beyond Empirical Risk Minimization",
+              "url": "https://arxiv.org/abs/1710.09412",
+              "kind": "paper"
+            },
+            {
+              "title": "CutMix",
+              "url": "https://arxiv.org/abs/1905.04899",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "학습률 스케줄",
+              "priority": "essential",
+              "description": "warmup + cosine decay"
+            },
+            {
+              "title": "Mixup·CutMix",
+              "priority": "recommended",
+              "description": "레이블 혼합 증강"
+            },
+            {
+              "title": "레이블 스무딩",
+              "priority": "recommended",
+              "description": "과신 억제"
+            },
+            {
+              "title": "RandAugment·AutoAugment",
+              "priority": "optional",
+              "description": "자동 증강 정책"
+            },
+            {
+              "title": "EMA와 가중치 감쇠",
+              "priority": "recommended",
+              "description": "AdamW 분리 가중치 감쇠·모델 EMA"
+            }
+          ]
+        },
+        {
+          "title": "전이 학습과 파인튜닝",
+          "priority": "essential",
+          "description": "사전학습 백본의 특징 추출 vs 전체 파인튜닝, 층별 학습률, linear probing, 도메인 차이(ImageNet → 로봇 카메라)에서의 성능 저하 — d2l 14.2절",
+          "resources": [
+            {
+              "title": "torchvision models",
+              "url": "https://pytorch.org/vision/stable/models.html",
+              "kind": "doc"
+            }
+          ],
+          "children": [
+            {
+              "title": "특징 추출 대 전체 파인튜닝",
+              "priority": "essential",
+              "description": "동결 층 선택과 학습률 차등 — d2l 14.2절"
+            },
+            {
+              "title": "timm 라이브러리",
+              "priority": "recommended",
+              "description": "timm.create_model 로 사전학습 백본 사용"
+            },
+            {
+              "title": "도메인 이동",
+              "priority": "recommended",
+              "description": "실험실→공장 조명·배경 변화 대응"
+            }
+          ]
+        },
+        {
+          "title": "분류기 해석: CAM과 Grad-CAM",
+          "priority": "recommended",
+          "description": "Class Activation Map, Grad-CAM의 기울기 가중 특징맵으로 모델이 어디를 보는지 시각화, 지름길 학습(shortcut learning) 진단",
+          "resources": [
+            {
+              "title": "Grad-CAM",
+              "url": "https://arxiv.org/abs/1610.02391",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Grad-CAM 계산",
+              "priority": "recommended",
+              "description": "마지막 합성곱 특징 기울기 가중합 — Selvaraju 2017"
+            },
+            {
+              "title": "지름길 학습 진단",
+              "priority": "recommended",
+              "description": "배경 단서 의존 여부 확인"
+            }
+          ]
+        },
+        {
+          "title": "분류 확률 보정(calibration)",
+          "priority": "recommended",
+          "description": "현대 신경망의 과신(overconfidence), reliability diagram, ECE(Expected Calibration Error), temperature scaling — 안전 판단에 softmax 점수를 쓸 때의 주의점",
+          "resources": [
+            {
+              "title": "On Calibration of Modern Neural Networks",
+              "url": "https://arxiv.org/abs/1706.04599",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "ECE와 신뢰도 도표",
+              "priority": "recommended",
+              "description": "Expected Calibration Error — Guo 2017"
+            },
+            {
+              "title": "온도 스케일링",
+              "priority": "recommended",
+              "description": "검증셋 단일 파라미터 T 보정"
+            },
+            {
+              "title": "OOD 탐지",
+              "priority": "recommended",
+              "description": "최대 소프트맥스 확률·에너지 점수 기반 분포 밖 입력 탐지"
+            }
+          ]
+        },
+        {
+          "title": "모델 경량화와 배포",
+          "priority": "recommended",
+          "description": "양자화(INT8)·가지치기·지식 증류와 TensorRT·ONNX 변환"
+        },
+        {
+          "title": "적대적 강건성",
+          "priority": "optional",
+          "description": "FGSM·PGD 적대적 예제와 안전 영향 — Goodfellow 2015"
+        }
+      ]
+    },
+    {
+      "title": "객체 검출",
+      "items": [
+        {
+          "title": "검출 문제 정의와 평가 지표",
+          "priority": "essential",
+          "description": "바운딩 박스 표현(xyxy, cxcywh), IoU, precision-recall 곡선, AP·mAP, COCO AP@[.5:.95]와 AP_S/M/L, 사람 검출 오탐·미탐의 안전 비용 — Szeliski 6.3절, d2l 14.3절",
+          "resources": [
+            {
+              "title": "COCO Detection Evaluation",
+              "url": "https://cocodataset.org/#detection-eval",
+              "kind": "doc"
+            },
+            {
+              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
+              "url": "https://szeliski.org/Book/",
+              "kind": "book"
+            }
+          ],
+          "children": [
+            {
+              "title": "IoU와 매칭",
+              "priority": "essential",
+              "description": "IoU 임계값과 TP·FP 판정"
+            },
+            {
+              "title": "AP·mAP 계산",
+              "priority": "essential",
+              "description": "PR 곡선 보간과 COCO AP@[.5:.95] — pycocotools"
+            },
+            {
+              "title": "COCO·Pascal VOC 형식",
+              "priority": "essential",
+              "description": "어노테이션 JSON 구조"
+            }
+          ]
+        },
+        {
+          "title": "앵커 박스와 박스 회귀",
+          "priority": "essential",
+          "description": "앵커 생성(스케일·종횡비), 박스 오프셋 파라미터화(dx, dy, log dw, log dh), positive/negative 매칭 규칙, Smooth L1 손실 — d2l 14.4절",
+          "resources": [],
+          "children": [
+            {
+              "title": "박스 인코딩",
+              "priority": "essential",
+              "description": "(tx, ty, tw, th) 오프셋 파라미터화 — d2l 14.4절"
+            },
+            {
+              "title": "앵커 할당 규칙",
+              "priority": "essential",
+              "description": "IoU 기반 양성·음성 할당"
+            }
+          ]
+        },
+        {
+          "title": "NMS와 후처리",
+          "priority": "essential",
+          "description": "Non-Maximum Suppression 알고리즘, 클래스별 NMS, Soft-NMS, 신뢰도 임계값 선택과 붐비는 장면(군중)에서의 실패",
+          "resources": [
+            {
+              "title": "Soft-NMS",
+              "url": "https://arxiv.org/abs/1704.04503",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Soft-NMS",
+              "priority": "recommended",
+              "description": "점수 감쇠 방식 — Bodla 2017"
+            },
+            {
+              "title": "클래스별·배치 NMS",
+              "priority": "essential",
+              "description": "torchvision.ops.batched_nms"
+            }
+          ]
+        },
+        {
+          "title": "2단계 검출기: R-CNN 계열",
+          "priority": "essential",
+          "description": "Selective Search 후보 영역, R-CNN → Fast R-CNN(RoI Pooling, 다중 작업 손실) → Faster R-CNN(RPN)으로 이어지는 발전 — d2l 14.8절",
+          "resources": [
+            {
+              "title": "Rich feature hierarchies (R-CNN)",
+              "url": "https://arxiv.org/abs/1311.2524",
+              "kind": "paper"
+            },
+            {
+              "title": "Fast R-CNN",
+              "url": "https://arxiv.org/abs/1504.08083",
+              "kind": "paper"
+            },
+            {
+              "title": "Faster R-CNN",
+              "url": "https://arxiv.org/abs/1506.01497",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Region Proposal Network",
+              "priority": "essential",
+              "description": "공유 특징맵 위 슬라이딩 윈도우, objectness 분류 + 박스 회귀, 4단계 교대 학습과 end-to-end 근사 학습",
+              "resources": [],
+              "children": [
+                {
+                  "title": "객체성 점수와 제안 수",
+                  "priority": "recommended",
+                  "description": "학습·추론 시 제안 개수 설정"
+                }
+              ]
+            },
+            {
+              "title": "RoI Pooling과 RoIAlign",
+              "priority": "essential",
+              "description": "양자화 오차가 생기는 RoI Pooling과 쌍선형 보간으로 이를 없앤 RoIAlign 비교",
+              "resources": [],
+              "children": [
+                {
+                  "title": "쌍선형 샘플링",
+                  "priority": "recommended",
+                  "description": "양자화 없는 RoIAlign — He 2017"
+                }
+              ]
+            },
+            {
+              "title": "Cascade R-CNN",
+              "priority": "optional",
+              "description": "IoU 임계값을 단계적으로 높인 다단 검출 헤드로 고품질 박스 학습",
+              "resources": [
+                {
+                  "title": "Cascade R-CNN",
+                  "url": "https://arxiv.org/abs/1712.00726",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "R-CNN·Fast R-CNN 진화",
+              "priority": "recommended",
+              "description": "선택적 탐색→공유 특징→RPN — d2l 14.8절"
+            }
+          ]
+        },
+        {
+          "title": "Feature Pyramid Network",
+          "priority": "essential",
+          "description": "top-down 경로와 lateral connection으로 다중 스케일 특징 생성, 스케일별 RoI 할당 규칙, 작은 물체 검출",
+          "resources": [
+            {
+              "title": "Feature Pyramid Networks for Object Detection",
+              "url": "https://arxiv.org/abs/1612.03144",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "하향식 경로와 측면 연결",
+              "priority": "essential",
+              "description": "P2~P6 다중 스케일 특징"
+            },
+            {
+              "title": "PANet·BiFPN",
+              "priority": "optional",
+              "description": "상향 경로 추가와 가중 융합"
+            }
+          ]
+        },
+        {
+          "title": "1단계 검출기: YOLO와 SSD",
+          "priority": "essential",
+          "description": "그리드 기반 직접 회귀(YOLOv1 손실 함수), 앵커 도입(YOLOv2), 다중 스케일 예측(YOLOv3), SSD의 다중 특징맵 default box — d2l 14.7절",
+          "resources": [
+            {
+              "title": "You Only Look Once (YOLOv1)",
+              "url": "https://arxiv.org/abs/1506.02640",
+              "kind": "paper"
+            },
+            {
+              "title": "YOLO9000",
+              "url": "https://arxiv.org/abs/1612.08242",
+              "kind": "paper"
+            },
+            {
+              "title": "YOLOv3: An Incremental Improvement",
+              "url": "https://arxiv.org/abs/1804.02767",
+              "kind": "paper"
+            },
+            {
+              "title": "SSD: Single Shot MultiBox Detector",
+              "url": "https://arxiv.org/abs/1512.02325",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "최신 YOLO 계열 구조",
+              "priority": "recommended",
+              "description": "anchor-free 헤드, decoupled head, 라벨 할당 전략 등 최신 YOLO 구현의 공통 구성 요소를 코드로 확인",
+              "resources": [
+                {
+                  "title": "Ultralytics YOLO",
+                  "url": "https://github.com/ultralytics/ultralytics",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "Ultralytics 학습 실습",
+                  "priority": "recommended",
+                  "description": "yolo train data=... 로 커스텀 데이터 학습 — Ultralytics 문서"
+                },
+                {
+                  "title": "디커플드 헤드와 앵커 프리",
+                  "priority": "optional",
+                  "description": "YOLOX 이후 설계 변화"
+                }
+              ]
+            },
+            {
+              "title": "SSD 다중 스케일 예측",
+              "priority": "recommended",
+              "description": "여러 특징맵 기본 박스 — d2l 14.7절"
+            },
+            {
+              "title": "Mosaic 증강",
+              "priority": "recommended",
+              "description": "4장 합성 증강"
+            }
+          ]
+        },
+        {
+          "title": "Focal Loss와 RetinaNet",
+          "priority": "essential",
+          "description": "1단계 검출기의 극단적 전경/배경 불균형, focal loss FL(p_t) = -α(1-p_t)^γ log p_t 유도, RetinaNet 구조",
+          "resources": [
+            {
+              "title": "Focal Loss for Dense Object Detection",
+              "url": "https://arxiv.org/abs/1708.02002",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "FL = −α(1−p)^γ log p",
+              "priority": "essential",
+              "description": "쉬운 음성 가중 축소 — Lin 2017"
+            }
+          ]
+        },
+        {
+          "title": "앵커 없는 검출: FCOS와 CenterNet",
+          "priority": "recommended",
+          "description": "픽셀별 (l, t, r, b) 거리 회귀와 centerness(FCOS), 중심점 히트맵 기반 검출(CenterNet)",
+          "resources": [
+            {
+              "title": "FCOS: Fully Convolutional One-Stage Object Detection",
+              "url": "https://arxiv.org/abs/1904.01355",
+              "kind": "paper"
+            },
+            {
+              "title": "Objects as Points (CenterNet)",
+              "url": "https://arxiv.org/abs/1904.07850",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "중심성 분기",
+              "priority": "recommended",
+              "description": "FCOS centerness"
+            },
+            {
+              "title": "히트맵 중심점 검출",
+              "priority": "recommended",
+              "description": "CenterNet 중심 히트맵·크기 회귀"
+            }
+          ]
+        },
+        {
+          "title": "박스 회귀 손실: IoU 계열",
+          "priority": "optional",
+          "description": "L1 손실과 IoU 지표의 불일치, IoU loss, GIoU의 정의와 겹치지 않는 박스에서의 기울기",
+          "resources": [
+            {
+              "title": "Generalized Intersection over Union",
+              "url": "https://arxiv.org/abs/1902.09630",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "GIoU·DIoU·CIoU",
+              "priority": "optional",
+              "description": "겹치지 않을 때 기울기·중심 거리·종횡비 항"
+            }
+          ]
+        },
+        {
+          "title": "DETR: 집합 예측 검출",
+          "priority": "essential",
+          "description": "object query, 트랜스포머 인코더-디코더, 헝가리안 매칭(Hungarian algorithm)으로 이분 매칭 손실 계산, NMS 없는 검출과 느린 수렴 문제",
+          "resources": [
+            {
+              "title": "End-to-End Object Detection with Transformers (DETR)",
+              "url": "https://arxiv.org/abs/2005.12872",
+              "kind": "paper"
+            },
+            {
+              "title": "facebookresearch/detr",
+              "url": "https://github.com/facebookresearch/detr",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "Deformable DETR",
+              "priority": "recommended",
+              "description": "참조점 주변 소수 샘플링 위치에만 주의하는 deformable attention, 다중 스케일 특징, 수렴 가속",
+              "resources": [
+                {
+                  "title": "Deformable DETR",
+                  "url": "https://arxiv.org/abs/2010.04159",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "변형 어텐션",
+                  "priority": "recommended",
+                  "description": "참조점 주변 소수 샘플링 어텐션"
+                }
+              ]
+            },
+            {
+              "title": "DINO(검출기)와 denoising 학습",
+              "priority": "optional",
+              "description": "contrastive denoising training, mixed query selection으로 DETR 계열 성능 향상 (자기지도 DINO와 다른 논문)",
+              "resources": [
+                {
+                  "title": "DINO: DETR with Improved DeNoising Anchor Boxes",
+                  "url": "https://arxiv.org/abs/2203.03605",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "RT-DETR 실시간 검출",
+              "priority": "optional",
+              "description": "하이브리드 인코더와 IoU-aware query selection으로 실시간 속도를 낸 DETR",
+              "resources": [
+                {
+                  "title": "DETRs Beat YOLOs on Real-time Object Detection (RT-DETR)",
+                  "url": "https://arxiv.org/abs/2304.08069",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "헝가리안 매칭 손실",
+              "priority": "essential",
+              "description": "이분 매칭 기반 집합 손실 — Carion 2020"
+            },
+            {
+              "title": "객체 쿼리",
+              "priority": "essential",
+              "description": "학습 가능한 쿼리와 디코더"
+            }
+          ]
+        },
+        {
+          "title": "Detectron2로 검출기 학습 실습",
+          "priority": "recommended",
+          "description": "config 체계, 사용자 데이터셋 등록(COCO 형식), Faster R-CNN 파인튜닝과 COCO 평가 실행",
+          "resources": [
+            {
+              "title": "Detectron2",
+              "url": "https://github.com/facebookresearch/detectron2",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "커스텀 데이터셋 등록",
+              "priority": "recommended",
+              "description": "DatasetCatalog·MetadataCatalog 등록"
+            },
+            {
+              "title": "설정 파일과 model zoo",
+              "priority": "recommended",
+              "description": "config yaml 과 사전학습 가중치 선택"
+            }
+          ]
+        },
+        {
+          "title": "3D 객체 검출",
+          "priority": "recommended",
+          "description": "LiDAR PointPillars·카메라 BEV 검출 — Lang 2019"
+        },
+        {
+          "title": "다중 객체 추적",
+          "priority": "recommended",
+          "description": "SORT·ByteTrack 칼만 필터+헝가리안 연결"
+        },
+        {
+          "title": "소형·가림 물체 검출",
+          "priority": "optional",
+          "description": "타일링 추론, 고해상도 입력, 가림 증강"
+        }
+      ]
+    },
+    {
+      "title": "영상 분할",
+      "items": [
+        {
+          "title": "분할 문제 분류와 지표",
+          "priority": "essential",
+          "description": "semantic / instance / panoptic 분할의 차이, 픽셀 정확도, mIoU, mask AP, Panoptic Quality(PQ = SQ × RQ) — Szeliski 6.4절",
+          "resources": [
+            {
+              "title": "Panoptic Segmentation",
+              "url": "https://arxiv.org/abs/1801.00868",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "의미·인스턴스·파놉틱 분할",
+              "priority": "essential",
+              "description": "세 문제의 출력 정의"
+            },
+            {
+              "title": "mIoU·PQ",
+              "priority": "essential",
+              "description": "평균 IoU 와 Panoptic Quality = SQ × RQ — Kirillov 2019"
+            }
+          ]
+        },
+        {
+          "title": "FCN과 전치 합성곱",
+          "priority": "essential",
+          "description": "완전 연결층을 합성곱으로 바꾼 Fully Convolutional Network, 전치 합성곱(transposed convolution) 업샘플링, skip 결합 — d2l 14.9~14.11절",
+          "resources": [
+            {
+              "title": "Fully Convolutional Networks for Semantic Segmentation",
+              "url": "https://arxiv.org/abs/1411.4038",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "전치 합성곱 업샘플",
+              "priority": "essential",
+              "description": "체커보드 아티팩트 — d2l 14.10절"
+            },
+            {
+              "title": "스킵 연결 FCN-8s",
+              "priority": "recommended",
+              "description": "얕은 층 특징 결합 — d2l 14.11절"
+            }
+          ]
+        },
+        {
+          "title": "U-Net 인코더-디코더",
+          "priority": "essential",
+          "description": "대칭 인코더-디코더와 skip connection으로 경계 해상도 복원, Dice 손실 등 분할 손실 함수",
+          "resources": [
+            {
+              "title": "U-Net",
+              "url": "https://arxiv.org/abs/1505.04597",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "Dice 손실",
+              "priority": "essential",
+              "description": "클래스 불균형 분할 손실"
+            },
+            {
+              "title": "nnU-Net",
+              "priority": "optional",
+              "description": "자동 설정 U-Net 파이프라인 — Isensee 2021"
+            }
+          ]
+        },
+        {
+          "title": "DeepLab과 atrous 합성곱",
+          "priority": "recommended",
+          "description": "dilated(atrous) 합성곱으로 해상도 유지한 채 수용 영역 확대, ASPP, DeepLabv3+ 디코더",
+          "resources": [
+            {
+              "title": "Rethinking Atrous Convolution (DeepLabv3)",
+              "url": "https://arxiv.org/abs/1706.05587",
+              "kind": "paper"
+            },
+            {
+              "title": "DeepLabv3+",
+              "url": "https://arxiv.org/abs/1802.02611",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "ASPP",
+              "priority": "recommended",
+              "description": "다중 팽창률 병렬 풀링"
+            },
+            {
+              "title": "DeepLabv3+ 디코더",
+              "priority": "recommended",
+              "description": "인코더-디코더 결합"
+            }
+          ]
+        },
+        {
+          "title": "Mask R-CNN",
+          "priority": "essential",
+          "description": "Faster R-CNN에 FCN 마스크 헤드 추가, RoIAlign, 클래스별 이진 마스크와 손실 분리, 키포인트 헤드 확장",
+          "resources": [
+            {
+              "title": "Mask R-CNN",
+              "url": "https://arxiv.org/abs/1703.06870",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "사람 키포인트 검출",
+              "priority": "recommended",
+              "description": "Mask R-CNN 키포인트 헤드(one-hot 마스크로 관절 위치 예측), 작업자 자세 인식에 쓰는 top-down 방식의 기본",
+              "resources": [],
+              "children": [
+                {
+                  "title": "키포인트 헤드 원-핫 마스크",
+                  "priority": "recommended",
+                  "description": "키포인트별 56×56 마스크 예측"
+                }
+              ]
+            },
+            {
+              "title": "마스크 헤드",
+              "priority": "essential",
+              "description": "RoIAlign 후 클래스별 28×28 이진 마스크"
+            },
+            {
+              "title": "torchvision Mask R-CNN 파인튜닝",
+              "priority": "recommended",
+              "description": "maskrcnn_resnet50_fpn 커스텀 학습 — PyTorch 튜토리얼"
+            }
+          ]
+        },
+        {
+          "title": "Panoptic FPN",
+          "priority": "optional",
+          "description": "Mask R-CNN과 semantic 분기를 하나의 FPN에서 결합한 panoptic 분할 기준 모델",
+          "resources": [
+            {
+              "title": "Panoptic Feature Pyramid Networks",
+              "url": "https://arxiv.org/abs/1901.02446",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "마스크 분류: MaskFormer와 Mask2Former",
+          "priority": "recommended",
+          "description": "픽셀별 분류 대신 'N개 마스크 + 클래스' 집합 예측으로 세 분할 문제를 통일, masked attention",
+          "resources": [
+            {
+              "title": "Per-Pixel Classification is Not All You Need (MaskFormer)",
+              "url": "https://arxiv.org/abs/2107.06278",
+              "kind": "paper"
+            },
+            {
+              "title": "Masked-attention Mask Transformer (Mask2Former)",
+              "url": "https://arxiv.org/abs/2112.01527",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "마스크 어텐션",
+              "priority": "recommended",
+              "description": "예측 마스크 영역에 제한한 교차 어텐션"
+            }
+          ]
+        },
+        {
+          "title": "Segment Anything(SAM)",
+          "priority": "essential",
+          "description": "promptable segmentation 과제 정의, 이미지 인코더(MAE 사전학습 ViT)·프롬프트 인코더·경량 마스크 디코더 구조, 모호성 처리를 위한 다중 마스크 출력, SA-1B 데이터 엔진",
+          "resources": [
+            {
+              "title": "Segment Anything",
+              "url": "https://arxiv.org/abs/2304.02643",
+              "kind": "paper"
+            },
+            {
+              "title": "facebookresearch/segment-anything",
+              "url": "https://github.com/facebookresearch/segment-anything",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "SAM 2 비디오 분할",
+              "priority": "recommended",
+              "description": "streaming memory로 프레임 간 마스크를 전파하는 비디오 확장, 텔레오퍼레이션 영상 라벨링 활용",
+              "resources": [
+                {
+                  "title": "SAM 2: Segment Anything in Images and Videos",
+                  "url": "https://arxiv.org/abs/2408.00714",
+                  "kind": "paper"
+                }
+              ],
+              "children": [
+                {
+                  "title": "메모리 뱅크",
+                  "priority": "recommended",
+                  "description": "과거 프레임 메모리 어텐션"
+                }
+              ]
+            },
+            {
+              "title": "프롬프트 인코더",
+              "priority": "essential",
+              "description": "점·박스·마스크 프롬프트"
+            },
+            {
+              "title": "경량 SAM",
+              "priority": "optional",
+              "description": "EfficientSAM·MobileSAM 엣지 배포"
+            },
+            {
+              "title": "Grounded-SAM",
+              "priority": "recommended",
+              "description": "텍스트 검출기 + SAM 조합"
+            }
+          ]
+        },
+        {
+          "title": "실시간 분할",
+          "priority": "recommended",
+          "description": "BiSeNet·DDRNet 등 실시간 의미 분할"
+        },
+        {
+          "title": "비디오 객체 분할",
+          "priority": "optional",
+          "description": "XMem 등 반지도 비디오 분할"
+        },
+        {
+          "title": "깊이 추정(단안)",
+          "priority": "recommended",
+          "description": "Depth Anything·MiDaS 상대 깊이 — Yang 2024"
+        }
+      ]
+    },
+    {
+      "title": "Vision Transformer",
+      "items": [
+        {
+          "title": "ViT 구조",
+          "priority": "essential",
+          "description": "16×16 패치 임베딩, [CLS] 토큰, 위치 임베딩, 표준 트랜스포머 인코더로 분류, 패치 수에 따른 계산량 O(N²) — d2l 11.8절, Prince UDL 12장",
+          "resources": [
+            {
+              "title": "An Image is Worth 16x16 Words (ViT)",
+              "url": "https://arxiv.org/abs/2010.11929",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "패치 임베딩",
+              "priority": "essential",
+              "description": "16×16 패치 선형 사영과 CLS 토큰 — Dosovitskiy 2021, d2l 11.8절"
+            },
+            {
+              "title": "위치 임베딩",
+              "priority": "essential",
+              "description": "학습형 위치 임베딩과 해상도 변경 시 보간"
+            },
+            {
+              "title": "멀티헤드 셀프 어텐션",
+              "priority": "essential",
+              "description": "softmax(QK^T/√d)V — d2l 11.5절"
+            }
+          ]
+        },
+        {
+          "title": "귀납 편향과 데이터 규모",
+          "priority": "essential",
+          "description": "CNN의 지역성·이동 등변성 vs ViT의 약한 귀납 편향, 데이터 규모에 따른 성능 역전, ViT와 CNN 내부 표현 비교",
+          "resources": [
+            {
+              "title": "Do Vision Transformers See Like Convolutional Neural Networks?",
+              "url": "https://arxiv.org/abs/2108.08810",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "JFT·ImageNet-21k 사전학습",
+              "priority": "essential",
+              "description": "대규모 데이터에서 CNN 을 넘는 이유"
+            }
+          ]
+        },
+        {
+          "title": "DeiT: 데이터 효율적 학습",
+          "priority": "recommended",
+          "description": "ImageNet-1k만으로 ViT 학습하는 증강·정규화 레시피, distillation 토큰으로 CNN 교사에서 지식 증류",
+          "resources": [
+            {
+              "title": "Training data-efficient image transformers (DeiT)",
+              "url": "https://arxiv.org/abs/2012.12877",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "증류 토큰",
+              "priority": "recommended",
+              "description": "CNN 교사 증류 — Touvron 2021"
+            }
+          ]
+        },
+        {
+          "title": "ViT 학습 레시피",
+          "priority": "optional",
+          "description": "augmentation·정규화와 데이터·연산량 사이의 교환 관계, 사전학습 vs 처음부터 학습 비교",
+          "resources": [
+            {
+              "title": "How to train your ViT?",
+              "url": "https://arxiv.org/abs/2106.10270",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "Swin Transformer",
+          "priority": "essential",
+          "description": "로컬 윈도우 self-attention과 shifted window로 선형 계산량, 패치 병합으로 계층적 특징맵 → 검출·분할 백본으로 사용",
+          "resources": [
+            {
+              "title": "Swin Transformer",
+              "url": "https://arxiv.org/abs/2103.14030",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "윈도우 어텐션과 shift",
+              "priority": "essential",
+              "description": "국소 윈도우·이동 윈도우로 선형 복잡도"
+            },
+            {
+              "title": "계층적 특징맵",
+              "priority": "essential",
+              "description": "패치 병합으로 다중 스케일"
+            }
+          ]
+        },
+        {
+          "title": "ViT를 검출·분할 백본으로",
+          "priority": "recommended",
+          "description": "단일 스케일 ViT에서 간단한 특징 피라미드를 만드는 ViTDet, 밀집 예측(깊이 추정 등)용 DPT 디코더",
+          "resources": [
+            {
+              "title": "Exploring Plain Vision Transformer Backbones for Object Detection (ViTDet)",
+              "url": "https://arxiv.org/abs/2203.16527",
+              "kind": "paper"
+            },
+            {
+              "title": "Vision Transformers for Dense Prediction (DPT)",
+              "url": "https://arxiv.org/abs/2103.13413",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "ViTDet",
+              "priority": "recommended",
+              "description": "단순 특징 피라미드 — Li 2022"
+            },
+            {
+              "title": "DPT 조밀 예측",
+              "priority": "optional",
+              "description": "ViT 기반 깊이·분할 디코더"
+            }
+          ]
+        },
+        {
+          "title": "ViT 어텐션 맵 해석",
+          "priority": "optional",
+          "description": "어텐션 시각화, attention rollout, 대형 ViT의 고노름 아티팩트 토큰과 register 토큰 해결책",
+          "resources": [
+            {
+              "title": "Vision Transformers Need Registers",
+              "url": "https://arxiv.org/abs/2309.16588",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "효율적 어텐션",
+          "priority": "recommended",
+          "description": "FlashAttention·토큰 병합(ToMe)으로 추론 가속"
+        },
+        {
+          "title": "하이브리드 CNN-ViT",
+          "priority": "optional",
+          "description": "EfficientViT·FastViT 엣지 모델"
+        }
+      ]
+    },
+    {
+      "title": "자기지도 표현 학습",
+      "items": [
+        {
+          "title": "자기지도 학습의 동기와 평가",
+          "priority": "essential",
+          "description": "라벨 없는 대규모 데이터 활용, pretext task 개념, linear probing / k-NN / 파인튜닝 평가 프로토콜 — Prince UDL 14장",
+          "resources": [],
+          "children": [
+            {
+              "title": "linear probe·k-NN 평가",
+              "priority": "essential",
+              "description": "고정 특징 선형 분류 평가"
+            },
+            {
+              "title": "전이 평가",
+              "priority": "recommended",
+              "description": "검출·분할·로봇 과제 전이"
+            }
+          ]
+        },
+        {
+          "title": "초기 pretext task",
+          "priority": "optional",
+          "description": "직소 퍼즐 풀기, 회전 각도 예측 등 수작업 설계 과제와 그 한계",
+          "resources": [
+            {
+              "title": "Unsupervised Learning of Visual Representations by Solving Jigsaw Puzzles",
+              "url": "https://arxiv.org/abs/1603.09246",
+              "kind": "paper"
+            },
+            {
+              "title": "Unsupervised Representation Learning by Predicting Image Rotations",
+              "url": "https://arxiv.org/abs/1803.07728",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "InfoNCE와 대조 학습 이론",
+          "priority": "essential",
+          "description": "InfoNCE 손실과 상호정보량 하한, 온도 파라미터 τ의 역할, 정렬(alignment)·균일성(uniformity) 관점의 해석",
+          "resources": [
+            {
+              "title": "Representation Learning with Contrastive Predictive Coding",
+              "url": "https://arxiv.org/abs/1807.03748",
+              "kind": "paper"
+            },
+            {
+              "title": "Understanding Contrastive Representation Learning through Alignment and Uniformity",
+              "url": "https://arxiv.org/abs/2005.10242",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "정렬과 균일성",
+              "priority": "recommended",
+              "description": "alignment·uniformity — Wang & Isola 2020"
+            }
+          ]
+        },
+        {
+          "title": "SimCLR",
+          "priority": "essential",
+          "description": "두 증강 뷰의 양성 쌍과 배치 내 음성 쌍, NT-Xent 손실, projection head, 증강 조합(crop + color jitter)의 중요성, 큰 배치 의존성",
+          "resources": [
+            {
+              "title": "A Simple Framework for Contrastive Learning (SimCLR)",
+              "url": "https://arxiv.org/abs/2002.05709",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "증강 조합",
+              "priority": "essential",
+              "description": "랜덤 크롭+색 왜곡 중요성"
+            },
+            {
+              "title": "프로젝션 헤드와 큰 배치",
+              "priority": "recommended",
+              "description": "MLP 헤드와 배치 크기 영향"
+            }
+          ]
+        },
+        {
+          "title": "MoCo",
+          "priority": "essential",
+          "description": "momentum 인코더 θ_k ← mθ_k + (1-m)θ_q와 음성 샘플 큐(queue), v2 개선, ViT에 적용한 v3의 학습 불안정 문제",
+          "resources": [
+            {
+              "title": "Momentum Contrast (MoCo)",
+              "url": "https://arxiv.org/abs/1911.05722",
+              "kind": "paper"
+            },
+            {
+              "title": "Improved Baselines with Momentum Contrastive Learning (MoCo v2)",
+              "url": "https://arxiv.org/abs/2003.04297",
+              "kind": "paper"
+            },
+            {
+              "title": "An Empirical Study of Training Self-Supervised Vision Transformers (MoCo v3)",
+              "url": "https://arxiv.org/abs/2104.02057",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "모멘텀 인코더와 큐",
+              "priority": "essential",
+              "description": "일관된 음성 사전"
+            },
+            {
+              "title": "MoCo v3 ViT 학습 안정화",
+              "priority": "optional",
+              "description": "패치 사영 고정"
+            }
+          ]
+        },
+        {
+          "title": "음성 샘플 없는 방법",
+          "priority": "recommended",
+          "description": "표현 붕괴(collapse)를 막는 장치 비교: BYOL·SimSiam의 predictor + stop-gradient, Barlow Twins의 교차 상관 행렬, VICReg의 분산·불변·공분산 항",
+          "resources": [
+            {
+              "title": "Bootstrap Your Own Latent (BYOL)",
+              "url": "https://arxiv.org/abs/2006.07733",
+              "kind": "paper"
+            },
+            {
+              "title": "Exploring Simple Siamese Representation Learning (SimSiam)",
+              "url": "https://arxiv.org/abs/2011.10566",
+              "kind": "paper"
+            },
+            {
+              "title": "Barlow Twins",
+              "url": "https://arxiv.org/abs/2103.03230",
+              "kind": "paper"
+            },
+            {
+              "title": "VICReg",
+              "url": "https://arxiv.org/abs/2105.04906",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "BYOL",
+              "priority": "recommended",
+              "description": "예측기+타깃 네트워크 — Grill 2020"
+            },
+            {
+              "title": "SimSiam stop-gradient",
+              "priority": "recommended",
+              "description": "붕괴 방지 — Chen & He 2021"
+            },
+            {
+              "title": "Barlow Twins·VICReg",
+              "priority": "recommended",
+              "description": "교차상관·분산 정규화"
+            }
+          ]
+        },
+        {
+          "title": "클러스터링 기반: SwAV",
+          "priority": "optional",
+          "description": "프로토타입 할당을 Sinkhorn-Knopp로 균등화하고 뷰 간 할당을 서로 예측, multi-crop 증강",
+          "resources": [
+            {
+              "title": "Unsupervised Learning of Visual Features by Contrasting Cluster Assignments (SwAV)",
+              "url": "https://arxiv.org/abs/2006.09882",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "DINO 자기 증류",
+          "priority": "essential",
+          "description": "학생-교사 자기 증류, 교사 출력의 centering·sharpening으로 붕괴 방지, multi-crop, ViT 어텐션에서 저절로 나타나는 객체 분할",
+          "resources": [
+            {
+              "title": "Emerging Properties in Self-Supervised Vision Transformers (DINO)",
+              "url": "https://arxiv.org/abs/2104.14294",
+              "kind": "paper"
+            },
+            {
+              "title": "facebookresearch/dino",
+              "url": "https://github.com/facebookresearch/dino",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "DINOv2 범용 특징",
+              "priority": "essential",
+              "description": "큐레이션된 LVD-142M 데이터, DINO + iBOT 손실 결합, 고정 특징으로 분류·분할·깊이 추정까지 쓰는 범용 백본 — 로봇 정책의 시각 인코더로 널리 사용",
+              "resources": [
+                {
+                  "title": "DINOv2: Learning Robust Visual Features without Supervision",
+                  "url": "https://arxiv.org/abs/2304.07193",
+                  "kind": "paper"
+                },
+                {
+                  "title": "facebookresearch/dinov2",
+                  "url": "https://github.com/facebookresearch/dinov2",
+                  "kind": "code"
+                }
+              ],
+              "children": [
+                {
+                  "title": "데이터 큐레이션 LVD-142M",
+                  "priority": "recommended",
+                  "description": "자동 검색 큐레이션"
+                },
+                {
+                  "title": "패치 특징 활용",
+                  "priority": "essential",
+                  "description": "대응·분할·깊이 프로브"
+                }
+              ]
+            },
+            {
+              "title": "iBOT 마스크 토큰 증류",
+              "priority": "optional",
+              "description": "온라인 토크나이저로 마스킹된 패치 토큰을 증류하는 MIM + 자기 증류 결합",
+              "resources": [
+                {
+                  "title": "iBOT: Image BERT Pre-Training with Online Tokenizer",
+                  "url": "https://arxiv.org/abs/2111.07832",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "센터링과 샤프닝",
+              "priority": "essential",
+              "description": "교사 출력 붕괴 방지"
+            },
+            {
+              "title": "멀티 크롭",
+              "priority": "recommended",
+              "description": "전역·지역 크롭"
+            }
+          ]
+        },
+        {
+          "title": "마스크 이미지 모델링: MAE",
+          "priority": "essential",
+          "description": "75% 패치 마스킹, 보이는 패치만 처리하는 비대칭 인코더-디코더, 픽셀 재구성 MSE 손실, 대조 학습과 linear probing·파인튜닝 성능 비교",
+          "resources": [
+            {
+              "title": "Masked Autoencoders Are Scalable Vision Learners (MAE)",
+              "url": "https://arxiv.org/abs/2111.06377",
+              "kind": "paper"
+            },
+            {
+              "title": "facebookresearch/mae",
+              "url": "https://github.com/facebookresearch/mae",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "BEiT 시각 토큰 예측",
+              "priority": "optional",
+              "description": "dVAE 토크나이저의 이산 토큰을 마스킹 위치에서 예측하는 BERT식 사전학습",
+              "resources": [
+                {
+                  "title": "BEiT: BERT Pre-Training of Image Transformers",
+                  "url": "https://arxiv.org/abs/2106.08254",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "I-JEPA 잠재 공간 예측",
+              "priority": "optional",
+              "description": "픽셀 대신 표현 공간에서 가려진 영역의 임베딩을 예측하는 joint-embedding predictive architecture",
+              "resources": [
+                {
+                  "title": "I-JEPA",
+                  "url": "https://arxiv.org/abs/2301.08243",
+                  "kind": "paper"
+                }
+              ]
+            },
+            {
+              "title": "75% 마스킹과 비대칭 인코더",
+              "priority": "essential",
+              "description": "보이는 패치만 인코딩 — He 2022"
+            }
+          ]
+        },
+        {
+          "title": "로봇 조작용 시각 사전학습",
+          "priority": "recommended",
+          "description": "사람 영상·자기 중심 영상으로 사전학습한 시각 표현(R3M, MVP, VC-1)이 모방 학습 정책 성능에 미치는 영향과 평가 방법",
+          "resources": [
+            {
+              "title": "R3M: A Universal Visual Representation for Robot Manipulation",
+              "url": "https://arxiv.org/abs/2203.12601",
+              "kind": "paper"
+            },
+            {
+              "title": "Masked Visual Pre-training for Motor Control",
+              "url": "https://arxiv.org/abs/2203.06173",
+              "kind": "paper"
+            },
+            {
+              "title": "Where are we in the search for an Artificial Visual Cortex for Embodied Intelligence? (VC-1)",
+              "url": "https://arxiv.org/abs/2303.18240",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "R3M",
+              "priority": "recommended",
+              "description": "Ego4D 시간 대조+언어 정렬 — Nair 2022"
+            },
+            {
+              "title": "VC-1·MVP",
+              "priority": "recommended",
+              "description": "MAE 기반 로봇 시각 표현 — Majumdar 2023"
+            },
+            {
+              "title": "동결 대 파인튜닝 비교",
+              "priority": "optional",
+              "description": "정책 학습에서 백본 처리 방식"
+            }
+          ]
+        },
+        {
+          "title": "비디오 자기지도",
+          "priority": "optional",
+          "description": "V-JEPA·VideoMAE 시간 표현"
+        }
+      ]
+    },
+    {
+      "title": "CLIP과 비전-언어 대조 학습",
+      "items": [
+        {
+          "title": "CLIP 구조와 대조 손실",
+          "priority": "essential",
+          "description": "이미지·텍스트 이중 인코더, 배치 N×N 유사도 행렬에 대한 대칭 cross-entropy(InfoNCE), 학습 가능한 온도, 4억 쌍 웹 데이터",
+          "resources": [
+            {
+              "title": "Learning Transferable Visual Models From Natural Language Supervision (CLIP)",
+              "url": "https://arxiv.org/abs/2103.00020",
+              "kind": "paper"
+            },
+            {
+              "title": "openai/CLIP",
+              "url": "https://github.com/openai/CLIP",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "대칭 InfoNCE와 온도",
+              "priority": "essential",
+              "description": "학습 가능한 온도 τ — Radford 2021"
+            },
+            {
+              "title": "OpenCLIP 사용",
+              "priority": "essential",
+              "description": "open_clip.create_model_and_transforms 로 추론"
+            }
+          ]
+        },
+        {
+          "title": "제로샷 분류와 프롬프트",
+          "priority": "essential",
+          "description": "클래스 이름을 텍스트 프롬프트로 임베딩해 분류기 가중치로 사용, prompt template·ensembling, 분포 이동에 대한 강건성 분석",
+          "resources": [],
+          "children": [
+            {
+              "title": "프롬프트 앙상블",
+              "priority": "essential",
+              "description": "'a photo of a {}' 템플릿 평균"
+            },
+            {
+              "title": "CoOp 프롬프트 학습",
+              "priority": "optional",
+              "description": "학습 가능한 문맥 토큰 — Zhou 2022"
+            }
+          ]
+        },
+        {
+          "title": "대규모 이미지-텍스트 학습 변형",
+          "priority": "recommended",
+          "description": "노이즈 많은 데이터 확장(ALIGN), 텍스트 타워만 학습하는 LiT, 데이터·모델 규모 스케일링 법칙(OpenCLIP)",
+          "resources": [
+            {
+              "title": "Scaling Up Visual and Vision-Language Representation Learning With Noisy Text Supervision (ALIGN)",
+              "url": "https://arxiv.org/abs/2102.05918",
+              "kind": "paper"
+            },
+            {
+              "title": "LiT: Zero-Shot Transfer with Locked-image text Tuning",
+              "url": "https://arxiv.org/abs/2111.07991",
+              "kind": "paper"
+            },
+            {
+              "title": "Reproducible scaling laws for contrastive language-image learning",
+              "url": "https://arxiv.org/abs/2212.07143",
+              "kind": "paper"
+            },
+            {
+              "title": "mlfoundations/open_clip",
+              "url": "https://github.com/mlfoundations/open_clip",
+              "kind": "code"
+            }
+          ],
+          "children": [
+            {
+              "title": "LAION·DataComp",
+              "priority": "recommended",
+              "description": "공개 데이터셋과 필터링"
+            }
+          ]
+        },
+        {
+          "title": "SigLIP 시그모이드 손실",
+          "priority": "recommended",
+          "description": "softmax 정규화 대신 쌍별 시그모이드 이진 손실로 배치 크기 의존성 감소 — 최근 VLM·VLA의 비전 인코더로 많이 쓰임",
+          "resources": [
+            {
+              "title": "Sigmoid Loss for Language Image Pre-Training (SigLIP)",
+              "url": "https://arxiv.org/abs/2303.15343",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "이미지-텍스트 생성·매칭 결합: BLIP",
+          "priority": "optional",
+          "description": "대조 손실 + 이미지-텍스트 매칭 + 캡션 생성 손실의 다중 목적 학습, CapFilt 데이터 정제",
+          "resources": [
+            {
+              "title": "BLIP: Bootstrapping Language-Image Pre-training",
+              "url": "https://arxiv.org/abs/2201.12086",
+              "kind": "paper"
+            }
+          ]
+        },
+        {
+          "title": "개방 어휘 검출",
+          "priority": "essential",
+          "description": "텍스트 임베딩을 분류 헤드로 쓰는 open-vocabulary detection: OWL-ViT, 검출을 grounding 문제로 바꾼 GLIP, DINO 검출기와 언어 융합한 Grounding DINO",
+          "resources": [
+            {
+              "title": "Simple Open-Vocabulary Object Detection with Vision Transformers (OWL-ViT)",
+              "url": "https://arxiv.org/abs/2205.06230",
+              "kind": "paper"
+            },
+            {
+              "title": "Grounded Language-Image Pre-training (GLIP)",
+              "url": "https://arxiv.org/abs/2112.03857",
+              "kind": "paper"
+            },
+            {
+              "title": "Grounding DINO",
+              "url": "https://arxiv.org/abs/2303.05499",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "OWL-ViT",
+              "priority": "recommended",
+              "description": "ViT+텍스트 쿼리 검출 — Minderer 2022"
+            },
+            {
+              "title": "Grounding DINO",
+              "priority": "essential",
+              "description": "텍스트 조건 DETR 검출 — Liu 2023"
+            },
+            {
+              "title": "YOLO-World",
+              "priority": "optional",
+              "description": "실시간 개방 어휘 검출"
+            }
+          ]
+        },
+        {
+          "title": "개방 어휘 분할",
+          "priority": "recommended",
+          "description": "픽셀 임베딩을 CLIP 텍스트 공간에 정렬하는 LSeg, Grounding DINO 박스를 SAM 프롬프트로 넘기는 검출+분할 파이프라인",
+          "resources": [
+            {
+              "title": "Language-driven Semantic Segmentation (LSeg)",
+              "url": "https://arxiv.org/abs/2201.03546",
+              "kind": "paper"
+            }
+          ],
+          "children": [
+            {
+              "title": "LSeg·OpenSeg",
+              "priority": "optional",
+              "description": "픽셀-텍스트 정렬"
+            }
+          ]
+        },
+        {
+          "title": "CLIP 계열의 한계와 실패 모드",
+          "priority": "recommended",
+          "description": "개수 세기·공간 관계·부정 표현에 약함, 텍스트 오버레이 typographic attack, 웹 데이터 편향 — 안전 판단에 제로샷 결과를 그대로 쓰면 안 되는 이유",
+          "resources": [],
+          "children": [
+            {
+              "title": "공간 관계·개수 이해 부족",
+              "priority": "recommended",
+              "description": "'왼쪽의 컵' 같은 관계 질의 실패"
+            },
+            {
+              "title": "텍스트 타이포그래피 공격",
+              "priority": "recommended",
+              "description": "글자 붙이기로 분류가 바뀌는 현상"
+            },
+            {
+              "title": "안전 판단에 쓰면 안 되는 이유",
+              "priority": "essential",
+              "description": "신뢰도 미보정·분포 이동 취약성"
+            }
+          ]
+        },
+        {
+          "title": "비전-언어 모델 입문",
+          "priority": "recommended",
+          "description": "LLaVA·PaliGemma 처럼 이미지 인코더+LLM 결합 구조"
+        },
+        {
+          "title": "VLM 공간 추론",
+          "priority": "optional",
+          "description": "SpatialVLM 등 3D 공간 질의응답"
+        }
+      ]
+    }
+  ]
+}
