@@ -81,14 +81,53 @@ describe("insertColumns", () => {
     expect(e.state.doc.child(1).childCount).toBe(3);
   });
 
-  it("stays while empty with the cursor in it, lifts once the cursor leaves", () => {
+  it("stays while empty with the cursor in it and after the cursor leaves", () => {
     const e = mount("intro");
     cursor(e, 3);
     insertColumns(e, 2);
     expect(e.state.doc.child(1).type.name).toBe("columns");
     cursor(e, 3);
-    expect(e.state.doc.child(1).type.name).toBe("paragraph");
-    expect(e.state.doc.textContent).toBe("intro");
+    expect(e.state.doc.child(1).type.name).toBe("columns");
+  });
+});
+
+describe("lifting stale columns", () => {
+  it("does not change a note of empty columns when it is opened or the cursor moves", () => {
+    const element = document.createElement("div");
+    document.body.append(element);
+    const updates: string[] = [];
+    editor = new Editor({
+      element,
+      extensions: createExtensions(""),
+      content: `intro\n\n${cols("", "")}\n\nafter`,
+      onUpdate: ({ editor: ed }) => updates.push(md(ed)),
+    });
+    const e = editor;
+    const before = md(e);
+    cursor(e, 3);
+    cursor(e, textPos(e, "after") + 2);
+    // intro (size 7), then columns > column > paragraph: the first column's text.
+    cursor(e, 7 + 3);
+    expect(e.state.selection.$from.node(-1).type.name).toBe("column");
+    expect(updates).toEqual([]);
+    expect(md(e)).toBe(before);
+  });
+
+  it("leaves an untouched empty columns block alone when another block is edited", () => {
+    const e = mount(`${cols("", "")}\n\nafter`);
+    const at = textPos(e, "after") + 1;
+    cursor(e, at);
+    e.view.dispatch(e.state.tr.insertText("x", at));
+    expect(e.state.doc.firstChild!.type.name).toBe("columns");
+  });
+
+  it("lifts the block an edit empties while the cursor is outside it", () => {
+    const e = mount(`${cols("a", "")}\n\nafter`);
+    const a = textPos(e, "a");
+    const tr = e.state.tr.delete(a, a + 1);
+    tr.setSelection(TextSelection.create(tr.doc, textPos(e, "after")));
+    e.view.dispatch(tr);
+    expect(e.state.doc.firstChild!.type.name).toBe("paragraph");
     e.state.doc.forEach((n) => expect(n.type.name).toBe("paragraph"));
   });
 });

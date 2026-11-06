@@ -11,8 +11,8 @@ import {
 /**
  * Editing behaviour for the `columns` / `column` blocks (schema in ./columns):
  * inserting them from the slash menu, Backspace in an empty column removing it, and
- * lifting a columns block back to plain blocks once a single column is left or every
- * column is empty and the cursor has left it.
+ * lifting a columns block back to plain blocks when an edit leaves it a single column, or
+ * every column empty with the cursor outside it.
  */
 
 const COLUMNS = "columns";
@@ -109,22 +109,44 @@ export function removeEmptyColumnTr(state: EditorState): Transaction | null {
   return tr.scrollIntoView();
 }
 
+/** Ranges `trs` changed, in the final document's positions. */
+function changedRanges(trs: readonly Transaction[]): [number, number][] {
+  let ranges: [number, number][] = [];
+  for (const tr of trs) {
+    if (!tr.docChanged) continue;
+    for (const map of tr.mapping.maps) {
+      ranges = ranges.map(([a, b]) => [map.map(a, -1), map.map(b, 1)]);
+      map.forEach((_oldStart, _oldEnd, newStart, newEnd) => {
+        ranges.push([newStart, newEnd]);
+      });
+    }
+  }
+  return ranges;
+}
+
 /**
- * Lifts columns blocks that are no longer columns: fewer than two columns, or every
- * column empty while the cursor is outside the block (a fresh, still empty block the
- * cursor sits in stays). Runs back to front so earlier positions stay valid.
+ * Lifts top-level columns blocks that `ranges` touch and are no longer columns: fewer
+ * than two columns, or every column empty while the cursor is outside the block (a
+ * fresh, still empty block the cursor sits in stays). Untouched blocks are left alone,
+ * so opening a note or moving the cursor never rewrites it. Runs back to front so
+ * earlier positions stay valid.
  */
-export function liftStaleColumnsTr(state: EditorState): Transaction | null {
+export function liftStaleColumnsTr(
+  state: EditorState,
+  ranges: readonly [number, number][],
+): Transaction | null {
+  if (ranges.length === 0) return null;
   const found: { pos: number; node: PMNode }[] = [];
   const { from, to } = state.selection;
-  state.doc.descendants((node, pos) => {
-    if (node.type.name !== COLUMNS) return true;
+  state.doc.forEach((node, pos) => {
+    if (node.type.name !== COLUMNS) return;
+    const end = pos + node.nodeSize;
+    if (!ranges.some(([a, b]) => a <= end && b >= pos)) return;
     const children: PMNode[] = [];
     node.forEach((c) => children.push(c));
-    const inside = from > pos && to < pos + node.nodeSize;
+    const inside = from > pos && to < end;
     if (node.childCount < 2 || (!inside && children.every(isEmptyColumn)))
       found.push({ pos, node });
-    return false;
   });
   if (found.length === 0) return null;
   const tr = state.tr;
@@ -153,9 +175,9 @@ export const ColumnsEditing = Extension.create({
       new Plugin({
         key: new PluginKey("columnsEditing"),
         appendTransaction: (trs, _old, state) => {
-          if (!trs.some((tr) => tr.docChanged || tr.selectionSet)) return null;
-          if (!state.schema.nodes[COLUMNS]) return null;
-          return liftStaleColumnsTr(state);
+          // Only edits: a cursor move alone must not change (and so save) the note.
+          if (!state.schema.nodes[COLUMNS] || !trs.some((tr) => tr.docChanged)) return null;
+          return liftStaleColumnsTr(state, changedRanges(trs));
         },
       }),
     ];
