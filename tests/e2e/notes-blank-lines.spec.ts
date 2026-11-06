@@ -15,9 +15,29 @@ test("노트: 엔터로 넣은 빈 줄이 저장·새로고침 뒤에도 남는�
     );
   });
 
-  // Two blank lines between "본문" and "끝" (the click lands at the end of "본문").
-  await editor.getByText("본문", { exact: true }).click();
-  await page.keyboard.press("End");
+  // Two blank lines between "본문" and "끝". Before typing, wait until ProseMirror's own
+  // selection (not just the DOM caret) sits at the end of "본문": right after the paste it is
+  // still at the end of the document, and Enter pressed before it syncs lands after "끝".
+  await expect(async () => {
+    await editor.getByText("본문", { exact: true }).click();
+    await page.keyboard.press("End");
+    const at = await editor.evaluate((el) => {
+      const { $from, empty } = (
+        el as HTMLElement & {
+          editor: {
+            state: {
+              selection: {
+                empty: boolean;
+                $from: { parent: { textContent: string }; parentOffset: number };
+              };
+            };
+          };
+        }
+      ).editor.state.selection;
+      return empty ? `${$from.parent.textContent}@${$from.parentOffset}` : "range";
+    });
+    expect(at).toBe("본문@2");
+  }).toPass({ timeout: 5_000 });
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
 
