@@ -30,6 +30,9 @@ export function parseWidthTitle(title: string | null | undefined): ImageWidth | 
   return match ? Number(match[1]) : null;
 }
 
+/** Below this width the photo hides its resize corner (the handle would cover it). */
+const SMALL_FRAME_PX = 48;
+
 const clampWidth = (percent: number) =>
   Math.min(MAX_IMAGE_WIDTH, Math.max(MIN_IMAGE_WIDTH, Math.round(percent)));
 const COPIED_MS = 1500;
@@ -133,6 +136,15 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
   handle.setAttribute("aria-hidden", "true");
   handle.title = "끌어서 크기 조절";
   frame.append(img, tools, handle);
+  // A photo smaller than the handle would be covered by it; the size buttons still work there.
+  const observer =
+    typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(() => {
+          if (frame.offsetWidth < SMALL_FRAME_PX) dom.dataset.small = "";
+          else delete dom.dataset.small;
+        });
+  observer?.observe(frame);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -298,6 +310,7 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     ignoreMutation: () => true,
     destroy: () => {
       clearTimeout(timer);
+      observer?.disconnect();
       drag = null;
       endDrag();
     },
