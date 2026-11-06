@@ -17,7 +17,8 @@
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "storage:push": "tsx scripts/storage-push.ts",
     "storage:gc-images": "tsx scripts/storage-gc-images.ts",
-    "backup": "tsx scripts/backup.ts"
+    "backup": "tsx scripts/backup.ts",
+    "roadmap:import": "tsx scripts/roadmap-import.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
