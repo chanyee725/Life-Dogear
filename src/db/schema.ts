@@ -26,6 +26,12 @@ import {
   THOUGHT_KIND,
   THOUGHT_MATURITY,
 } from "@/lib/enums";
+import {
+  NODE_KINDS,
+  NODE_STATUSES,
+  ROADMAP_PRIORITIES,
+  type RoadmapResource,
+} from "@/lib/roadmap/contract";
 
 // Timestamps are ISO 8601 UTC strings; date-only fields are `YYYY-MM-DD`.
 const timestamps = {
@@ -353,3 +359,52 @@ export const appSettings = sqliteTable("app_settings", {
   value: text("value").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+/**
+ * Learning roadmaps (학습 로드맵), imported from JSON (`src/lib/roadmap/contract.ts`).
+ * Replaces the old area → goal → project → task roadmap view, which had no tables of its own.
+ */
+export const learningRoadmaps = sqliteTable("learning_roadmaps", {
+  id: text("id").primaryKey(),
+  /** Stable key from the JSON; re-importing the same slug updates the roadmap. */
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  topic: text("topic").notNull(),
+  summary: text("summary").notNull().default(""),
+  ...timestamps,
+});
+
+/**
+ * Stages and items of a learning roadmap. `parentId` null = stage (kind "stage"); items
+ * hang under a stage or another item. Deleted with their roadmap.
+ */
+export const roadmapNodes = sqliteTable(
+  "roadmap_nodes",
+  {
+    id: text("id").primaryKey(),
+    roadmapId: text("roadmap_id")
+      .notNull()
+      .references(() => learningRoadmaps.id, { onDelete: "cascade" }),
+    parentId: text("parent_id").references((): AnySQLiteColumn => roadmapNodes.id, {
+      onDelete: "cascade",
+    }),
+    kind: text("kind", { enum: NODE_KINDS }).notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    /** Null for stages. */
+    priority: text("priority", { enum: ROADMAP_PRIORITIES }),
+    /** JSON array of `{ title, url, kind }`. */
+    resources: text("resources", { mode: "json" })
+      .$type<RoadmapResource[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    status: text("status", { enum: NODE_STATUSES }).notNull().default("todo"),
+    /** Order among siblings. */
+    position: integer("position").notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("roadmap_nodes_roadmap_idx").on(t.roadmapId, t.parentId, t.position),
+    index("roadmap_nodes_parent_idx").on(t.parentId),
+  ],
+);

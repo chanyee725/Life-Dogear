@@ -1,0 +1,126 @@
+{
+  "slug": "e2e-visual-slam",
+  "title": "Visual SLAM 로드맵",
+  "topic": "Visual SLAM",
+  "summary": "카메라로 위치를 추정하고 지도를 만드는 Visual SLAM을 기초 수학부터 시스템 구현까지 단계별로 익힌다.",
+  "stages": [
+    {
+      "title": "기초 수학",
+      "description": "SLAM 전반에 쓰이는 선형대수·확률·최적화.",
+      "items": [
+        {
+          "title": "선형대수",
+          "priority": "essential",
+          "description": "행렬 분해와 고유값, 최소제곱.",
+          "resources": [
+            {
+              "title": "Linear Algebra Lecture Notes",
+              "url": "https://example.com/linear-algebra",
+              "kind": "course"
+            }
+          ],
+          "children": [
+            {
+              "title": "SVD",
+              "priority": "essential",
+              "description": "특이값 분해와 그 응용.",
+              "resources": [],
+              "children": [
+                {
+                  "title": "저랭크 근사",
+                  "priority": "optional",
+                  "description": "",
+                  "resources": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "title": "QR 분해",
+              "priority": "recommended",
+              "description": "",
+              "resources": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "title": "확률과 추정",
+          "priority": "recommended",
+          "description": "가우시안, 베이즈 필터.",
+          "resources": [
+            {
+              "title": "Probabilistic Robotics (book)",
+              "url": "https://example.com/probabilistic-robotics",
+              "kind": "book"
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "카메라 기하",
+      "description": "핀홀 모델부터 다중 시점 기하까지.",
+      "items": [
+        {
+          "title": "카메라 모델과 보정",
+          "priority": "essential",
+          "description": "내부·외부 파라미터, 왜곡 보정.",
+          "resources": [
+            {
+              "title": "Camera Calibration Tutorial",
+              "url": "https://example.com/calibration",
+              "kind": "doc"
+            }
+          ],
+          "children": []
+        },
+        {
+          "title": "에피폴라 기하",
+          "priority": "essential",
+          "description": "기본 행렬과 필수 행렬.",
+          "resources": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "SLAM 시스템",
+      "description": "프런트엔드·백엔드·루프 클로저.",
+      "items": [
+        {
+          "title": "번들 조정",
+          "priority": "essential",
+          "description": "비선형 최소제곱으로 자세와 지도점을 함께 최적화.",
+          "resources": [
+            {
+              "title": "Bundle Adjustment Paper",
+              "url": "https://example.com/bundle-adjustment",
+              "kind": "paper"
+            },
+            {
+              "title": "Sample Optimizer Code",
+              "url": "https://example.com/optimizer-code",
+              "kind": "code"
+            }
+          ],
+          "children": []
+        },
+        {
+          "title": "루프 클로저",
+          "priority": "optional",
+          "description": "",
+          "resources": [
+            {
+              "title": "Place Recognition Talk",
+              "url": "https://example.com/place-recognition",
+              "kind": "video"
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}
