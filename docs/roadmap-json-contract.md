@@ -60,18 +60,26 @@ file are removed.
 
 ## Prompt for Claude Code
 
-Paste this, filling in the topic:
+Paste this, filling in the topic. Roadmaps are split into steps (one roadmap per step,
+slug `step-<n>-<name>`, title `<n>단계: <name>`), ordered by what the learner needs first;
+the roadmap list is sorted by slug, so steps show in order.
 
-> Create a learning roadmap for **<topic>** as a single JSON file that follows
-> `docs/roadmap-json-contract.md` exactly. Order `stages` from foundations to advanced
-> topics (4–8 stages). Give each stage 3–8 items; use `children` only for real sub-topics.
-> Mark each item `essential`, `recommended` or `optional` by how much a learner needs it.
-> Add 1–3 resources per item where a well-known, stable resource exists (official docs,
-> standard textbooks, well-known courses, original papers, reference code); use only URLs
-> you are confident exist, and leave `resources` empty otherwise. Write titles and
-> descriptions in Korean; keep resource titles in their original language. Keep sibling
-> titles unique. Output only the JSON, saved as `roadmaps/<slug>.json`, then run
-> `npm run roadmap:import roadmaps/<slug>.json`.
+> Create a learning roadmap for **<topic>** as step **<n>** (slug `step-<n>-<name>`,
+> title `<n>단계: <name>`), one JSON file that follows `docs/roadmap-json-contract.md`
+> exactly. The learner already does the hands-on work; focus on the theory a university
+> course would teach, in fine detail: one item is one study unit (one or two weeks of a
+> lecture or less), and use `children` and grandchildren to break topics down.
+> Do not write `summary` or stage `description`. Each item `description` names what is
+> learned in concrete terms (theorems, equations, algorithms, API or tag names) and ends
+> with where it is in a standard textbook or official doc (e.g. "— Lynch & Park 5장");
+> give only the book name when the chapter is uncertain.
+> Mark each item `essential`, `recommended` or `optional` for this learner. Add resources
+> only where a stable one exists (official docs, author-hosted textbooks, original arXiv
+> papers, official GitHub); use only URLs you are confident exist, check them with
+> `curl -sIL` in parallel and drop any that fail; leave paid standards (ISO, IEC) as names
+> in the description. Write titles and descriptions in Korean; keep resource titles in
+> their original language. Keep sibling titles unique and the whole file under 1000 nodes.
+> Save as `roadmaps/<slug>.json`, then run `npm run roadmap:import roadmaps/<slug>.json`.
 
 ## Example
 
