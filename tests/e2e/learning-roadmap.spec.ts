@@ -59,7 +59,7 @@ test("/roadmap: 트리 DOM 구조, 단계 접힘/펼침", async ({ page }) => {
   const item = page.locator('button[data-testid^="rm-item-"]').filter({ hasText: "E2E 선택 항목" });
   await expect(item).toBeVisible(); // 단계는 기본 펼침
 
-  const toggle = stage.locator('[data-testid^="rt-toggle-"]').first();
+  const toggle = stage.locator("button.rt-stage-label").first();
   await toggle.click();
   await expect(item).toBeHidden();
   await expect(stage).toHaveAttribute("aria-expanded", "false");
