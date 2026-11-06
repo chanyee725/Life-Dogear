@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/db/client";
 import { learningRoadmaps, roadmapNodes } from "@/db/schema";
-import { importRoadmap, parseRoadmapJson } from "../../scripts/roadmap-import";
+import { importRoadmapJson } from "../../scripts/roadmap-import";
 import { useFreshDb } from "./repo-helpers";
 
 let db: Db;
@@ -26,7 +26,9 @@ function sample() {
             title: "소유권",
             priority: "essential",
             description: "ownership",
-            resources: [{ title: "The Book", url: "https://doc.rust-lang.org/book/", kind: "book" }],
+            resources: [
+              { title: "The Book", url: "https://doc.rust-lang.org/book/", kind: "book" },
+            ],
             children: [
               {
                 title: "빌림",
@@ -45,6 +47,15 @@ function sample() {
   };
 }
 
+async function run(value: unknown) {
+  const out = await importRoadmapJson(
+    db,
+    typeof value === "string" ? value : JSON.stringify(value),
+  );
+  if (!out.ok) throw new Error(out.errors.join("\n"));
+  return out.result;
+}
+
 async function nodes() {
   return db.select().from(roadmapNodes).orderBy(asc(roadmapNodes.position));
 }
@@ -56,14 +67,14 @@ async function nodeByTitle(title: string) {
 
 describe("roadmap import", () => {
   it("imports a new roadmap with every node as todo", async () => {
-    const result = await importRoadmap(db, parseRoadmapJson(JSON.stringify(sample())));
-    expect(result).toMatchObject({ created: true, added: 6, updated: 0, removed: 0 });
+    const result = await run(sample());
+    expect(result).toMatchObject({ created: true, added: 5, updated: 0, removed: 0 });
 
     const [roadmap] = await db.select().from(learningRoadmaps);
     expect(roadmap).toMatchObject({ slug: "rust-basics", title: "Rust 기초", topic: "Rust" });
 
     const all = await nodes();
-    expect(all).toHaveLength(6);
+    expect(all).toHaveLength(5);
     expect(all.every((n) => n.status === "todo" && n.roadmapId === roadmap!.id)).toBe(true);
 
     const stage = await nodeByTitle("입문");
@@ -78,17 +89,22 @@ describe("roadmap import", () => {
   });
 
   it("updates the same slug: keeps status by path, overwrites text, drops missing nodes", async () => {
-    await importRoadmap(db, parseRoadmapJson(JSON.stringify(sample())));
+    await run(sample());
     const ownership = await nodeByTitle("소유권");
     const borrowing = await nodeByTitle("빌림");
     await db.update(roadmapNodes).set({ status: "done" }).where(eq(roadmapNodes.id, ownership!.id));
-    await db.update(roadmapNodes).set({ status: "doing" }).where(eq(roadmapNodes.id, borrowing!.id));
+    await db
+      .update(roadmapNodes)
+      .set({ status: "doing" })
+      .where(eq(roadmapNodes.id, borrowing!.id));
 
     const next = sample();
     next.title = "Rust 기초 (개정)";
     const item = next.stages[0]!.items[0]!;
     item.description = "ownership v2";
-    item.resources = [{ title: "Rustlings", url: "https://github.com/rust-lang/rustlings", kind: "code" }];
+    item.resources = [
+      { title: "Rustlings", url: "https://github.com/rust-lang/rustlings", kind: "code" },
+    ];
     next.stages[0]!.items[1] = {
       title: "트레잇",
       priority: "essential",
@@ -98,7 +114,7 @@ describe("roadmap import", () => {
     };
     next.stages.pop();
 
-    const result = await importRoadmap(db, parseRoadmapJson(JSON.stringify(next)));
+    const result = await run(next);
     expect(result).toMatchObject({ created: false, added: 1, updated: 3, removed: 2 });
 
     const roadmaps = await db.select().from(learningRoadmaps);
@@ -115,14 +131,15 @@ describe("roadmap import", () => {
     expect(await nodes()).toHaveLength(4);
   });
 
-  it("rejects malformed or off-contract JSON", async () => {
-    expect(() => parseRoadmapJson("{not json")).toThrow();
+  it("rejects malformed or off-contract JSON without touching the DB", async () => {
+    expect((await importRoadmapJson(db, "{not json")).ok).toBe(false);
     const bad = sample();
     (bad.stages[0]!.items[0]!.resources[0] as { url: string }).url = "ftp://example.com";
-    expect(() => parseRoadmapJson(JSON.stringify(bad))).toThrow();
+    expect((await importRoadmapJson(db, JSON.stringify(bad))).ok).toBe(false);
     const noSlug: Partial<ReturnType<typeof sample>> = sample();
     delete noSlug.slug;
-    expect(() => parseRoadmapJson(JSON.stringify(noSlug))).toThrow();
+    expect((await importRoadmapJson(db, JSON.stringify(noSlug))).ok).toBe(false);
     expect(await db.select().from(learningRoadmaps)).toHaveLength(0);
+    expect(await nodes()).toHaveLength(0);
   });
 });
