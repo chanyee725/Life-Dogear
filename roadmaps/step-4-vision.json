@@ -10,13 +10,7 @@
           "title": "빛과 영상 형성",
           "priority": "recommended",
           "description": "복사량(radiance)·조도(irradiance), 램버트 반사와 BRDF, 렌즈의 얇은 렌즈 공식 1/f = 1/z_o + 1/z_i, 피사계 심도와 조리개(f-number), 비네팅을 배운다 — Szeliski 2장",
-          "resources": [
-            {
-              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
-              "url": "https://szeliski.org/Book/",
-              "kind": "book"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "복사 측정 단위",
@@ -485,13 +479,7 @@
           "title": "렌즈 왜곡 모델",
           "priority": "essential",
           "description": "방사 왜곡(k1, k2, k3)·접선 왜곡(p1, p2)의 Brown–Conrady 모델, 왜곡 보정(undistort)과 역사상의 반복 해법, 리매핑 테이블을 배운다 — Szeliski 2.1.5절",
-          "resources": [
-            {
-              "title": "OpenCV calib3d module",
-              "url": "https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html",
-              "kind": "doc"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "어안 렌즈 모델",
@@ -592,13 +580,7 @@
           "title": "Zhang 평면 캘리브레이션",
           "priority": "essential",
           "description": "평면 체커보드의 호모그래피 H = K[r1 r2 t] 에서 ω = K^{-T}K^{-1} 제약 2개를 얻어 B 를 선형으로 풀고 K·외부 파라미터를 닫힌 해로 구한 뒤 왜곡 포함 LM 으로 정제하는 전 과정을 배운다 — Zhang 2000 논문, Hartley & Zisserman 8.8절",
-          "resources": [
-            {
-              "title": "OpenCV Camera Calibration tutorial",
-              "url": "https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html",
-              "kind": "doc"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "절대 원뿔곡선의 상",
@@ -1667,13 +1649,7 @@
           "title": "Lucas–Kanade 방법",
           "priority": "essential",
           "description": "지역 윈도우 내 상수 흐름 가정의 최소제곱 해 (A^T A) v = −A^T b, 구조 텐서 조건과 Harris 와의 연결, 반복 정제와 피라미드 coarse-to-fine 을 배운다 — Szeliski 9.1·9.3절",
-          "resources": [
-            {
-              "title": "OpenCV Optical Flow tutorial",
-              "url": "https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html",
-              "kind": "doc"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "KLT 특징 추적",
@@ -1788,13 +1764,7 @@
           "title": "거리 측정 방식 분류",
           "priority": "essential",
           "description": "능동(ToF·구조광·LiDAR)과 수동(스테레오) 깊이 측정의 원리 차이, 측정 범위·해상도·외광 내성·다중 경로 오차 비교. — Szeliski 12장, Siciliano Handbook of Robotics 'Range Sensing'",
-          "resources": [
-            {
-              "title": "Computer Vision: Algorithms and Applications, 2nd ed.",
-              "url": "https://szeliski.org/Book/",
-              "kind": "book"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "능동·수동 센싱",
@@ -1885,13 +1855,7 @@
           "title": "능동 스테레오와 수동 스테레오",
           "priority": "essential",
           "description": "정렬된 스테레오의 깊이식 Z = f·B/d, 시차 정밀도에서 깊이 오차 δZ ≈ Z²/(f·B)·δd 유도, IR 프로젝터로 텍스처를 보탠 능동 스테레오(RealSense D400). — Szeliski 12장",
-          "resources": [
-            {
-              "title": "Intel RealSense Developer Documentation",
-              "url": "https://dev.intelrealsense.com/docs",
-              "kind": "doc"
-            }
-          ],
+          "resources": [],
           "children": [
             {
               "title": "IR 프로젝터 텍스처",
@@ -3691,11 +3655,6 @@
               "title": "COCO Detection Evaluation",
               "url": "https://cocodataset.org/#detection-eval",
               "kind": "doc"
-            },
-            {
-              "title": "Computer Vision: Algorithms and Applications, 2nd ed. (Szeliski)",
-              "url": "https://szeliski.org/Book/",
-              "kind": "book"
             }
           ],
           "children": [
