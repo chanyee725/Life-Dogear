@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemLinkPath, stageCurvePath, stageRows, stageSway, SWAY } from "@/app/roadmap/layout";
+import { itemLinkPath, stageCurvePath, stageRows, stageSway, SWAY } from "@/app/roadmap/path-layout";
 import type { RoadmapNode } from "@/app/roadmap/model";
 
 const node = (id: string, children: RoadmapNode[] = []): RoadmapNode => ({
