@@ -4,7 +4,18 @@ import { insertColumns } from "./columns-edit";
 import { findWikiTrigger } from "./WikiSuggest";
 
 export type SlashCommandId =
-  "page" | "h2" | "h3" | "bullet" | "ordered" | "task" | "quote" | "code" | "table" | "image" | "columns2" | "columns3";
+  | "page"
+  | "h2"
+  | "h3"
+  | "bullet"
+  | "ordered"
+  | "task"
+  | "quote"
+  | "code"
+  | "table"
+  | "image"
+  | "columns2"
+  | "columns3";
 
 export type SlashCommand = {
   id: SlashCommandId;

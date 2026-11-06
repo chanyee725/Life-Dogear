@@ -1,6 +1,12 @@
 import { Extension } from "@tiptap/core";
 import { Fragment, type Node as PMNode, type ResolvedPos } from "@tiptap/pm/model";
-import { NodeSelection, Plugin, PluginKey, type EditorState, type Transaction } from "@tiptap/pm/state";
+import {
+  NodeSelection,
+  Plugin,
+  PluginKey,
+  type EditorState,
+  type Transaction,
+} from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
 /**
@@ -113,11 +119,7 @@ export function blockAt(doc: PMNode, pos: number, inside = -1): Block | null {
   const inFirstColumn = column < 0 && hasColumn($pos);
   for (let d = $pos.depth; d >= 1; d--) {
     const node = $pos.node(d);
-    if (
-      (ITEM_TYPES.has(node.type.name) && !inFirstColumn) ||
-      d === column + 1 ||
-      d === 1
-    )
+    if ((ITEM_TYPES.has(node.type.name) && !inFirstColumn) || d === column + 1 || d === 1)
       return { pos: $pos.before(d), node };
   }
   return null;
@@ -187,7 +189,6 @@ class DragHandleView {
   private hideTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private view: EditorView) {
-
     this.handle = document.createElement("button");
     this.handle.type = "button";
     this.handle.className = "rb-drag-handle";

@@ -55,6 +55,8 @@ describe("filterSlashCommands", () => {
       "code",
       "table",
       "image",
+      "columns2",
+      "columns3",
     ]);
     expect(ids("", false)).not.toContain("page");
     expect(ids("page", false)).toEqual([]);
@@ -76,6 +78,15 @@ describe("filterSlashCommands", () => {
     expect(ids("table")).toEqual(["table"]);
     expect(ids("image")).toEqual(["image"]);
     expect(ids("사진")).toEqual(["image"]);
+    expect(ids("2열")).toEqual(["columns2"]);
+    expect(ids("columns")).toEqual(["columns2", "columns3"]);
+    expect(ids("열")).toEqual(["columns2", "columns3"]);
+    expect(ids("단")).toEqual(["columns2", "columns3"]);
+  });
+
+  it("puts 2열 / 3열 first for a bare /2 or /3", () => {
+    expect(ids("2")[0]).toBe("columns2");
+    expect(ids("3")[0]).toBe("columns3");
   });
 
   it("knows every planned alias", () => {
