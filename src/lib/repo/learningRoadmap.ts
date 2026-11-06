@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { learningRoadmaps, roadmapNodes } from "@/db/schema";
 import { db, nowIso, serializeWrite } from "./shared";
 import {
@@ -124,12 +124,12 @@ const nodeColumns = {
   position: roadmapNodes.position,
 };
 
-/** All roadmaps, most recently updated first, with item progress. */
+/** All roadmaps, ordered by slug ascending (step-1…step-6), with item progress. */
 export async function listRoadmaps(): Promise<RoadmapSummary[]> {
   const roadmaps = await db()
     .select()
     .from(learningRoadmaps)
-    .orderBy(desc(learningRoadmaps.updatedAt), asc(learningRoadmaps.title));
+    .orderBy(asc(learningRoadmaps.slug));
   const nodes = await db()
     .select({
       roadmapId: roadmapNodes.roadmapId,
