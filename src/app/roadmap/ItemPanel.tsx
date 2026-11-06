@@ -60,6 +60,8 @@ export default function ItemPanel({
   return (
     <aside
       aria-label={`${item.title} 상세`}
+      data-testid="rm-item-panel"
+      data-status={item.status}
       className={cn(
         "flex flex-col gap-4 border-l border-[var(--rb-border)] bg-[var(--rb-bg)] p-4",
         className,
@@ -90,6 +92,7 @@ export default function ItemPanel({
             key={s}
             type="button"
             role="radio"
+            data-testid={`rm-status-${s}`}
             aria-checked={item.status === s}
             disabled={pending || !onStatusChange}
             onClick={() => {
