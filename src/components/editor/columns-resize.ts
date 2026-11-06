@@ -14,7 +14,13 @@ const COLUMNS = "columns";
 export const MIN_COLUMN_WIDTH = 15;
 export const WIDTH_STEP = 5;
 /** Hit area of the bar (px); the visible line inside is thinner (globals.css). */
-const BAR_WIDTH = 8;
+const BAR_WIDTH = 6;
+/**
+ * Room (px) left of the right column's text kept free for the block grip: the grip sits
+ * up to 24px left of a block (drag-handle.ts) plus a little air. The bar stays in the part
+ * of the gap left of that, so reaching for the grip never lands on the bar.
+ */
+const GRIP_CLEARANCE = 28;
 /** Transactions from a drag: the columns-editing lift skips them. */
 export const COLUMN_RESIZE_META = "columnResize";
 
@@ -62,6 +68,16 @@ export function setColumnWidthsTr(
     changed = true;
   });
   return changed ? tr.setMeta(COLUMN_RESIZE_META, true) : null;
+}
+
+/**
+ * Bar centre for the gap between `leftEdge` (left column's right side) and `rightEdge`
+ * (right column's left side): the middle of the gap part clear of the grip, or the gap's
+ * middle when the gap is too narrow for that.
+ */
+export function barCenter(leftEdge: number, rightEdge: number): number {
+  const free = rightEdge - GRIP_CLEARANCE;
+  return free - leftEdge >= BAR_WIDTH ? (leftEdge + free) / 2 : (leftEdge + rightEdge) / 2;
 }
 
 const currentWidths = (node: PMNode) => {
@@ -143,7 +159,7 @@ class ColumnResizeView {
           wanted.push({
             pos,
             index: i,
-            left: (a.right + b.left) / 2 - BAR_WIDTH / 2 - host.left,
+            left: barCenter(a.right, b.left) - BAR_WIDTH / 2 - host.left,
             top: box.top - host.top,
             height: box.height,
           });

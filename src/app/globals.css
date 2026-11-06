@@ -892,13 +892,19 @@
   .rb-prose .rb-column[data-width] {
     flex-grow: var(--rb-col-w);
   }
+  /* Wider than `md:gap-x-8` so the width bar (left part) and the right column's block
+     grip (right part) each get their own strip of the gap (columns-resize.ts). */
+  .rb-prose .rb-columns {
+    column-gap: 2.5rem;
+  }
 }
 
 /* ---------- Column width bar (columns-resize.ts) ---------- */
 @layer components {
   .rb-column-resize {
     position: absolute;
-    z-index: 4;
+    /* Below the block grip (.rb-drag-handle, z 5) so the grip wins where they meet. */
+    z-index: 3;
     display: flex;
     justify-content: center;
     cursor: col-resize;
