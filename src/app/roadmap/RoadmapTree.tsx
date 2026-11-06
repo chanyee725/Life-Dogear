@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronRight, Circle, CircleCheck, CircleDot, Diamond } from "lucide-react";
-import { useState, type CSSProperties, type KeyboardEventHandler, type Ref } from "react";
-import { collapseAll, toggleCollapsed, type CollapsedSet } from "./collapse";
+import { type CSSProperties, type KeyboardEventHandler, type Ref } from "react";
+import type { CollapsedSet } from "./collapse";
 import {
   PRIORITY_LABEL,
   STATUS_LABEL,
@@ -18,8 +18,8 @@ export interface RoadmapTreeProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   /** Folded stage/item ids; owned by RoadmapView (useTreeCollapse). */
-  collapsed?: CollapsedSet;
-  onToggle?: (id: string) => void;
+  collapsed: CollapsedSet;
+  onToggle: (id: string) => void;
   /** Keyboard wiring for ul.rt-tree (useTreeKeyboard). */
   treeRef?: Ref<HTMLUListElement>;
   onKeyDown?: KeyboardEventHandler<HTMLUListElement>;
@@ -70,7 +70,7 @@ interface BranchProps {
 
 function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; level: number }) {
   const hasChildren = node.children.length > 0;
-  const folded = collapsed(ctx, node);
+  const folded = isFolded(ctx, node);
   const priority = node.priority ? PRIORITY_LABEL[node.priority] : null;
   const meta = [priority, STATUS_LABEL[node.status]].filter(Boolean).join(", ");
   return (
@@ -121,10 +121,10 @@ function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; le
   );
 }
 
-const collapsed = (ctx: BranchProps, node: RoadmapNode) => ctx.collapsed.has(node.id);
+const isFolded = (ctx: BranchProps, node: RoadmapNode) => ctx.collapsed.has(node.id);
 
 function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode; index: number }) {
-  const folded = collapsed(ctx, stage);
+  const folded = isFolded(ctx, stage);
   const hasChildren = stage.children.length > 0;
   const status = stageStatus(stage);
   const { done, total } = stage.progress;
@@ -178,17 +178,6 @@ function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode;
   );
 }
 
-/** Ids folded by default: every item that has children (stages stay open). */
-function defaultCollapsed(roadmap: LearningRoadmap): CollapsedSet {
-  const ids: string[] = [];
-  const walk = (n: RoadmapNode) => {
-    if (n.children.length > 0) ids.push(n.id);
-    n.children.forEach(walk);
-  };
-  roadmap.stages.forEach((s) => s.children.forEach(walk));
-  return collapseAll(ids);
-}
-
 /** Stages down a trunk; items branch off with elbow connectors, deeper levels indent further. */
 export default function RoadmapTree({
   roadmap,
@@ -196,13 +185,12 @@ export default function RoadmapTree({
   onSelect,
   treeRef,
   onKeyDown,
-  ...controlled
+  collapsed,
+  onToggle,
 }: RoadmapTreeProps) {
-  // Fallback until RoadmapView passes the shared collapse state.
-  const [own, setOwn] = useState<CollapsedSet>(() => defaultCollapsed(roadmap));
   const ctx: BranchProps = {
-    collapsed: controlled.collapsed ?? own,
-    onToggle: controlled.onToggle ?? ((id) => setOwn((c) => toggleCollapsed(c, id))),
+    collapsed,
+    onToggle,
     selectedId,
     onSelect,
   };
