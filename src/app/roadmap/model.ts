@@ -1,14 +1,14 @@
 // Screen-side model for the learning roadmap. Types mirror the import contract; pure helpers
 // (progress, side split) are unit-tested in tests/unit/learning-roadmap-model.test.ts.
 
-export const PRIORITIES = ["required", "recommended", "optional"] as const;
+export const PRIORITIES = ["essential", "recommended", "optional"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
 export const STATUSES = ["todo", "doing", "done"] as const;
 export type Status = (typeof STATUSES)[number];
 
 export const PRIORITY_LABEL: Record<Priority, string> = {
-  required: "필수",
+  essential: "필수",
   recommended: "추천",
   optional: "선택",
 };
