@@ -1,0 +1,40 @@
+import Link from "next/link";
+import { cn } from "@/components/ui/cn";
+
+export interface RoadmapPickerProps {
+  roadmaps: { slug: string; title: string }[];
+  /** Slug of the roadmap being shown. */
+  current: string;
+  className?: string;
+}
+
+/** Tab-style links to /roadmap?r=slug. Renders nothing when there is only one roadmap. */
+export default function RoadmapPicker({ roadmaps, current, className }: RoadmapPickerProps) {
+  if (roadmaps.length < 2) return null;
+
+  return (
+    <nav
+      aria-label="로드맵 선택"
+      className={cn("flex flex-wrap gap-1 border-b border-[var(--rb-border)]", className)}
+    >
+      {roadmaps.map((r) => {
+        const selected = r.slug === current;
+        return (
+          <Link
+            key={r.slug}
+            href={`/roadmap?r=${encodeURIComponent(r.slug)}`}
+            aria-current={selected ? "page" : undefined}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-1.5 text-sm",
+              selected
+                ? "border-[var(--rb-accent)] font-medium text-[var(--rb-fg)]"
+                : "border-transparent text-[var(--rb-muted)] hover:text-[var(--rb-fg)]",
+            )}
+          >
+            {r.title}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
