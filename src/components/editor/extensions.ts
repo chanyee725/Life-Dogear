@@ -10,6 +10,7 @@ import { Markdown } from "tiptap-markdown";
 import { CodeBlock, CodeBlockClipboard } from "./code-block";
 import { Column, Columns, TOP_BLOCK } from "./columns";
 import { ColumnsEditing } from "./columns-edit";
+import { ColumnResize } from "./columns-resize";
 import { BlockDragHandle } from "./drag-handle";
 import { CaptionedImage } from "./image-view";
 import { WikiLink } from "./WikiLink";
@@ -146,6 +147,7 @@ export function createExtensions(placeholder: string) {
     Columns,
     Column,
     ColumnsEditing,
+    ColumnResize,
     CaptionedImage.configure({ inline: false, allowBase64: false }),
     Placeholder.configure({ placeholder }),
     WikiLink,

@@ -11,6 +11,9 @@
  *     :::
  *     :::
  *
+ * A column may carry its width in percent after the marker (`::: column 40`); a column
+ * without one shares the row equally, and its line is written exactly as above.
+ *
  * Only a complete, well-formed group (2–3 columns, every marker on its own line, outside
  * code fences) is read as columns; anything else stays ordinary text, so existing notes
  * that happen to contain `:::` read exactly as before.
@@ -54,7 +57,34 @@ export type MarkdownItBlockLike = {
   };
 };
 
-const MARKERS = new Set([COLUMNS_OPEN, COLUMN_OPEN, COLUMN_CLOSE]);
+/** Widths a column may store: whole percents. */
+export const MIN_WIDTH = 1;
+export const MAX_WIDTH = 100;
+
+/** `value` as a column width (a whole number 1–100), else null. */
+export function parseColumnWidth(value: string | null | undefined): number | null {
+  if (!value || !/^\d{1,3}$/.test(value)) return null;
+  const n = Number(value);
+  return n >= MIN_WIDTH && n <= MAX_WIDTH ? n : null;
+}
+
+/** The `::: column` line for a column of `width` (none for an equal share). */
+export function columnOpenLine(width: number | null | undefined): string {
+  return width ? `${COLUMN_OPEN} ${width}` : COLUMN_OPEN;
+}
+
+/**
+ * For a `::: column` line (trimmed): its width, or null for none. Undefined when `text` is
+ * not a column marker, including a bad width (`::: column abc`, `::: column 0`).
+ */
+function columnOpen(text: string): number | null | undefined {
+  if (text === COLUMN_OPEN) return null;
+  if (!text.startsWith(`${COLUMN_OPEN} `)) return undefined;
+  return parseColumnWidth(text.slice(COLUMN_OPEN.length + 1)) ?? undefined;
+}
+
+const isMarker = (text: string) =>
+  text === COLUMNS_OPEN || text === COLUMN_CLOSE || columnOpen(text) !== undefined;
 
 /**
  * Column Markdown with `\` before every line (outside code fences) that would otherwise read
@@ -74,7 +104,7 @@ export function escapeMarkerLines(markdown: string): string {
       }
       const open = /^(`{3,}|~{3,})/.exec(t);
       if (open) fence = open[1];
-      else if (MARKERS.has(t)) return line.replace(":", "\\:");
+      else if (isMarker(t)) return line.replace(":", "\\:");
       return line;
     })
     .join("\n");
@@ -83,11 +113,11 @@ export function escapeMarkerLines(markdown: string): string {
 const lineText = (state: BlockState, line: number) =>
   state.src.slice(state.bMarks[line] + state.tShift[line], state.eMarks[line]).trimEnd();
 
-/** Content line ranges `[start, end)` of each column, and the line of the final `:::`. */
-type Layout = { columns: [number, number][]; last: number };
+/** Each column's content lines `[start, end)` and width, and the line of the final `:::`. */
+type Layout = { columns: { start: number; end: number; width: number | null }[]; last: number };
 
 function scan(state: BlockState, startLine: number, endLine: number): Layout | null {
-  const columns: [number, number][] = [];
+  const columns: Layout["columns"] = [];
   let line = startLine + 1;
   while (line < endLine) {
     const text = lineText(state, line);
@@ -95,7 +125,8 @@ function scan(state: BlockState, startLine: number, endLine: number): Layout | n
       if (columns.length < MIN_COLUMNS) return null;
       return { columns, last: line };
     }
-    if (text !== COLUMN_OPEN || columns.length === MAX_COLUMNS) return null;
+    const width = columnOpen(text);
+    if (width === undefined || columns.length === MAX_COLUMNS) return null;
     const start = line + 1;
     let fence: string | null = null;
     let end = -1;
@@ -110,10 +141,10 @@ function scan(state: BlockState, startLine: number, endLine: number): Layout | n
       else if (t === COLUMN_CLOSE) {
         end = l;
         break;
-      } else if (t === COLUMNS_OPEN || t === COLUMN_OPEN) return null; // no nesting
+      } else if (t === COLUMNS_OPEN || columnOpen(t) !== undefined) return null; // no nesting
     }
     if (end < 0) return null;
-    columns.push([start, end]);
+    columns.push({ start, end, width });
     line = end + 1;
   }
   return null;
@@ -133,11 +164,12 @@ const columnsRule: BlockRule = (state, startLine, endLine, silent) => {
   open.block = true;
   open.map = [startLine, layout.last + 1];
   open.attrSet("data-type", "columns");
-  for (const [start, end] of layout.columns) {
+  for (const { start, end, width } of layout.columns) {
     const col = state.push("column_open", "div", 1);
     col.block = true;
     col.map = [start - 1, end + 1];
     col.attrSet("data-type", "column");
+    if (width !== null) col.attrSet("data-width", String(width));
     state.lineMax = end;
     state.md.block.tokenize(state, start, end);
     state.lineMax = oldMax;

@@ -2,10 +2,11 @@ import { Node, type CommandProps } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import {
+  columnOpenLine,
   columnsPlugin,
   escapeMarkerLines,
+  parseColumnWidth,
   COLUMN_CLOSE,
-  COLUMN_OPEN,
   COLUMNS_OPEN,
   MAX_COLUMNS,
   MIN_COLUMNS,
@@ -16,6 +17,8 @@ import {
  * Notion-style columns: a `columns` block holds 2–3 `column`s side by side, each holding
  * any blocks (lists, code, photos, tables…). Below the `md` breakpoint they stack. Stored
  * in Markdown as `::: columns` / `::: column` / `:::` lines (see `columns-markdown`).
+ * A column's `width` (percent, null = equal share) is dragged in `columns-resize` and only
+ * applies side by side (globals.css).
  */
 
 export const COLUMNS = "columns";
@@ -106,14 +109,28 @@ export const Column = Node.create({
   isolating: true,
   defining: true,
 
+  addAttributes() {
+    return {
+      width: {
+        default: null,
+        parseHTML: (element: HTMLElement) => parseColumnWidth(element.getAttribute("data-width")),
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const width = attributes.width as number | null;
+          return width ? { "data-width": String(width), style: `--rb-col-w: ${width}` } : {};
+        },
+      },
+    };
+  },
+
   parseHTML() {
     return [{ tag: 'div[data-type="column"]' }];
   },
 
-  renderHTML() {
+  renderHTML({ HTMLAttributes }) {
     return [
       "div",
       {
+        ...HTMLAttributes,
         "data-type": COLUMN,
         class: "rb-column min-w-0 flex-1 [&>*+*]:mt-[0.6em]",
       },
@@ -158,7 +175,7 @@ export const Columns = Node.create({
           state.write(COLUMNS_OPEN);
           state.ensureNewLine();
           node.forEach((column) => {
-            state.write(COLUMN_OPEN);
+            state.write(columnOpenLine(column.attrs.width as number | null));
             state.ensureNewLine();
             const from = state.out.length;
             state.renderContent(column);

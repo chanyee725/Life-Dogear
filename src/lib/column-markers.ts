@@ -1,8 +1,8 @@
 /**
- * Column blocks are stored in Markdown as `::: columns` / `::: column` / `:::` lines
+ * Column blocks are stored in Markdown as `::: columns` / `::: column` (or `::: column 40`) / `:::` lines
  * (see `@/components/editor/columns-markdown`). Search snippets and previews drop them.
  */
-const MARKER_LINE = /^[ \t]{0,3}:::(?:[ \t]*columns?)?[ \t]*$/;
+const MARKER_LINE = /^[ \t]{0,3}:::(?:[ \t]*(?:columns|column(?:[ \t]+\d{1,3})?))?[ \t]*$/;
 
 /** Markdown `text` without column marker lines. */
 export function stripColumnMarkers(text: string): string {
