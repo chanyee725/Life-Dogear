@@ -10,7 +10,8 @@ import { ItemNotes } from "@/components/notes/ItemNotes";
 import { TaskSection } from "@/components/tasks/TaskSection";
 import { Page } from "@/components/shell/PageHeader";
 import { EmptyAdd, formatDate, LinkButton, RowList, Section } from "@/components/ui";
-import { isValidItemId } from "@/lib/ids";
+import { itemPath } from "@/lib/item-path";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { areas, goals, tags } from "@/lib/repo";
 import { areaOptionsFor } from "../../projects/ProjectFields";
 import { deleteGoal, updateGoal } from "../actions";
@@ -25,16 +26,15 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const goal = isValidItemId(id) ? await goals.get(id) : null;
+  const id = await itemIdForMetadata("goals", (await params).id);
+  const goal = id ? await goals.get(id) : null;
   return { title: goal?.title ?? "목표" };
 }
 
 const CHILD_HORIZON = { life: "year", year: "quarter", quarter: null } as const;
 
 export default async function GoalDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("goals", (await params).id);
   const [node, allTags, areaList, goalList] = await Promise.all([
     goals.getNode(id),
     tags.listAll({ visibleOnly: true }),
@@ -75,6 +75,7 @@ export default async function GoalDetailPage({ params }: Props) {
             <GoalProgress value={node.progress} />
           </p>
           <GoalFields
+            doc={{ type: "goal", id: goal.id }}
             editorKey={goal.id}
             created={formatDate(seoulDate(goal.createdAt))}
             hasChildren={goalList.some((g) => g.parentId === goal.id)}
@@ -143,7 +144,7 @@ export default async function GoalDetailPage({ params }: Props) {
               {node.projects.map((p) => (
                 <li key={p.id}>
                   <Link
-                    href={`/projects/${p.id}`}
+                    href={itemPath("projects", p.id, p.title)}
                     className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
                   >
                     <span

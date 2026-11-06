@@ -4,6 +4,7 @@ import { SEMINAR_KIND, THOUGHT_KIND, THOUGHT_MATURITY } from "@/lib/enums";
 import type { Seminar } from "@/lib/repo/seminars";
 import type { Thought } from "@/lib/repo/thoughts";
 import { formatDate, formatRelative } from "./format";
+import { itemPath } from "@/lib/item-path";
 
 const rowClass =
   "flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors hover:bg-surface focus-visible:bg-surface";
@@ -29,7 +30,7 @@ export function RecentThoughts({ thoughts }: { thoughts: Thought[] }) {
         <ul className="-mx-3 flex flex-col">
           {thoughts.map((t) => (
             <li key={t.id}>
-              <Link href={`/thoughts/${t.id}`} className={rowClass}>
+              <Link href={itemPath("thoughts", t.id, t.title)} className={rowClass}>
                 <span className="line-clamp-1 text-sm text-fg">{t.title}</span>
                 <span className="flex items-center gap-1.5 text-xs text-muted">
                   <Badge tone={THOUGHT_KIND.tone(t.kind)}>{THOUGHT_KIND.label(t.kind)}</Badge>
@@ -62,7 +63,7 @@ export function RecentSeminars({ seminars }: { seminars: Seminar[] }) {
         <ul className="-mx-3 flex flex-col">
           {seminars.map((s) => (
             <li key={s.id}>
-              <Link href={`/seminars/${s.id}`} className={rowClass}>
+              <Link href={itemPath("seminars", s.id, s.title)} className={rowClass}>
                 <span className="line-clamp-1 text-sm text-fg">{s.title}</span>
                 <span className="flex items-center gap-1.5 text-xs text-muted">
                   <Badge tone={SEMINAR_KIND.tone(s.kind)}>{SEMINAR_KIND.label(s.kind)}</Badge>

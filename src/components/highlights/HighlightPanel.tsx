@@ -13,6 +13,7 @@ import { HIGHLIGHT_SWATCH, MAX_HIGHLIGHT_NOTE, type HighlightColor } from "@/lib
 import type { Highlight } from "@/lib/repo/highlights";
 import { ColorSwatches } from "./ColorSwatches";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { itemPath } from "@/lib/item-path";
 
 export type HighlightPanelProps = {
   highlights: Highlight[];
@@ -215,7 +216,7 @@ function HighlightItem({
         {thoughtId ? (
           <p className="text-xs text-muted" aria-live="polite">
             생각을 만들고 이 논문과 연결했어요.{" "}
-            <Link href={`/thoughts/${thoughtId}`} className="text-accent hover:underline">
+            <Link href={itemPath("thoughts", thoughtId)} className="text-accent hover:underline">
               생각 열기 →
             </Link>
           </p>

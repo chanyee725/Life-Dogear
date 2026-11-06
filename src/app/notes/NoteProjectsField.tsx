@@ -1,10 +1,9 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Property } from "@/components/fields/Properties";
 import { Select } from "@/components/ui/Select";
-import { isValidItemId } from "@/lib/ids";
+import { itemHref } from "@/lib/item-href";
 import type { NoteProject } from "@/lib/repo/notes";
 import { loadNoteProjects, setNoteProject } from "./actions";
 
@@ -12,11 +11,10 @@ import { loadNoteProjects, setNoteProject } from "./actions";
  * 프로젝트 field of a saved note (`/notes/[id]`): chips for the linked projects and a
  * picker of non-archived ones. Each change links/unlinks right away through `links`,
  * so the project's 노트 section shows the note (or drops it). Not part of the form
- * patch: neither control has a `name`. Hidden on `/notes/new` (no id yet).
+ * patch: neither control has a `name`. Hidden on `/notes/new` (no id yet). Takes the
+ * note id as a prop: the route param is a `<slug>-<shortid>` segment, not the id.
  */
-export function NoteProjectsField() {
-  const params = useParams<{ id?: string }>();
-  const noteId = typeof params?.id === "string" && isValidItemId(params.id) ? params.id : null;
+export function NoteProjectsField({ noteId }: { noteId: string | null }) {
   const [linked, setLinked] = useState<NoteProject[] | null>(null);
   const [options, setOptions] = useState<NoteProject[]>([]);
   const [error, setError] = useState("");
@@ -78,7 +76,7 @@ export function NoteProjectsField() {
                   key={p.id}
                   className="inline-flex h-6 items-center gap-1 rounded-md bg-subtle pr-1 pl-2 text-[13px] text-fg"
                 >
-                  <a href={`/projects/${p.id}`} className="hover:underline">
+                  <a href={itemHref("project", p.id, p.title)} className="hover:underline">
                     {p.title}
                   </a>
                   {p.archived ? <span className="text-xs text-muted">(보관됨)</span> : null}

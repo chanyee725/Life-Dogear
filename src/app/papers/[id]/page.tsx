@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PaperHighlights } from "@/components/highlights";
 import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Page } from "@/components/shell";
-import { isValidItemId } from "@/lib/ids";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { papers, tags } from "@/lib/repo";
 import * as highlightsRepo from "@/lib/repo/highlights";
 import { PaperEditor } from "../_components/PaperEditor";
@@ -13,21 +13,21 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-async function load(id: string) {
-  return isValidItemId(id) ? papers.get(id) : null;
+async function load(id: string | null) {
+  return id ? papers.get(id) : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const paper = await load((await params).id);
+  const paper = await load(await itemIdForMetadata("papers", (await params).id));
   return { title: paper?.title ?? "논문" };
 }
 
 export default async function PaperPage({ params }: Props) {
-  const { id } = await params;
+  const id = await resolveItemRoute("papers", (await params).id);
   const [paper, allTags, paperHighlights] = await Promise.all([
     load(id),
     tags.listAll(),
-    highlightsRepo.listByPaper(id), // [] for an invalid id
+    highlightsRepo.listByPaper(id),
   ]);
   if (!paper) notFound();
 
@@ -41,6 +41,7 @@ export default async function PaperPage({ params }: Props) {
         pdfSlot={
           <PdfPanel
             paperId={paper.id}
+            paperTitle={paper.title}
             hasPdf={Boolean(paper.pdfPath)}
             lastPage={paper.lastPage}
             totalPages={paper.totalPages}
@@ -50,6 +51,7 @@ export default async function PaperPage({ params }: Props) {
       />
       <PaperHighlights
         paperId={paper.id}
+        paperTitle={paper.title}
         initialHighlights={paperHighlights}
         hasPdf={Boolean(paper.pdfPath)}
       />

@@ -27,7 +27,7 @@ describe("task actions", () => {
     const parent = { type: "project", id: p.id };
     const a = await createTask({ title: "a", parent, dueDate: "2026-11-03" });
     expect(a.ok && a.data).toMatchObject({ title: "a", parentTitle: "p", dueDate: "2026-11-03" });
-    expect(paths()).toEqual(["/", "/tasks", `/projects/${p.id}`]);
+    expect(paths()).toEqual(["/", "/tasks", "/projects/[id]"]);
     const b = await createTask({ title: "b", parent });
     const bId = b.ok ? b.data.id : "";
     const aId = a.ok ? a.data.id : "";
@@ -91,7 +91,7 @@ describe("task actions", () => {
     // The client then asks for a reload of that list.
     vi.mocked(revalidatePath).mockClear();
     expect(await reloadTasks(a)).toEqual({ ok: true, data: null });
-    expect(paths()).toContain(`/projects/${p.id}`);
+    expect(paths()).toContain("/projects/[id]");
     expect(await reloadTasks("seed-x")).toMatchObject({ ok: false });
   });
 

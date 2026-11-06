@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { items, links, notes, RepoError, type ItemRef } from "@/lib/repo";
 import { cleanTitle, titleKey } from "@/lib/wikilinks";
-import { itemPath, MAX_TITLE, parseItemRef, parseText } from "./parse";
+import { itemRoute, MAX_TITLE, parseItemRef, parseText } from "./parse";
 import { runAction, type ActionResult } from "./result";
 
 /**
@@ -39,8 +39,8 @@ export async function createSlashPage(
       page = { ref: { type: "note", id: note.id }, title: note.title };
     }
 
-    revalidatePath(itemPath(from));
-    revalidatePath(itemPath(page.ref));
+    revalidatePath(itemRoute(from), "page");
+    revalidatePath(itemRoute(page.ref), "page");
     revalidatePath("/notes");
     if (from.type === "area") revalidatePath("/areas", "layout");
     return page;

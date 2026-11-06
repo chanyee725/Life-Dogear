@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { itemPath } from "@/app/_actions/parse";
 import { Badge, ListRow, RowList, Section } from "@/components/ui";
 import { ITEM_TYPE } from "@/lib/enums";
 import { areas, links, notes, type ItemRef } from "@/lib/repo";
 import { refKey } from "@/lib/repo/items";
 import { LinkPicker } from "./LinkPicker";
 import { UnlinkButton } from "./UnlinkButton";
+import { itemHref } from "@/lib/item-href";
 
 /**
  * "연결된 항목" section for a detail page (server component).
@@ -72,7 +72,7 @@ export async function ConnectedItems({
               <ListRow key={refKey(c.ref)} className="group transition-colors hover:bg-hover">
                 <Badge tone={ITEM_TYPE.tone(c.type)}>{ITEM_TYPE.label(c.type)}</Badge>
                 <Link
-                  href={itemPath(c.ref)}
+                  href={itemHref(c.ref.type, c.ref.id, c.title)}
                   className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
                 >
                   {c.title}
@@ -89,7 +89,7 @@ export async function ConnectedItems({
               >
                 <Badge tone={ITEM_TYPE.tone(c.ref.type)}>{ITEM_TYPE.label(c.ref.type)}</Badge>
                 <Link
-                  href={itemPath(c.ref)}
+                  href={itemHref(c.ref.type, c.ref.id, c.title)}
                   className="min-w-0 flex-1 truncate text-sm text-fg hover:underline"
                 >
                   {c.title}

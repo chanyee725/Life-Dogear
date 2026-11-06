@@ -3,6 +3,7 @@ import { Badge, ListRow, cn } from "@/components/ui";
 import { GOAL_HORIZON, GOAL_STATUS } from "@/lib/enums";
 import { GoalProgress } from "./GoalProgress";
 import { dueLabel, type ListGoal } from "./list-view";
+import { itemPath } from "@/lib/item-path";
 
 /** Left padding per sub-goal level (px), on top of the row's own padding. */
 const INDENT = 24;
@@ -42,7 +43,7 @@ export function GoalListRow({
           <span className="shrink-0 text-xs text-muted tabular-nums">{goal.period}</span>
         ) : null}
         <Link
-          href={`/goals/${goal.id}`}
+          href={itemPath("goals", goal.id, goal.title)}
           className={cn(
             "min-w-0 rounded-sm break-words sm:truncate",
             dropped ? "text-muted line-through hover:text-fg" : "font-medium hover:underline",

@@ -12,10 +12,13 @@ import { SectionHeader } from "@/components/ui";
  */
 export function PaperHighlights({
   paperId,
+  paperTitle,
   initialHighlights,
   hasPdf,
 }: {
   paperId: string;
+  /** Slug for reader links; optional, the short id alone also resolves. */
+  paperTitle?: string | null;
   initialHighlights: Highlight[];
   hasPdf: boolean;
 }) {
@@ -32,7 +35,11 @@ export function PaperHighlights({
       />
       <HighlightPanel
         highlights={highlights}
-        hrefFor={hasPdf ? (h) => readerHref(paperId, h.page, scrollTargetFor(h.rects)) : undefined}
+        hrefFor={
+          hasPdf
+            ? (h) => readerHref(paperId, h.page, scrollTargetFor(h.rects), paperTitle)
+            : undefined
+        }
         onUpdated={replace}
         onRemoved={removeById}
       />

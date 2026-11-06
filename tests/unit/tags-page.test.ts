@@ -13,6 +13,7 @@ import TagsPage from "@/app/tags/page";
 import { decodeTagParam, loadTagPage, sortTags, tagHref } from "@/app/tags/tag-data";
 import { archive, areas, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 beforeEach(async () => {
   await useFreshDb();
@@ -91,7 +92,7 @@ describe("loadTagPage", () => {
     const items = data.groups[1].items;
     expect(items.map((i) => i.title).sort()).toEqual(["출처 없는 노트", "회귀분석 노트"]);
     expect(items.find((i) => i.id === n.id)).toMatchObject({
-      href: `/notes/${n.id}`,
+      href: itemPath("notes", n.id, n.title),
       badges: [{ label: "강의", tone: "teal" }],
       meta: "통계학 강의",
     });
@@ -122,7 +123,7 @@ describe("tag pages", () => {
       await TagPage({ params: Promise.resolve({ name: encodeURIComponent("질적 연구") }) }),
     );
     expect(html).toContain("#질적 연구");
-    expect(html).toContain(`href="/papers/${p.id}"`);
+    expect(html).toContain(`href="${itemPath("papers", p.id, p.title)}"`);
     expect(html).toContain("논문 &lt;X&gt;");
     expect(html).not.toContain(">연구<span");
     await expect(TagPage({ params: Promise.resolve({ name: "nope" }) })).rejects.toMatchObject({

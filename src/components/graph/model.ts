@@ -15,6 +15,8 @@ import {
   parseGraphNodeId,
 } from "@/lib/graph/types";
 import { isGraphColorBy, type GraphColorBy } from "@/lib/graph/color";
+import { itemHref } from "@/lib/item-href";
+import { tagPath } from "@/lib/item-path";
 
 /** Korean labels for chips, PARA column titles and the preview. */
 export const GRAPH_TYPE_LABEL: Record<GraphNodeType, string> = {
@@ -403,14 +405,14 @@ const ROUTE: Record<GraphNodeType, string> = {
 export function nodeHref(node: Pick<GraphNode, "id" | "title" | "parent">): string | null {
   const parsed = parseGraphNodeId(node.id);
   if (!parsed) return null;
-  if (parsed.type === "tag") return `/tags/${encodeURIComponent(node.title)}`;
+  if (parsed.type === "tag") return tagPath(node.title);
   if (parsed.type === "task") {
     const parent = node.parent ? parseGraphNodeId(node.parent) : null;
     return parent && parent.type !== "task" && parent.type !== "tag"
-      ? `${ROUTE[parent.type]}/${encodeURIComponent(parent.id)}`
+      ? itemHref(parent.type, parent.id)
       : ROUTE.task;
   }
-  return `${ROUTE[parsed.type]}/${encodeURIComponent(parsed.id)}`;
+  return itemHref(parsed.type, parsed.id, node.title);
 }
 
 // ---------- Filter and URL state (design 6.2) ----------

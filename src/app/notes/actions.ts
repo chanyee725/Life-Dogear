@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { formText, parseId, parseItemRef } from "@/app/_actions/parse";
 import { runAction, type ActionResult } from "@/app/_actions/result";
-import { ITEM_ROUTE } from "@/lib/enums";
 import { links, notes, RepoError, type ItemRef } from "@/lib/repo";
 import { parseNoteForm } from "./form";
+import { itemRoutePattern } from "@/lib/item-href";
 
 const NOT_FOUND = "노트를 찾을 수 없습니다.";
 
@@ -15,7 +15,7 @@ function revalidate(id?: string) {
   revalidatePath("/resources");
   revalidatePath("/areas", "layout");
   revalidatePath("/tags", "layout");
-  if (id) revalidatePath(`/notes/${id}`);
+  if (id) revalidatePath("/notes/[id]", "page");
 }
 
 export async function createNote(form: FormData): Promise<ActionResult<{ id: string }>> {
@@ -28,7 +28,7 @@ export async function createNote(form: FormData): Promise<ActionResult<{ id: str
       linkTo,
     });
     revalidate();
-    if (linkTo) revalidatePath(`${ITEM_ROUTE[linkTo.type]}/${linkTo.id}`);
+    if (linkTo) revalidatePath(itemRoutePattern(linkTo.type), "page");
     return { id: note.id };
   });
 }
@@ -89,8 +89,8 @@ export async function setNoteProject(
     if (on === true) await links.link(note, project);
     else if (on === false) await links.unlink(note, project);
     else throw new RepoError("invalid", "연결 값이 올바르지 않습니다.");
-    revalidatePath(`/notes/${note.id}`);
-    revalidatePath(`${ITEM_ROUTE.project}/${project.id}`);
+    revalidatePath(itemRoutePattern("note"), "page");
+    revalidatePath(itemRoutePattern("project"), "page");
     revalidatePath("/notes");
     return null;
   });

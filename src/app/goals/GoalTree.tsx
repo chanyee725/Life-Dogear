@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { GOAL_HORIZON, GOAL_STATUS } from "@/lib/enums";
 import type { GoalNode } from "@/lib/repo/goals";
 import { GoalProgress } from "./GoalProgress";
+import { itemPath } from "@/lib/item-path";
 
 /**
  * Goals as a collapsible tree (life → year → quarter). Open by default; achieved and
@@ -31,7 +32,7 @@ function GoalLine({ node }: { node: GoalNode }) {
       <Badge tone={GOAL_HORIZON.tone(goal.horizon)}>{GOAL_HORIZON.label(goal.horizon)}</Badge>
       {goal.period ? <span className="text-xs text-muted tabular-nums">{goal.period}</span> : null}
       <Link
-        href={`/goals/${goal.id}`}
+        href={itemPath("goals", goal.id, goal.title)}
         className={
           goal.status === "dropped"
             ? "min-w-0 truncate text-muted line-through hover:text-fg"

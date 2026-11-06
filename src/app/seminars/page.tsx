@@ -21,6 +21,7 @@ import { seoulDate } from "@/components/calendar/model";
 import { SEMINAR_KIND } from "@/lib/enums";
 import { seminars } from "@/lib/repo";
 import type { Seminar, SeminarSort } from "@/lib/repo/seminars";
+import { itemPath } from "@/lib/item-path";
 
 export const metadata: Metadata = { title: "활동" };
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ function groupSeminars(list: Seminar[], group: SeminarGroup): ItemGroup<Seminar>
 }
 
 const BASE = "/seminars";
-const href = (s: Seminar) => `/seminars/${s.id}`;
+const href = (s: Seminar) => itemPath("seminars", s.id, s.title);
 
 const columns: Column<Seminar>[] = [
   {

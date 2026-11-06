@@ -13,7 +13,7 @@ function revalidate(id?: string) {
   // Project pages offer goals in a select; tag pages list goals.
   revalidatePath("/projects", "layout");
   revalidatePath("/tags", "layout");
-  if (id) revalidatePath(`/goals/${id}`);
+  if (id) revalidatePath("/goals/[id]", "page");
 }
 
 export async function createGoal(form: FormData): Promise<ActionResult<{ id: string }>> {

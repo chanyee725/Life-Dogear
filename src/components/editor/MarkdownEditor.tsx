@@ -10,6 +10,7 @@ import type { ItemRef } from "@/lib/repo/shared";
 import { createExtensions } from "./extensions";
 import { insertImages, isImageFile } from "./image-upload";
 import { SlashMenu } from "./SlashMenu";
+import { CurrentDocContext, useCurrentDoc } from "./current-doc";
 import { itemFromPath } from "./wiki-resolver";
 import { WikiRenamePrompt } from "./WikiRenamePrompt";
 import { WikiSuggest, type SuggestKeyHandler } from "./WikiSuggest";
@@ -137,33 +138,35 @@ export function MarkdownEditor({
   }, [editor]);
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      {toolbar && editable && editor ? (
-        <Toolbar editor={editor} onPickImages={(files) => void addImages(files)} />
-      ) : null}
-      <EditorContent editor={editor} />
-      {uploading > 0 ? (
-        <p aria-live="polite" className="text-xs text-muted">
-          사진 올리는 중…
-        </p>
-      ) : null}
-      {imageError ? (
-        <p role="alert" className="text-xs text-danger">
-          {imageError}
-        </p>
-      ) : null}
-      {editor && editable ? <WikiSuggest editor={editor} keyHandler={suggestKeys} /> : null}
-      {editor && editable ? (
-        <SlashMenu
-          editor={editor}
-          keyHandler={slashKeys}
-          doc={docRef}
-          onPickImages={(files) => void addImages(files)}
-        />
-      ) : null}
-      {name ? <HiddenValue name={name} editor={editor} initial={value} /> : null}
-      {name && editable ? <FormTitleRename /> : null}
-    </div>
+    <CurrentDocContext.Provider value={docRef}>
+      <div className={cn("flex flex-col gap-2", className)}>
+        {toolbar && editable && editor ? (
+          <Toolbar editor={editor} onPickImages={(files) => void addImages(files)} />
+        ) : null}
+        <EditorContent editor={editor} />
+        {uploading > 0 ? (
+          <p aria-live="polite" className="text-xs text-muted">
+            사진 올리는 중…
+          </p>
+        ) : null}
+        {imageError ? (
+          <p role="alert" className="text-xs text-danger">
+            {imageError}
+          </p>
+        ) : null}
+        {editor && editable ? <WikiSuggest editor={editor} keyHandler={suggestKeys} /> : null}
+        {editor && editable ? (
+          <SlashMenu
+            editor={editor}
+            keyHandler={slashKeys}
+            doc={docRef}
+            onPickImages={(files) => void addImages(files)}
+          />
+        ) : null}
+        {name ? <HiddenValue name={name} editor={editor} initial={value} /> : null}
+        {name && editable ? <FormTitleRename /> : null}
+      </div>
+    </CurrentDocContext.Provider>
   );
 }
 
@@ -173,7 +176,7 @@ export function MarkdownEditor({
  * Editors outside such a form (the paper page) render `WikiRenamePrompt` themselves.
  */
 function FormTitleRename() {
-  const item = itemFromPath(usePathname());
+  const item = useCurrentDoc();
   const probe = useRef<HTMLSpanElement>(null);
   const [title, setTitle] = useState<string | null>(null);
 

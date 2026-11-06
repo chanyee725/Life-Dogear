@@ -1,3 +1,4 @@
+import type { ItemRef } from "@/lib/repo/shared";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { DateField } from "@/components/fields/DateField";
 import { DetailBody, TitleInput } from "@/components/fields/ItemDetail";
@@ -13,10 +14,13 @@ export function SeminarFields({
   values,
   tagSuggestions,
   editorKey,
+  doc,
 }: {
   values: SeminarFormValues;
   tagSuggestions: string[];
   editorKey: string;
+  /** The saved item this body belongs to (detail page); omit on the new page. */
+  doc?: ItemRef | null;
 }) {
   return (
     <>
@@ -49,7 +53,7 @@ export function SeminarFields({
         </Property>
       </Properties>
       <DetailBody>
-        <MarkdownEditor key={editorKey} name="body" value={values.body} />
+        <MarkdownEditor key={editorKey} doc={doc} name="body" value={values.body} />
       </DetailBody>
     </>
   );

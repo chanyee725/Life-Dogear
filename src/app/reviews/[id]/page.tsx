@@ -12,7 +12,8 @@ import { ConnectedItems } from "@/components/links";
 import { Page } from "@/components/shell/PageHeader";
 import { Badge, LinkButton } from "@/components/ui";
 import { REVIEW_KIND } from "@/lib/enums";
-import { isValidItemId } from "@/lib/ids";
+import { itemPath } from "@/lib/item-path";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { goals, projects, thoughts } from "@/lib/repo";
 import * as reviews from "@/lib/repo/reviews";
 import { periodLabel } from "@/lib/reviews/period";
@@ -30,8 +31,8 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const review = isValidItemId(id) ? await reviews.get(id) : null;
+  const id = await itemIdForMetadata("reviews", (await params).id);
+  const review = id ? await reviews.get(id) : null;
   return { title: review?.title ?? "회고" };
 }
 
@@ -50,8 +51,7 @@ function Step({ n, title, children }: { n?: number; title: string; children?: Re
 const pct = (v: number | null | undefined) => (v === null || v === undefined ? "—" : `${v}%`);
 
 export default async function ReviewDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("reviews", (await params).id);
   const review = await reviews.get(id);
   if (!review) notFound();
 
@@ -93,7 +93,10 @@ export default async function ReviewDetailPage({ params }: Props) {
             const change = progressChange(now, previous?.goalProgress[g.id]);
             return (
               <li key={g.id} className="flex items-baseline gap-2">
-                <Link href={`/goals/${g.id}`} className="min-w-0 flex-1 truncate hover:underline">
+                <Link
+                  href={itemPath("goals", g.id, g.title)}
+                  className="min-w-0 flex-1 truncate hover:underline"
+                >
                   {g.title}
                 </Link>
                 <span className="text-xs text-muted">{g.period}</span>
@@ -172,7 +175,10 @@ export default async function ReviewDetailPage({ params }: Props) {
                   <ul className="flex flex-col gap-1 text-sm">
                     {activeProjects.map((p) => (
                       <li key={p.id}>
-                        <Link href={`/projects/${p.id}`} className="hover:underline">
+                        <Link
+                          href={itemPath("projects", p.id, p.title)}
+                          className="hover:underline"
+                        >
                           {p.title}
                         </Link>
                       </li>
@@ -199,6 +205,7 @@ export default async function ReviewDetailPage({ params }: Props) {
           <DetailBody>
             <MarkdownEditor
               key={review.id}
+              doc={{ type: "review", id: review.id }}
               name="body"
               value={review.body}
               placeholder="돌아보며 적어 보세요…"

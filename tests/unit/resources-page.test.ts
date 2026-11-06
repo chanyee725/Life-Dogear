@@ -11,6 +11,7 @@ import {
 } from "@/app/resources/resource-data";
 import { archive, notes, papers, projects, seminars, thoughts } from "@/lib/repo";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 describe("parseTopicParam / findTopic / resourcesHref", () => {
   it("takes the first non-empty string, NFC-normalised", () => {
@@ -146,7 +147,7 @@ describe("loadResources", () => {
     expect(data.items.find((i) => i.id === p.id)?.type).toBe("paper");
     expect(data.items.find((i) => i.id === n.id)).toMatchObject({
       type: "note",
-      href: `/notes/${n.id}`,
+      href: itemPath("notes", n.id, n.title),
       meta: "책 · 통계학 입문",
     });
   });

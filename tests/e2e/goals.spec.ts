@@ -24,7 +24,9 @@ test("목표: 속성이 짝지어 한 줄씩, 상세에 생성일과 빈 섹션 
   await page.getByLabel("왜").fill("이유 한 줄");
   await page.getByRole("button", { name: "저장" }).click();
   await expect(page).toHaveURL(/\/goals\/(?!new)[^/]+$/, { timeout: 20_000 });
-  const id = page.url().split("/").pop()!;
+  // Detail URLs end in the id's first 8 hex chars; "new …" links still carry the full id.
+  const short = page.url().slice(-8);
+  const fullId = `${short}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`;
 
   await expect(page.getByText("생성일")).toBeVisible();
   await expect(page.getByText(/^\d{4}\.\d{2}\.\d{2}$/)).toBeVisible();
@@ -33,12 +35,12 @@ test("목표: 속성이 짝지어 한 줄씩, 상세에 생성일과 빈 섹션 
   const children = page.getByRole("region", { name: "하위 목표" });
   await expect(children.getByRole("link", { name: "＋ 새 하위 목표" })).toHaveAttribute(
     "href",
-    `/goals/new?horizon=quarter&parent=${id}`,
+    new RegExp(`^/goals/new\\?horizon=quarter&parent=${fullId}$`),
   );
   const projects = page.getByRole("region", { name: "프로젝트" });
   await expect(projects.getByRole("link", { name: "＋ 새 프로젝트" })).toHaveAttribute(
     "href",
-    `/projects/new?goal=${id}`,
+    new RegExp(`^/projects/new\\?goal=${fullId}$`),
   );
   await expect(
     page.getByRole("region", { name: "노트" }).getByRole("link", { name: "＋ 새 노트" }),

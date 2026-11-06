@@ -3,14 +3,15 @@
 import { InputRule, Node, type Editor } from "@tiptap/core";
 import type { ResolvedPos } from "@tiptap/pm/model";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createThoughtForTitle } from "@/app/_actions/wikilinks";
 import { safeAction } from "@/components/links/safe-action";
 import { cn } from "@/components/ui/cn";
 import { ITEM_TYPE } from "@/lib/enums";
 import { cleanTitle } from "@/lib/wikilinks";
-import { invalidateWikiTitles, itemFromPath, itemHref, useWikiTarget } from "./wiki-resolver";
+import { useCurrentDoc } from "./current-doc";
+import { invalidateWikiTitles, itemHref, useWikiTarget } from "./wiki-resolver";
 import { wikiLinkPlugin, type MarkdownItLike } from "./wikilink-markdown";
 
 /** True inside a quote or code, where `[[…]]` stays plain text (see `@/lib/wikilinks`). */
@@ -107,21 +108,19 @@ function WikiLinkView({ node, selected }: ReactNodeViewProps) {
   const title = String(node.attrs.title ?? "");
   const target = useWikiTarget(title);
   const router = useRouter();
-  const pathname = usePathname();
+  const doc = useCurrentDoc();
   const [menu, setMenu] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const open = () => {
-    if (target) router.push(itemHref(target.ref));
+    if (target) router.push(itemHref(target.ref, target.title));
     else if (target === null) setMenu((m) => !m);
   };
 
   const create = () =>
     startTransition(async () => {
-      const result = await safeAction(() =>
-        createThoughtForTitle(title, itemFromPath(pathname) ?? undefined),
-      );
+      const result = await safeAction(() => createThoughtForTitle(title, doc ?? undefined));
       if (!result.ok) {
         setError(result.error);
         return;

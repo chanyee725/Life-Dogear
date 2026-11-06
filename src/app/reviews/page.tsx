@@ -8,6 +8,7 @@ import * as reviews from "@/lib/repo/reviews";
 import { periodLabel, periodOf } from "@/lib/reviews/period";
 import { openReview } from "./actions";
 import { bodyPreview, CURRENT_PERIOD_LABEL, KIND_TAB_LABEL } from "./labels";
+import { itemPath } from "@/lib/item-path";
 
 export const metadata: Metadata = { title: "회고" };
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function ReviewsPage({
 
   // One review per period: write it when missing, otherwise open the existing one.
   const primary = current ? (
-    <LinkButton href={`/reviews/${current.id}`}>{currentLabel} 열기</LinkButton>
+    <LinkButton href={itemPath("reviews", current.id)}>{currentLabel} 열기</LinkButton>
   ) : (
     <form action={openReview}>
       <input type="hidden" name="kind" value={kind} />
@@ -65,7 +66,7 @@ export default async function ReviewsPage({
           {items.map((r) => (
             <li key={r.id}>
               <Link
-                href={`/reviews/${r.id}`}
+                href={itemPath("reviews", r.id)}
                 className="flex items-baseline gap-3 rounded-md px-2 py-3 hover:bg-hover"
               >
                 <span className="shrink-0 font-medium tabular-nums">

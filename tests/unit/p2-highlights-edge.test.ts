@@ -22,6 +22,7 @@ import {
   validateRects,
 } from "@/lib/highlights";
 import { useFreshDb } from "./repo-helpers";
+import { itemPath } from "@/lib/item-path";
 
 let db: Awaited<ReturnType<typeof useFreshDb>>;
 let paperId: string;
@@ -489,13 +490,13 @@ describe("parseJumpParams (?page= & scroll=)", () => {
 
   it("builds links that round-trip through the parser", () => {
     const href = readerHref(paperId, 7, 0.4);
-    expect(href).toBe(`/papers/${paperId}/read?page=7&scroll=0.4`);
+    expect(href).toBe(`${itemPath("papers", paperId)}/read?page=7&scroll=0.4`);
     const q = new URL(href, "http://x").searchParams;
     expect(parseJumpParams({ page: q.get("page")!, scroll: q.get("scroll")! })).toEqual({
       page: 7,
       scroll: 0.4,
     });
-    expect(readerHref(paperId, 7)).toBe(`/papers/${paperId}/read?page=7`);
+    expect(readerHref(paperId, 7)).toBe(`${itemPath("papers", paperId)}/read?page=7`);
     expect(readerHref(paperId, 7, -1)).not.toContain("scroll");
     expect(readerHref(paperId, 7, Number.NaN)).not.toContain("scroll");
   });

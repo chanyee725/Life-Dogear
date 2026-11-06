@@ -10,7 +10,7 @@ function revalidate(id?: string) {
   revalidatePath("/");
   revalidatePath("/seminars");
   revalidatePath("/tags", "layout");
-  if (id) revalidatePath(`/seminars/${id}`);
+  if (id) revalidatePath("/seminars/[id]", "page");
 }
 
 export async function createSeminar(form: FormData): Promise<ActionResult<{ id: string }>> {

@@ -7,12 +7,14 @@ test("프로젝트 노트 섹션: 비었으면 ＋ 새 노트, 만든 노트가 
   const projectTitle = uniqueTitle("노트 섹션 프로젝트");
   await createItem(page, "projects", projectTitle);
   const projectUrl = page.url();
-  const projectId = projectUrl.split("/").pop()!;
+  // Detail URL is `<slug>-<shortid>`; the new-note link still carries the full UUID.
+  const projectShortId = projectUrl.split("/").pop()!.split("-").pop()!;
 
   const section = page.getByRole("region", { name: "노트" });
   await expect(section.getByRole("listitem")).toHaveCount(0);
   await section.getByRole("link", { name: "＋ 새 노트" }).click();
-  await expect(page).toHaveURL(new RegExp(`/notes/new\\?project=${projectId}$`), {
+  const uuidTail = "-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  await expect(page).toHaveURL(new RegExp(`/notes/new\\?project=${projectShortId}${uuidTail}$`), {
     // First client navigation to /notes/new may wait for the dev server to compile it.
     timeout: 20_000,
   });

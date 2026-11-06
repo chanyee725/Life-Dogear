@@ -10,7 +10,8 @@ import { ConnectedWithGraph } from "@/components/graph/ConnectedWithGraph";
 import { Badge, EmptyAdd, LinkButton, RowList, Section } from "@/components/ui";
 import { ItemNotes } from "@/components/notes/ItemNotes";
 import { Page } from "@/components/shell/PageHeader";
-import { isValidItemId } from "@/lib/ids";
+import { itemPath, type ItemPathKind } from "@/lib/item-path";
+import { itemIdForMetadata, resolveItemRoute } from "@/lib/item-route";
 import { ITEM_ROUTE, ITEM_TYPE, PROJECT_STATUS } from "@/lib/enums";
 import { areas, goals, projects, tags } from "@/lib/repo";
 import type { AreaProject } from "@/lib/repo/projects";
@@ -30,14 +31,13 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const area = isValidItemId(id) ? await areas.get(id) : null;
+  const id = await itemIdForMetadata("areas", (await params).id);
+  const area = id ? await areas.get(id) : null;
   return { title: area?.title ?? "영역" };
 }
 
 export default async function AreaDetailPage({ params }: Props) {
-  const { id } = await params;
-  if (!isValidItemId(id)) notFound();
+  const id = await resolveItemRoute("areas", (await params).id);
   const [area, allTags, areaProjects, areaGoals, allGoals, materials] = await Promise.all([
     areas.get(id),
     tags.listAll({ visibleOnly: true }),
@@ -77,6 +77,7 @@ export default async function AreaDetailPage({ params }: Props) {
           }
         >
           <AreaFields
+            doc={{ type: "area", id: area.id }}
             editorKey={area.id}
             tagSuggestions={allTags.map((t) => t.name)}
             values={{
@@ -140,7 +141,11 @@ export default async function AreaDetailPage({ params }: Props) {
             {materials.map((m) => (
               <li key={`${m.ref.type}:${m.ref.id}`}>
                 <Link
-                  href={`${ITEM_ROUTE[m.ref.type]}/${m.ref.id}`}
+                  href={itemPath(
+                    ITEM_ROUTE[m.ref.type].slice(1) as ItemPathKind,
+                    m.ref.id,
+                    m.title,
+                  )}
                   className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface"
                 >
                   <Badge tone={ITEM_TYPE.tone(m.ref.type)}>{ITEM_TYPE.label(m.ref.type)}</Badge>
