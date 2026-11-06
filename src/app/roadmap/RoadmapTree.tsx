@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Circle, CircleCheck, CircleDot, Diamond } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useRef, type CSSProperties } from "react";
 import type { CollapsedSet } from "./collapse";
 import {
@@ -9,10 +9,13 @@ import {
   ratio,
   stageStatus,
   type LearningRoadmap,
+  type Priority,
   type RoadmapNode,
   type Status,
 } from "./model";
+import { stageCurvePath, stageRows, type Side, type StageRow } from "./path-layout";
 import { useTreeKeyboard } from "./useTreeKeyboard";
+import "./roadmap-tree.css";
 
 export interface RoadmapTreeProps {
   roadmap: LearningRoadmap;
@@ -24,27 +27,44 @@ export interface RoadmapTreeProps {
 }
 
 /*
- * DOM contract (keyboard handling lives with the collapse hook, keyed by data-id):
+ * Path layout (roadmap-tree.css): stages run down a thick curved path as yellow topic boxes;
+ * each stage's items sit beside it, split into a left and a right column with dotted links.
+ *
+ * DOM contract (keyboard handling in useTreeKeyboard, keyed by data-id):
  *   ul.rt-tree[role=tree]
- *     li.rt-node[role=treeitem][aria-level][aria-expanded?][aria-selected][data-id][data-kind]
- *       div.rt-row > button.rt-twisty + (stage: button.rt-stage-label | item: button.rt-label)
- *       ul.rt-group[role=group] > li.rt-node ...
+ *     li.rt-node.rt-stage[role=treeitem][aria-level=1][aria-expanded?][data-id]
+ *       div.rt-row.rt-stage-row > button.rt-stage-label
+ *       ul.rt-group.rt-side[data-side=left|right][role=group] > li.rt-node[role=treeitem] ...
+ *     li.rt-node (item) > div.rt-row > button.rt-twisty + button.rt-label
+ *       ul.rt-group[role=group] > li.rt-node ...           (children open in place)
+ * Left items come first in the DOM, so arrow-key order reads left column, then right.
  */
 
-const STATUS_ICON: Record<Status, typeof Circle> = {
-  todo: Circle,
-  doing: CircleDot,
-  done: CircleCheck,
-};
+/** Viewbox width of a curve between two stages; wide enough for 2 × the path's sway. */
+const CURVE_W = 240;
+const CURVE_H = 100;
+/** Sideways swing of the stage boxes, px; the item columns keep a 64px gap (roadmap-tree.css). */
+const SWAY = 32;
 
-function StatusIcon({ status }: { status: Status }) {
-  const Icon = STATUS_ICON[status];
-  return <Icon className="rt-status" aria-hidden="true" strokeWidth={2.25} />;
+/** Status as a shape: empty ring, half-filled ring, filled ring with a check. */
+function StatusBadge({ status }: { status: Status }) {
+  return (
+    <span className="rt-badge rt-badge-status" data-status={status} aria-hidden="true">
+      {status === "done" && <Check strokeWidth={3.5} />}
+    </span>
+  );
+}
+
+/** Priority as a letter (필/추/선) in a circle; fill and border style repeat it. */
+function PriorityBadge({ priority }: { priority: Priority }) {
+  return (
+    <span className="rt-badge rt-badge-prio" data-priority={priority} aria-hidden="true">
+      {PRIORITY_LABEL[priority].slice(0, 1)}
+    </span>
+  );
 }
 
 function Twisty({ node, onToggle }: { node: RoadmapNode; onToggle: (id: string) => void }) {
-  if (node.children.length === 0)
-    return <span className="rt-twisty rt-twisty-leaf" aria-hidden="true" />;
   return (
     <button
       type="button"
@@ -54,7 +74,7 @@ function Twisty({ node, onToggle }: { node: RoadmapNode; onToggle: (id: string) 
       data-testid={`rt-toggle-${node.id}`}
       onClick={() => onToggle(node.id)}
     >
-      <ChevronRight className="rt-chevron" strokeWidth={2.25} />
+      <ChevronRight className="rt-chevron" strokeWidth={2.5} />
     </button>
   );
 }
@@ -66,17 +86,27 @@ interface BranchProps {
   onSelect: (id: string) => void;
 }
 
-function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; level: number }) {
+interface ItemNodeProps extends BranchProps {
+  node: RoadmapNode;
+  level: number;
+  /** Explicit set position: the stage's items span two groups (left/right). */
+  pos?: { inSet: number; size: number };
+}
+
+function ItemNode({ node, level, pos, ...ctx }: ItemNodeProps) {
   const hasChildren = node.children.length > 0;
-  const folded = collapsed(ctx, node);
-  const priority = node.priority ? PRIORITY_LABEL[node.priority] : null;
-  const meta = [priority, STATUS_LABEL[node.status]].filter(Boolean).join(", ");
+  const folded = ctx.collapsed.has(node.id);
+  const meta = [node.priority ? PRIORITY_LABEL[node.priority] : null, STATUS_LABEL[node.status]]
+    .filter(Boolean)
+    .join(", ");
   return (
     <li
-      className="rt-node"
+      className="rt-node rt-item"
       role="treeitem"
       tabIndex={-1}
       aria-level={level}
+      aria-posinset={pos?.inSet}
+      aria-setsize={pos?.size}
       aria-expanded={hasChildren ? !folded : undefined}
       aria-selected={ctx.selectedId === node.id}
       data-id={node.id}
@@ -86,30 +116,30 @@ function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; le
       data-status={node.status}
     >
       <div className="rt-row">
-        <Twisty node={node} onToggle={ctx.onToggle} />
+        {hasChildren && <Twisty node={node} onToggle={ctx.onToggle} />}
         <button
           type="button"
           className="rt-label"
           tabIndex={-1}
           data-testid={`rm-item-${node.id}`}
-          title={meta.replace(", ", " · ")}
+          title={meta}
           onClick={() => ctx.onSelect(node.id)}
         >
-          <StatusIcon status={node.status} />
-          {node.priority === "essential" && (
-            <Diamond className="rt-prio" aria-hidden="true" strokeWidth={2.25} />
-          )}
           <span className="rt-title">{node.title}</span>
           <span className="sr-only">({meta})</span>
+          {hasChildren && (
+            <span className="rt-count" aria-hidden="true">
+              {node.progress.done}/{node.progress.total}
+            </span>
+          )}
         </button>
-        {hasChildren && (
-          <span className="rt-count" aria-hidden="true">
-            {node.progress.done}/{node.progress.total}
-          </span>
-        )}
+        <span className="rt-badges">
+          {node.priority && <PriorityBadge priority={node.priority} />}
+          <StatusBadge status={node.status} />
+        </span>
       </div>
       {hasChildren && !folded && (
-        <ul className="rt-group" role="group">
+        <ul className="rt-group rt-sub" role="group">
           {node.children.map((c) => (
             <ItemNode key={c.id} node={c} level={level + 1} {...ctx} />
           ))}
@@ -119,13 +149,52 @@ function ItemNode({ node, level, ...ctx }: BranchProps & { node: RoadmapNode; le
   );
 }
 
-const collapsed = (ctx: BranchProps, node: RoadmapNode) => ctx.collapsed.has(node.id);
+function SideGroup({
+  side,
+  items,
+  offset,
+  size,
+  ...ctx
+}: BranchProps & { side: Side; items: RoadmapNode[]; offset: number; size: number }) {
+  if (items.length === 0) return null;
+  return (
+    <ul
+      className="rt-group rt-side"
+      role="group"
+      data-side={side}
+      data-many={items.length > 4 ? "" : undefined}
+    >
+      {items.map((c, i) => (
+        <ItemNode key={c.id} node={c} level={2} pos={{ inSet: offset + i + 1, size }} {...ctx} />
+      ))}
+    </ul>
+  );
+}
 
-function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode; index: number }) {
-  const folded = collapsed(ctx, stage);
+/** Thick path from this stage's box down to the next one (ends meet both box centres). */
+function Curve({ index }: { index: number }) {
+  return (
+    <svg
+      className="rt-curve"
+      viewBox={`0 0 ${CURVE_W} ${CURVE_H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d={stageCurvePath(index, { width: CURVE_W, height: CURVE_H, amplitude: SWAY })}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+function StageNode({ row, ...ctx }: BranchProps & { row: StageRow }) {
+  const { stage, index, folded, left, right, sway, hasNext } = row;
   const hasChildren = stage.children.length > 0;
   const status = stageStatus(stage);
   const { done, total } = stage.progress;
+  const size = stage.children.length;
   return (
     <li
       className="rt-node rt-stage"
@@ -139,12 +208,20 @@ function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode;
       data-kind="stage"
       data-depth={1}
       data-status={status}
+      data-first={index === 0 ? "" : undefined}
+      data-sides={right.length > 0 ? "both" : left.length > 0 ? "left" : "none"}
       data-testid={`rm-stage-${stage.id}`}
-      style={{ "--rt-progress": ratio(stage.progress) } as CSSProperties}
+      style={
+        {
+          "--rt-progress": ratio(stage.progress),
+          "--rt-sway": `${sway}px`,
+        } as CSSProperties
+      }
     >
+      {hasNext && <Curve index={index} />}
       <div className="rt-row rt-stage-row">
         <span className="rt-stage-num" aria-hidden="true">
-          {status === "done" ? <CircleCheck strokeWidth={2.5} /> : index + 1}
+          {index + 1}
         </span>
         <button
           type="button"
@@ -153,30 +230,25 @@ function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode;
           onClick={() => hasChildren && ctx.onToggle(stage.id)}
         >
           <span className="rt-stage-title">{stage.title}</span>
-          {hasChildren && (
-            <ChevronRight className="rt-chevron" aria-hidden="true" strokeWidth={2.25} />
-          )}
-        </button>
-        <span className="rt-stage-meter" aria-hidden="true">
-          <span className="rt-stage-bar" />
-          <span className="rt-stage-count">
-            {done}/{total}
+          <span className="rt-stage-meta" aria-hidden="true">
+            <span className="rt-stage-bar" />
+            <span className="rt-stage-count">
+              {done}/{total}
+            </span>
+            {hasChildren && <ChevronRight className="rt-chevron" strokeWidth={2.5} />}
           </span>
+        </button>
+        <span className="rt-badges">
+          <StatusBadge status={status} />
         </span>
-        {stage.description && !folded && <p className="rt-stage-desc">{stage.description}</p>}
       </div>
-      {hasChildren && !folded && (
-        <ul className="rt-group" role="group">
-          {stage.children.map((c) => (
-            <ItemNode key={c.id} node={c} level={2} {...ctx} />
-          ))}
-        </ul>
-      )}
+      <SideGroup side="left" items={left} offset={0} size={size} {...ctx} />
+      <SideGroup side="right" items={right} offset={left.length} size={size} {...ctx} />
     </li>
   );
 }
 
-/** Stages down a trunk; items branch off with elbow connectors, deeper levels indent further. */
+/** Stages down a curved centre path; items branch off to both sides with dotted links. */
 export default function RoadmapTree({
   roadmap,
   selectedId,
@@ -187,19 +259,22 @@ export default function RoadmapTree({
   const treeRef = useRef<HTMLUListElement>(null);
   const { onKeyDown } = useTreeKeyboard({ rootRef: treeRef, collapsed, onToggle, onSelect });
   const ctx: BranchProps = { collapsed, onToggle, selectedId, onSelect };
+  const rows = stageRows(roadmap.stages, collapsed, SWAY);
 
   return (
-    <ul
-      ref={treeRef}
-      onKeyDown={onKeyDown}
-      className="rt-tree"
-      role="tree"
-      aria-label={`${roadmap.title} 로드맵`}
-      data-testid="rm-tree"
-    >
-      {roadmap.stages.map((stage, i) => (
-        <StageNode key={stage.id} stage={stage} index={i} {...ctx} />
-      ))}
-    </ul>
+    <div className="rt-wrap">
+      <ul
+        ref={treeRef}
+        onKeyDown={onKeyDown}
+        className="rt-tree"
+        role="tree"
+        aria-label={`${roadmap.title} 로드맵`}
+        data-testid="rm-tree"
+      >
+        {rows.map((row) => (
+          <StageNode key={row.stage.id} row={row} {...ctx} />
+        ))}
+      </ul>
+    </div>
   );
 }
