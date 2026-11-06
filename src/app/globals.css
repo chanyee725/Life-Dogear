@@ -423,6 +423,8 @@
   /* A sized photo fills its share of the column; the caption matches it. */
   .rb-prose .rb-image[data-width] img {
     width: 100%;
+    /* Keep the photo's proportions at any chosen width. */
+    max-height: none;
   }
   .rb-image[data-width] .rb-image-caption,
   .rb-image[data-width] .rb-image-caption-input {
@@ -488,6 +490,33 @@
     color: var(--rb-fg);
     background: var(--rb-surface);
   }
+  /* Bottom-right corner handle: drag to resize (editing only). */
+  .rb-image-resize {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 2px solid var(--rb-bg);
+    background: var(--rb-accent);
+    cursor: nwse-resize;
+    touch-action: none;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .rb-image-frame:hover .rb-image-resize,
+  .rb-image[data-resizing] .rb-image-resize {
+    opacity: 1;
+  }
+  .rb-image[data-resizing],
+  .rb-image[data-resizing] * {
+    cursor: nwse-resize;
+    user-select: none;
+  }
+  .rb-prose[contenteditable="false"] .rb-image-resize {
+    display: none;
+  }
   .rb-image-frame:hover .rb-image-tools,
   .rb-image-tools:focus-within,
   .rb-image[data-copy] .rb-image-tools {
@@ -500,7 +529,8 @@
     display: none;
   }
   @media (hover: none) {
-    .rb-image-tools {
+    .rb-image-tools,
+    .rb-image-resize {
       opacity: 1;
     }
   }

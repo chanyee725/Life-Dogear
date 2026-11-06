@@ -10,21 +10,28 @@ export const IMAGE_COPY_LABEL = {
 } as const;
 export const CAPTION_PLACEHOLDER = "캡션 추가";
 
-/** Photo widths as a share of the text column; no width keeps the photo's own size. */
+/** Preset photo widths as a share of the text column; no width keeps the photo's own size. */
 export const IMAGE_SIZES = [
   { width: 25, label: "작게" },
   { width: 50, label: "중간" },
   { width: 75, label: "크게" },
   { width: 100, label: "원본" },
 ] as const;
-export type ImageWidth = (typeof IMAGE_SIZES)[number]["width"];
-const WIDTH_TITLE = /^w=(25|50|75|100)$/;
+/** Any whole percent of the column from 10 to 100 (presets, or dragged with the corner handle). */
+export type ImageWidth = number;
+export const MIN_IMAGE_WIDTH = 10;
+export const MAX_IMAGE_WIDTH = 100;
+// 10–99 or 100, no leading zero, so a saved title always reads back as itself.
+const WIDTH_TITLE = /^w=([1-9]\d|100)$/;
 
-/** `w=50` (the Markdown image title) → 50; anything else → null. */
+/** `w=50` or `w=37` (the Markdown image title) → that percent; anything else → null. */
 export function parseWidthTitle(title: string | null | undefined): ImageWidth | null {
   const match = title ? WIDTH_TITLE.exec(title.trim()) : null;
-  return match ? (Number(match[1]) as ImageWidth) : null;
+  return match ? Number(match[1]) : null;
 }
+
+const clampWidth = (percent: number) =>
+  Math.min(MAX_IMAGE_WIDTH, Math.max(MIN_IMAGE_WIDTH, Math.round(percent)));
 const COPIED_MS = 1500;
 const FAILED_MS = 2500;
 
@@ -117,7 +124,15 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
   const tools = document.createElement("div");
   tools.className = "rb-image-tools";
   tools.append(sizes, button);
-  frame.append(img, tools);
+
+  // Bottom-right corner: drag to resize. The photo stays centred, so it grows on both sides
+  // and the width changes by twice the pointer's move to keep the corner under the pointer.
+  const handle = document.createElement("div");
+  handle.className = "rb-image-resize";
+  handle.dataset.testid = "image-resize-handle";
+  handle.setAttribute("aria-hidden", "true");
+  handle.title = "끌어서 크기 조절";
+  frame.append(img, tools, handle);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -182,6 +197,73 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     view.dispatch(view.state.tr.setSelection(Selection.near($after)));
   });
 
+  /** Sizes the photo and caption to `width`% of the column (null: the photo's own size). */
+  const applyWidth = (width: ImageWidth | null) => {
+    const share = width ? `${width}%` : "";
+    for (const element of [frame, input, caption]) element.style.width = share;
+    if (width) dom.dataset.width = String(width);
+    else delete dom.dataset.width;
+    for (const size of sizeButtons) {
+      // No saved width is the photo's own size, shown as 원본.
+      const pressed = size.width === (width ?? 100);
+      size.button.setAttribute("aria-pressed", String(pressed));
+    }
+  };
+
+  let drag: { startX: number; startPx: number; columnPx: number; width: ImageWidth } | null =
+    null;
+  const onMove = (event: PointerEvent) => {
+    if (!drag) return;
+    event.preventDefault();
+    const px = drag.startPx + 2 * (event.clientX - drag.startX);
+    drag.width = clampWidth((px / drag.columnPx) * 100);
+    applyWidth(drag.width);
+  };
+  const endDrag = () => {
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onCancel);
+    delete dom.dataset.resizing;
+    dom.draggable = true;
+  };
+  const onUp = () => {
+    const width = drag?.width;
+    drag = null;
+    endDrag();
+    const pos = getPos();
+    // One transaction for the whole drag, only when the width really changed.
+    if (width === undefined || pos === undefined || node.attrs.width === width) {
+      return applyWidth(parseWidthTitle(`w=${node.attrs.width}`));
+    }
+    view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, width }));
+  };
+  const onCancel = () => {
+    drag = null;
+    endDrag();
+    applyWidth(parseWidthTitle(`w=${node.attrs.width}`));
+  };
+  handle.addEventListener("mousedown", (event) => event.preventDefault());
+  handle.addEventListener("pointerdown", (event) => {
+    if (!view.editable || event.button !== 0) return;
+    const columnPx = dom.getBoundingClientRect().width;
+    if (!columnPx) return;
+    event.preventDefault();
+    event.stopPropagation();
+    // The figure is draggable as a block; a resize must not start a block drag.
+    dom.draggable = false;
+    dom.dataset.resizing = "";
+    const startPx = frame.getBoundingClientRect().width;
+    drag = {
+      startX: event.clientX,
+      startPx,
+      columnPx,
+      width: clampWidth((startPx / columnPx) * 100),
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+  });
+
   const render = () => {
     const src = (node.attrs.src as string | null) ?? "";
     const alt = (node.attrs.alt as string | null) ?? "";
@@ -194,17 +276,9 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     caption.textContent = alt;
     caption.hidden = !alt.trim();
 
-    const width = parseWidthTitle(`w=${node.attrs.width}`);
-    // A sized photo and its caption share the same share of the column.
-    const share = width ? `${width}%` : "";
-    for (const element of [frame, input, caption]) element.style.width = share;
-    if (width) dom.dataset.width = String(width);
-    else delete dom.dataset.width;
-    for (const size of sizeButtons) {
-      // No saved width is the photo's own size, shown as 원본.
-      const pressed = size.width === (width ?? 100);
-      size.button.setAttribute("aria-pressed", String(pressed));
-    }
+    // A sized photo and its caption share the same share of the column; mid-drag the
+    // dragged width wins until the pointer is released.
+    if (!drag) applyWidth(parseWidthTitle(`w=${node.attrs.width}`));
   };
   render();
 
@@ -218,9 +292,15 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     },
     stopEvent: (event) =>
       event.target instanceof Node &&
-      (input.contains(event.target) || tools.contains(event.target)),
+      (input.contains(event.target) ||
+        tools.contains(event.target) ||
+        handle.contains(event.target)),
     ignoreMutation: () => true,
-    destroy: () => clearTimeout(timer),
+    destroy: () => {
+      clearTimeout(timer);
+      drag = null;
+      endDrag();
+    },
   };
 }
 
@@ -251,8 +331,9 @@ function keepEscapesInAlt(md: MarkdownIt) {
 }
 
 /**
- * Block photo with hover size and copy buttons and a one-line caption under it, centred.
- * A chosen size is saved as the image title: `![캡션](url "w=50")`.
+ * Block photo with hover size and copy buttons, a bottom-right resize corner and a one-line
+ * caption under it, centred. A chosen size (10–100% of the column) is saved as the image
+ * title: `![캡션](url "w=50")`.
  * Markdown stays `![캡션](url)` (the same output as prosemirror-markdown's image), now
  * closed as a block: the stock serializer wrote the next paragraph straight after the `)`,
  * so `![](url)` and the text below it merged into one line.
