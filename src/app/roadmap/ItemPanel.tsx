@@ -84,7 +84,60 @@ export interface ItemPanelProps {
   onStatusChange?: (itemId: string, status: Status) => void;
   /** Disables the status buttons while the update is in flight. */
   pending?: boolean;
+  /** Opens a child/grandchild in this panel. Omit to list them as plain text. */
+  onSelect?: (itemId: string) => void;
   className?: string;
+}
+
+/** How many levels below the item the panel lists (child, grandchild). */
+const SUBTREE_DEPTH = 2;
+
+/** Nested list of the item's children and grandchildren, same glyphs as the tree. */
+function SubTree({
+  nodes,
+  depth,
+  onSelect,
+}: {
+  nodes: RoadmapItem[];
+  depth: number;
+  onSelect?: (itemId: string) => void;
+}) {
+  return (
+    <ul className="ip-sub-list" data-depth={depth}>
+      {nodes.map((n) => {
+        const deeper = depth >= SUBTREE_DEPTH && n.children.length > 0;
+        const body = (
+          <>
+            <StatusIcon status={n.status} size={14} />
+            <span className="sr-only">{STATUS_LABEL[n.status]}, </span>
+            {n.priority ? <PriorityMark priority={n.priority} /> : null}
+            {n.priority ? <span className="sr-only">{PRIORITY_LABEL[n.priority]}, </span> : null}
+            <span className="ip-sub-title">{n.title}</span>
+            {deeper ? (
+              <span className="ip-sub-more">
+                {n.progress.done}/{n.progress.total}
+                <span className="sr-only"> 하위 항목 완료</span>
+              </span>
+            ) : null}
+          </>
+        );
+        return (
+          <li key={n.id} className="ip-sub-node" data-priority={n.priority ?? undefined} data-status={n.status}>
+            {onSelect ? (
+              <button type="button" className="ip-sub-row" onClick={() => onSelect(n.id)}>
+                {body}
+              </button>
+            ) : (
+              <span className="ip-sub-row">{body}</span>
+            )}
+            {!deeper && n.children.length > 0 ? (
+              <SubTree nodes={n.children} depth={depth + 1} onSelect={onSelect} />
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 /** Side panel for one roadmap item: description, resource links, status switch. */
@@ -93,6 +146,7 @@ export default function ItemPanel({
   onClose,
   onStatusChange,
   pending = false,
+  onSelect,
   className,
 }: ItemPanelProps) {
   if (!item) return null;
@@ -143,6 +197,15 @@ export default function ItemPanel({
       </div>
 
       {item.description ? <p className="ip-desc">{item.description}</p> : null}
+
+      {item.children.length > 0 ? (
+        <section aria-labelledby={`ip-sub-${item.id}`} className="ip-sub">
+          <h3 id={`ip-sub-${item.id}`} className="ip-section-title">
+            하위 항목 {item.progress.done}/{item.progress.total} 완료
+          </h3>
+          <SubTree nodes={item.children} depth={1} onSelect={onSelect} />
+        </section>
+      ) : null}
 
       {item.resources.length > 0 ? (
         <section aria-labelledby={`ip-res-${item.id}`} className="ip-resources">
