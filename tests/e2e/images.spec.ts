@@ -160,3 +160,54 @@ test("사진: 크기 버튼으로 본문 폭의 비율을 바꾸고 새로고침
   await expect(editor.locator("figure.rb-image")).toHaveAttribute("data-width", "50");
   await deleteCurrentItem(page);
 });
+
+test("사진: 오른쪽 아래 모서리 핸들을 끌면 크기가 바뀌고 새로고침 뒤에도 유지된다", async ({
+  page,
+}) => {
+  await createItem(page, "thoughts", uniqueTitle("E2E photo corner"));
+  const editor = page.getByRole("textbox", { name: "본문" });
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: /사진 넣기/ }).click();
+  await (await chooser).setFiles({ name: "image.png", mimeType: "image/png", buffer: PNG });
+  const img = editor.locator("figure.rb-image img");
+  await expect(img).toHaveAttribute("src", /^\/api\/images\//);
+
+  // Start from a known size: half the column.
+  await img.hover();
+  await page
+    .getByRole("group", { name: "사진 크기" })
+    .getByRole("button", { name: "중간" })
+    .click();
+  const column = (await editor.boundingBox())!;
+  await expect
+    .poll(async () => (await img.boundingBox())!.width)
+    .toBeGreaterThan(column.width * 0.45);
+
+  await img.hover();
+  const handle = page.getByTestId("image-resize-handle");
+  await expect(handle).toBeVisible();
+  const grip = (await handle.boundingBox())!;
+  const before = (await img.boundingBox())!;
+  // Shrink: drag the bottom-right corner left by a quarter of the column.
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2 - column.width * 0.25, grip.y + grip.height / 2, {
+    steps: 8,
+  });
+  await page.mouse.up();
+
+  await expect.poll(async () => (await img.boundingBox())!.width).toBeLessThan(before.width * 0.7);
+  const after = (await img.boundingBox())!;
+  const percent = Math.round((after.width / column.width) * 100);
+  await expect(page.locator('input[type="hidden"][name="body"]')).toHaveValue(
+    /!\[\]\(\/api\/images\/[^)\s]+ "w=\d{1,3}"\)/,
+  );
+  await expect(page.getByText("저장됨", { exact: true })).toBeVisible();
+
+  await page.reload();
+  const figure = page.locator("figure.rb-image");
+  const saved = Number(await figure.getAttribute("data-width"));
+  expect(Math.abs(saved - percent)).toBeLessThanOrEqual(3);
+  expect(saved).not.toBe(50);
+  await deleteCurrentItem(page);
+});
