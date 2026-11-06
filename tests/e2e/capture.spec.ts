@@ -54,6 +54,12 @@ test("빠른 캡처: Cmd/Ctrl+K 팔레트의 '빠른 캡처' 명령으로도 열
   await page.goto("/");
   await page.keyboard.press("ControlOrMeta+k");
   const search = page.getByRole("combobox", { name: "검색어" });
+  const box = await page.getByRole("dialog", { name: /검색/ }).boundingBox();
+  const vp = page.viewportSize();
+  if (box && vp) {
+    expect(Math.abs(box.x + box.width / 2 - vp.width / 2)).toBeLessThan(2);
+    expect(Math.abs(box.y + box.height / 2 - vp.height / 2)).toBeLessThan(2);
+  }
   await search.fill("캡처");
   await expect(page.getByRole("option", { name: /빠른 캡처/ })).toBeVisible();
   await search.press("Enter");

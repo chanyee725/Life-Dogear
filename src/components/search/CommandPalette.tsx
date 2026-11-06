@@ -191,10 +191,10 @@ export function CommandPalette() {
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
-      className="mx-auto mt-[12vh] mb-auto w-[min(40rem,calc(100vw-2rem))] rounded-lg border border-border bg-bg p-0 text-fg shadow-overlay backdrop:bg-black/30"
+      className="m-auto h-[min(32rem,70vh)] max-h-[calc(100vh-2rem)] w-[min(40rem,calc(100vw-2rem))] rounded-lg border border-border bg-bg p-0 text-fg shadow-overlay backdrop:bg-black/30"
     >
       {open ? (
-        <div className="flex max-h-[70vh] flex-col">
+        <div className="flex h-full flex-col">
           <div className="flex items-center gap-2 border-b border-border px-4">
             <span aria-hidden className="text-faint">
               ⌕
