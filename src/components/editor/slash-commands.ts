@@ -43,14 +43,14 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
     id: "columns2",
     label: "2열",
     icon: "▥",
-    aliases: ["/2", "2", "columns", "열", "단"],
+    aliases: ["columns", "열", "단"],
     run: (editor) => insertColumns(editor, 2),
   },
   {
     id: "columns3",
     label: "3열",
     icon: "▥",
-    aliases: ["/3", "3", "columns", "열", "단"],
+    aliases: ["columns", "열", "단"],
     run: (editor) => insertColumns(editor, 3),
   },
 ];

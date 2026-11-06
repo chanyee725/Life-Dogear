@@ -99,3 +99,26 @@ test("열: 경계 핸들을 끌어 비율을 바꾸면 새로고침 뒤에도 �
   await deleteCurrentItem(page);
   await expect(page).toHaveURL(/\/notes$/);
 });
+
+test("열: /2·/3 메뉴에는 열 명령 하나만 뜨고 제목 2·3은 안 뜬다", async ({ page }) => {
+  const title = uniqueTitle("열 메뉴");
+  await page.goto("/notes/new");
+  await page.getByLabel("제목", { exact: true }).fill(title);
+  await page.getByRole("button", { name: "저장" }).click();
+  await expect(page).toHaveURL(/\/notes\/(?!new)[^/]+$/, { timeout: 20_000 });
+
+  await editor(page).click();
+  for (const n of ["2", "3"]) {
+    await page.keyboard.type(`/${n}`);
+    const options = menu(page).getByRole("option");
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveText(`▥${n}열`);
+    await expect(menu(page)).not.toContainText(`제목 ${n}`);
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+  }
+
+  await deleteCurrentItem(page);
+  await expect(page).toHaveURL(/\/notes$/);
+});
