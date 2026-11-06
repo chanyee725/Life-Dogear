@@ -15,9 +15,11 @@ import { eq, inArray } from "drizzle-orm";
 import { createDb, type Db } from "../src/db/config";
 import { loadEnvIfPresent } from "../src/db/env";
 import { learningRoadmaps, roadmapNodes } from "../src/db/schema";
-import { roadmapImportSchema, type RoadmapImport } from "../src/lib/roadmap/contract";
-
-type ImportItem = RoadmapImport["stages"][number]["items"][number];
+import {
+  parseRoadmapJson,
+  type RoadmapInput,
+  type RoadmapItemInput,
+} from "../src/lib/roadmap/contract";
 
 export type ImportResult = {
   created: boolean;
@@ -26,9 +28,14 @@ export type ImportResult = {
   removed: number;
 };
 
-/** Parses and validates roadmap JSON text. Throws on bad JSON or off-contract data. */
-export function parseRoadmapJson(text: string): RoadmapImport {
-  return roadmapImportSchema.parse(JSON.parse(text));
+/** Validates JSON text and imports it; off-contract input changes nothing. */
+export async function importRoadmapJson(
+  db: Db,
+  json: string,
+): Promise<{ ok: true; result: ImportResult } | { ok: false; errors: string[] }> {
+  const parsed = parseRoadmapJson(json);
+  if (!parsed.ok) return parsed;
+  return { ok: true, result: await importRoadmap(db, parsed.roadmap) };
 }
 
 /** A node's identity across imports: its title and every ancestor title. */
@@ -39,7 +46,7 @@ function pathKey(path: string[]): string {
 type NodeRow = typeof roadmapNodes.$inferSelect;
 
 /** Inserts or updates a roadmap by slug; see the file header for the update rules. */
-export async function importRoadmap(db: Db, data: RoadmapImport): Promise<ImportResult> {
+export async function importRoadmap(db: Db, data: RoadmapInput): Promise<ImportResult> {
   return db.transaction(async (tx) => {
     const now = new Date().toISOString();
     const [existing] = await tx
@@ -91,19 +98,26 @@ export async function importRoadmap(db: Db, data: RoadmapImport): Promise<Import
         updated++;
         await tx
           .update(roadmapNodes)
-          .set({ ...node, parentId, position })
+          .set({ ...node, parentId, position, updatedAt: now })
           .where(eq(roadmapNodes.id, old.id));
         return old.id;
       }
       const id = crypto.randomUUID();
       added++;
-      await tx
-        .insert(roadmapNodes)
-        .values({ id, roadmapId, parentId, position, status: "todo", ...node });
+      await tx.insert(roadmapNodes).values({
+        id,
+        roadmapId,
+        parentId,
+        position,
+        status: "todo",
+        createdAt: now,
+        updatedAt: now,
+        ...node,
+      });
       return id;
     }
 
-    async function importItems(items: ImportItem[], parentPath: string[], parentId: string) {
+    async function importItems(items: RoadmapItemInput[], parentPath: string[], parentId: string) {
       for (const [i, item] of items.entries()) {
         const path = [...parentPath, item.title];
         const id = await upsert(path, parentId, i, {
@@ -113,7 +127,7 @@ export async function importRoadmap(db: Db, data: RoadmapImport): Promise<Import
           priority: item.priority,
           resources: item.resources,
         });
-        await importItems((item.children ?? []) as ImportItem[], path, id);
+        await importItems(item.children, path, id);
       }
     }
 
@@ -143,18 +157,13 @@ async function main() {
     process.exit(1);
   }
   loadEnvIfPresent();
-  let data: RoadmapImport;
-  try {
-    data = parseRoadmapJson(readFileSync(resolve(file), "utf8"));
-  } catch (err) {
-    const issues = (err as { issues?: { path: PropertyKey[]; message: string }[] }).issues;
+  const out = await importRoadmapJson(createDb(), readFileSync(resolve(file), "utf8"));
+  if (!out.ok) {
     console.error("가져오기 거절: JSON 형식이 계약과 다릅니다.");
-    for (const issue of issues?.slice(0, 10) ?? []) {
-      console.error(`  - ${issue.path.join(".") || "(root)"}: ${issue.message}`);
-    }
+    for (const e of out.errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  const r = await importRoadmap(createDb(), data);
+  const r = out.result;
   console.log(
     `${r.created ? "새 로드맵" : "로드맵 갱신"}: 추가 ${r.added} · 갱신 ${r.updated} · 삭제 ${r.removed}`,
   );
