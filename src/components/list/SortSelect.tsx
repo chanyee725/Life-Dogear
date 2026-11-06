@@ -29,7 +29,7 @@ export function SortSelect({
       aria-label={label ?? "정렬"}
       value={value}
       onChange={(e) => router.push(buildHref(basePath, params, { [param]: e.target.value }))}
-      className="h-8 w-auto text-[13px]"
+      className="h-8 w-auto py-0 text-[13px] leading-none"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

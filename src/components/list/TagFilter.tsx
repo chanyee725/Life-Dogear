@@ -27,7 +27,7 @@ export function FilterChips({
   className?: string;
 }) {
   return (
-    <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1", className)}>
+    <nav aria-label={ariaLabel} className={cn("flex flex-wrap items-center gap-1.5", className)}>
       <ChipLink href={buildHref(basePath, params, { [param]: undefined })} active={!selected}>
         {allLabel}
       </ChipLink>
