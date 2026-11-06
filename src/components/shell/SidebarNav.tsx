@@ -15,6 +15,7 @@ import {
   PaperIcon,
   ProjectIcon,
   ReviewIcon,
+  RoadmapIcon,
   SeminarIcon,
   SettingsIcon,
   SidebarIcon,
@@ -43,6 +44,7 @@ const ICONS: Record<NavIcon, () => ReactNode> = {
   goal: GoalIcon,
   area: AreaIcon,
   graph: GraphIcon,
+  roadmap: RoadmapIcon,
   task: TaskIcon,
   settings: SettingsIcon,
 };

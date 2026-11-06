@@ -115,6 +115,30 @@ describe("layoutTree", () => {
     expect(edgePath(e)).toMatch(/^M[\d.]+,[\d.]+ C/);
   });
 
+  it("keeps per-kind boxes apart when a parent is taller than its children", () => {
+    const sized: LayoutSize = {
+      ...SIZE,
+      branchGap: 16,
+      kinds: { area: { width: 120, height: 60 }, task: { width: 80, height: 12 } },
+    };
+    const { nodes, edges, height } = layoutTree(roots, new Set(), sized);
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
+        const hit =
+          a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+        expect(hit, `${a.key} overlaps ${b.key}`).toBe(false);
+      }
+    }
+    for (const p of nodes) expect(p.y).toBeGreaterThanOrEqual(0);
+    for (const p of nodes) expect(p.y + p.height).toBeLessThanOrEqual(height);
+    // Column 1 starts after the widest box of column 0 (the 120px area).
+    expect(byId(nodes, "goal-g1").x).toBe(120 + 40);
+    const e = edges.find((x) => x.key.endsWith("task-t1"))!;
+    expect(e.x2 - e.x1).toBe(40);
+  });
+
   it("is empty for no roots", () => {
     expect(layoutTree([], new Set(), SIZE)).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
   });

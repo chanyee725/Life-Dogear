@@ -138,6 +138,15 @@ export const GraphIcon = () => (
     <path d="M5.6 5.2 7.6 10.4M5.7 4.4 10.5 4.1M11.4 5.4 9.2 10.4" />
   </Icon>
 );
+/** Roadmap: a root box branching right into two boxes (a left-to-right tree). */
+export const RoadmapIcon = () => (
+  <Icon>
+    <rect x="1.75" y="6.25" width="4" height="3.5" rx="1" />
+    <rect x="10.25" y="2.25" width="4" height="3.5" rx="1" />
+    <rect x="10.25" y="10.25" width="4" height="3.5" rx="1" />
+    <path d="M5.75 8H7.5a.75.75 0 0 0 .75-.75V4.75A.75.75 0 0 1 9 4h1.25M8.25 8.75v2.5A.75.75 0 0 0 9 12h1.25" />
+  </Icon>
+);
 /** Gear (lucide "settings" geometry), drawn on a 24 grid so it reads apart from the theme sun. */
 export const SettingsIcon = () => (
   <Icon viewBox="0 0 24 24" strokeWidth="2.1">

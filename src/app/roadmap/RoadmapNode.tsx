@@ -4,60 +4,71 @@ import Link from "next/link";
 import type { CSSProperties, MouseEvent, ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 import { AreaIcon, GoalIcon, ProjectIcon } from "@/components/shell/icons";
+import { PROJECT_STATUS } from "@/lib/enums";
 import type { RoadmapKind, RoadmapNode } from "@/lib/repo/roadmap-types";
+import {
+  formatRoadmapDate,
+  goalStatusLabel,
+  progressPercent,
+  projectStatusLabel,
+  type RoadmapCounts,
+} from "./roadmapStats";
 
 export interface RoadmapNodeBoxProps {
   node: RoadmapNode;
-  /** Box size in layout px (layout.ts DEFAULT_SIZE.nodeWidth / nodeHeight). */
+  /** Box size in layout px (from the layout's placed node). */
   width: number;
   height: number;
   /** Children hidden. Only matters when the node has children. */
   collapsed?: boolean;
   /** Collapse / expand. Without it no toggle button is shown. */
   onToggle?: () => void;
-  /** Absolute placement from the layout, e.g. `{ left: x, top: y }`. */
+  /** Descendant counts, shown on area boxes. */
+  counts?: RoadmapCounts;
+  /** Branch colour slot (`0`..`5`, or `none`), see .rb-roadmap-node[data-tone]. */
+  tone?: string;
+  /** Faded: another branch is hovered or focused. */
+  dim?: boolean;
+  /** Pointer entered or keyboard focus moved inside the box. */
+  onFocusIn?: () => void;
+  /** Pointer left the box. */
+  onFocusOut?: () => void;
+  /** Placement from the layout, e.g. `{ transform: translate(x, y) }`. */
   style?: CSSProperties;
   className?: string;
 }
 
-const KIND_LABEL: Record<RoadmapKind, string> = {
+export const KIND_LABEL: Record<RoadmapKind, string> = {
   area: "영역",
   goal: "목표",
   project: "프로젝트",
   task: "할 일",
 };
 
-/** Empty box, or a checked box when the task is done. */
-function TaskCheck({ done }: { done: boolean }) {
+/** Round check: empty, or filled with a tick when the task is done. */
+export function TaskCheck({ done }: { done: boolean }) {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
-      {done && <path d="m5.25 8.25 1.9 1.85 3.6-4" />}
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <circle
+        cx="7"
+        cy="7"
+        r="5.75"
+        fill={done ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+      {done && (
+        <path
+          d="m4.5 7.1 1.7 1.6 3.3-3.4"
+          fill="none"
+          stroke="var(--rb-bg)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
     </svg>
   );
-}
-
-function KindIcon({ node }: { node: RoadmapNode }) {
-  switch (node.kind) {
-    case "area":
-      return <AreaIcon />;
-    case "goal":
-      return <GoalIcon />;
-    case "project":
-      return <ProjectIcon />;
-    case "task":
-      return <TaskCheck done={!!node.done} />;
-  }
 }
 
 function ChevronIcon() {
@@ -78,16 +89,140 @@ function ChevronIcon() {
   );
 }
 
-/** 0..1 → whole percent, clamped; null when there is nothing to show. */
-function toPercent(progress: number | null): number | null {
-  if (progress == null || !Number.isFinite(progress)) return null;
-  return Math.round(Math.min(1, Math.max(0, progress)) * 100);
+/** Goal progress ring; the percent sits in the middle (or a dash when unknown). */
+function ProgressRing({ percent }: { percent: number | null }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  return (
+    <span
+      className="rb-roadmap-ring"
+      role={percent == null ? undefined : "progressbar"}
+      aria-label={percent == null ? undefined : "진행률"}
+      aria-valuemin={percent == null ? undefined : 0}
+      aria-valuemax={percent == null ? undefined : 100}
+      aria-valuenow={percent ?? undefined}
+    >
+      <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+        <circle className="rb-roadmap-ring-track" cx="16" cy="16" r={r} />
+        {percent != null && percent > 0 && (
+          <circle
+            className="rb-roadmap-ring-fill"
+            cx="16"
+            cy="16"
+            r={r}
+            strokeDasharray={`${(c * percent) / 100} ${c}`}
+            transform="rotate(-90 16 16)"
+          />
+        )}
+      </svg>
+      <span className="rb-roadmap-ring-label">
+        {percent == null ? <GoalIcon /> : percent}
+      </span>
+    </span>
+  );
+}
+
+function ProgressBar({ percent }: { percent: number }) {
+  return (
+    <span
+      className="rb-roadmap-bar"
+      role="progressbar"
+      aria-label="진행률"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={percent}
+    >
+      <span className="rb-roadmap-bar-fill" style={{ width: `${percent}%` }} />
+    </span>
+  );
+}
+
+function AreaBody({ node, counts }: { node: RoadmapNode; counts?: RoadmapCounts }) {
+  const parts: string[] = [];
+  if (counts?.goals) parts.push(`목표 ${counts.goals}`);
+  if (counts?.projects) parts.push(`프로젝트 ${counts.projects}`);
+  return (
+    <>
+      <span className="rb-roadmap-chip" aria-hidden="true">
+        <AreaIcon />
+      </span>
+      <span className="rb-roadmap-text">
+        <span className="rb-roadmap-title">{node.title}</span>
+        <span className="rb-roadmap-meta">
+          {parts.length ? (
+            parts.map((p) => <span key={p}>{p}</span>)
+          ) : (
+            <span className="rb-roadmap-faint">아직 비어 있음</span>
+          )}
+        </span>
+      </span>
+    </>
+  );
+}
+
+function GoalBody({ node }: { node: RoadmapNode }) {
+  const percent = progressPercent(node);
+  const period = formatRoadmapDate(node.due);
+  const status = node.status && node.status !== "active" ? goalStatusLabel(node.status) : "";
+  return (
+    <>
+      <ProgressRing percent={percent} />
+      <span className="rb-roadmap-text">
+        <span className="rb-roadmap-title">{node.title}</span>
+        {(period || status) && (
+          <span className="rb-roadmap-meta">
+            {period && <span className="rb-roadmap-num">{period}</span>}
+            {status && <span>{status}</span>}
+          </span>
+        )}
+      </span>
+    </>
+  );
+}
+
+function ProjectBody({ node }: { node: RoadmapNode }) {
+  const percent = progressPercent(node);
+  const due = formatRoadmapDate(node.due);
+  const status = projectStatusLabel(node.status);
+  const tone = node.status ? PROJECT_STATUS.tone(node.status as never) : "gray";
+  return (
+    <>
+      <span className="rb-roadmap-chip" aria-hidden="true">
+        <ProjectIcon />
+      </span>
+      <span className="rb-roadmap-text">
+        <span className="rb-roadmap-title">{node.title}</span>
+        <span className="rb-roadmap-meta">
+          {status && (
+            <span className="rb-roadmap-status" data-tone={tone}>
+              {status}
+            </span>
+          )}
+          {percent != null && <ProgressBar percent={percent} />}
+          {percent != null && <span className="rb-roadmap-num">{percent}%</span>}
+          {due && <span className="rb-roadmap-num rb-roadmap-due">{due}</span>}
+        </span>
+      </span>
+    </>
+  );
+}
+
+function TaskBody({ node }: { node: RoadmapNode }) {
+  return (
+    <>
+      <span className="rb-roadmap-check" aria-hidden="true">
+        <TaskCheck done={!!node.done} />
+      </span>
+      <span className="rb-roadmap-title">{node.title}</span>
+    </>
+  );
 }
 
 /**
  * One roadmap box. Positioned by the caller (`style`), sized by `width` / `height`.
- * The box body links to `node.href`; the collapse button sits beside the link
- * (not inside it), so toggling never navigates.
+ * Each kind has its own shape: area card, goal with a progress ring, project with a
+ * status badge and bar, task pill. The body links to `node.href`; the collapse button
+ * sits beside the link (not inside it), so toggling never navigates.
  */
 export function RoadmapNodeBox({
   node,
@@ -95,54 +230,35 @@ export function RoadmapNodeBox({
   height,
   collapsed = false,
   onToggle,
+  counts,
+  tone,
+  dim = false,
+  onFocusIn,
+  onFocusOut,
   style,
   className,
 }: RoadmapNodeBoxProps) {
   const testId = `${node.kind}-${node.id}`;
   const childCount = node.children.length;
   const hasToggle = childCount > 0 && !!onToggle;
-  const percent = node.kind === "goal" || node.kind === "project" ? toPercent(node.progress) : null;
   const done = node.kind === "task" && !!node.done;
 
-  const meta: ReactNode[] = [];
-  if (percent != null) {
-    meta.push(
-      <span key="progress" className="rb-roadmap-progress">
-        <span
-          className="rb-roadmap-progress-track"
-          role="progressbar"
-          aria-label="진행률"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-        >
-          <span className="rb-roadmap-progress-fill" style={{ width: `${percent}%` }} />
-        </span>
-        <span className="rb-roadmap-progress-label">{percent}%</span>
-      </span>,
-    );
-  }
-  if (node.due) {
-    meta.push(
-      <span key="due" className="rb-roadmap-due">
-        {node.due}
-      </span>,
-    );
+  let body: ReactNode;
+  switch (node.kind) {
+    case "area":
+      body = <AreaBody node={node} counts={counts} />;
+      break;
+    case "goal":
+      body = <GoalBody node={node} />;
+      break;
+    case "project":
+      body = <ProjectBody node={node} />;
+      break;
+    case "task":
+      body = <TaskBody node={node} />;
+      break;
   }
 
-  const body = (
-    <>
-      <span className="rb-roadmap-icon" aria-hidden="true">
-        <KindIcon node={node} />
-      </span>
-      <span className="rb-roadmap-text">
-        <span className="rb-roadmap-title">{node.title}</span>
-        {meta.length > 0 && <span className="rb-roadmap-meta">{meta}</span>}
-      </span>
-    </>
-  );
-
-  const tooltip = node.status ? `${node.title} · ${node.status}` : node.title;
   const label = `${KIND_LABEL[node.kind]}: ${node.title}${done ? " (완료)" : ""}`;
 
   const onToggleClick = (e: MouseEvent<HTMLButtonElement>) => {
@@ -164,19 +280,24 @@ export function RoadmapNodeBox({
       data-kind={node.kind}
       data-done={node.kind === "task" ? String(done) : undefined}
       data-collapsed={hasToggle ? String(collapsed) : undefined}
+      data-tone={tone}
+      data-dim={dim ? "true" : undefined}
+      onPointerEnter={onFocusIn}
+      onPointerLeave={onFocusOut}
+      onFocus={onFocusIn}
     >
       {node.href ? (
         <Link
           href={node.href}
           className="rb-roadmap-body"
-          title={tooltip}
+          title={node.title}
           aria-label={label}
           draggable={false}
         >
           {body}
         </Link>
       ) : (
-        <div className="rb-roadmap-body" title={tooltip} aria-label={label}>
+        <div className="rb-roadmap-body" title={node.title} aria-label={label}>
           {body}
         </div>
       )}
