@@ -87,7 +87,10 @@ describe("zoomScroll", () => {
   });
 
   it("zooming at the top-left corner scales the scroll offset", () => {
-    expect(zoomScroll({ left: 100, top: 40 }, 1, 2, { x: 0, y: 0 })).toEqual({ left: 200, top: 80 });
+    expect(zoomScroll({ left: 100, top: 40 }, 1, 2, { x: 0, y: 0 })).toEqual({
+      left: 200,
+      top: 80,
+    });
   });
 
   it("is a no-op when the zoom does not change", () => {

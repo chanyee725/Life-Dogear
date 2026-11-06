@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
 // ---------------------------------------------------------------------------------------
 // Pure math (unit-tested). Coordinates: "layout px" are the tree's own units (zoom 1);
 // "screen px" are layout px × zoom, the units of scrollLeft/scrollTop.
@@ -91,4 +93,206 @@ export function focusScroll(
     content,
     viewport,
   );
+}
+
+// ---------------------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------------------
+
+export interface ViewportOptions {
+  /** Starting zoom (clamped). Default 1. */
+  initialZoom?: number;
+  /**
+   * Box to bring into view once the container mounts (layout px, e.g. the root node's
+   * x/y/width/height from layoutTree). Applied a single time, the first render it is set.
+   */
+  initialFocus?: Rect | null;
+}
+
+export interface Viewport {
+  /** Callback ref for the scroll container (needs `overflow: auto`). */
+  ref: (el: HTMLDivElement | null) => void;
+  /** Current zoom, 0.5..2. Scale the content by this (size × zoom, or transform). */
+  zoom: number;
+  /** True while the user is dragging: show a grabbing cursor, disable text selection. */
+  dragging: boolean;
+  /** Set the zoom, keeping `anchor` (viewport px; default: viewport centre) fixed. */
+  setZoom: (zoom: number, anchor?: Point) => void;
+  /** Scroll so `rect` (layout px) sits at the left margin, vertically centred. */
+  focus: (rect: Rect) => void;
+}
+
+/** Elements where a press means typing/selecting, not panning. */
+const isEditable = (t: EventTarget | null): boolean =>
+  t instanceof HTMLElement &&
+  (t.isContentEditable || t.closest("input, textarea, select, [contenteditable='true']") !== null);
+
+/**
+ * Pannable, zoomable scroll container for the roadmap tree.
+ *
+ * - Drag with the primary mouse button to pan. A press that moves less than
+ *   DRAG_THRESHOLD px stays a click; after a real drag the click that follows is swallowed,
+ *   so letting go over a node does not open it.
+ * - Ctrl+wheel (and trackpad pinch) zooms 0.5..2× around the cursor; plain wheel scrolls.
+ * - `initialFocus` scrolls the root into view on first mount.
+ */
+export function useViewport({
+  initialZoom = 1,
+  initialFocus = null,
+}: ViewportOptions = {}): Viewport {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
+  const [zoom, setZoomState] = useState(() => clampZoom(initialZoom));
+  const [dragging, setDragging] = useState(false);
+
+  // Latest zoom and the scroll still waiting for the zoomed content to render: wheel events
+  // can arrive faster than React re-renders, and each must build on the previous one.
+  const zoomRef = useRef(zoom);
+  const pendingScroll = useRef<Scroll | null>(null);
+  const focused = useRef(false);
+
+  const setZoom = useCallback(
+    (next: number, anchor?: Point) => {
+      const from = zoomRef.current;
+      const to = clampZoom(next);
+      if (!el || to === from) return;
+      const at = anchor ?? { x: el.clientWidth / 2, y: el.clientHeight / 2 };
+      const current = pendingScroll.current ?? { left: el.scrollLeft, top: el.scrollTop };
+      pendingScroll.current = zoomScroll(current, from, to, at);
+      zoomRef.current = to;
+      setZoomState(to);
+    },
+    [el],
+  );
+
+  // Apply the anchored scroll after the content has been resized for the new zoom.
+  useLayoutEffect(() => {
+    const target = pendingScroll.current;
+    if (!el || !target) return;
+    pendingScroll.current = null;
+    el.scrollLeft = target.left;
+    el.scrollTop = target.top;
+  }, [el, zoom]);
+
+  const focus = useCallback(
+    (rect: Rect) => {
+      if (!el) return;
+      const s = focusScroll(
+        rect,
+        zoomRef.current,
+        { width: el.clientWidth, height: el.clientHeight },
+        { width: el.scrollWidth, height: el.scrollHeight },
+      );
+      el.scrollLeft = s.left;
+      el.scrollTop = s.top;
+    },
+    [el],
+  );
+
+  useLayoutEffect(() => {
+    if (!el || !initialFocus || focused.current) return;
+    focused.current = true;
+    focus(initialFocus);
+  }, [el, initialFocus, focus]);
+
+  // Ctrl+wheel zoom. Native, non-passive listener so preventDefault stops the page zoom.
+  useEffect(() => {
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      // deltaMode 1 = lines (Firefox mouse wheels); treat a line as ~16px.
+      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      const box = el.getBoundingClientRect();
+      setZoom(wheelZoom(zoomRef.current, dy), {
+        x: e.clientX - box.left - el.clientLeft,
+        y: e.clientY - box.top - el.clientTop,
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [el, setZoom]);
+
+  // Drag to pan.
+  useEffect(() => {
+    if (!el) return;
+    let press: { id: number; x: number; y: number; left: number; top: number } | null = null;
+    let moved = false;
+    let swallowClick = false;
+    let clearSwallow: ReturnType<typeof setTimeout> | undefined;
+
+    const end = (e: PointerEvent) => {
+      if (!press || e.pointerId !== press.id) return;
+      press = null;
+      if (moved) {
+        moved = false;
+        setDragging(false);
+        if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+        if (e.type === "pointerup") {
+          // The click (if any) fires right after pointerup; drop the flag after that so a
+          // later keyboard "click" is not eaten when no pointer click arrived.
+          swallowClick = true;
+          clearSwallow = setTimeout(() => (swallowClick = false), 0);
+        }
+      }
+    };
+
+    const onDown = (e: PointerEvent) => {
+      swallowClick = false;
+      if (e.button !== 0 || e.pointerType === "touch" || isEditable(e.target)) return;
+      press = {
+        id: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        left: el.scrollLeft,
+        top: el.scrollTop,
+      };
+      moved = false;
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (!press || e.pointerId !== press.id) return;
+      const dx = e.clientX - press.x;
+      const dy = e.clientY - press.y;
+      if (!moved) {
+        if (!isDrag(dx, dy)) return;
+        moved = true;
+        setDragging(true);
+        el.setPointerCapture(e.pointerId);
+        window.getSelection()?.removeAllRanges();
+      }
+      e.preventDefault();
+      el.scrollLeft = press.left - dx;
+      el.scrollTop = press.top - dy;
+    };
+
+    const onClick = (e: MouseEvent) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Links and images start a native HTML drag, which cancels the pointer stream.
+    const onDragStart = (e: DragEvent) => {
+      if (press) e.preventDefault();
+    };
+
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("click", onClick, true);
+    el.addEventListener("dragstart", onDragStart);
+    return () => {
+      clearTimeout(clearSwallow);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", end);
+      el.removeEventListener("pointercancel", end);
+      el.removeEventListener("click", onClick, true);
+      el.removeEventListener("dragstart", onDragStart);
+    };
+  }, [el]);
+
+  return { ref: setEl, zoom, dragging, setZoom, focus };
 }
