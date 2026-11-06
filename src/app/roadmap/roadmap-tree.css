@@ -58,8 +58,7 @@
     --rt-select: #8fb4f0;
   }
 
-  .rt-tree,
-  .rt-tree ul {
+  :where(.rt-tree, .rt-tree ul) {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -67,8 +66,7 @@
   .rt-tree {
     max-width: 1180px;
     margin-inline: auto;
-    /* room for badges of edge items: stages use content-visibility, which clips at the li */
-    padding: 8px 12px 24px;
+    padding: 8px 0 24px;
   }
   .rt-node {
     position: relative;
@@ -77,51 +75,16 @@
 
   /* ---------------------------------------------------------------- stage row */
   .rt-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--rt-center) minmax(0, 1fr);
-    column-gap: var(--rt-gap);
-    align-items: center;
-    padding-block: 26px;
+    /* inline padding: room for edge badges, since content-visibility clips at the li */
+    padding: 26px 12px;
     content-visibility: auto;
     contain-intrinsic-size: auto 220px;
-  }
-
-  /* centre path: straight drop into this box from above, curve out of it below */
-  .rt-stage:not([data-first])::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 50%;
-    left: calc(50% + var(--rt-sway, 0px) - var(--rt-path-w) / 2);
-    width: var(--rt-path-w);
-    background: var(--rt-path);
-    border-radius: 3px;
-  }
-  .rt-curve {
-    position: absolute;
-    top: 50%;
-    bottom: 0;
-    left: 50%;
-    width: 240px; /* = CURVE_W, so the viewBox maps 1:1 sideways */
-    height: 50%;
-    transform: translateX(-50%);
-    overflow: visible;
-    pointer-events: none;
-  }
-  .rt-curve path {
-    fill: none;
-    stroke: var(--rt-path);
-    stroke-width: var(--rt-path-w);
-    stroke-linecap: round;
   }
 
   /* topic box */
   .rt-stage-row {
     position: relative;
     z-index: 2;
-    grid-column: 2;
-    grid-row: 1;
-    transform: translateX(var(--rt-sway, 0px));
     border: 2.5px solid var(--rt-ink);
     border-radius: var(--rt-radius);
     background: var(--rt-yellow);
@@ -202,101 +165,144 @@
     transform: rotate(90deg);
   }
 
-  /* ---------------------------------------------------------------- side columns */
-  .rt-side {
-    position: relative;
-    grid-row: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .rt-side[data-side="left"] {
-    grid-column: 1;
-    align-items: flex-end;
-    justify-self: end;
-  }
-  .rt-side[data-side="right"] {
-    grid-column: 3;
-    align-items: flex-start;
-    justify-self: start;
-  }
-  /* the spine runs in this margin; stubs reach it from each box */
-  .rt-side[data-side="left"] {
-    margin-right: var(--rt-stub);
-  }
-  .rt-side[data-side="right"] {
-    margin-left: var(--rt-stub);
-  }
-  /* link: spine (or bundle edge) → topic box; the box covers the far end, whatever the sway */
-  .rt-side::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: calc(var(--rt-gap) + var(--rt-center) / 2);
-    border-top: var(--rt-line-w) dotted var(--rt-link);
-  }
-  .rt-side[data-side="left"]::after {
-    left: 100%;
-  }
-  .rt-side[data-side="right"]::after {
-    right: 100%;
-  }
+  /* ---------------------------------------------------------------- wide: path + two columns */
+  @container rt (min-width: 720px) {
+    .rt-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--rt-center) minmax(0, 1fr);
+      column-gap: var(--rt-gap);
+      align-items: center;
+    }
 
-  /* one top-level item */
-  .rt-side > .rt-node {
-    max-width: min(100%, 17.5rem);
-    padding-block: 4px;
-  }
-  /* stub: box edge → spine, at the first line's centre */
-  .rt-side:not([data-many]) > .rt-node::after {
-    content: "";
-    position: absolute;
-    top: var(--rt-mid);
-    width: var(--rt-stub);
-    border-top: var(--rt-line-w) dotted var(--rt-link);
-  }
-  .rt-side[data-side="left"]:not([data-many]) > .rt-node::after {
-    left: 100%;
-  }
-  .rt-side[data-side="right"]:not([data-many]) > .rt-node::after {
-    right: 100%;
-  }
-  /* spine piece per item: first from its stub down, last from top to its stub */
-  .rt-side:not([data-many]) > .rt-node:not(:only-child)::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    border-left: var(--rt-line-w) dotted var(--rt-link);
-  }
-  .rt-side[data-side="left"]:not([data-many]) > .rt-node::before {
-    left: calc(100% + var(--rt-stub) - var(--rt-line-w));
-  }
-  .rt-side[data-side="right"]:not([data-many]) > .rt-node::before {
-    right: calc(100% + var(--rt-stub) - var(--rt-line-w));
-  }
-  .rt-side:not([data-many]) > .rt-node:first-child::before {
-    top: var(--rt-mid);
-  }
-  .rt-side:not([data-many]) > .rt-node:last-child::before {
-    bottom: auto;
-    height: var(--rt-mid);
-  }
+    /* centre path: straight drop into this box from above, curve out of it below */
+    .rt-stage:not([data-first])::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 50%;
+      left: calc(50% + var(--rt-sway, 0px) - var(--rt-path-w) / 2);
+      width: var(--rt-path-w);
+      background: var(--rt-path);
+      border-radius: 3px;
+    }
+    .rt-curve {
+      position: absolute;
+      top: 50%;
+      bottom: 0;
+      left: 50%;
+      width: 240px; /* = CURVE_W, so the viewBox maps 1:1 sideways */
+      height: 50%;
+      transform: translateX(-50%);
+      overflow: visible;
+      pointer-events: none;
+    }
+    .rt-curve path {
+      fill: none;
+      stroke: var(--rt-path);
+      stroke-width: var(--rt-path-w);
+      stroke-linecap: round;
+    }
+    .rt-stage-row {
+      grid-column: 2;
+      grid-row: 1;
+      transform: translateX(var(--rt-sway, 0px));
+    }
+    /* ---------------------------------------------------------------- side columns */
+    .rt-side {
+      position: relative;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .rt-side[data-side="left"] {
+      grid-column: 1;
+      align-items: flex-end;
+      justify-self: end;
+    }
+    .rt-side[data-side="right"] {
+      grid-column: 3;
+      align-items: flex-start;
+      justify-self: start;
+    }
+    /* the spine runs in this margin; stubs reach it from each box */
+    .rt-side[data-side="left"] {
+      margin-right: var(--rt-stub);
+    }
+    .rt-side[data-side="right"] {
+      margin-left: var(--rt-stub);
+    }
+    /* link: spine (or bundle edge) → topic box; the box covers the far end, whatever the sway */
+    .rt-side::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: calc(var(--rt-gap) + var(--rt-center) / 2);
+      border-top: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]::after {
+      left: 100%;
+    }
+    .rt-side[data-side="right"]::after {
+      right: 100%;
+    }
 
-  /* 5+ items on a side: one stacked bundle, one link */
-  .rt-side[data-many] {
-    gap: 10px;
-    padding: 10px;
-    border: var(--rt-line-w) dashed color-mix(in srgb, var(--rt-ink) 45%, transparent);
-    border-radius: var(--rt-radius);
-  }
-  .rt-side[data-many] > .rt-node {
-    width: 100%;
-    max-width: 17.5rem;
-    padding-block: 0;
-  }
-  .rt-side[data-many][data-side="left"] {
-    align-items: stretch;
+    /* one top-level item */
+    .rt-side > .rt-node {
+      max-width: min(100%, 17.5rem);
+      padding-block: 4px;
+    }
+    /* stub: box edge → spine, at the first line's centre */
+    .rt-side:not([data-many]) > .rt-node::after {
+      content: "";
+      position: absolute;
+      top: var(--rt-mid);
+      width: var(--rt-stub);
+      border-top: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]:not([data-many]) > .rt-node::after {
+      left: 100%;
+    }
+    .rt-side[data-side="right"]:not([data-many]) > .rt-node::after {
+      right: 100%;
+    }
+    /* spine piece per item: first from its stub down, last from top to its stub */
+    .rt-side:not([data-many]) > .rt-node:not(:only-child)::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: var(--rt-line-w) dotted var(--rt-link);
+    }
+    .rt-side[data-side="left"]:not([data-many]) > .rt-node::before {
+      left: calc(100% + var(--rt-stub) - var(--rt-line-w));
+    }
+    .rt-side[data-side="right"]:not([data-many]) > .rt-node::before {
+      right: calc(100% + var(--rt-stub) - var(--rt-line-w));
+    }
+    .rt-side:not([data-many]) > .rt-node:first-child::before {
+      top: var(--rt-mid);
+    }
+    .rt-side:not([data-many]) > .rt-node:last-child::before {
+      bottom: auto;
+      height: var(--rt-mid);
+    }
+
+    /* 5+ items on a side: one stacked bundle, one link */
+    .rt-side[data-many] {
+      gap: 10px;
+      padding: 10px;
+      border: var(--rt-line-w) dashed color-mix(in srgb, var(--rt-ink) 45%, transparent);
+      border-radius: var(--rt-radius);
+    }
+    .rt-side[data-many] > .rt-node {
+      width: 100%;
+      max-width: 17.5rem;
+      padding-block: 0;
+    }
+    .rt-side[data-many][data-side="left"] {
+      align-items: stretch;
+    }
   }
 
   /* ---------------------------------------------------------------- item box */
@@ -509,40 +515,30 @@
 
   /* ---------------------------------------------------------------- narrow: one list */
   @container rt (max-width: 719px) {
-    .rt-tree {
-      --rt-gap: 0px;
-      padding-left: 6px;
-    }
+    /* trunk down the left edge; stage boxes full width; items listed under them */
     .rt-stage {
-      display: block;
-      padding: 0 0 18px 22px;
+      padding: 14px 12px 14px 26px;
     }
-    .rt-stage::before,
-    .rt-stage:not([data-first])::before {
+    .rt-stage::before {
       content: "";
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 4px;
+      left: 6px;
       width: 4px;
-      background: var(--rt-path);
       border-radius: 2px;
+      background: var(--rt-path);
     }
     .rt-stage[data-first]::before {
-      top: 24px;
+      top: 36px;
     }
     .rt-stage:last-child::before {
       bottom: auto;
-      height: 24px;
+      height: 36px;
     }
-    .rt-stage:only-child::before {
-      display: none;
-    }
+    .rt-stage:only-child::before,
     .rt-curve {
       display: none;
-    }
-    .rt-stage-row {
-      transform: none;
     }
     .rt-stage-label {
       flex-direction: row;
@@ -552,49 +548,41 @@
       padding: 10px 14px;
       text-align: left;
     }
-    .rt-side,
-    .rt-side[data-many] {
-      margin: 10px 0 0 14px;
-      padding: 0 0 0 16px;
-      gap: 6px;
-      border: 0;
-      align-items: stretch;
+    .rt-side {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0 0 14px;
+      padding-left: 16px;
     }
     .rt-side + .rt-side {
-      margin-top: 6px;
+      margin-top: 8px;
     }
-    .rt-side::after,
-    .rt-side[data-side]::after {
-      display: none;
-    }
-    .rt-side > .rt-node,
-    .rt-side[data-many] > .rt-node {
-      max-width: none;
-      width: 100%;
-      padding-block: 0;
-    }
-    .rt-side > .rt-node::before,
-    .rt-side:not([data-many]) > .rt-node::before {
+    .rt-side > .rt-node::before {
       content: "";
       position: absolute;
-      top: -6px;
+      top: -8px;
       bottom: 0;
       left: -16px;
-      right: auto;
-      height: auto;
       border-left: var(--rt-line-w) dotted var(--rt-link);
     }
     .rt-side > .rt-node:last-child::before {
       bottom: auto;
-      height: 26px;
+      height: 30px;
     }
-    .rt-side > .rt-node::after,
-    .rt-side:not([data-many]) > .rt-node::after {
+    /* left and right groups read as one list: keep the spine running between them */
+    .rt-side:has(+ .rt-side) > .rt-node:last-child::before {
+      bottom: 0;
+      height: auto;
+    }
+    .rt-side + .rt-side > .rt-node:first-child::before {
+      top: -16px;
+    }
+    .rt-side > .rt-node::after {
       content: "";
       position: absolute;
-      top: 20px;
+      top: 21px;
       left: -16px;
-      right: auto;
       width: 14px;
       border-top: var(--rt-line-w) dotted var(--rt-link);
     }
