@@ -1,0 +1,387 @@
+/* Learning roadmap (app/roadmap/*) — visual styles: colour, legend, progress, dark mode, narrow screens.
+ * DOM and class names follow the tsx (.rm-root > .rm-tree > .rm-stage > .rm-side > .rm-branch > .rm-item).
+ * The side panel (.rm-panel*) layout belongs to the panel component; only shared colour slots live here.
+ *
+ * Priority also differs by border (required solid 2px, recommended solid 1px, optional dashed), so
+ * colour is never the only signal. Colours come from --rb-* tokens, so light/dark follow `.dark`.
+ */
+
+@layer components {
+  .rm-root {
+    --rm-stem: var(--rb-border-strong);
+    --rm-branch-w: 30px;
+    color: var(--rb-fg);
+  }
+
+  /* ---- priority colour slots (ink on soft) ---- */
+  .rm-root [data-priority="required"] {
+    --rm-ink: var(--rb-tone-rose-fg);
+    --rm-soft: var(--rb-tone-rose-bg);
+  }
+  .rm-root [data-priority="recommended"] {
+    --rm-ink: var(--rb-tone-teal-fg);
+    --rm-soft: var(--rb-tone-teal-bg);
+  }
+  .rm-root [data-priority="optional"] {
+    --rm-ink: var(--rb-tone-gray-fg);
+    --rm-soft: var(--rb-surface);
+  }
+
+  /* ---- status colour slots ---- */
+  .rm-root [data-status="todo"] {
+    --rm-st: var(--rb-faint);
+  }
+  .rm-root [data-status="doing"] {
+    --rm-st: var(--rb-tone-amber-fg);
+  }
+  .rm-root [data-status="done"] {
+    --rm-st: var(--rb-tone-green-fg);
+  }
+
+  /* ---- picker tabs ---- */
+  .rm-picker-tab {
+    border: 1px solid var(--rb-border);
+    border-radius: 8px;
+    padding: 5px 12px;
+    background: var(--rb-bg);
+    color: var(--rb-muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .rm-picker-tab[aria-selected="true"] {
+    background: var(--rb-accent-soft);
+    color: var(--rb-fg);
+    font-weight: 600;
+    border-color: var(--rb-border-strong);
+  }
+
+  /* ---- head ---- */
+  .rm-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .rm-desc {
+    color: var(--rb-muted);
+    font-size: 14px;
+    max-width: 62ch;
+    line-height: 1.6;
+  }
+
+  /* ---- progress: track + fill (--rm-progress 0..1) + "3/7" ---- */
+  .rm-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--rb-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .rm-progress-bar {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    min-width: 40px;
+    border-radius: 999px;
+    background: var(--rb-hover);
+    overflow: hidden;
+  }
+  .rm-progress-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform: scaleX(var(--rm-progress, 0));
+    border-radius: inherit;
+    background: var(--rb-tone-green-fg);
+  }
+  .rm-progress-text {
+    flex-shrink: 0;
+  }
+
+  /* ---- legend ---- */
+  .rm-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+    color: var(--rb-muted);
+  }
+  .rm-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .rm-legend-item::before {
+    content: "";
+    width: 22px;
+    height: 12px;
+    border-radius: 4px;
+    background: var(--rm-soft, transparent);
+    border: 1px solid var(--rm-ink, var(--rb-border-strong));
+  }
+  .rm-legend-item[data-priority="required"]::before {
+    border-width: 2px;
+  }
+  .rm-legend-item[data-priority="optional"]::before {
+    border-style: dashed;
+  }
+  .rm-legend-item[data-status]::before {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--rm-st);
+    background: transparent;
+  }
+  .rm-legend-item[data-status="doing"]::before {
+    background: conic-gradient(var(--rm-st) 0 50%, transparent 0);
+  }
+  .rm-legend-item[data-status="done"]::before {
+    background: var(--rm-st);
+  }
+
+  /* ---- stem ---- */
+  .rm-tree {
+    position: relative;
+  }
+  .rm-tree::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 2px;
+    background: var(--rm-stem);
+  }
+
+  /* ---- stage hub ---- */
+  .rm-stage-node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px 11px;
+    border: 1px solid var(--rb-border-strong);
+    border-radius: 12px;
+    background: var(--rb-bg);
+    box-shadow: 0 0 0 5px var(--rb-bg);
+  }
+  .rm-stage[data-status="done"] > .rm-stage-node {
+    border-color: var(--rb-tone-green-fg);
+  }
+  .rm-stage[data-status="doing"] > .rm-stage-node {
+    border-color: var(--rb-tone-amber-fg);
+  }
+  .rm-stage-index {
+    font-size: 12px;
+    color: var(--rb-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .rm-stage-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  /* horizontal branch from the stem into each side */
+  .rm-side {
+    position: relative;
+  }
+  .rm-side::before {
+    content: "";
+    position: absolute;
+    top: 22px;
+    width: var(--rm-branch-w);
+    height: 2px;
+    background: var(--rm-stem);
+  }
+  .rm-side[data-side="left"]::before {
+    right: calc(-1 * var(--rm-branch-w));
+  }
+  .rm-side[data-side="right"]::before {
+    left: calc(-1 * var(--rm-branch-w));
+  }
+
+  /* ---- item ---- */
+  .rm-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    min-height: 36px;
+    padding: 6px 12px 6px 10px;
+    border: 1px solid var(--rm-ink);
+    border-radius: 9px;
+    background: var(--rm-soft);
+    color: var(--rb-fg);
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color 120ms,
+      box-shadow 120ms;
+  }
+  .rm-item[data-priority="required"] {
+    border-width: 2px;
+    font-weight: 600;
+  }
+  .rm-item[data-priority="optional"] {
+    border-style: dashed;
+    color: var(--rb-muted);
+  }
+  .rm-item[data-depth="2"] {
+    min-height: 32px;
+    font-size: 13px;
+  }
+  .rm-item:hover {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--rm-ink) 18%, transparent);
+  }
+  .rm-item[aria-pressed="true"] {
+    box-shadow:
+      0 0 0 2px var(--rb-bg),
+      0 0 0 4px var(--rm-ink);
+  }
+  .rm-item[data-status="done"] .rm-item-title {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--rb-fg) 40%, transparent);
+  }
+  .rm-item-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* status glyph: ring (todo), half-filled (doing), filled (done). Max may put an icon inside. */
+  .rm-item-status {
+    position: relative;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--rm-st);
+    color: var(--rb-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .rm-item[data-status="doing"] .rm-item-status {
+    background: conic-gradient(var(--rm-st) 0 50%, transparent 0);
+  }
+  .rm-item[data-status="done"] .rm-item-status {
+    background: var(--rm-st);
+  }
+
+  /* connector from item to its children */
+  .rm-children {
+    position: relative;
+  }
+  .rm-children > .rm-item::before {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 1.5px;
+    top: 50%;
+    background: var(--rm-stem);
+  }
+
+  /* ---- shared chips / status buttons (used inside the panel) ---- */
+  .rm-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid var(--rm-ink);
+    border-radius: 999px;
+    background: var(--rm-soft);
+    color: var(--rm-ink);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .rm-chip[data-priority="optional"] {
+    border-style: dashed;
+  }
+  .rm-status-btn[aria-pressed="true"] {
+    background: var(--rb-bg);
+    color: var(--rm-st);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px var(--rm-st);
+  }
+  .rm-link {
+    color: var(--rb-tone-blue-fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .rm-empty {
+    padding: 40px 16px;
+    border: 1px dashed var(--rb-border-strong);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--rb-muted);
+  }
+
+  /* ---- keyboard focus ---- */
+  .rm-item:focus-visible,
+  .rm-picker-tab:focus-visible,
+  .rm-status-btn:focus-visible,
+  .rm-panel-close:focus-visible,
+  .rm-link:focus-visible {
+    outline: 2px solid var(--rb-fg);
+    outline-offset: 2px;
+  }
+
+  /* ---- <1024px: stem moves to the left edge, hub first, items below ---- */
+  @media (max-width: 1023px) {
+    .rm-tree {
+      padding-left: 22px;
+    }
+    .rm-tree::before {
+      left: 6px;
+      margin-left: 0;
+    }
+    .rm-stage::before {
+      content: "";
+      position: absolute;
+      left: -22px;
+      top: 14px;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--rb-bg);
+      border: 3px solid var(--rb-fg);
+      z-index: 1;
+    }
+    .rm-stage-node {
+      box-shadow: none;
+    }
+    .rm-side::before {
+      display: none;
+    }
+    .rm-item {
+      width: 100%;
+      min-height: 44px;
+    }
+    .rm-status-btn {
+      min-height: 44px;
+    }
+    .rm-children > .rm-item::before {
+      left: -14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rm-item {
+      transition: none;
+    }
+  }
+}
