@@ -9,7 +9,6 @@ import {
   stageStatus,
   STATUS_LABEL,
   STATUSES,
-  treeKeyAction,
   visibleNodes,
   type LearningRoadmap,
   type RoadmapNode,
@@ -127,7 +126,7 @@ describe("learning roadmap progress", () => {
   });
 });
 
-describe("visibleNodes / treeKeyAction", () => {
+describe("visibleNodes", () => {
   const tree = [
     stage([node("a", "todo", [node("a1", "todo", [node("a11", "todo")])]), node("b", "done")], "s1"),
     stage([node("c", "todo")], "s2"),
@@ -140,20 +139,5 @@ describe("visibleNodes / treeKeyAction", () => {
     expect(ids(["s1", "s2"])).toEqual(["s1", "s2"]);
     const a11 = visibleNodes(tree, new Set()).find((r) => r.id === "a11")!;
     expect([a11.level, a11.parentId, a11.stageIndex]).toEqual([4, "a1", 0]);
-  });
-
-  it("arrow keys follow the WAI-ARIA tree pattern", () => {
-    const rows = visibleNodes(tree, new Set(["a"]));
-    expect(treeKeyAction(rows, "a", "ArrowDown")).toEqual({ type: "focus", id: "b" });
-    expect(treeKeyAction(rows, "a", "ArrowUp")).toEqual({ type: "focus", id: "s1" });
-    expect(treeKeyAction(rows, "a", "ArrowRight")).toEqual({ type: "expand", id: "a" });
-    expect(treeKeyAction(rows, "s1", "ArrowRight")).toEqual({ type: "focus", id: "a" });
-    expect(treeKeyAction(rows, "s1", "ArrowLeft")).toEqual({ type: "collapse", id: "s1" });
-    expect(treeKeyAction(rows, "b", "ArrowLeft")).toEqual({ type: "focus", id: "s1" });
-    expect(treeKeyAction(rows, "b", "Home")).toEqual({ type: "focus", id: "s1" });
-    expect(treeKeyAction(rows, "b", "End")).toEqual({ type: "focus", id: "c" });
-    expect(treeKeyAction(rows, "b", "Enter")).toEqual({ type: "open", id: "b" });
-    expect(treeKeyAction(rows, "c", "ArrowDown")).toBeNull();
-    expect(treeKeyAction(rows, "c", "x")).toBeNull();
   });
 });

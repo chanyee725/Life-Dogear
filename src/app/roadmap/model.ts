@@ -120,50 +120,6 @@ export function parentIndex(stages: RoadmapNodeView[]): Map<string, string | nul
   return out;
 }
 
-export type TreeKeyAction =
-  | { type: "focus"; id: string }
-  | { type: "expand"; id: string }
-  | { type: "collapse"; id: string }
-  | { type: "open"; id: string };
-
-/**
- * WAI-ARIA tree keys on the visible rows. Returns null for keys the tree does not handle
- * (the caller then leaves the event alone).
- * ↑/↓ prev/next row · → expand, or first child when open · ← collapse, or parent ·
- * Home/End first/last row · Enter open (ItemPanel).
- */
-export function treeKeyAction(
-  rows: readonly VisibleNode[],
-  focusedId: string,
-  key: string,
-): TreeKeyAction | null {
-  const i = rows.findIndex((r) => r.id === focusedId);
-  if (i < 0) return rows.length > 0 && key in KEYS ? { type: "focus", id: rows[0].id } : null;
-  const row = rows[i];
-  switch (key) {
-    case "ArrowDown":
-      return i + 1 < rows.length ? { type: "focus", id: rows[i + 1].id } : null;
-    case "ArrowUp":
-      return i > 0 ? { type: "focus", id: rows[i - 1].id } : null;
-    case "ArrowRight":
-      if (!row.hasChildren) return null;
-      return row.expanded ? { type: "focus", id: rows[i + 1].id } : { type: "expand", id: row.id };
-    case "ArrowLeft":
-      if (row.expanded) return { type: "collapse", id: row.id };
-      return row.parentId ? { type: "focus", id: row.parentId } : null;
-    case "Home":
-      return { type: "focus", id: rows[0].id };
-    case "End":
-      return { type: "focus", id: rows[rows.length - 1].id };
-    case "Enter":
-      return { type: "open", id: row.id };
-    default:
-      return null;
-  }
-}
-
-const KEYS = { ArrowDown: 1, ArrowUp: 1, ArrowRight: 1, ArrowLeft: 1, Home: 1, End: 1, Enter: 1 };
-
 /** Done/total per stage plus the whole roadmap, from the server-computed progress. */
 export function stageProgress(roadmap: RoadmapTree): {
   stages: { id: string; done: number; total: number; ratio: number }[];

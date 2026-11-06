@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronRight, Circle, CircleCheck, CircleDot, Diamond } from "lucide-react";
-import { useState, type CSSProperties, type KeyboardEventHandler, type Ref } from "react";
-import { collapseAll, toggleCollapsed, type CollapsedSet } from "./collapse";
+import { useRef, type CSSProperties } from "react";
+import type { CollapsedSet } from "./collapse";
 import {
   PRIORITY_LABEL,
   STATUS_LABEL,
@@ -12,17 +12,15 @@ import {
   type RoadmapNode,
   type Status,
 } from "./model";
+import { useTreeKeyboard } from "./useTreeKeyboard";
 
 export interface RoadmapTreeProps {
   roadmap: LearningRoadmap;
   selectedId: string | null;
   onSelect: (id: string) => void;
   /** Folded stage/item ids; owned by RoadmapView (useTreeCollapse). */
-  collapsed?: CollapsedSet;
-  onToggle?: (id: string) => void;
-  /** Keyboard wiring for ul.rt-tree (useTreeKeyboard). */
-  treeRef?: Ref<HTMLUListElement>;
-  onKeyDown?: KeyboardEventHandler<HTMLUListElement>;
+  collapsed: CollapsedSet;
+  onToggle: (id: string) => void;
 }
 
 /*
@@ -178,34 +176,17 @@ function StageNode({ stage, index, ...ctx }: BranchProps & { stage: RoadmapNode;
   );
 }
 
-/** Ids folded by default: every item that has children (stages stay open). */
-function defaultCollapsed(roadmap: LearningRoadmap): CollapsedSet {
-  const ids: string[] = [];
-  const walk = (n: RoadmapNode) => {
-    if (n.children.length > 0) ids.push(n.id);
-    n.children.forEach(walk);
-  };
-  roadmap.stages.forEach((s) => s.children.forEach(walk));
-  return collapseAll(ids);
-}
-
 /** Stages down a trunk; items branch off with elbow connectors, deeper levels indent further. */
 export default function RoadmapTree({
   roadmap,
   selectedId,
   onSelect,
-  treeRef,
-  onKeyDown,
-  ...controlled
+  collapsed,
+  onToggle,
 }: RoadmapTreeProps) {
-  // Fallback until RoadmapView passes the shared collapse state.
-  const [own, setOwn] = useState<CollapsedSet>(() => defaultCollapsed(roadmap));
-  const ctx: BranchProps = {
-    collapsed: controlled.collapsed ?? own,
-    onToggle: controlled.onToggle ?? ((id) => setOwn((c) => toggleCollapsed(c, id))),
-    selectedId,
-    onSelect,
-  };
+  const treeRef = useRef<HTMLUListElement>(null);
+  const { onKeyDown } = useTreeKeyboard({ rootRef: treeRef, collapsed, onToggle, onSelect });
+  const ctx: BranchProps = { collapsed, onToggle, selectedId, onSelect };
 
   return (
     <ul
