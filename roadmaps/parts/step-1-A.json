@@ -1,0 +1,1914 @@
+[
+  {
+    "title": "환경 준비와 작업 공간",
+    "items": [
+      {
+        "title": "ROS 2 Jazzy 설치와 환경 설정",
+        "priority": "essential",
+        "description": "Ubuntu 24.04 + ROS 2 Jazzy deb 설치, source /opt/ros/jazzy/setup.bash, ROS_DOMAIN_ID·RMW_IMPLEMENTATION 환경 변수 — ROS 2 docs Installation",
+        "resources": [
+          {
+            "title": "ROS 2 Jazzy Installation",
+            "url": "https://docs.ros.org/en/jazzy/Installation.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "ROS 2 계층 구조",
+            "priority": "essential",
+            "description": "사용자 코드 → rclcpp/rclpy → rcl(C API) → rmw 추상화 → DDS/Zenoh 구현 계층, 언어 클라이언트가 rcl 을 공유하는 이유 — Concepts: About client libraries",
+            "resources": [
+              {
+                "title": "About client libraries",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Basic/About-Client-Libraries.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "rmw 구현 선택",
+                "priority": "recommended",
+                "description": "rmw_fastrtps_cpp(기본)·rmw_cyclonedds_cpp·rmw_connextdds·rmw_zenoh_cpp, RMW_IMPLEMENTATION 으로 실행 시 교체, 서로 다른 rmw 간 통신 제약 — Concepts: About different middleware vendors",
+                "resources": [
+                  {
+                    "title": "About different ROS 2 middleware vendors",
+                    "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Different-Middleware-Vendors.html",
+                    "kind": "doc"
+                  }
+                ]
+              },
+              {
+                "title": "DDS 디스커버리",
+                "priority": "recommended",
+                "description": "SPDP(참여자)·SEDP(엔드포인트) 2단계 디스커버리, 멀티캐스트 vs 유니캐스트, 같은 도메인 안의 참여자끼리만 발견 — DDS 표준(OMG DDSI-RTPS) 개요"
+              }
+            ]
+          },
+          {
+            "title": "도메인 ID 와 포트",
+            "priority": "essential",
+            "description": "ROS_DOMAIN_ID 0~101(리눅스 권장 범위), UDP 포트 = 7400 + 250×domain + 오프셋, 참여자 수 한계와 같은 망 다중 로봇 분리 — Concepts: The ROS_DOMAIN_ID",
+            "resources": [
+              {
+                "title": "The ROS_DOMAIN_ID",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Domain-ID.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "디스커버리 범위 설정",
+            "priority": "recommended",
+            "description": "ROS_AUTOMATIC_DISCOVERY_RANGE(SUBNET/LOCALHOST/OFF/SYSTEM_DEFAULT), ROS_STATIC_PEERS, 폐기된 ROS_LOCALHOST_ONLY 대체 — Tutorials: Improved Dynamic Discovery",
+            "resources": [
+              {
+                "title": "Improved Dynamic Discovery",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "배포판과 지원 플랫폼",
+            "priority": "optional",
+            "description": "LTS(Humble·Jazzy) 5년 지원 vs 비LTS, REP 2000 의 Tier 1 플랫폼(Ubuntu 24.04 amd64/arm64), 배포판 혼용 금지 — REP 2000",
+            "resources": [
+              {
+                "title": "REP 2000",
+                "url": "https://www.ros.org/reps/rep-2000.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "ros2 doctor",
+            "priority": "optional",
+            "description": "ros2 doctor --report 로 네트워크·rmw·패키지 버전 점검, 경고 항목 읽는 법 — ROS 2 docs Tutorials: Getting started with ros2doctor"
+          }
+        ]
+      },
+      {
+        "title": "colcon 워크스페이스",
+        "priority": "essential",
+        "description": "src/build/install/log 구조, colcon build --symlink-install, overlay·underlay 와 install/setup.bash, rosdep install --from-paths src — Beginner: Client libraries > Creating a workspace",
+        "resources": [
+          {
+            "title": "Creating a workspace",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "colcon build 옵션",
+            "priority": "essential",
+            "description": "--symlink-install, --packages-select/--packages-up-to/--packages-skip, --cmake-args -DCMAKE_BUILD_TYPE=Release, --parallel-workers, --event-handlers console_direct+ — colcon docs",
+            "resources": [
+              {
+                "title": "colcon documentation",
+                "url": "https://colcon.readthedocs.io/en/released/",
+                "kind": "doc"
+              },
+              {
+                "title": "Using colcon to build packages",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "패키지 선택 옵션",
+                "priority": "essential",
+                "description": "--packages-select(그 패키지만), --packages-up-to(의존성 포함), --packages-above(역의존 포함), --packages-ignore — colcon docs: Package selection arguments"
+              },
+              {
+                "title": "CMake 빌드 타입과 인자",
+                "priority": "recommended",
+                "description": "CMAKE_BUILD_TYPE(Debug/Release/RelWithDebInfo), --cmake-clean-cache, --cmake-force-configure, compile_commands.json(CMAKE_EXPORT_COMPILE_COMMANDS) — colcon docs: colcon-cmake"
+              },
+              {
+                "title": "빌드 산출물 정리",
+                "priority": "optional",
+                "description": "build/·install/·log/ 삭제 후 재빌드가 필요한 경우(패키지 이름 변경, 빌드 타입 전환), COLCON_IGNORE 파일로 패키지 제외 — colcon docs"
+              }
+            ]
+          },
+          {
+            "title": "overlay 와 underlay 원리",
+            "priority": "essential",
+            "description": "setup.bash(체인 포함) vs local_setup.bash(해당 워크스페이스만), AMENT_PREFIX_PATH·CMAKE_PREFIX_PATH·PYTHONPATH 순서, 오버레이가 같은 이름 패키지를 가리는 규칙 — Creating a workspace"
+          },
+          {
+            "title": "rosdep",
+            "priority": "essential",
+            "description": "rosdep init/update, package.xml 키 → OS 패키지 매핑(rosdistro rosdep/*.yaml), rosdep install --from-paths src --ignore-src -r -y, rosdep keys/resolve — Tutorials: Managing dependencies with rosdep",
+            "resources": [
+              {
+                "title": "Managing Dependencies with rosdep",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Rosdep.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "colcon test",
+            "priority": "recommended",
+            "description": "colcon test --packages-select, colcon test-result --all --verbose, ament_lint_auto·ament_cmake_gtest·pytest 결과 위치(build/<pkg>/test_results) — colcon docs: test verb"
+          },
+          {
+            "title": "vcstool 과 .repos",
+            "priority": "recommended",
+            "description": "vcs import src < deps.repos, vcs pull/status, .repos YAML(type/url/version) 로 소스 의존성 고정 — vcstool README"
+          },
+          {
+            "title": "colcon mixin 과 defaults",
+            "priority": "optional",
+            "description": "~/.colcon/defaults.yaml 로 기본 인자 고정, colcon mixin(release, ccache) — colcon docs: Configuration"
+          }
+        ]
+      },
+      {
+        "title": "패키지 만들기",
+        "priority": "essential",
+        "description": "ros2 pkg create --build-type ament_python/ament_cmake, package.xml 의존성 태그, setup.py entry_points 와 CMakeLists install() — Creating a package",
+        "resources": [
+          {
+            "title": "Creating a package",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "package.xml 형식 3",
+            "priority": "essential",
+            "description": "<package format=\"3\">, <name>/<version>/<maintainer>/<license>, <buildtool_depend>, <export><build_type> — REP 149",
+            "resources": [
+              {
+                "title": "REP 149 Package Manifest Format Three",
+                "url": "https://www.ros.org/reps/rep-0149.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "의존성 태그 종류",
+                "priority": "essential",
+                "description": "<depend>(build+export+exec), <build_depend>, <build_export_depend>, <exec_depend>, <test_depend>, <doc_depend> 의 차이 — REP 149"
+              },
+              {
+                "title": "조건부 의존성과 그룹",
+                "priority": "optional",
+                "description": "condition=\"$ROS_VERSION == 2\", <member_of_group>rosidl_interface_packages</member_of_group>, <group_depend> — REP 149"
+              }
+            ]
+          },
+          {
+            "title": "ament_cmake 패키지 구조",
+            "priority": "essential",
+            "description": "find_package, add_executable/add_library, target_link_libraries(…::…), ament_target_dependencies, install(TARGETS … DESTINATION lib/${PROJECT_NAME}), install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME}), ament_package() — How-to: ament_cmake user documentation",
+            "resources": [
+              {
+                "title": "ament_cmake user documentation",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Ament-CMake-Documentation.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "install 규칙",
+                "priority": "essential",
+                "description": "실행 파일은 lib/<pkg>, 라이브러리는 lib, 헤더는 include/<pkg>, launch·config·urdf 는 share/<pkg> 로 설치해야 ros2 run·FindPackageShare 가 찾음 — ament_cmake user documentation"
+              },
+              {
+                "title": "라이브러리 export",
+                "priority": "recommended",
+                "description": "ament_export_targets(HAS_LIBRARY_TARGET), ament_export_dependencies, install(EXPORT …) 로 다운스트림 패키지가 find_package 하게 만들기 — ament_cmake user documentation"
+              },
+              {
+                "title": "ament 리소스 인덱스",
+                "priority": "optional",
+                "description": "share/ament_index/resource_index/packages/<pkg> 마커로 패키지 탐색, ament_index_cpp/ament_index_python get_package_share_directory — ament_index 문서"
+              }
+            ]
+          },
+          {
+            "title": "ament_python 패키지 구조",
+            "priority": "essential",
+            "description": "setup.py 의 packages/data_files/entry_points(console_scripts), setup.cfg [install] install_scripts=$base/lib/<pkg>, resource/<pkg> 마커, launch·config 를 data_files 로 share 에 설치 — Creating a package"
+          },
+          {
+            "title": "C++·Python 혼합 패키지",
+            "priority": "optional",
+            "description": "ament_cmake_python, ament_python_install_package(${PROJECT_NAME}), 파이썬 노드 install(PROGRAMS) — How-to: ament_cmake_python user documentation",
+            "resources": [
+              {
+                "title": "ament_cmake_python user documentation",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Ament-CMake-Python-Documentation.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "패키지 개발 관례",
+            "priority": "optional",
+            "description": "패키지 이름 규칙(소문자·밑줄), 인터페이스 전용 패키지 분리, *_description/*_bringup/*_moveit_config 패키지 분할 관례 — How-to: Developing a ROS 2 package",
+            "resources": [
+              {
+                "title": "Developing a ROS 2 package",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Developing-a-ROS-2-Package.html",
+                "kind": "doc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "RViz2 와 rqt 도구",
+        "priority": "recommended",
+        "description": "RViz2 Fixed Frame·디스플레이(RobotModel, TF, Marker) 추가, rqt_graph 로 노드-토픽 연결 확인, rqt_console 로그 레벨 — Beginner: CLI tools",
+        "resources": [
+          {
+            "title": "Beginner: CLI tools",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "RViz2 디스플레이 종류",
+            "priority": "essential",
+            "description": "RobotModel(Description Topic), TF(프레임 이름·축 표시), Marker/MarkerArray, PointCloud2, Image, Camera, Axes, Pose, Path, InteractiveMarkers 와 Global Options Fixed Frame — RViz User Guide",
+            "children": [
+              {
+                "title": "visualization_msgs/Marker",
+                "priority": "recommended",
+                "description": "type(ARROW, CUBE, SPHERE, CYLINDER, LINE_STRIP, POINTS, TEXT_VIEW_FACING, MESH_RESOURCE), action(ADD/DELETE/DELETEALL), ns+id 식별, lifetime, frame_locked — visualization_msgs 메시지 정의"
+              },
+              {
+                "title": ".rviz 설정 파일",
+                "priority": "recommended",
+                "description": "Displays·Views 를 .rviz 로 저장, rviz2 -d config.rviz, launch 에서 arguments=['-d', path] 로 로드 — RViz User Guide"
+              }
+            ]
+          },
+          {
+            "title": "rqt 플러그인",
+            "priority": "recommended",
+            "description": "rqt_graph(노드-토픽 그래프), rqt_plot(수치 시계열), rqt_reconfigure(파라미터 변경), rqt_topic, rqt_service_caller, rqt_tf_tree, rqt_console — rqt 문서"
+          },
+          {
+            "title": "로깅 시스템",
+            "priority": "essential",
+            "description": "RCLCPP_DEBUG/INFO/WARN/ERROR/FATAL, node.get_logger().info(), _ONCE/_THROTTLE/_SKIPFIRST 변형, --ros-args --log-level <logger>:=debug, /rosout 토픽, RCUTILS_CONSOLE_OUTPUT_FORMAT, ~/.ros/log — Concepts: About logging",
+            "resources": [
+              {
+                "title": "About logging and logger configuration",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Logging.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "ros2 bag 기본",
+            "priority": "recommended",
+            "description": "ros2 bag record -o name topics / -a, play(--rate, --loop), info, MCAP(-s mcap) vs sqlite3 저장 형식, QoS 오버라이드 파일 — Recording and playing back data",
+            "resources": [
+              {
+                "title": "Recording and playing back data",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Recording-And-Playing-Back-Data/Recording-And-Playing-Back-Data.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "외부 시각화 도구",
+            "priority": "optional",
+            "description": "Foxglove(foxglove_bridge, WebSocket), PlotJuggler(ROS 2 토픽·bag 시계열 분석) 의 쓰임 구분 — 각 프로젝트 문서"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "ROS 2 통신 기본",
+    "items": [
+      {
+        "title": "노드",
+        "priority": "essential",
+        "description": "노드 = 하나의 실행 단위, ros2 run/ros2 node list/info, 네임스페이스와 리매핑(--ros-args -r __ns:=, -r old:=new) — Understanding nodes",
+        "resources": [
+          {
+            "title": "Understanding nodes",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "rclpy Node 클래스",
+            "priority": "essential",
+            "description": "rclpy.init(args), Node 상속과 super().__init__('name'), get_name/get_namespace/get_clock, destroy_node, rclpy.shutdown/try_shutdown, KeyboardInterrupt 처리 — rclpy API 문서",
+            "children": [
+              {
+                "title": "Context 와 init/shutdown",
+                "priority": "recommended",
+                "description": "rclpy.init 이 만드는 Context, 여러 Context, rclpy.ok(), on_shutdown 콜백 — rclpy API: Context"
+              },
+              {
+                "title": "노드 정리 순서",
+                "priority": "recommended",
+                "description": "spin 종료 → destroy_node → shutdown 순서, 퍼블리셔·타이머 destroy_*, 종료 시 예외(ExternalShutdownException) — rclpy API 문서"
+              }
+            ]
+          },
+          {
+            "title": "rclcpp Node 클래스",
+            "priority": "essential",
+            "description": "rclcpp::init, std::make_shared<MyNode>(), rclcpp::spin, rclcpp::shutdown, this->get_logger(), shared_from_this 주의 — rclcpp API 문서",
+            "children": [
+              {
+                "title": "NodeOptions",
+                "priority": "recommended",
+                "description": "use_intra_process_comms, parameter_overrides, automatically_declare_parameters_from_overrides, allow_undeclared_parameters, arguments(--ros-args …) — rclcpp::NodeOptions API"
+              },
+              {
+                "title": "노드 인터페이스 분리",
+                "priority": "optional",
+                "description": "NodeBaseInterface·NodeTopicsInterface·NodeParametersInterface 등, get_node_base_interface() 로 Node/LifecycleNode 를 같은 코드로 다루기 — rclcpp API 문서"
+              }
+            ]
+          },
+          {
+            "title": "이름 해석 규칙",
+            "priority": "essential",
+            "description": "상대 이름(foo) → /ns/foo, 절대 이름(/foo), private 이름(~/foo) → /ns/node/foo, 이름 문자 규칙, 숨김 토픽(_로 시작) — ROS 2 design: Topic and Service name mapping"
+          },
+          {
+            "title": "리매핑 문법",
+            "priority": "essential",
+            "description": "--ros-args -r from:=to, -r __node:=new_name, -r __ns:=/robot1, 노드 지정 리매핑 node_name:from:=to, 여러 노드 프로세스에서의 적용 범위 — Understanding nodes"
+          },
+          {
+            "title": "타이머",
+            "priority": "essential",
+            "description": "create_timer(period, cb)/create_wall_timer, 주기 오차와 콜백 지연, timer.cancel/reset, ROS 시간 기반 타이머가 use_sim_time 에서 멈추는 이유 — rclpy/rclcpp API"
+          },
+          {
+            "title": "시간과 Clock",
+            "priority": "essential",
+            "description": "RCL_ROS_TIME/RCL_SYSTEM_TIME/RCL_STEADY_TIME, node.get_clock().now(), Time·Duration 산술과 to_msg, /clock 과 use_sim_time, Rate 와 sleep — ROS 2 design: Clock and Time",
+            "children": [
+              {
+                "title": "builtin_interfaces/Time",
+                "priority": "essential",
+                "description": "sec+nanosec 표현, 메시지 stamp 채우기, Time(0)의 의미(최신·미지정) — builtin_interfaces 메시지 정의"
+              },
+              {
+                "title": "시뮬레이션 시간",
+                "priority": "recommended",
+                "description": "use_sim_time=true 일 때 /clock 수신 전 시간 0, 모든 노드 일관 설정 필요, Gazebo·bag play --clock — ROS 2 design: Clock and Time"
+              }
+            ]
+          },
+          {
+            "title": "컴포넌트 노드",
+            "priority": "recommended",
+            "description": "rclcpp_components, RCLCPP_COMPONENTS_REGISTER_NODE, rclcpp_components_register_nodes(CMake), component_container(_mt), ros2 component load/list/unload — Concepts: About composition",
+            "resources": [
+              {
+                "title": "About composition",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Composition.html",
+                "kind": "doc"
+              },
+              {
+                "title": "Composing multiple nodes in a single process",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Composition.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "인트라프로세스 통신",
+                "priority": "optional",
+                "description": "use_intra_process_comms=True, std::unique_ptr 로 publish 시 복사 없는 전달, 조건(같은 Context·KEEP_LAST·VOLATILE) — Demos: Intra-process communication",
+                "resources": [
+                  {
+                    "title": "Intra-Process Communication",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Demos/Intra-Process-Communication.html",
+                    "kind": "doc"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "토픽",
+        "priority": "essential",
+        "description": "publish/subscribe 비동기 통신, ros2 topic list/echo/hz/bw/pub, 메시지 타입(ros2 interface show) — Understanding topics",
+        "resources": [
+          {
+            "title": "Understanding topics",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "rclpy 퍼블리셔·서브스크라이버",
+            "priority": "essential",
+            "description": "create_publisher/create_subscription, create_timer 콜백, rclpy.spin — Writing a simple publisher and subscriber (Python)",
+            "resources": [
+              {
+                "title": "Writing a simple publisher and subscriber (Python)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "rclpy 콜백 인자",
+                "priority": "recommended",
+                "description": "메시지 객체 하나를 받는 콜백, raw=True 로 직렬화 바이트 받기, 콜백 안 무거운 연산 금지 — rclpy API: Node.create_subscription"
+              },
+              {
+                "title": "publish 패턴",
+                "priority": "essential",
+                "description": "타이머 콜백에서 주기 publish, 메시지 객체 재사용, header.stamp = get_clock().now().to_msg() — rclpy API: Publisher"
+              }
+            ]
+          },
+          {
+            "title": "자주 쓰는 메시지 타입",
+            "priority": "essential",
+            "description": "std_msgs/Header(stamp, frame_id), sensor_msgs/JointState·Image·CameraInfo, geometry_msgs/Pose·PoseStamped·Twist·TwistStamped·TransformStamped — ros2 interface show 로 필드 확인",
+            "children": [
+              {
+                "title": "std_msgs/Header",
+                "priority": "essential",
+                "description": "stamp(builtin_interfaces/Time)·frame_id, stamp 는 측정 시각 기준, frame_id 는 TF 프레임 — std_msgs 메시지 정의"
+              },
+              {
+                "title": "sensor_msgs/JointState",
+                "priority": "essential",
+                "description": "name[]·position[]·velocity[]·effort[] 병렬 배열, 순서가 URDF 순서와 다를 수 있음, 일부 배열 생략 가능 — sensor_msgs 메시지 정의"
+              },
+              {
+                "title": "geometry_msgs 계열",
+                "priority": "essential",
+                "description": "Point/Vector3/Quaternion, Pose(위치+자세)·Transform, Twist(선속도·각속도)·Wrench(힘·토크), *Stamped 변형의 차이 — geometry_msgs 메시지 정의"
+              },
+              {
+                "title": "sensor_msgs/Image 와 CameraInfo",
+                "priority": "recommended",
+                "description": "height/width/encoding(rgb8, 16UC1)/step/data, CameraInfo 의 K·D·R·P 행렬과 distortion_model(plumb_bob) — sensor_msgs 메시지 정의"
+              },
+              {
+                "title": "trajectory_msgs/JointTrajectory",
+                "priority": "essential",
+                "description": "joint_names, points[](positions, velocities, accelerations, effort, time_from_start), header.stamp=0 이면 즉시 시작 — trajectory_msgs 메시지 정의"
+              }
+            ]
+          },
+          {
+            "title": "rclcpp 퍼블리셔·서브스크라이버",
+            "priority": "essential",
+            "description": "create_publisher<MsgT>(topic, qos), publish(msg), create_subscription<MsgT>(topic, qos, callback), 람다 vs std::bind, SharedPtr — Writing a simple publisher and subscriber (C++)",
+            "resources": [
+              {
+                "title": "Writing a simple publisher and subscriber (C++)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "구독 콜백 시그니처",
+                "priority": "recommended",
+                "description": "const MsgT&, MsgT::ConstSharedPtr, std::unique_ptr<MsgT>, (msg, const rclcpp::MessageInfo&) 형태와 복사 비용 — rclcpp API: AnySubscriptionCallback"
+              },
+              {
+                "title": "loaned message",
+                "priority": "optional",
+                "description": "borrow_loaned_message 로 미들웨어 버퍼 직접 쓰기, rmw 지원 조건(zero-copy) — rclcpp API"
+              }
+            ]
+          },
+          {
+            "title": "메시지 직렬화",
+            "priority": "recommended",
+            "description": "CDR 직렬화, rosidl typesupport(introspection/fastrtps), rclpy.serialization.serialize_message/deserialize_message, SerializedMessage 구독 — rosidl 문서"
+          },
+          {
+            "title": "토픽 진단",
+            "priority": "optional",
+            "description": "ros2 topic hz/bw/delay, ros2 topic info -v(엔드포인트·QoS), 토픽 통계(enable_topic_statistics, /statistics) — Concepts: About topic statistics",
+            "resources": [
+              {
+                "title": "About topic statistics",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Topic-Statistics.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "ROS 2 그래프 조회 API",
+            "priority": "optional",
+            "description": "get_topic_names_and_types, get_node_names, count_publishers/count_subscribers, get_publishers_info_by_topic — rclpy/rclcpp Node API"
+          }
+        ]
+      },
+      {
+        "title": "서비스",
+        "priority": "essential",
+        "description": "request/response 동기 호출, ros2 service list/type/call, create_service/create_client 와 call_async — Understanding services",
+        "resources": [
+          {
+            "title": "Understanding services",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html",
+            "kind": "doc"
+          },
+          {
+            "title": "Writing a simple service and client (Python)",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Service-And-Client.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "rclpy 서비스 서버",
+            "priority": "essential",
+            "description": "create_service(SrvType, name, callback), callback(request, response) 가 response 를 반환, 예외 처리와 응답 채우기 — Writing a simple service and client (Python)"
+          },
+          {
+            "title": "rclpy 서비스 클라이언트",
+            "priority": "essential",
+            "description": "create_client, wait_for_service(timeout_sec), call_async → Future, rclpy.spin_until_future_complete, future.add_done_callback, 콜백 안 동기 call() 의 데드락 — Writing a simple service and client (Python)"
+          },
+          {
+            "title": "rclcpp 서비스",
+            "priority": "essential",
+            "description": "create_service<SrvT>(name, callback(request, response)), create_client<SrvT>, async_send_request → SharedFuture, 응답 콜백 형태 — Writing a simple service and client (C++)",
+            "resources": [
+              {
+                "title": "Writing a simple service and client (C++)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Service-And-Client.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "서비스 설계 주의점",
+            "priority": "recommended",
+            "description": "서비스에 기본 타임아웃 없음(클라이언트가 직접 처리), 긴 작업은 액션으로, 서비스 QoS(services_default), 서비스 introspection(configure_introspection) — Concepts: About services"
+          }
+        ]
+      },
+      {
+        "title": "액션",
+        "priority": "essential",
+        "description": "goal·feedback·result 3단 구조와 취소(cancel), ros2 action list/info/send_goal, ActionServer/ActionClient — MoveIt·FollowJointTrajectory 가 액션 기반",
+        "resources": [
+          {
+            "title": "Understanding actions",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html",
+            "kind": "doc"
+          },
+          {
+            "title": "Writing an action server and client (Python)",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Writing-an-Action-Server-Client/Py.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "액션 내부 구조",
+            "priority": "recommended",
+            "description": "send_goal·cancel_goal·get_result 3개 서비스 + feedback·status 2개 토픽, GoalUUID, 결과 보존 시간 — ROS 2 design: Actions",
+            "resources": [
+              {
+                "title": "ROS 2 design: Actions",
+                "url": "https://design.ros2.org/articles/actions.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "goal 상태 머신",
+                "priority": "recommended",
+                "description": "ACCEPTED → EXECUTING → SUCCEEDED/ABORTED/CANCELED, CANCELING 전이, GoalStatus 값 — ROS 2 design: Actions"
+              }
+            ]
+          },
+          {
+            "title": "rclpy ActionServer",
+            "priority": "essential",
+            "description": "ActionServer(node, ActionT, name, execute_callback, goal_callback, cancel_callback), GoalResponse.ACCEPT/REJECT, CancelResponse, goal_handle.publish_feedback/succeed/abort/canceled, is_cancel_requested — Writing an action server and client (Python)"
+          },
+          {
+            "title": "rclpy ActionClient",
+            "priority": "essential",
+            "description": "ActionClient.wait_for_server, send_goal_async(goal, feedback_callback), goal_handle.accepted, get_result_async, cancel_goal_async — Writing an action server and client (Python)"
+          },
+          {
+            "title": "rclcpp_action",
+            "priority": "recommended",
+            "description": "rclcpp_action::create_server(handle_goal, handle_cancel, handle_accepted), ServerGoalHandle, 실행 스레드 분리, Client::SendGoalOptions(goal_response/feedback/result 콜백) — Writing an action server and client (C++)",
+            "resources": [
+              {
+                "title": "Writing an action server and client (C++)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Writing-an-Action-Server-Client/Cpp.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "FollowJointTrajectory 액션",
+            "priority": "essential",
+            "description": "control_msgs/action/FollowJointTrajectory: trajectory, path_tolerance, goal_tolerance, goal_time_tolerance, result.error_code(INVALID_GOAL, PATH_TOLERANCE_VIOLATED…) — control_msgs 정의"
+          }
+        ]
+      },
+      {
+        "title": "커스텀 인터페이스",
+        "priority": "recommended",
+        "description": ".msg/.srv/.action 정의, rosidl_generate_interfaces, 인터페이스 전용 ament_cmake 패키지 — Creating custom msg and srv files",
+        "resources": [
+          {
+            "title": "Creating custom msg and srv files",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "IDL 필드 타입",
+            "priority": "essential",
+            "description": "bool, byte, char, int8~uint64, float32/float64, string/wstring, 고정 배열 T[N], 가변 배열 T[], 상한 배열 T[<=N], 상한 문자열 string<=N, 기본값과 상수(대문자) — Concepts: About interfaces",
+            "resources": [
+              {
+                "title": "About ROS 2 interfaces",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Basic/About-Interfaces.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": ".srv 와 .action 구조",
+            "priority": "essential",
+            "description": "--- 구분자: srv 는 request/response, action 은 goal/result/feedback 순서, 생성되는 _Request/_Response/_Goal/_Feedback 타입 — Concepts: About interfaces"
+          },
+          {
+            "title": "rosidl 생성 파이프라인",
+            "priority": "recommended",
+            "description": "rosidl_generate_interfaces(${PROJECT_NAME} files DEPENDENCIES …), rosidl_default_generators/rosidl_default_runtime, 생성 헤더 경로(<pkg>/msg/my_msg.hpp) — Creating custom msg and srv files"
+          },
+          {
+            "title": "같은 패키지에서 인터페이스 쓰기",
+            "priority": "optional",
+            "description": "rosidl_get_typesupport_target(cpp_typesupport_target …) 로 같은 패키지 노드에 링크 — Implementing custom interfaces",
+            "resources": [
+              {
+                "title": "Implementing custom interfaces",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Single-Package-Define-And-Use-Interface.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "타입 해시와 호환성",
+            "priority": "optional",
+            "description": "Jazzy 의 타입 설명·RIHS01 타입 해시(REP 2011), 필드 변경 시 서로 다른 타입으로 인식되는 문제 — REP 2011"
+          }
+        ]
+      },
+      {
+        "title": "Executor 와 콜백 그룹",
+        "priority": "optional",
+        "description": "SingleThreadedExecutor vs MultiThreadedExecutor, MutuallyExclusive/Reentrant 콜백 그룹 — 서비스 호출 중 데드락 피하기 수준만 — Concepts: Executors",
+        "resources": [
+          {
+            "title": "About Executors",
+            "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Executors.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "spin 함수 계열",
+            "priority": "essential",
+            "description": "spin, spin_once(timeout), spin_some, spin_until_future_complete, executor.add_node/remove_node — Concepts: Executors"
+          },
+          {
+            "title": "SingleThreadedExecutor",
+            "priority": "essential",
+            "description": "한 스레드가 준비된 콜백을 순서대로 실행, 긴 콜백이 다른 콜백을 막는 문제 — Concepts: Executors"
+          },
+          {
+            "title": "MultiThreadedExecutor",
+            "priority": "essential",
+            "description": "num_threads, 콜백 그룹 규칙 안에서 병렬 실행, 공유 상태 보호(mutex·threading.Lock) — Concepts: Executors"
+          },
+          {
+            "title": "EventsExecutor",
+            "priority": "optional",
+            "description": "rclcpp::experimental::executors::EventsExecutor, 대기 집합(wait set) 대신 이벤트 큐로 오버헤드 감소 — Concepts: Executors"
+          },
+          {
+            "title": "콜백 그룹",
+            "priority": "essential",
+            "description": "노드 기본 그룹(MutuallyExclusive), create_callback_group, 퍼블리셔·구독·타이머·서비스에 callback_group 인자 — How-to: Using callback groups",
+            "resources": [
+              {
+                "title": "Using callback groups",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Using-callback-groups.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "MutuallyExclusiveCallbackGroup",
+                "priority": "essential",
+                "description": "같은 그룹 콜백은 동시에 실행되지 않음, 상태 공유 콜백을 묶어 lock 대신 쓰기 — Using callback groups"
+              },
+              {
+                "title": "ReentrantCallbackGroup",
+                "priority": "essential",
+                "description": "같은 콜백도 병렬 실행 가능, 재진입 안전 코드 필요 — Using callback groups"
+              },
+              {
+                "title": "콜백 안 서비스 호출 데드락",
+                "priority": "essential",
+                "description": "타이머 콜백에서 같은 그룹 클라이언트의 동기 call → 응답 콜백이 실행 못 해 멈춤, 별도 그룹 + MultiThreadedExecutor 또는 call_async 로 해결 — Using callback groups"
+              }
+            ]
+          },
+          {
+            "title": "실시간성과 스케줄링",
+            "priority": "optional",
+            "description": "wait set 처리 순서(타이머→구독→서비스→클라이언트), 콜백 지연과 우선순위 역전, 실시간 커널·메모리 사전 할당 개념 — Concepts: Executors"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "QoS · 파라미터 · launch",
+    "items": [
+      {
+        "title": "QoS",
+        "priority": "essential",
+        "description": "reliability(RELIABLE/BEST_EFFORT), durability(VOLATILE/TRANSIENT_LOCAL), history depth, 센서 데이터 프로파일(qos_profile_sensor_data), 퍼블리셔·서브스크라이버 QoS 불일치로 메시지가 안 오는 경우와 ros2 topic info -v 로 확인 — Concepts: Quality of Service settings",
+        "resources": [
+          {
+            "title": "Quality of Service settings",
+            "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Quality-of-Service-Settings.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "/robot_description 의 TRANSIENT_LOCAL",
+            "priority": "recommended",
+            "description": "latched 토픽처럼 늦게 붙은 구독자도 마지막 메시지를 받는 원리 — robot_state_publisher·MoveIt 이 이 방식으로 모델을 받음",
+            "children": [
+              {
+                "title": "TRANSIENT_LOCAL 구독 설정",
+                "priority": "essential",
+                "description": "구독자도 TRANSIENT_LOCAL 을 요청해야 과거 메시지를 받음, ros2 topic echo --qos-durability transient_local /robot_description — Concepts: QoS settings"
+              }
+            ]
+          },
+          {
+            "title": "Reliability",
+            "priority": "essential",
+            "description": "RELIABLE(ACK/NACK 재전송) vs BEST_EFFORT(손실 허용), 센서 스트림에 BEST_EFFORT 를 쓰는 이유, 호환 규칙(pub BEST_EFFORT + sub RELIABLE = 불일치) — Concepts: QoS settings",
+            "children": [
+              {
+                "title": "손실 네트워크에서의 동작",
+                "priority": "recommended",
+                "description": "Wi-Fi 손실 시 RELIABLE 의 재전송 지연·큐 적체, BEST_EFFORT 와 depth 조합 — Demos: Using quality-of-service settings for lossy networks",
+                "resources": [
+                  {
+                    "title": "Quality of Service demo",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Demos/Quality-of-Service.html",
+                    "kind": "doc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Durability",
+            "priority": "essential",
+            "description": "VOLATILE(구독 이후 메시지만) vs TRANSIENT_LOCAL(퍼블리셔가 depth 만큼 보관해 늦은 구독자에 전달), 호환 규칙(pub VOLATILE + sub TRANSIENT_LOCAL = 불일치) — Concepts: QoS settings"
+          },
+          {
+            "title": "History 와 Depth",
+            "priority": "essential",
+            "description": "KEEP_LAST(depth) vs KEEP_ALL, 송수신 큐 크기, 느린 구독자에서 오래된 메시지가 버려지는 동작, depth 1 의 쓰임 — Concepts: QoS settings"
+          },
+          {
+            "title": "Deadline",
+            "priority": "recommended",
+            "description": "메시지 간 최대 간격 계약, offered vs requested deadline 호환(offered ≤ requested), OfferedDeadlineMissed/RequestedDeadlineMissed 이벤트 — ROS 2 design: Deadline, Liveliness, and Lifespan",
+            "resources": [
+              {
+                "title": "QoS Deadline, Liveliness, and Lifespan",
+                "url": "https://design.ros2.org/articles/qos_deadline_liveliness_lifespan.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "Lifespan",
+            "priority": "recommended",
+            "description": "메시지 유효 기간 경과 시 전달 안 함, TRANSIENT_LOCAL 와 함께 오래된 상태 메시지 차단 — ROS 2 design: Deadline, Liveliness, and Lifespan"
+          },
+          {
+            "title": "Liveliness",
+            "priority": "recommended",
+            "description": "AUTOMATIC vs MANUAL_BY_TOPIC, lease_duration, assert_liveliness, LivelinessChanged/LivelinessLost 이벤트로 퍼블리셔 생존 감지 — ROS 2 design: Deadline, Liveliness, and Lifespan"
+          },
+          {
+            "title": "QoS 호환성 표",
+            "priority": "essential",
+            "description": "offered(퍼블리셔) vs requested(구독자) 규칙 정리: reliability·durability·deadline·liveliness·lease_duration, 불일치 시 연결 자체가 안 됨 — Concepts: QoS settings",
+            "children": [
+              {
+                "title": "불일치 진단",
+                "priority": "essential",
+                "description": "ros2 topic info -v 로 엔드포인트별 QoS 비교, 'New publisher discovered … incompatible QoS' 경고, IncompatibleQoS 이벤트 — Concepts: QoS settings"
+              }
+            ]
+          },
+          {
+            "title": "QoS 프로파일 프리셋",
+            "priority": "essential",
+            "description": "기본(KEEP_LAST 10, RELIABLE, VOLATILE), qos_profile_sensor_data(BEST_EFFORT, KEEP_LAST 5), services_default, parameters, system_default, rclcpp::SensorDataQoS()/QoS(10).reliable().transient_local() — Concepts: QoS settings"
+          },
+          {
+            "title": "QoS 이벤트 콜백",
+            "priority": "optional",
+            "description": "rclcpp SubscriptionOptions.event_callbacks(deadline_callback, liveliness_callback, incompatible_qos_callback, message_lost_callback), rclpy event_callbacks — rclcpp API"
+          },
+          {
+            "title": "QoS 오버라이드",
+            "priority": "optional",
+            "description": "QosOverridingOptions 로 파라미터(qos_overrides./topic.publisher.reliability)로 QoS 바꾸기, ros2 bag --qos-profile-overrides-path — How-to: Overriding QoS policies for recording and playback",
+            "resources": [
+              {
+                "title": "Overriding QoS Policies For Recording And Playback",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "CLI 에서 QoS 지정",
+            "priority": "optional",
+            "description": "ros2 topic echo/pub --qos-profile sensor_data, --qos-reliability, --qos-durability, --qos-depth 로 대상 토픽에 맞추기 — ros2 topic --help"
+          }
+        ]
+      },
+      {
+        "title": "파라미터",
+        "priority": "essential",
+        "description": "declare_parameter/get_parameter, ros2 param list/get/set/dump/load, YAML 파라미터 파일(노드이름: ros__parameters:) 구조, use_sim_time — Understanding parameters, Using parameters in a class (Python)",
+        "resources": [
+          {
+            "title": "Understanding parameters",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Parameters/Understanding-ROS2-Parameters.html",
+            "kind": "doc"
+          },
+          {
+            "title": "Using parameters in a class (Python)",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Using-Parameters-In-A-Class-Python.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "파라미터 선언과 타입",
+            "priority": "essential",
+            "description": "declare_parameter(name, default, descriptor), ParameterType(BOOL, INTEGER, DOUBLE, STRING, *_ARRAY, BYTE_ARRAY), 미선언 파라미터 접근 오류, 타입 변경 시 InvalidParameterTypeException — Concepts: About parameters",
+            "resources": [
+              {
+                "title": "About parameters",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Basic/About-Parameters.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "ParameterDescriptor",
+                "priority": "recommended",
+                "description": "description, read_only, dynamic_typing, integer_range/floating_point_range(from_value, to_value, step), additional_constraints — rcl_interfaces/ParameterDescriptor"
+              },
+              {
+                "title": "일괄 선언과 중첩 이름",
+                "priority": "optional",
+                "description": "declare_parameters(namespace, [(name, default)]), 점 표기 중첩 이름(controller.gains.p), get_parameters_by_prefix — rclpy/rclcpp API"
+              }
+            ]
+          },
+          {
+            "title": "파라미터 콜백",
+            "priority": "essential",
+            "description": "rclpy add_on_set_parameters_callback → SetParametersResult(successful, reason), rclcpp add_on_set_parameters_callback 핸들 보관 — Concepts: About parameters",
+            "children": [
+              {
+                "title": "pre-set·on-set·post-set 콜백",
+                "priority": "recommended",
+                "description": "add_pre_set_parameters_callback(수정), add_on_set_parameters_callback(검증·거부), add_post_set_parameters_callback(반영) 역할 분리 — Concepts: About parameters"
+              },
+              {
+                "title": "ParameterEventHandler",
+                "priority": "recommended",
+                "description": "/parameter_events 구독으로 다른 노드 파라미터 변경 감시, add_parameter_callback(name, node_name, cb) — Monitoring for parameter changes (C++)",
+                "resources": [
+                  {
+                    "title": "Monitoring for parameter changes (C++)",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Monitoring-For-Parameter-Changes-CPP.html",
+                    "kind": "doc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "YAML 파라미터 파일",
+            "priority": "essential",
+            "description": "<node_name>: ros__parameters: 구조, 네임스페이스 포함 키(/ns/node), 와일드카드(/**:), 배열·중첩 맵, --ros-args --params-file, launch 의 parameters=[path, {...}] 우선순위 — Understanding parameters"
+          },
+          {
+            "title": "파라미터 서비스",
+            "priority": "recommended",
+            "description": "노드마다 ~/get_parameters, ~/set_parameters, ~/set_parameters_atomically, ~/list_parameters, ~/describe_parameters, ~/get_parameter_types, AsyncParametersClient/SyncParametersClient — Concepts: About parameters"
+          },
+          {
+            "title": "ros2 param CLI",
+            "priority": "essential",
+            "description": "ros2 param list/get/set/describe/dump(--output-dir)/load/delete, 실행 중 파라미터 저장 후 YAML 재사용 — Understanding parameters"
+          },
+          {
+            "title": "C++ 파라미터 사용",
+            "priority": "recommended",
+            "description": "this->declare_parameter<double>(\"gain\", 1.0), get_parameter(\"gain\").as_double(), rclcpp::Parameter — Using parameters in a class (C++)",
+            "resources": [
+              {
+                "title": "Using parameters in a class (C++)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Using-Parameters-In-A-Class-CPP.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "파라미터 소유 모델",
+            "priority": "optional",
+            "description": "ROS 1 parameter server 가 없고 노드가 파라미터를 소유, 공유 값은 YAML·launch SetParameter 로 배포, 전역 use_sim_time 처리 — Concepts: About parameters"
+          }
+        ]
+      },
+      {
+        "title": "launch 파일",
+        "priority": "essential",
+        "description": "Python launch: LaunchDescription, Node(package, executable, parameters, remappings, namespace), IncludeLaunchDescription — Intermediate: Launch",
+        "resources": [
+          {
+            "title": "Launch tutorials",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Launch-Main.html",
+            "kind": "doc"
+          },
+          {
+            "title": "Creating a launch file",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Creating-Launch-Files.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "인자와 치환",
+            "priority": "essential",
+            "description": "DeclareLaunchArgument, LaunchConfiguration, PathJoinSubstitution, FindPackageShare, Command(['xacro ', path]) 로 robot_description 만들기 — Using substitutions",
+            "resources": [
+              {
+                "title": "Using substitutions",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Using-Substitutions.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "DeclareLaunchArgument",
+                "priority": "essential",
+                "description": "name, default_value, description, choices, LaunchConfiguration('name') 로 참조, 미선언 인자 전달 시 동작 — Using substitutions"
+              },
+              {
+                "title": "경로 치환",
+                "priority": "essential",
+                "description": "FindPackageShare('pkg'), PathJoinSubstitution([share, 'urdf', 'robot.xacro']), ThisLaunchFileDir — Using substitutions"
+              },
+              {
+                "title": "Command 와 xacro 실행",
+                "priority": "essential",
+                "description": "Command(['xacro ', path, ' use_mock:=', LaunchConfiguration('mock')]) 공백 처리, FindExecutable(name='xacro') — Using substitutions"
+              },
+              {
+                "title": "기타 치환",
+                "priority": "recommended",
+                "description": "TextSubstitution, EnvironmentVariable, PythonExpression, AndSubstitution/OrSubstitution/NotSubstitution, LaunchConfiguration 기본값 — launch API"
+              },
+              {
+                "title": "OpaqueFunction",
+                "priority": "recommended",
+                "description": "OpaqueFunction(function=f) 에서 context.perform_substitution 으로 실제 문자열을 얻어 파이썬 로직 실행, MoveItConfigsBuilder 와 함께 쓰는 경우 — launch API"
+              }
+            ]
+          },
+          {
+            "title": "조건부 실행",
+            "priority": "recommended",
+            "description": "IfCondition/UnlessCondition 으로 use_sim·use_rviz 같은 스위치 처리",
+            "children": [
+              {
+                "title": "IfCondition 과 UnlessCondition",
+                "priority": "essential",
+                "description": "condition=IfCondition(LaunchConfiguration('use_rviz')), 'true'/'false' 문자열 해석 — launch API"
+              },
+              {
+                "title": "LaunchConfigurationEquals",
+                "priority": "optional",
+                "description": "LaunchConfigurationEquals('mode', 'sim')/NotEquals 로 문자열 분기, PythonExpression 조건 대안 — launch API"
+              }
+            ]
+          },
+          {
+            "title": "Python launch 기본 구조",
+            "priority": "essential",
+            "description": "generate_launch_description() → LaunchDescription([...]), launch(코어) vs launch_ros(ROS 전용) 패키지, ros2 launch pkg x.launch.py --show-args, 액션·치환·이벤트·조건 개념 — Concepts: About launch",
+            "resources": [
+              {
+                "title": "About launch",
+                "url": "https://docs.ros.org/en/jazzy/Concepts/Basic/About-Launch.html",
+                "kind": "doc"
+              },
+              {
+                "title": "Architecture of launch",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Launch-system.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "launch_ros.actions.Node",
+            "priority": "essential",
+            "description": "package, executable, name, namespace, parameters(dict·YAML 경로 목록), remappings, arguments, ros_arguments, output='screen', emulate_tty, respawn/respawn_delay — launch_ros API",
+            "children": [
+              {
+                "title": "parameters 인자 형식",
+                "priority": "essential",
+                "description": "[{'use_sim_time': True}, '/path/params.yaml'] 순서대로 적용, ParameterValue(Command(...), value_type=str) 로 문자열 강제 — launch_ros API"
+              },
+              {
+                "title": "respawn 과 종료 처리",
+                "priority": "optional",
+                "description": "respawn=True, respawn_delay, 노드 종료가 launch 전체 종료로 이어지게 하는 on_exit=Shutdown() — launch_ros API"
+              }
+            ]
+          },
+          {
+            "title": "launch 포함과 그룹",
+            "priority": "essential",
+            "description": "IncludeLaunchDescription(PythonLaunchDescriptionSource(path), launch_arguments={...}.items()), GroupAction(scoped=True), PushRosNamespace, SetParameter, SetRemap, SetLaunchConfiguration — Intermediate: Launch",
+            "children": [
+              {
+                "title": "PushRosNamespace 로 다중 로봇",
+                "priority": "recommended",
+                "description": "GroupAction 안 PushRosNamespace('robot1') 로 포함 launch 전체에 네임스페이스 부여, TF 프레임 접두사는 별도(frame_prefix) — Managing large projects"
+              }
+            ]
+          },
+          {
+            "title": "launch 이벤트와 핸들러",
+            "priority": "recommended",
+            "description": "RegisterEventHandler, OnProcessStart, OnProcessExit, OnProcessIO, OnExecutionComplete, OnShutdown, EmitEvent(Shutdown()), LogInfo, ExecuteProcess — Using event handlers",
+            "resources": [
+              {
+                "title": "Using event handlers",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Using-Event-Handlers.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "TimerAction",
+                "priority": "recommended",
+                "description": "TimerAction(period=3.0, actions=[...]) 로 지연 시작, 컨트롤러 스폰 순서 맞추기 — launch API"
+              },
+              {
+                "title": "순차 실행 패턴",
+                "priority": "recommended",
+                "description": "OnProcessExit(target_action=spawner, on_exit=[next]) 로 joint_state_broadcaster → arm_controller 순서 보장 — Using event handlers"
+              }
+            ]
+          },
+          {
+            "title": "XML launch 문법",
+            "priority": "recommended",
+            "description": "<launch>, <arg name default>, <node pkg exec name namespace output>, <param name value>/<param from>, <remap from to>, <include file><arg/></include>, <group><push_ros_namespace/></group>, $(find-pkg-share x), $(var x), $(env X), $(eval …), if/unless 속성 — How-to: Using Python, XML, and YAML for ROS 2 launch files",
+            "resources": [
+              {
+                "title": "Using Python, XML, and YAML for ROS 2 Launch Files",
+                "url": "https://docs.ros.org/en/jazzy/How-To-Guides/Launch-file-different-formats.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "YAML launch 문법",
+            "priority": "optional",
+            "description": "launch: 목록 아래 - arg:, - node:, - include: 키, XML 과 같은 치환 문법 — How-to: Using Python, XML, and YAML for ROS 2 launch files"
+          },
+          {
+            "title": "대규모 프로젝트 launch 구성",
+            "priority": "recommended",
+            "description": "상위 launch 가 하위 launch 를 포함하는 계층, 파라미터 YAML 분리, 인자 전달 체인, 재사용 가능한 launch 설계 — Managing large projects",
+            "resources": [
+              {
+                "title": "Managing large projects",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Using-ROS2-Launch-For-Large-Projects.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "launch_testing",
+            "priority": "optional",
+            "description": "launch_testing.markers.keep_alive, ReadyToTest, 활성 테스트·사후 테스트(@launch_testing.post_shutdown_test), 프로세스 출력·종료 코드 assert — Writing basic integration tests with launch_testing",
+            "resources": [
+              {
+                "title": "Integration tests with launch_testing",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Testing/Integration.html",
+                "kind": "doc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "lifecycle 노드",
+        "priority": "essential",
+        "description": "관리형 노드: 상태 기계로 설정·활성화 시점을 외부에서 제어, ros2_control 하드웨어·Nav2 가 이 모델을 씀 — ROS 2 design: Managed nodes",
+        "resources": [
+          {
+            "title": "Managed nodes (design)",
+            "url": "https://design.ros2.org/articles/node_lifecycle.html",
+            "kind": "doc"
+          },
+          {
+            "title": "Managed nodes demo",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Demos/Managed-Nodes.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "주 상태와 전이 상태",
+            "priority": "essential",
+            "description": "주 상태 Unconfigured·Inactive·Active·Finalized, 전이 상태 Configuring·CleaningUp·Activating·Deactivating·ShuttingDown·ErrorProcessing, 전이 configure/activate/deactivate/cleanup/shutdown — ROS 2 design: Managed nodes",
+            "children": [
+              {
+                "title": "전이 콜백 반환값",
+                "priority": "essential",
+                "description": "on_configure/on_activate/on_deactivate/on_cleanup/on_shutdown/on_error 가 CallbackReturn SUCCESS·FAILURE·ERROR 반환 시 다음 상태 — ROS 2 design: Managed nodes"
+              },
+              {
+                "title": "오류 처리 전이",
+                "priority": "recommended",
+                "description": "ERROR 반환 → ErrorProcessing → on_error 성공 시 Unconfigured, 실패 시 Finalized — ROS 2 design: Managed nodes"
+              }
+            ]
+          },
+          {
+            "title": "rclcpp_lifecycle::LifecycleNode",
+            "priority": "essential",
+            "description": "LifecycleNode 상속, on_configure 에서 자원 생성, LifecyclePublisher 는 on_activate 이후에만 publish, get_current_state() — lifecycle demo",
+            "resources": [
+              {
+                "title": "ros2/demos lifecycle",
+                "url": "https://github.com/ros2/demos/tree/jazzy/lifecycle",
+                "kind": "code"
+              }
+            ]
+          },
+          {
+            "title": "rclpy lifecycle",
+            "priority": "optional",
+            "description": "rclpy.lifecycle.Node, TransitionCallbackReturn, create_lifecycle_publisher — rclpy API"
+          },
+          {
+            "title": "ros2 lifecycle CLI",
+            "priority": "recommended",
+            "description": "ros2 lifecycle nodes/get/list/set <node> configure, lifecycle_msgs/srv/ChangeState·GetState 서비스와 ~/transition_event 토픽 — Managed nodes demo"
+          },
+          {
+            "title": "launch 에서 lifecycle 제어",
+            "priority": "recommended",
+            "description": "launch_ros.actions.LifecycleNode, EmitEvent(ChangeState(lifecycle_node_matcher, transition_id)), OnStateTransition 핸들러로 자동 configure→activate — launch_ros API"
+          },
+          {
+            "title": "lifecycle 매니저 패턴",
+            "priority": "optional",
+            "description": "nav2_lifecycle_manager 처럼 여러 노드를 순서대로 전이시키는 관리자 노드, bond 로 생존 감시 — Nav2 문서"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "로봇 모델: URDF · xacro · SRDF · TF2",
+    "items": [
+      {
+        "title": "URDF 태그",
+        "priority": "essential",
+        "description": "<robot>, <link>(visual/collision/inertial), <joint> type(revolute/continuous/prismatic/fixed), <parent>/<child>/<origin xyz rpy>/<axis>/<limit lower upper effort velocity> — ROS 2 docs Intermediate: URDF, ROS wiki urdf/XML",
+        "resources": [
+          {
+            "title": "URDF tutorials",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/URDF-Main.html",
+            "kind": "doc"
+          },
+          {
+            "title": "urdf/XML specification",
+            "url": "https://wiki.ros.org/urdf/XML",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "링크·조인트 트리 읽기",
+            "priority": "essential",
+            "description": "base_link 부터 tool0/end-effector 까지 체인 따라가기, mimic 조인트(그리퍼), check_urdf·urdf_to_graphviz 로 트리 확인",
+            "children": [
+              {
+                "title": "check_urdf 와 urdf_to_graphviz",
+                "priority": "recommended",
+                "description": "xacro → URDF 생성 후 check_urdf 로 루트 링크·자식 트리 출력, urdf_to_graphviz 로 PDF 그래프 — liburdfdom-tools"
+              },
+              {
+                "title": "기구학 체인 추출",
+                "priority": "essential",
+                "description": "base_link 에서 tip 까지 조인트 목록·순서, 고정 조인트 병합, MoveIt chain 그룹과 kinematics solver 의 입력 — Lynch & Park 4장"
+              }
+            ]
+          },
+          {
+            "title": "<ros2_control> 태그",
+            "priority": "essential",
+            "description": "URDF 안의 <ros2_control name type=\"system\">, <hardware><plugin>, <joint><command_interface name=\"position\"/><state_interface/> — ros2_control 이 읽는 부분",
+            "children": [
+              {
+                "title": "<hardware> 와 <plugin>",
+                "priority": "essential",
+                "description": "<plugin>mock_components/GenericSystem</plugin> 또는 벤더 하드웨어 플러그인, <param name=\"…\"> 로 IP·포트 전달 — ros2_control 문서: Hardware description in URDF"
+              },
+              {
+                "title": "command·state interface",
+                "priority": "essential",
+                "description": "<command_interface name=\"position|velocity|effort\"> 와 <param name=\"min\"/max>, <state_interface name=\"position\"><param name=\"initial_value\"/></state_interface> — ros2_control 문서"
+              },
+              {
+                "title": "<sensor> 와 <gpio>",
+                "priority": "optional",
+                "description": "힘토크 센서 <sensor><state_interface name=\"force.x\"/>, 그리퍼·IO 를 <gpio> 로 표현 — ros2_control 문서"
+              }
+            ]
+          },
+          {
+            "title": "<link> 구성",
+            "priority": "essential",
+            "description": "name 유일성, visual·collision·inertial 이 각각 0개 이상, 형상 없는 빈 링크(world, base_footprint, tool0, TCP 프레임)의 용도 — ROS wiki urdf/XML/link",
+            "children": [
+              {
+                "title": "<visual>",
+                "priority": "essential",
+                "description": "<origin xyz rpy>(링크 프레임 기준 형상 위치), <geometry>, <material name><color rgba/><texture filename/></material> — urdf/XML/link"
+              },
+              {
+                "title": "<geometry> 종류",
+                "priority": "essential",
+                "description": "<box size=\"x y z\">, <cylinder radius length>(z축 방향), <sphere radius>, <mesh filename=\"package://pkg/meshes/x.stl\" scale>, 메시 단위(m) 주의 — urdf/XML/link"
+              },
+              {
+                "title": "<collision>",
+                "priority": "essential",
+                "description": "시각 메시보다 단순한 형상(볼록 메시·primitive) 사용 이유(충돌 검사 비용), 여러 collision 요소, MoveIt 충돌 검사가 쓰는 부분 — Adding physical and collision properties",
+                "resources": [
+                  {
+                    "title": "Adding physical and collision properties",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Adding-Physical-and-Collision-Properties-to-a-URDF-Model.html",
+                    "kind": "doc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "<inertial>",
+            "priority": "essential",
+            "description": "<mass value>, <origin>(질량 중심 위치와 관성 주축 방향), <inertia ixx ixy ixz iyy iyz izz> — urdf/XML/link, Lynch & Park 8.2절",
+            "resources": [
+              {
+                "title": "Modern Robotics (Lynch & Park)",
+                "url": "http://hades.mech.northwestern.edu/images/7/7f/MR.pdf",
+                "kind": "book"
+              }
+            ],
+            "children": [
+              {
+                "title": "관성 텐서 이론",
+                "priority": "essential",
+                "description": "관성 텐서 I = ∫ρ(r^T r·1 − r r^T)dV, 대칭·양의 정부호, 주관성 모멘트 삼각 부등식, 평행축 정리 I_q = I_c + m(q^T q·1 − q q^T) — Lynch & Park 8.2절"
+              },
+              {
+                "title": "기본 형상 관성 공식",
+                "priority": "recommended",
+                "description": "상자 Ixx = m(y²+z²)/12, 원기둥 Izz = mr²/2·Ixx = m(3r²+h²)/12, 구 I = 2mr²/5 — Lynch & Park 8장, Wikipedia 'List of moments of inertia'"
+              },
+              {
+                "title": "메시에서 관성 추정",
+                "priority": "optional",
+                "description": "CAD 질량 특성 내보내기, MeshLab 'Compute Geometric Measures', 잘못된 관성(0 또는 비물리적)이 시뮬레이션에 주는 영향 — Gazebo 문서"
+              }
+            ]
+          },
+          {
+            "title": "<joint> type",
+            "priority": "essential",
+            "description": "revolute(한계 있음), continuous(무한 회전), prismatic(직선), fixed, floating(6자유도), planar(평면 3자유도), 각 타입의 자유도 — urdf/XML/joint",
+            "resources": [
+              {
+                "title": "Building a movable robot model",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Building-a-Movable-Robot-Model-with-URDF.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "<origin xyz rpy>",
+            "priority": "essential",
+            "description": "부모 링크 프레임에서 조인트(=자식 링크) 프레임까지 변환, rpy 는 고정축 x→y→z 회전 R = Rz(yaw)·Ry(pitch)·Rx(roll), 단위 m·rad — urdf/XML/joint, Lynch & Park 3장",
+            "children": [
+              {
+                "title": "RPY 와 회전 행렬",
+                "priority": "essential",
+                "description": "고정축(extrinsic) XYZ = 회전축(intrinsic) ZYX 동치, 짐벌락(pitch=±π/2), 회전 행렬 → RPY 역변환 — Lynch & Park 3.2절, 부록 B"
+              }
+            ]
+          },
+          {
+            "title": "<axis>",
+            "priority": "essential",
+            "description": "조인트 프레임 기준 회전·이동 축 단위벡터(기본 1 0 0), 부호에 따른 양의 회전 방향(오른손 법칙) — urdf/XML/joint"
+          },
+          {
+            "title": "<limit>",
+            "priority": "essential",
+            "description": "lower/upper(rad 또는 m, revolute·prismatic 필수), effort(N·m 또는 N), velocity(rad/s 또는 m/s), continuous 는 위치 한계 없음 — urdf/XML/joint"
+          },
+          {
+            "title": "<dynamics>",
+            "priority": "recommended",
+            "description": "damping(N·s/m, N·m·s/rad), friction(정지 마찰) — 시뮬레이터가 쓰는 값 — urdf/XML/joint"
+          },
+          {
+            "title": "<mimic>",
+            "priority": "recommended",
+            "description": "joint, multiplier, offset: 값 = multiplier × 기준 조인트 + offset, 평행 그리퍼 손가락에 사용, MoveIt·ros2_control 의 mimic 처리 — urdf/XML/joint"
+          },
+          {
+            "title": "<safety_controller>",
+            "priority": "optional",
+            "description": "soft_lower_limit, soft_upper_limit, k_position, k_velocity 로 소프트 한계 근처 속도 제한 — urdf/XML/safety_limits"
+          },
+          {
+            "title": "<calibration> 와 <transmission>",
+            "priority": "optional",
+            "description": "<calibration rising falling>, ROS 1 시절 <transmission>(actuator–joint 감속비)과 ros2_control transmission_interface 의 관계 — urdf/XML"
+          },
+          {
+            "title": "<gazebo> 확장",
+            "priority": "optional",
+            "description": "<gazebo reference=\"link\"> 의 material·mu1/mu2, <plugin> 로 gz_ros2_control 연결 — Gazebo(gz) 문서"
+          },
+          {
+            "title": "URDF 한계",
+            "priority": "recommended",
+            "description": "트리 구조만(폐쇄 체인 불가), 링크당 부모 하나, 센서·환경 표현 부족 → SDF 와 비교 — ROS wiki urdf/XML, SDFormat 문서"
+          }
+        ]
+      },
+      {
+        "title": "xacro",
+        "priority": "essential",
+        "description": "xacro:property, xacro:macro/params, xacro:include, xacro:arg 와 $(arg), 조건부 xacro:if — 회사 로봇 설명 패키지는 대부분 xacro — Using Xacro to clean up a URDF file",
+        "resources": [
+          {
+            "title": "Using Xacro to clean up a URDF file",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Using-Xacro-to-Clean-Up-a-URDF-File.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "xacro:property",
+            "priority": "essential",
+            "description": "<xacro:property name value/>, ${name} 참조, 블록 프로퍼티(<xacro:property name><origin …/></xacro:property> + <xacro:insert_block name/>), 스코프 — ROS wiki xacro",
+            "resources": [
+              {
+                "title": "xacro (ROS wiki)",
+                "url": "https://wiki.ros.org/xacro",
+                "kind": "doc"
+              },
+              {
+                "title": "xacro wiki (GitHub)",
+                "url": "https://github.com/ros/xacro/wiki",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "${} 수식",
+            "priority": "essential",
+            "description": "파이썬 식 평가 ${pi/2}, ${radians(90)}, math 함수, 문자열 결합, 정수·실수 변환 주의 — ROS wiki xacro"
+          },
+          {
+            "title": "xacro:macro",
+            "priority": "essential",
+            "description": "<xacro:macro name params=\"prefix parent *origin\">, 기본값 param:=default, ^ 상속 기본값(param:=^|default), 호출 <xacro:name prefix=\"left_\"/> — ROS wiki xacro",
+            "children": [
+              {
+                "title": "블록 파라미터",
+                "priority": "recommended",
+                "description": "*origin 단일 블록·**content 다중 블록 인자와 <xacro:insert_block name=\"origin\"/> — ROS wiki xacro"
+              },
+              {
+                "title": "prefix 패턴",
+                "priority": "essential",
+                "description": "모든 링크·조인트 이름에 ${prefix} 를 붙여 양팔·다중 로봇 재사용, parent 링크 인자로 부착 위치 지정 — ROS wiki xacro"
+              }
+            ]
+          },
+          {
+            "title": "xacro:include 와 파일 분할",
+            "priority": "essential",
+            "description": "<xacro:include filename=\"$(find pkg)/urdf/arm.xacro\"/>, ns 속성, 로봇·그리퍼·ros2_control 분리 파일 구성 — ROS wiki xacro"
+          },
+          {
+            "title": "xacro:arg 와 치환 인자",
+            "priority": "essential",
+            "description": "<xacro:arg name default/>, $(arg name), $(find pkg), $(env VAR), $(optenv VAR default), 명령행 xacro robot.xacro use_mock:=true — ROS wiki xacro"
+          },
+          {
+            "title": "xacro:if 와 xacro:unless",
+            "priority": "essential",
+            "description": "value=\"$(arg use_mock)\" 또는 ${expr} 를 bool 로 평가, 'true'/'false'/1/0 허용 — ROS wiki xacro"
+          },
+          {
+            "title": "xacro.load_yaml",
+            "priority": "recommended",
+            "description": "${xacro.load_yaml('$(find pkg)/config/joint_limits.yaml')} 로 관절 한계·캘리브레이션을 YAML 에서 읽어 딕셔너리 참조 — xacro wiki"
+          },
+          {
+            "title": "xacro:element 와 xacro:attribute",
+            "priority": "optional",
+            "description": "동적 태그 이름·속성 생성 — ROS wiki xacro"
+          },
+          {
+            "title": "xacro 실행과 디버깅",
+            "priority": "essential",
+            "description": "xacro in.xacro > out.urdf 로 전개 결과 확인, 'Undefined substitution argument' 등 오류 해석, launch 의 Command 와 같은 결과인지 비교 — Using Xacro to clean up a URDF file"
+          }
+        ]
+      },
+      {
+        "title": "robot_state_publisher 와 joint_state_publisher",
+        "priority": "essential",
+        "description": "/joint_states → robot_state_publisher → /tf·/tf_static, joint_state_publisher_gui 로 조인트 움직여 보기 — Using URDF with robot_state_publisher",
+        "resources": [
+          {
+            "title": "Using URDF with robot_state_publisher (Python)",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Using-URDF-with-Robot-State-Publisher-py.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "robot_state_publisher 동작",
+            "priority": "essential",
+            "description": "robot_description 파라미터 → KDL 트리, fixed 조인트는 /tf_static 1회, 가동 조인트는 /joint_states 수신 시 /tf, publish_frequency, frame_prefix, ignore_timestamp — robot_state_publisher README",
+            "children": [
+              {
+                "title": "/robot_description 토픽",
+                "priority": "essential",
+                "description": "robot_state_publisher 가 TRANSIENT_LOCAL 로 URDF 문자열 publish, MoveIt·RViz·ros2_control 이 구독 — robot_state_publisher README"
+              },
+              {
+                "title": "누락된 joint_states",
+                "priority": "recommended",
+                "description": "/joint_states 에 없는 가동 조인트는 TF 가 안 나와 RViz 에 'No transform' 표시 — robot_state_publisher README"
+              }
+            ]
+          },
+          {
+            "title": "joint_state_publisher",
+            "priority": "recommended",
+            "description": "source_list 로 여러 joint_states 병합, zeros 초기값, mimic 조인트 자동 계산, rate — joint_state_publisher README"
+          },
+          {
+            "title": "joint_state_broadcaster 와의 관계",
+            "priority": "essential",
+            "description": "실기·ros2_control 환경에서는 joint_state_broadcaster 가 /joint_states 를 publish, joint_state_publisher 와 동시 실행 금지 — ros2_controllers 문서"
+          },
+          {
+            "title": "순기구학 원리",
+            "priority": "recommended",
+            "description": "루트에서 링크까지 T = Π(T_origin,i · T_joint,i(q_i)), revolute 는 축 회전 exp([ω]θ), prismatic 은 축 이동 — Lynch & Park 4장",
+            "resources": [
+              {
+                "title": "Modern Robotics (Lynch & Park)",
+                "url": "http://hades.mech.northwestern.edu/images/7/7f/MR.pdf",
+                "kind": "book"
+              }
+            ]
+          },
+          {
+            "title": "KDL 과 kdl_parser",
+            "priority": "optional",
+            "description": "kdl_parser 로 URDF → KDL::Tree, getChain, ChainFkSolverPos_recursive — orocos_kinematics_dynamics 문서"
+          }
+        ]
+      },
+      {
+        "title": "SRDF 태그",
+        "priority": "essential",
+        "description": "<group>(chain base_link→tip_link 또는 joint 목록), <group_state>(named pose, 예: home), <end_effector>, <disable_collisions reason=\"Adjacent/Never\">, <virtual_joint> — MoveIt docs URDF and SRDF",
+        "resources": [
+          {
+            "title": "URDF and SRDF (MoveIt)",
+            "url": "https://moveit.picknik.ai/main/doc/examples/urdf_srdf/urdf_srdf_tutorial.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "<virtual_joint>",
+            "priority": "essential",
+            "description": "name, type(fixed/floating/planar), parent_frame(world), child_link(base_link), 이동 로봇과 고정 팔 차이 — MoveIt docs URDF and SRDF"
+          },
+          {
+            "title": "<group>",
+            "priority": "essential",
+            "description": "<chain base_link tip_link/>, <joint name/>, <link name/>, 하위 <group name/> 로 계획 그룹 정의 — MoveIt docs URDF and SRDF",
+            "children": [
+              {
+                "title": "chain 그룹 vs joint 목록 그룹",
+                "priority": "essential",
+                "description": "chain 은 IK 솔버(KDL 등)에 바로 쓰기 좋음, joint 목록은 분기 구조·그리퍼에 사용 — MoveIt docs URDF and SRDF"
+              },
+              {
+                "title": "서브그룹 구성",
+                "priority": "recommended",
+                "description": "arm·gripper 를 묶은 arm_with_gripper, 양팔 dual_arm 그룹 — MoveIt docs URDF and SRDF"
+              }
+            ]
+          },
+          {
+            "title": "<group_state>",
+            "priority": "essential",
+            "description": "<group_state name=\"home\" group=\"arm\"><joint name value/></group_state>, setNamedTarget('home') 로 사용 — MoveIt docs URDF and SRDF"
+          },
+          {
+            "title": "<end_effector>",
+            "priority": "essential",
+            "description": "name, parent_link, group(그리퍼 그룹), parent_group(팔 그룹), RViz 인터랙티브 마커 위치 결정 — MoveIt docs URDF and SRDF"
+          },
+          {
+            "title": "<disable_collisions>",
+            "priority": "essential",
+            "description": "link1, link2, reason(Adjacent/Default/Never/User), 허용 충돌 행렬(ACM)의 기본값, 너무 많이 끄면 실제 충돌을 놓침 — MoveIt docs URDF and SRDF"
+          },
+          {
+            "title": "<passive_joint> 와 구 근사",
+            "priority": "optional",
+            "description": "<passive_joint name/>(계획에서 제외), <link_sphere_approximation> — MoveIt docs URDF and SRDF"
+          },
+          {
+            "title": "MoveIt Setup Assistant",
+            "priority": "essential",
+            "description": "URDF 로드, 자기 충돌 행렬 샘플링(density), 계획 그룹·로봇 포즈·엔드이펙터·ros2_control 컨트롤러 정의, 생성 파일(.srdf, kinematics.yaml, joint_limits.yaml, ros2_controllers.yaml, moveit_controllers.yaml) — MoveIt Setup Assistant 튜토리얼",
+            "resources": [
+              {
+                "title": "MoveIt Setup Assistant",
+                "url": "https://moveit.picknik.ai/main/doc/examples/setup_assistant/setup_assistant_tutorial.html",
+                "kind": "doc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "TF2",
+        "priority": "essential",
+        "description": "프레임 트리(map/odom/base_link/tool0/camera_link), /tf vs /tf_static, 부모-자식 단방향 트리 — Concepts: tf2, Intermediate: tf2",
+        "resources": [
+          {
+            "title": "About tf2",
+            "url": "https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Tf2.html",
+            "kind": "doc"
+          },
+          {
+            "title": "tf2 tutorials",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Tf2-Main.html",
+            "kind": "doc"
+          }
+        ],
+        "children": [
+          {
+            "title": "TF 조회와 디버깅",
+            "priority": "essential",
+            "description": "tf2_echo src tgt, view_frames 로 frames.pdf, RViz TF 디스플레이, Buffer.lookup_transform 과 시간 인자(rclpy.time.Time()=최신) — Writing a listener (Python)",
+            "resources": [
+              {
+                "title": "Writing a listener (Python)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Listener-Py.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "tf2_echo",
+                "priority": "essential",
+                "description": "ros2 run tf2_ros tf2_echo <source> <target> 출력(Translation, Rotation 쿼터니언·RPY), 출력 방향 해석 — Debugging tf2 problems"
+              },
+              {
+                "title": "view_frames",
+                "priority": "recommended",
+                "description": "ros2 run tf2_tools view_frames 로 frames.pdf, 브로드캐스터·평균 주기·버퍼 길이 확인 — Debugging tf2 problems",
+                "resources": [
+                  {
+                    "title": "Debugging tf2 problems",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Debugging-Tf2-Problems.html",
+                    "kind": "doc"
+                  }
+                ]
+              },
+              {
+                "title": "tf2_monitor",
+                "priority": "optional",
+                "description": "ros2 run tf2_ros tf2_monitor 로 프레임별 지연·발행 주기 측정 — tf2_ros 문서"
+              }
+            ]
+          },
+          {
+            "title": "static transform",
+            "priority": "essential",
+            "description": "카메라 외부 파라미터 같은 고정 변환: static_transform_publisher CLI 와 StaticTransformBroadcaster — Writing a static broadcaster (Python)",
+            "resources": [
+              {
+                "title": "Writing a static broadcaster (Python)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Static-Broadcaster-Py.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "static_transform_publisher 인자",
+                "priority": "essential",
+                "description": "--x --y --z --roll --pitch --yaw(또는 --qx --qy --qz --qw) --frame-id --child-frame-id 이름 붙은 인자 형식, launch Node(arguments=[...]) 로 실행 — Writing a static broadcaster"
+              },
+              {
+                "title": "/tf_static 특성",
+                "priority": "recommended",
+                "description": "TRANSIENT_LOCAL 로 한 번만 publish, 시간 무관(항상 유효), 같은 child 를 다른 노드가 덮어쓰는 문제 — Concepts: tf2"
+              }
+            ]
+          },
+          {
+            "title": "자주 보는 TF 오류",
+            "priority": "recommended",
+            "description": "'Could not find a connection between', extrapolation into the future/past, 프레임 이름 오타·use_sim_time 불일치 원인 구분",
+            "children": [
+              {
+                "title": "extrapolation 오류",
+                "priority": "essential",
+                "description": "'Lookup would require extrapolation into the future/past': 타임스탬프와 버퍼 범위 불일치, 시계 차이·지연·use_sim_time 원인과 timeout·Time() 대처 — Debugging tf2 problems"
+              },
+              {
+                "title": "connection 오류",
+                "priority": "essential",
+                "description": "'Could not find a connection between A and B because they are not part of the same tree': 브로드캐스터 누락·프레임 이름 오타·트리 분리 — Debugging tf2 problems"
+              },
+              {
+                "title": "TF_REPEATED_DATA 와 다중 부모",
+                "priority": "optional",
+                "description": "같은 타임스탬프 중복 발행 경고, 한 child 에 두 부모를 보내 트리가 흔들리는 문제 — tf2 문서"
+              }
+            ]
+          },
+          {
+            "title": "프레임 규약",
+            "priority": "essential",
+            "description": "REP 105 의 earth·map·odom·base_link 관계와 연속성 요구, REP 103 의 단위(SI)와 축(x 전방, y 좌측, z 위) — REP 105, REP 103",
+            "resources": [
+              {
+                "title": "REP 105 Coordinate Frames for Mobile Platforms",
+                "url": "https://www.ros.org/reps/rep-0105.html",
+                "kind": "doc"
+              },
+              {
+                "title": "REP 103 Standard Units and Coordinate Conventions",
+                "url": "https://www.ros.org/reps/rep-0103.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "카메라 optical frame",
+                "priority": "essential",
+                "description": "camera_link(x 전방) vs *_optical_frame(z 전방, x 오른쪽, y 아래), 둘 사이 rpy(-π/2, 0, -π/2) — REP 103"
+              },
+              {
+                "title": "로봇팔 프레임 관례",
+                "priority": "recommended",
+                "description": "base_link, base(산업용 좌표계), flange, tool0(툴 장착면), TCP 프레임 추가 — ROS-Industrial 관례"
+              }
+            ]
+          },
+          {
+            "title": "TransformStamped 와 변환 수학",
+            "priority": "essential",
+            "description": "header.frame_id=부모, child_frame_id=자식, translation+rotation(쿼터니언), T_parent_child 의미, 합성 T_ac = T_ab·T_bc 와 역 T⁻¹ = [Rᵀ, −Rᵀp] — Lynch & Park 3장",
+            "resources": [
+              {
+                "title": "Modern Robotics (Lynch & Park)",
+                "url": "http://hades.mech.northwestern.edu/images/7/7f/MR.pdf",
+                "kind": "book"
+              }
+            ],
+            "children": [
+              {
+                "title": "쿼터니언",
+                "priority": "essential",
+                "description": "(x, y, z, w) 순서, 단위 쿼터니언 정규화, 축-각 표현 q = (sin(θ/2)·u, cos(θ/2)), 곱셈으로 회전 합성·켤레로 역 — Quaternion fundamentals",
+                "resources": [
+                  {
+                    "title": "Quaternion fundamentals",
+                    "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Quaternion-Fundamentals.html",
+                    "kind": "doc"
+                  }
+                ]
+              },
+              {
+                "title": "SE(3) 동차변환",
+                "priority": "essential",
+                "description": "4×4 행렬 [R p; 0 1], 점 변환 vs 벡터 변환, 좌표 프레임 변환과 물체 이동의 구분 — Lynch & Park 3.3절"
+              }
+            ]
+          },
+          {
+            "title": "동적 브로드캐스터",
+            "priority": "essential",
+            "description": "tf2_ros.TransformBroadcaster(node), sendTransform(TransformStamped), stamp 는 측정 시각, 한 프레임에 부모 하나 — Writing a broadcaster (Python)",
+            "resources": [
+              {
+                "title": "Writing a broadcaster (Python)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Broadcaster-Py.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "Buffer 와 TransformListener",
+            "priority": "essential",
+            "description": "tf2_ros.Buffer(cache_time 기본 10초), TransformListener(buffer, node) 가 /tf·/tf_static 구독, can_transform, C++ tf2_ros::Buffer + TransformListener — Writing a listener (C++)",
+            "resources": [
+              {
+                "title": "Writing a listener (C++)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Listener-Cpp.html",
+                "kind": "doc"
+              }
+            ],
+            "children": [
+              {
+                "title": "lookup_transform 인자",
+                "priority": "essential",
+                "description": "lookup_transform(target_frame, source_frame, time, timeout): 결과는 source 의 데이터를 target 으로 옮기는 변환, Time() = 최신, timeout 동안 대기 — tf2_ros API"
+              },
+              {
+                "title": "시간 여행 lookup",
+                "priority": "recommended",
+                "description": "lookup_transform_full(target, target_time, source, source_time, fixed_frame) 로 과거 시점 간 변환 — tf2 tutorials: Traveling in time"
+              },
+              {
+                "title": "보간과 외삽",
+                "priority": "recommended",
+                "description": "버퍼 안 두 시점 사이 평행이동 선형 보간·회전 slerp, 범위 밖은 외삽하지 않고 ExtrapolationException — Concepts: tf2"
+              }
+            ]
+          },
+          {
+            "title": "tf2 로 메시지 변환",
+            "priority": "essential",
+            "description": "tf2_geometry_msgs 의 do_transform_pose/point/vector3, buffer.transform(pose_stamped, 'base_link'), C++ tf2::doTransform, tf2::fromMsg/toMsg — tf2_geometry_msgs API"
+          },
+          {
+            "title": "MessageFilter",
+            "priority": "recommended",
+            "description": "tf2_ros::MessageFilter 로 변환 가능한 시점까지 메시지 대기 후 콜백, 센서 데이터 처리에서의 사용 — Using stamped datatypes with tf2_ros::MessageFilter",
+            "resources": [
+              {
+                "title": "Using stamped datatypes with tf2_ros::MessageFilter",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Using-Stamped-Datatypes-With-Tf2-Ros-MessageFilter.html",
+                "kind": "doc"
+              }
+            ]
+          },
+          {
+            "title": "프레임 추가",
+            "priority": "optional",
+            "description": "고정 프레임 vs 움직이는 프레임 추가, 부모 선택 기준 — Adding a frame (Python)",
+            "resources": [
+              {
+                "title": "Adding a frame (Python)",
+                "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Adding-A-Frame-Py.html",
+                "kind": "doc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "URDF 와 SDF 비교",
+        "priority": "optional",
+        "description": "SDFormat 의 <model>/<world>, 폐쇄 체인·센서·물리 표현, gz sdf -p robot.urdf 변환, Gazebo 가 URDF 를 SDF 로 바꿔 읽는 과정 — SDFormat 문서"
+      },
+      {
+        "title": "CAD 에서 URDF 내보내기",
+        "priority": "optional",
+        "description": "SolidWorks to URDF Exporter·onshape-to-robot 등 도구, 좌표계·메시 원점 정리, 내보낸 관성값 검증 — Exporting an URDF file",
+        "resources": [
+          {
+            "title": "Exporting an URDF file",
+            "url": "https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/Exporting-an-URDF-File.html",
+            "kind": "doc"
+          }
+        ]
+      }
+    ]
+  }
+]
