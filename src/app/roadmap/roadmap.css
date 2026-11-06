@@ -14,7 +14,7 @@
   }
 
   /* ---- priority colour slots (ink on soft) ---- */
-  .rm-root [data-priority="required"] {
+  .rm-root [data-priority="essential"] {
     --rm-ink: var(--rb-tone-rose-fg);
     --rm-soft: var(--rb-tone-rose-bg);
   }
@@ -124,7 +124,7 @@
     background: var(--rm-soft, transparent);
     border: 1px solid var(--rm-ink, var(--rb-border-strong));
   }
-  .rm-legend-item[data-priority="required"]::before {
+  .rm-legend-item[data-priority="essential"]::before {
     border-width: 2px;
   }
   .rm-legend-item[data-priority="optional"]::before {
@@ -232,7 +232,7 @@
       background-color 120ms,
       box-shadow 120ms;
   }
-  .rm-item[data-priority="required"] {
+  .rm-item[data-priority="essential"] {
     border-width: 2px;
     font-weight: 600;
   }
