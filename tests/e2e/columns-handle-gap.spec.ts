@@ -56,7 +56,12 @@ for (const n of [2, 3] as const) {
     await page.mouse.up();
 
     await expect(columns.nth(0)).toContainText("번호 항목");
-    await expect(columns.nth(n - 1)).not.toContainText("번호 항목");
+    if (n === 3) {
+      // The emptied right column disappears, so only two columns remain.
+      await expect(columns).toHaveCount(n - 1);
+    } else {
+      await expect(columns.nth(n - 1)).not.toContainText("번호 항목");
+    }
     await expect(page.locator('input[type="hidden"][name="body"]')).toHaveValue(
       /::: column\n왼쪽 글\n\n1\. 번호 항목/,
     );
