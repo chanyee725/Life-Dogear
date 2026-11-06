@@ -1,6 +1,12 @@
 import { Extension } from "@tiptap/core";
-import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
-import { NodeSelection, Plugin, PluginKey, type EditorState, type Transaction } from "@tiptap/pm/state";
+import { Fragment, type Node as PMNode, type ResolvedPos } from "@tiptap/pm/model";
+import {
+  NodeSelection,
+  Plugin,
+  PluginKey,
+  type EditorState,
+  type Transaction,
+} from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
 /**
@@ -8,12 +14,15 @@ import type { EditorView } from "@tiptap/pm/view";
  * Dragging the grip moves the block (a drop line marks where it lands); clicking it
  * selects the block so the keyboard can delete or copy it. List and task items move
  * as single items; every other block moves as a whole top-level block (a table, a
- * quote, a code block, a photo). Hidden while the editor is read-only. On touch the
- * grip has to be held briefly before it drags.
+ * quote, a code block, a photo, a columns block). Blocks in the second or third column
+ * get their own grip (in the gap between columns) and move between columns; the grip
+ * beside the first column moves the whole columns block. Hidden while the editor is
+ * read-only. On touch the grip has to be held briefly before it drags.
  */
 
 const LIST_TYPES = new Set(["bulletList", "orderedList", "taskList"]);
 const ITEM_TYPES = new Set(["listItem", "taskItem"]);
+const COLUMN = "column";
 /** Pointer travel (px) before a press on the grip becomes a drag. */
 const DRAG_SLOP = 4;
 /** Touch hold (ms) before the grip drags, so a swipe over it still scrolls the page. */
@@ -37,7 +46,9 @@ function removalRange(doc: PMNode, from: number, node: PMNode): [number, number]
   while (
     depth > 0 &&
     $from.node(depth).childCount === 1 &&
-    !$from.node(depth).type.validContent(Fragment.empty)
+    !$from.node(depth).type.validContent(Fragment.empty) &&
+    // A column cannot leave its columns block (it needs two); it keeps an empty line.
+    $from.node(depth - 1).canReplace($from.index(depth - 1), $from.index(depth - 1) + 1)
   )
     depth--;
   if (depth === $from.depth) return [from, from + node.nodeSize];
@@ -61,27 +72,62 @@ export function moveBlock(
   if (to >= from && to <= end) return null;
   const [delFrom, delTo] = removalRange(state.doc, from, node);
   if (to > delFrom && to < delTo) return null;
-  const tr = state.tr.delete(delFrom, delTo);
+  const tr = state.tr;
+  const parent = state.doc.resolve(delFrom).parent;
+  const filler =
+    delFrom === from && parent.childCount === 1 && !parent.type.validContent(Fragment.empty)
+      ? parent.type.contentMatch.defaultType?.createAndFill()
+      : null;
+  if (filler) tr.replaceWith(delFrom, delTo, filler);
+  else tr.delete(delFrom, delTo);
   const insertAt = tr.mapping.map(to);
   tr.insert(insertAt, node);
   tr.setSelection(NodeSelection.create(tr.doc, insertAt));
   return tr.scrollIntoView();
 }
 
-/** The draggable block around `pos`: the innermost list item, else the top-level block. */
+/**
+ * Depth of the column (not the first in its columns block) that holds `$pos`, or -1.
+ * Blocks there drag on their own; the first column's blocks belong to the whole block.
+ */
+function innerColumnDepth($pos: ResolvedPos): number {
+  for (let d = $pos.depth; d >= 1; d--)
+    if ($pos.node(d).type.name === COLUMN) return $pos.index(d - 1) > 0 ? d : -1;
+  return -1;
+}
+
+/**
+ * The draggable block around `pos`: the innermost list item or block of a second/third
+ * column, else the top-level block.
+ */
 export function blockAt(doc: PMNode, pos: number, inside = -1): Block | null {
   if (inside >= 0) {
     const node = doc.nodeAt(inside);
     const $inside = doc.resolve(inside);
-    if (node?.isBlock && (ITEM_TYPES.has(node.type.name) || $inside.depth === 0))
+    const column = innerColumnDepth($inside);
+    const inFirstColumn = column < 0 && hasColumn($inside);
+    if (
+      node?.isBlock &&
+      ((ITEM_TYPES.has(node.type.name) && !inFirstColumn) ||
+        $inside.depth === 0 ||
+        (column >= 0 && $inside.depth === column))
+    )
       return { pos: inside, node };
   }
   const $pos = doc.resolve(Math.min(Math.max(pos, 0), doc.content.size));
+  const column = innerColumnDepth($pos);
+  const inFirstColumn = column < 0 && hasColumn($pos);
   for (let d = $pos.depth; d >= 1; d--) {
     const node = $pos.node(d);
-    if (ITEM_TYPES.has(node.type.name) || d === 1) return { pos: $pos.before(d), node };
+    if ((ITEM_TYPES.has(node.type.name) && !inFirstColumn) || d === column + 1 || d === 1)
+      return { pos: $pos.before(d), node };
   }
   return null;
+}
+
+function hasColumn($pos: ResolvedPos): boolean {
+  for (let d = $pos.depth; d >= 1; d--) if ($pos.node(d).type.name === COLUMN) return true;
+  return false;
 }
 
 /**
@@ -143,7 +189,6 @@ class DragHandleView {
   private hideTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private view: EditorView) {
-
     this.handle = document.createElement("button");
     this.handle.type = "button";
     this.handle.className = "rb-drag-handle";

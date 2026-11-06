@@ -1,8 +1,21 @@
+import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
+import { insertColumns } from "./columns-edit";
 import { findWikiTrigger } from "./WikiSuggest";
 
 export type SlashCommandId =
-  "page" | "h2" | "h3" | "bullet" | "ordered" | "task" | "quote" | "code" | "table" | "image";
+  | "page"
+  | "h2"
+  | "h3"
+  | "bullet"
+  | "ordered"
+  | "task"
+  | "quote"
+  | "code"
+  | "table"
+  | "image"
+  | "columns2"
+  | "columns3";
 
 export type SlashCommand = {
   id: SlashCommandId;
@@ -11,6 +24,8 @@ export type SlashCommand = {
   icon: string;
   /** Extra words that find it (lower case). */
   aliases: readonly string[];
+  /** Applies the command (the `/query` is already removed); else the menu's own switch does. */
+  run?: (editor: Editor) => boolean;
 };
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
@@ -24,6 +39,20 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { id: "code", label: "코드", icon: "</>", aliases: ["code"] },
   { id: "table", label: "표", icon: "▦", aliases: ["table"] },
   { id: "image", label: "사진", icon: "🖼", aliases: ["image", "photo", "img", "이미지"] },
+  {
+    id: "columns2",
+    label: "2열",
+    icon: "▥",
+    aliases: ["/2", "2", "columns", "열", "단"],
+    run: (editor) => insertColumns(editor, 2),
+  },
+  {
+    id: "columns3",
+    label: "3열",
+    icon: "▥",
+    aliases: ["/3", "3", "columns", "열", "단"],
+    run: (editor) => insertColumns(editor, 3),
+  },
 ];
 
 const squash = (s: string) => s.toLowerCase().replace(/\s+/g, "");

@@ -1,5 +1,7 @@
 /** Pure helpers for note sources (출처) on the notes screens. */
 
+import { stripColumnMarkers } from "@/lib/column-markers";
+
 /** `http(s)://…` only; other schemes never become a link. */
 export function isHttpUrl(value: string | null | undefined): value is string {
   if (!value) return false;
@@ -16,7 +18,7 @@ export function isHttpUrl(value: string | null | undefined): value is string {
  * checkbox markers dropped).
  */
 export function bodyPreview(body: string): string {
-  const line = body
+  const line = stripColumnMarkers(body)
     .split("\n")
     .map((l) =>
       l
