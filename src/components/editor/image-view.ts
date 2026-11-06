@@ -9,6 +9,22 @@ export const IMAGE_COPY_LABEL = {
   failed: "복사 실패",
 } as const;
 export const CAPTION_PLACEHOLDER = "캡션 추가";
+
+/** Photo widths as a share of the text column; no width keeps the photo's own size. */
+export const IMAGE_SIZES = [
+  { width: 25, label: "작게" },
+  { width: 50, label: "중간" },
+  { width: 75, label: "크게" },
+  { width: 100, label: "원본" },
+] as const;
+export type ImageWidth = (typeof IMAGE_SIZES)[number]["width"];
+const WIDTH_TITLE = /^w=(25|50|75|100)$/;
+
+/** `w=50` (the Markdown image title) → 50; anything else → null. */
+export function parseWidthTitle(title: string | null | undefined): ImageWidth | null {
+  const match = title ? WIDTH_TITLE.exec(title.trim()) : null;
+  return match ? (Number(match[1]) as ImageWidth) : null;
+}
 const COPIED_MS = 1500;
 const FAILED_MS = 2500;
 
@@ -75,7 +91,33 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
   badge.className = "rb-image-copy-status";
   badge.setAttribute("role", "status");
   button.append(badge);
-  frame.append(img, button);
+
+  const sizes = document.createElement("div");
+  sizes.className = "rb-image-sizes";
+  sizes.setAttribute("role", "group");
+  sizes.setAttribute("aria-label", "사진 크기");
+  const sizeButtons = IMAGE_SIZES.map(({ width, label }) => {
+    const sizeButton = document.createElement("button");
+    sizeButton.type = "button";
+    sizeButton.className = "rb-image-size";
+    sizeButton.textContent = label;
+    sizeButton.title = `${label} (본문 폭의 ${width}%)`;
+    sizeButton.addEventListener("mousedown", (event) => event.preventDefault());
+    sizeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const pos = getPos();
+      if (pos === undefined || !view.editable || node.attrs.width === width) return;
+      view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, width }));
+    });
+    sizes.append(sizeButton);
+    return { width, button: sizeButton };
+  });
+
+  const tools = document.createElement("div");
+  tools.className = "rb-image-tools";
+  tools.append(sizes, button);
+  frame.append(img, tools);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -151,6 +193,18 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     if (input.value !== alt) input.value = alt;
     caption.textContent = alt;
     caption.hidden = !alt.trim();
+
+    const width = parseWidthTitle(`w=${node.attrs.width}`);
+    // A sized photo and its caption share the same share of the column.
+    const share = width ? `${width}%` : "";
+    for (const element of [frame, input, caption]) element.style.width = share;
+    if (width) dom.dataset.width = String(width);
+    else delete dom.dataset.width;
+    for (const size of sizeButtons) {
+      // No saved width is the photo's own size, shown as 원본.
+      const pressed = size.width === (width ?? 100);
+      size.button.setAttribute("aria-pressed", String(pressed));
+    }
   };
   render();
 
@@ -164,7 +218,7 @@ function imageView(initial: PMNode, view: EditorView, getPos: () => number | und
     },
     stopEvent: (event) =>
       event.target instanceof Node &&
-      (input.contains(event.target) || button.contains(event.target)),
+      (input.contains(event.target) || tools.contains(event.target)),
     ignoreMutation: () => true,
     destroy: () => clearTimeout(timer),
   };
@@ -197,21 +251,42 @@ function keepEscapesInAlt(md: MarkdownIt) {
 }
 
 /**
- * Block photo with a hover copy button and a one-line caption under it, both centred.
+ * Block photo with hover size and copy buttons and a one-line caption under it, centred.
+ * A chosen size is saved as the image title: `![캡션](url "w=50")`.
  * Markdown stays `![캡션](url)` (the same output as prosemirror-markdown's image), now
  * closed as a block: the stock serializer wrote the next paragraph straight after the `)`,
  * so `![](url)` and the text below it merged into one line.
  */
 export const CaptionedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      title: {
+        default: null,
+        parseHTML: (element) => {
+          const title = element.getAttribute("title");
+          return parseWidthTitle(title) ? null : title;
+        },
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => parseWidthTitle(element.getAttribute("title")),
+        renderHTML: (attributes) =>
+          attributes.width ? { "data-width": String(attributes.width) } : {},
+      },
+    };
+  },
   addStorage() {
     return {
       markdown: {
         serialize(state: SerializerState, node: PMNode) {
-          const { src, alt, title } = node.attrs as {
+          const { src, alt, width } = node.attrs as {
             src: string;
             alt: string | null;
-            title: string | null;
+            width: ImageWidth | null;
           };
+          // The size rides in the title (`"w=50"`), so the Markdown stays plain.
+          const title = width ? `w=${width}` : (node.attrs.title as string | null);
           state.write(
             `![${state.esc(alt ?? "")}](${src.replace(/[()]/g, "\\$&")}` +
               (title ? ` "${title.replace(/"/g, '\\"')}"` : "") +
