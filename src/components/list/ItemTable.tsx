@@ -39,14 +39,6 @@ const HIDE_BELOW: Record<"md" | "lg", string> = {
   lg: "hidden lg:table-cell",
 };
 
-/**
- * Title cell width: its text's width up to 36rem (narrower on small screens), so short
- * titles don't push the meta columns to the far edge. Long titles wrap.
- */
-const TITLE_WIDTH = "w-max max-w-[min(36rem,calc(100vw-5rem))]";
-/** Empty last column that takes the leftover width, keeping the table full width. */
-const FILLER = "w-full p-0";
-
 const isBlank = (v: ReactNode) => v === null || v === undefined || v === false || v === "";
 
 const hideClass = (c: { hideBelow?: "md" | "lg" }) =>
@@ -92,14 +84,14 @@ export function ItemTable<T>({
               key={c.key}
               className={cn(
                 hideClass(c),
-                // Every column shrinks to its content; the filler cell below takes the slack.
+                // Meta columns shrink to their content; the title column takes the rest of the
+                // width (long titles wrap), so the meta columns sit flush with the right edge.
                 c.primary ? "min-w-56" : "w-px whitespace-nowrap [&_.flex-wrap]:flex-nowrap",
                 c.className,
               )}
             >
               {c.primary ? (
-                // Title as wide as its text, capped so the meta columns stay next to it.
-                <div className={TITLE_WIDTH}>
+                <>
                   {href ? (
                     // Stretched link: the ::after covers the row so the whole row is clickable.
                     <Link
@@ -111,13 +103,12 @@ export function ItemTable<T>({
                   ) : (
                     c.render(item)
                   )}
-                </div>
+                </>
               ) : (
                 c.render(item)
               )}
             </Td>
           ))}
-          <Td aria-hidden className={FILLER} />
         </Tr>
       );
     });
@@ -131,7 +122,6 @@ export function ItemTable<T>({
               {c.header}
             </Th>
           ))}
-          <Th aria-hidden className={FILLER} />
         </tr>
       </THead>
       {groups ? (
@@ -144,7 +134,7 @@ export function ItemTable<T>({
             <tr className="bg-subtle">
               <th
                 scope="rowgroup"
-                colSpan={columns.length + 1}
+                colSpan={columns.length}
                 className="h-8 px-3 text-left text-xs font-medium text-fg"
               >
                 {group.label}
