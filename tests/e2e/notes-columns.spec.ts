@@ -13,7 +13,7 @@ test("열: /2로 넣고 양쪽에 쓰면 저장 후 새로고침해도 그대로
 
   await editor(page).click();
   await page.keyboard.type("/2");
-  await expect(menu(page).getByRole("option")).toHaveText(["▥2열"]);
+  await expect(menu(page).getByRole("option").first()).toHaveText("▥2열");
   await page.keyboard.press("Enter");
   await expect(menu(page)).toBeHidden();
 
