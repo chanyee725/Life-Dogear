@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -9,12 +8,11 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type ReactNode,
 } from "react";
-import { AreaIcon, GoalIcon, ProjectIcon } from "@/components/shell/icons";
 import { cn } from "@/components/ui/cn";
-import type { RoadmapData, RoadmapKind, RoadmapNode } from "@/lib/repo/roadmap-types";
-import { DEFAULT_SIZE, defaultCollapsed, edgePath, layoutTree, type PlacedNode } from "./layout";
+import type { RoadmapData } from "@/lib/repo/roadmap-types";
+import { DEFAULT_SIZE, defaultCollapsed, edgePath, layoutTree } from "./layout";
+import { RoadmapNodeBox } from "./RoadmapNode";
 
 /** Room around the tree so the toggle buttons on the right edge are not clipped. */
 const PAD = 24;
@@ -24,154 +22,6 @@ const ZOOM_MAX = 2;
 const DRAG_SLOP = 4;
 
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
-
-const KIND: Record<RoadmapKind, { label: string; chip: string; bar: string }> = {
-  area: { label: "영역", chip: "bg-tone-teal-bg text-tone-teal-fg", bar: "bg-tone-teal-fg" },
-  goal: { label: "목표", chip: "bg-tone-rose-bg text-tone-rose-fg", bar: "bg-tone-rose-fg" },
-  project: { label: "프로젝트", chip: "bg-tone-blue-bg text-tone-blue-fg", bar: "bg-tone-blue-fg" },
-  task: { label: "할 일", chip: "bg-tone-green-bg text-tone-green-fg", bar: "bg-tone-green-fg" },
-};
-
-function CheckBox({ done }: { done: boolean }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect
-        x="2.5"
-        y="2.5"
-        width="11"
-        height="11"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        fill={done ? "currentColor" : "none"}
-      />
-      {done && (
-        <path
-          d="m5.25 8.25 1.9 1.85 3.6-4"
-          stroke="var(--rb-bg)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
-  );
-}
-
-function KindIcon({ node }: { node: RoadmapNode }) {
-  switch (node.kind) {
-    case "area":
-      return <AreaIcon />;
-    case "goal":
-      return <GoalIcon />;
-    case "project":
-      return <ProjectIcon />;
-    case "task":
-      return <CheckBox done={!!node.done} />;
-  }
-}
-
-/** Second line: progress for goals/projects, otherwise due date or status. */
-function Meta({ node }: { node: RoadmapNode }) {
-  const extra = [node.due, node.status].filter(Boolean).join(" · ");
-  if ((node.kind === "goal" || node.kind === "project") && node.progress !== null) {
-    const pct = Math.round(Math.min(1, Math.max(0, node.progress)) * 100);
-    return (
-      <span className="mt-1 flex items-center gap-2">
-        <span
-          role="progressbar"
-          aria-label="진행률"
-          aria-valuenow={pct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-tone-gray-bg"
-        >
-          <span
-            className={cn("block h-full rounded-full", KIND[node.kind].bar)}
-            style={{ width: `${pct}%` }}
-          />
-        </span>
-        <span className="text-xs text-muted tabular-nums">{pct}%</span>
-        {node.due && <span className="truncate text-xs text-faint">{node.due}</span>}
-      </span>
-    );
-  }
-  const text = node.kind === "area" ? `하위 ${node.children.length}개` : extra;
-  if (!text) return null;
-  return <span className="mt-0.5 block truncate text-xs text-muted">{text}</span>;
-}
-
-function NodeBox({ placed, onToggle }: { placed: PlacedNode; onToggle: (id: string) => void }) {
-  const { node, id, collapsed } = placed;
-  const kind = KIND[node.kind];
-  const hasChildren = node.children.length > 0;
-  const body: ReactNode = (
-    <>
-      <span
-        className={cn("flex size-7 shrink-0 items-center justify-center rounded-md", kind.chip)}
-      >
-        <KindIcon node={node} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="sr-only">{kind.label}: </span>
-        <span
-          className={cn(
-            "block truncate text-sm font-medium text-fg",
-            node.done && "text-muted line-through",
-          )}
-        >
-          {node.title}
-        </span>
-        <Meta node={node} />
-      </span>
-    </>
-  );
-  const boxClass =
-    "flex h-full items-center gap-2.5 rounded-lg border border-border bg-bg pr-4 pl-2.5 shadow-sm";
-  return (
-    <div
-      className="absolute"
-      style={{
-        left: placed.x,
-        top: placed.y,
-        width: DEFAULT_SIZE.nodeWidth,
-        height: DEFAULT_SIZE.nodeHeight,
-      }}
-    >
-      {node.href ? (
-        <Link
-          href={node.href}
-          draggable={false}
-          title={node.title}
-          data-testid={`roadmap-node-${id}`}
-          className={cn(
-            boxClass,
-            "cursor-pointer transition-colors hover:border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          )}
-        >
-          {body}
-        </Link>
-      ) : (
-        <div title={node.title} data-testid={`roadmap-node-${id}`} className={boxClass}>
-          {body}
-        </div>
-      )}
-      {hasChildren && (
-        <button
-          type="button"
-          data-testid={`roadmap-toggle-${id}`}
-          aria-expanded={!collapsed}
-          aria-label={`${node.title} ${collapsed ? "펼치기" : "접기"}`}
-          title={collapsed ? "펼치기" : "접기"}
-          onClick={() => onToggle(id)}
-          className="absolute top-1/2 -right-2.5 flex h-5 min-w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border-strong bg-bg px-1 text-[11px] leading-none text-muted tabular-nums hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          {collapsed ? node.children.length : "−"}
-        </button>
-      )}
-    </div>
-  );
-}
 
 export default function RoadmapTree({ data }: { data: RoadmapData }) {
   const [collapsed, setCollapsed] = useState(() => defaultCollapsed(data.roots));
@@ -371,7 +221,15 @@ export default function RoadmapTree({ data }: { data: RoadmapData }) {
             </svg>
             <div className="absolute" style={{ left: PAD, top: PAD }}>
               {layout.nodes.map((p) => (
-                <NodeBox key={p.key} placed={p} onToggle={toggle} />
+                <RoadmapNodeBox
+                  key={p.key}
+                  node={p.node}
+                  width={DEFAULT_SIZE.nodeWidth}
+                  height={DEFAULT_SIZE.nodeHeight}
+                  collapsed={p.collapsed}
+                  onToggle={() => toggle(p.id)}
+                  style={{ left: p.x, top: p.y }}
+                />
               ))}
             </div>
           </div>
