@@ -59,3 +59,118 @@ export function splitSides<T>(items: T[]): { left: T[]; right: T[] } {
 export function findNode(roadmap: RoadmapTree, id: string): RoadmapNodeView | undefined {
   return flatten(roadmap.stages).find((n) => n.id === id);
 }
+
+/** A row the tree currently shows; `level` is 1 for stages (aria-level), max 4. */
+export interface VisibleNode {
+  node: RoadmapNodeView;
+  id: string;
+  level: number;
+  parentId: string | null;
+  /** 1-based position among siblings, and the sibling count (aria-posinset / aria-setsize). */
+  posInSet: number;
+  setSize: number;
+  hasChildren: boolean;
+  expanded: boolean;
+  /** 0-based index of the stage this row belongs to. */
+  stageIndex: number;
+}
+
+/**
+ * Rows in display order (depth first), walking only into unfolded nodes, so the cost is the
+ * number of visible rows, not the 1000 nodes. Keyboard navigation moves along this list.
+ */
+export function visibleNodes(
+  stages: RoadmapNodeView[],
+  collapsed: ReadonlySet<string>,
+): VisibleNode[] {
+  const out: VisibleNode[] = [];
+  const walk = (nodes: RoadmapNodeView[], level: number, parentId: string | null, stageIndex: number) => {
+    nodes.forEach((node, i) => {
+      const hasChildren = node.children.length > 0;
+      const open = hasChildren && !collapsed.has(node.id);
+      const si = level === 1 ? i : stageIndex;
+      out.push({
+        node,
+        id: node.id,
+        level,
+        parentId,
+        posInSet: i + 1,
+        setSize: nodes.length,
+        hasChildren,
+        expanded: open,
+        stageIndex: si,
+      });
+      if (open) walk(node.children, level + 1, node.id, si);
+    });
+  };
+  walk(stages, 1, null, 0);
+  return out;
+}
+
+/** Parent id of every node (stages map to null); build once per roadmap. */
+export function parentIndex(stages: RoadmapNodeView[]): Map<string, string | null> {
+  const out = new Map<string, string | null>();
+  const walk = (nodes: RoadmapNodeView[], parent: string | null) => {
+    for (const n of nodes) {
+      out.set(n.id, parent);
+      walk(n.children, n.id);
+    }
+  };
+  walk(stages, null);
+  return out;
+}
+
+export type TreeKeyAction =
+  | { type: "focus"; id: string }
+  | { type: "expand"; id: string }
+  | { type: "collapse"; id: string }
+  | { type: "open"; id: string };
+
+/**
+ * WAI-ARIA tree keys on the visible rows. Returns null for keys the tree does not handle
+ * (the caller then leaves the event alone).
+ * ↑/↓ prev/next row · → expand, or first child when open · ← collapse, or parent ·
+ * Home/End first/last row · Enter open (ItemPanel).
+ */
+export function treeKeyAction(
+  rows: readonly VisibleNode[],
+  focusedId: string,
+  key: string,
+): TreeKeyAction | null {
+  const i = rows.findIndex((r) => r.id === focusedId);
+  if (i < 0) return rows.length > 0 && key in KEYS ? { type: "focus", id: rows[0].id } : null;
+  const row = rows[i];
+  switch (key) {
+    case "ArrowDown":
+      return i + 1 < rows.length ? { type: "focus", id: rows[i + 1].id } : null;
+    case "ArrowUp":
+      return i > 0 ? { type: "focus", id: rows[i - 1].id } : null;
+    case "ArrowRight":
+      if (!row.hasChildren) return null;
+      return row.expanded ? { type: "focus", id: rows[i + 1].id } : { type: "expand", id: row.id };
+    case "ArrowLeft":
+      if (row.expanded) return { type: "collapse", id: row.id };
+      return row.parentId ? { type: "focus", id: row.parentId } : null;
+    case "Home":
+      return { type: "focus", id: rows[0].id };
+    case "End":
+      return { type: "focus", id: rows[rows.length - 1].id };
+    case "Enter":
+      return { type: "open", id: row.id };
+    default:
+      return null;
+  }
+}
+
+const KEYS = { ArrowDown: 1, ArrowUp: 1, ArrowRight: 1, ArrowLeft: 1, Home: 1, End: 1, Enter: 1 };
+
+/** Done/total per stage plus the whole roadmap, from the server-computed progress. */
+export function stageProgress(roadmap: RoadmapTree): {
+  stages: { id: string; done: number; total: number; ratio: number }[];
+  overall: RoadmapProgress & { ratio: number };
+} {
+  return {
+    stages: roadmap.stages.map((s) => ({ id: s.id, ...s.progress, ratio: ratio(s.progress) })),
+    overall: { ...roadmap.progress, ratio: ratio(roadmap.progress) },
+  };
+}
