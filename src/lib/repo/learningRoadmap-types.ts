@@ -1,10 +1,18 @@
 // Client-safe types for learning roadmaps (no db imports). Server code lives in
-// `./learningRoadmap.ts`; UI components should import types from here.
+// `./learningRoadmap.ts`; UI components should import types from here. Unions come
+// from the JSON contract (type-only import, so zod stays out of client bundles).
 
-export type RoadmapNodeKind = "stage" | "item";
-export type RoadmapNodePriority = "essential" | "recommended" | "optional";
-export type RoadmapNodeStatus = "todo" | "doing" | "done";
-export type RoadmapResourceKind = "book" | "course" | "paper" | "video" | "code" | "doc";
+import type {
+  NodeKind,
+  NodeStatus,
+  ResourceKind,
+  RoadmapPriority,
+} from "@/lib/roadmap/contract";
+
+export type RoadmapNodeKind = NodeKind;
+export type RoadmapNodePriority = RoadmapPriority;
+export type RoadmapNodeStatus = NodeStatus;
+export type RoadmapResourceKind = ResourceKind;
 
 export const ROADMAP_NODE_STATUSES: readonly RoadmapNodeStatus[] = ["todo", "doing", "done"];
 
