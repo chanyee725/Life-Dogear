@@ -40,7 +40,7 @@ export async function importRoadmapJson(
 
 /** A node's identity across imports: its title and every ancestor title. */
 function pathKey(path: string[]): string {
-  return JSON.stringify(path);
+  return JSON.stringify(path.map((title) => title.normalize("NFC")));
 }
 
 type NodeRow = typeof roadmapNodes.$inferSelect;
@@ -73,7 +73,7 @@ export async function importRoadmap(db: Db, data: RoadmapInput): Promise<ImportR
     const pathOf = (row: NodeRow): string[] => {
       const path: string[] = [];
       for (let r: NodeRow | undefined = row; r; r = r.parentId ? byId.get(r.parentId) : undefined) {
-        path.unshift(r.title);
+        path.unshift(r.title.normalize("NFC"));
       }
       return path;
     };

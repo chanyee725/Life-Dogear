@@ -34,7 +34,14 @@ export const LIMITS = {
   totalNodes: 1000,
 } as const;
 
-const text = (max: number) => z.string().trim().min(1).max(max);
+// NFC so the same title typed as composed or decomposed Unicode (e.g. Hangul) is one identity.
+const text = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(max)
+    .transform((s) => s.normalize("NFC"));
 const optionalText = (max: number) => z.string().trim().max(max).optional().default("");
 
 const httpUrl = z

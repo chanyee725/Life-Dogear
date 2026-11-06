@@ -131,6 +131,21 @@ describe("roadmap import", () => {
     expect(await nodes()).toHaveLength(4);
   });
 
+  it("keeps status when the same titles are re-imported in NFD instead of NFC", async () => {
+    await run(sample());
+    const ownership = await nodeByTitle("소유권");
+    await db.update(roadmapNodes).set({ status: "done" }).where(eq(roadmapNodes.id, ownership!.id));
+
+    const nfd = sample();
+    nfd.stages[0]!.title = nfd.stages[0]!.title.normalize("NFD");
+    nfd.stages[0]!.items[0]!.title = "소유권".normalize("NFD");
+    expect(nfd.stages[0]!.items[0]!.title).not.toBe("소유권");
+
+    const result = await run(nfd);
+    expect(result).toMatchObject({ added: 0, updated: 5, removed: 0 });
+    expect(await nodeByTitle("소유권")).toMatchObject({ id: ownership!.id, status: "done" });
+  });
+
   it("rejects malformed or off-contract JSON without touching the DB", async () => {
     expect((await importRoadmapJson(db, "{not json")).ok).toBe(false);
     const bad = sample();
