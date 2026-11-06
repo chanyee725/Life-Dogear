@@ -114,3 +114,58 @@ test("새 노트 템플릿: 고르면 본문이 채워지고, 직접 쓴 본문�
   await expect(editor(page).locator("h2")).toHaveText(["증상", "원인", "해결", "참고"]);
   await expect(page.getByText("본문이 있어 템플릿을 적용하지 않았습니다.")).toBeHidden();
 });
+
+test("노트 상세: 본문은 제목·속성 폭에 맞고, 긴 코드 줄은 상자 안에서 가로로 스크롤된다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const title = uniqueTitle("폭 노트");
+  const longLine = `https://example.com/${"very-long-path-segment/".repeat(30)}end`;
+  await page.goto("/notes/new");
+  await page.getByLabel("제목", { exact: true }).fill(title);
+  await pasteMarkdown(
+    page,
+    [
+      "```\n" + longLine + "\n```",
+      "```ts\nconst url = \"" + longLine + "\";\n```",
+      "- 목록 안\n\n  ```\n  " + longLine + "\n  ```",
+      "> 인용 안\n>\n> ```\n> " + longLine + "\n> ```",
+      "이어지는 문단 " + longLine,
+    ].join("\n\n"),
+  );
+  await page.getByRole("button", { name: "저장" }).click();
+  await expect(page).toHaveURL(/\/notes\/(?!new)[^/]+$/, { timeout: 20_000 });
+  await page.reload();
+  await expect(page.locator(".rb-code")).toHaveCount(4);
+
+  const widths = await page.evaluate(() => {
+    const w = (el: Element | null) => (el ? el.getBoundingClientRect().width : -1);
+    const body = document.querySelector(".rb-prose")!.getBoundingClientRect();
+    const pres = [...document.querySelectorAll<HTMLElement>(".rb-prose pre")];
+    return {
+      properties: w(document.querySelector("main dl")),
+      toolbar: w(document.querySelector('[role="toolbar"]')),
+      body: w(document.querySelector(".rb-prose")),
+      pres: pres.map((pre) => ({
+        right: pre.closest(".rb-code")!.getBoundingClientRect().right,
+        scrolls: pre.scrollWidth > pre.clientWidth,
+        overflowX: getComputedStyle(pre).overflowX,
+      })),
+      bodyRight: body.right,
+      bodyScroll: (document.querySelector(".rb-prose") as HTMLElement).scrollWidth,
+      docScroll: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    };
+  });
+  // Toolbar and body run as wide as the properties above them.
+  expect(Math.abs(widths.body - widths.properties)).toBeLessThanOrEqual(1);
+  expect(widths.toolbar).toBeGreaterThanOrEqual(widths.properties - 1);
+  // Every code box stays inside the body; its long line scrolls inside the box.
+  for (const pre of widths.pres) {
+    expect(pre.right).toBeLessThanOrEqual(widths.bodyRight + 1);
+    expect(pre.overflowX).toBe("auto");
+    expect(pre.scrolls).toBe(true);
+  }
+  expect(widths.bodyScroll).toBeLessThanOrEqual(Math.ceil(widths.body) + 1);
+  expect(widths.docScroll).toBeLessThanOrEqual(widths.viewport);
+});
