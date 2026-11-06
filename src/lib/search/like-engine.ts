@@ -13,6 +13,7 @@ import {
   tasks,
   thoughts,
 } from "@/db/schema";
+import { stripColumnMarkers } from "@/lib/column-markers";
 import type { ItemType } from "@/lib/enums";
 import { parseStoredRects, readerHref, scrollTargetFor } from "@/lib/highlights";
 import {
@@ -188,7 +189,7 @@ function matchItem(title: string, meta: string[], body: string, query: string): 
     }
   }
   const plain = plainText(body);
-  if (findMatch(plain, query) >= 0 || findMatch(body, query) >= 0) {
+  if (findMatch(plain, query) >= 0 || findMatch(stripColumnMarkers(body), query) >= 0) {
     return { field: "body", snippet: makeSnippet(plain, query), score: FIELD_SCORE.body };
   }
   return null;

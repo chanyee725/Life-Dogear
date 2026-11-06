@@ -13,6 +13,7 @@ import {
   findSlashTrigger,
   isImeKey,
   settleSlashTrigger,
+  SLASH_COMMANDS,
   type SlashCommand,
   type SlashTrigger,
 } from "./slash-commands";
@@ -41,7 +42,7 @@ function runBlockCommand(editor: Editor, id: SlashCommand["id"]) {
     case "table":
       return chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
     default:
-      return false;
+      return SLASH_COMMANDS.find((c) => c.id === id)?.run?.(editor) ?? false;
   }
 }
 

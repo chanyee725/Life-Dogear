@@ -1,4 +1,4 @@
-import { Extension } from "@tiptap/core";
+import { Extension, Node } from "@tiptap/core";
 import Paragraph from "@tiptap/extension-paragraph";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -8,6 +8,8 @@ import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { CodeBlock, CodeBlockClipboard } from "./code-block";
+import { Column, Columns, TOP_BLOCK } from "./columns";
+import { ColumnsEditing } from "./columns-edit";
 import { BlockDragHandle } from "./drag-handle";
 import { CaptionedImage } from "./image-view";
 import { WikiLink } from "./WikiLink";
@@ -48,7 +50,7 @@ type MarkdownSerializerState = {
 const BLANK_LINE = "&nbsp;";
 
 /**
- * Blank lines the writer adds with Enter (empty top-level paragraphs) are stored as a
+ * Blank lines the writer adds with Enter (empty top-level or column paragraphs) are stored as a
  * `&nbsp;` line each, and read back as empty paragraphs, so spacing between blocks
  * survives save and reload. Bodies without empty paragraphs serialize exactly as before.
  */
@@ -61,7 +63,7 @@ const BlankLineParagraph = Paragraph.extend({
           // after a final list, code block, table, heading or image on the first edit.
           if (
             node.childCount === 0 &&
-            parent.type.name === "doc" &&
+            (parent.type.name === "doc" || parent.type.name === "column") &&
             node !== parent.lastChild
           ) {
             state.write(BLANK_LINE);
@@ -73,8 +75,18 @@ const BlankLineParagraph = Paragraph.extend({
         },
         parse: {
           updateDOM(element: HTMLElement) {
-            for (const child of element.children) {
-              if (child.tagName === "P" && child.textContent === "\u00a0" && child.childNodes.length === 1) {
+            const blocks = [
+              ...element.children,
+              ...element.querySelectorAll(
+                ':scope > div[data-type="columns"] > div[data-type="column"] > *',
+              ),
+            ];
+            for (const child of blocks) {
+              if (
+                child.tagName === "P" &&
+                child.textContent === "\u00a0" &&
+                child.childNodes.length === 1
+              ) {
                 child.textContent = "";
               }
             }
@@ -83,6 +95,13 @@ const BlankLineParagraph = Paragraph.extend({
       },
     };
   },
+});
+
+/** The document also takes `columns` (group `topBlock`), which no other node accepts. */
+const ColumnsDocument = Node.create({
+  name: "doc",
+  topNode: true,
+  content: `(block | ${TOP_BLOCK})+`,
 });
 
 /**
@@ -95,6 +114,8 @@ export function createExtensions(placeholder: string) {
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
+      // Replaced by ColumnsDocument (also accepts columns).
+      document: false,
       // Replaced by the highlighted code block below (same node name and Markdown).
       codeBlock: false,
       // Replaced by BlankLineParagraph (keeps blank lines through Markdown).
@@ -108,6 +129,7 @@ export function createExtensions(placeholder: string) {
         HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
       },
     }),
+    ColumnsDocument,
     BlankLineParagraph,
     CodeBlock,
     CodeBlockClipboard,
@@ -121,6 +143,9 @@ export function createExtensions(placeholder: string) {
     // Photos are stored as files and referenced by URL (`![alt](/api/images/…)`), never
     // inlined as base64: bodies stay small and Markdown stays readable. The alt text is
     // the caption shown under the photo.
+    Columns,
+    Column,
+    ColumnsEditing,
     CaptionedImage.configure({ inline: false, allowBase64: false }),
     Placeholder.configure({ placeholder }),
     WikiLink,

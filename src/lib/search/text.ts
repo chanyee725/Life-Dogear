@@ -1,6 +1,7 @@
 import { type ItemType } from "@/lib/enums";
 import type { SearchField, SearchHit, Snippet } from "./types";
 import { itemHref as detailHref } from "@/lib/item-href";
+import { stripColumnMarkers } from "@/lib/column-markers";
 
 export const MAX_QUERY_LENGTH = 200;
 export const DEFAULT_LIMIT = 20;
@@ -90,9 +91,12 @@ export function findMatch(text: string, query: string): number {
   return query ? fold(text).indexOf(fold(query)) : -1;
 }
 
-/** Markdown body → plain prose for snippets (syntax marks and link targets removed). */
+/**
+ * Markdown body → plain prose for snippets (syntax marks, link targets and column
+ * markers removed).
+ */
 export function plainText(markdown: string): string {
-  return markdown
+  return stripColumnMarkers(markdown)
     .normalize("NFC")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1") // links/images → label
     .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, "") // headings, quotes, list marks

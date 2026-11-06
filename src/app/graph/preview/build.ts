@@ -17,14 +17,14 @@ import {
   THOUGHT_KIND,
   THOUGHT_MATURITY,
 } from "@/lib/enums";
+import { stripColumnMarkers } from "@/lib/column-markers";
 
 const SUMMARY_MAX = 160;
 
 /** First paragraph of a markdown body as plain text, cut to 160 chars. */
 export function firstParagraph(body: string | null | undefined): string | undefined {
   if (!body) return undefined;
-  const text = body
-    .replace(/\r\n?/g, "\n")
+  const text = stripColumnMarkers(body.replace(/\r\n?/g, "\n"))
     // Fenced code blocks are not prose.
     .replace(/^\s*(```|~~~)[^\n]*\n[\s\S]*?(^\s*\1[^\n]*$|(?![\s\S]))/gm, "");
   for (const block of text.split(/\n\s*\n/)) {
