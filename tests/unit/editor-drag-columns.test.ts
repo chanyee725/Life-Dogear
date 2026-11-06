@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { Editor } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { dropPosition, moveBlock, type Block } from "@/components/editor/drag-handle";
 import { createExtensions } from "@/components/editor/extensions";
@@ -113,5 +114,14 @@ describe("taking the last list item out of a column", () => {
     });
     expect(columns).toBe(2);
     expect(md(e)).not.toMatch(/^- *$/m);
+  });
+
+  it("deleting the grip-selected only item of a column's list leaves no bullet", () => {
+    const e = mount(group("왼쪽", "- 혼자"));
+    const item = block(e, "혼자", "listItem");
+    e.view.dispatch(e.state.tr.setSelection(NodeSelection.create(e.state.doc, item.pos)));
+    e.commands.deleteSelection();
+    expect(md(e)).not.toMatch(/^- *$/m);
+    expect(md(e)).toContain("왼쪽");
   });
 });
