@@ -7,6 +7,7 @@ import {
   type EditorState,
   type Transaction,
 } from "@tiptap/pm/state";
+import { COLUMN_RESIZE_META } from "./columns-resize";
 
 /**
  * Editing behaviour for the `columns` / `column` blocks (schema in ./columns):
@@ -175,8 +176,10 @@ export const ColumnsEditing = Extension.create({
       new Plugin({
         key: new PluginKey("columnsEditing"),
         appendTransaction: (trs, _old, state) => {
-          // Only edits: a cursor move alone must not change (and so save) the note.
+          // Only edits: a cursor move alone must not change (and so save) the note. A width
+          // drag only sets attrs, so it never lifts (even a fresh, still empty block).
           if (!state.schema.nodes[COLUMNS] || !trs.some((tr) => tr.docChanged)) return null;
+          if (trs.every((tr) => !tr.docChanged || tr.getMeta(COLUMN_RESIZE_META))) return null;
           return liftStaleColumnsTr(state, changedRanges(trs));
         },
       }),
