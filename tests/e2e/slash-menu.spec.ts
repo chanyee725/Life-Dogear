@@ -18,12 +18,12 @@ test("'/' 메뉴: 블록 넣기, 키보드, 뜨지 않는 곳", async ({ page })
   await createNote(page, host);
   await editor(page).click();
 
-  // '/' → 제목 2 (↑ from the top wraps to the bottom, ↓ wraps back).
+  // '/' → 제목 2 (↑ from the top wraps to the last item, 3열; ↓ wraps back).
   await page.keyboard.type("/");
   await expect(menu(page)).toBeVisible();
   await expect(option(page, "페이지")).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("ArrowUp");
-  await expect(option(page, "사진")).toHaveAttribute("aria-selected", "true");
+  await expect(option(page, "3열")).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("ArrowDown");
   await expect(option(page, "페이지")).toHaveAttribute("aria-selected", "true");
   await option(page, "제목 2").click();
