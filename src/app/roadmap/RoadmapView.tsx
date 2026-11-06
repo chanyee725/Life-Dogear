@@ -19,22 +19,21 @@ import {
 } from "./model";
 import RoadmapTree from "./RoadmapTree";
 
-/** Same shapes as the tree nodes: priority by border + mark, status by icon. */
+/** Boxed key in the top-left corner: priority as mini nodes, status as the tree's icons. */
 function Legend() {
   return (
     <div className="rv-legend" aria-label="범례" role="group">
       <ul className="rv-legend-group" aria-label="우선순위">
         {PRIORITIES.map((p) => (
           <li key={p} className="rv-legend-item" data-priority={p}>
-            <span className="rv-legend-swatch" aria-hidden="true">
+            <span className="rv-legend-badge">
               <PriorityMark priority={p} />
+              {PRIORITY_LABEL[p]}
             </span>
-            {PRIORITY_LABEL[p]}
           </li>
         ))}
       </ul>
-      <span className="rv-legend-sep" aria-hidden="true" />
-      <ul className="rv-legend-group" aria-label="상태">
+      <ul className="rv-legend-group" aria-label="진행 상태">
         {STATUSES.map((s) => (
           <li key={s} className="rv-legend-item" data-status={s}>
             <StatusIcon status={s} size={15} />
@@ -102,6 +101,8 @@ export default function RoadmapView({ roadmap }: { roadmap: LearningRoadmap }) {
   return (
     <div className="rv-root">
       <header className="rv-head">
+        <Legend />
+
         <div className="rv-head-main">
           <h2 className="rv-title">{roadmap.title}</h2>
           {roadmap.summary && <p className="rv-summary">{roadmap.summary}</p>}
@@ -115,10 +116,6 @@ export default function RoadmapView({ roadmap }: { roadmap: LearningRoadmap }) {
             </span>
           </p>
           <StageTrail roadmap={roadmap} />
-        </div>
-
-        <div className="rv-toolbar">
-          <Legend />
           <button
             type="button"
             className="rv-fold-all"
@@ -157,6 +154,7 @@ export default function RoadmapView({ roadmap }: { roadmap: LearningRoadmap }) {
               onClose={() => setSelectedId(null)}
               onStatusChange={onStatusChange}
               pending={pending}
+              onSelect={setSelectedId}
             />
           </div>
         )}
