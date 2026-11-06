@@ -55,7 +55,7 @@ document must match it; change both together.
 Importing a file whose `slug` already exists updates that roadmap: titles, descriptions,
 priorities, resources and order are replaced by the file. Progress (`status`:
 todo/doing/done) is kept for every node whose title path (stage title → item title → …) is
-unchanged. Renaming a stage or item resets its progress to `todo`; nodes missing from the
+unchanged. Renaming a stage or item resets its progress to `todo` (including every item beneath it); nodes missing from the
 file are removed.
 
 ## Prompt for Claude Code

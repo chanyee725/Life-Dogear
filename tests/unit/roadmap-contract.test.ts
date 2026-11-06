@@ -46,6 +46,11 @@ describe("roadmap JSON contract", () => {
     dup.stages[1].title = dup.stages[0].title;
     expect(parseRoadmap(dup).ok).toBe(false);
 
+    const nfcDup = fixture();
+    nfcDup.stages[0].title = "입문".normalize("NFC");
+    nfcDup.stages[1].title = "입문".normalize("NFD");
+    expect(parseRoadmap(nfcDup).ok).toBe(false);
+
     expect(parseRoadmapJson("{not json").ok).toBe(false);
   });
 });
