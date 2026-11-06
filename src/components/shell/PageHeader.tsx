@@ -5,15 +5,14 @@ import { cn } from "@/components/ui/cn";
  * Standard page width + padding. Pages that need full width (e.g. the PDF viewer) can skip it.
  * Narrow screens: the fixed "사이드바 열기" button sits at the top-left (12px + 32px), so the page
  * starts below it (64px) instead of under it.
- * List and detail pages share one column so the width does not jump between them. It is 68rem
- * (1088px) up to ~1600px windows, then grows with the main area (keeping ~140px of margin on each
- * side) up to 88rem (1408px), so big screens don't leave wide empty gutters; the editor in `DetailBody` runs the same width as the title
+ * List and detail pages share one column (68rem = 1088px, 1008px of content after padding) so the
+ * width does not jump between them; the editor in `DetailBody` runs the same width as the title
  * and properties. Pages that want a narrower or wider column (settings, tasks, home) pass a
  * `max-w-*` className, which overrides this default.
  */
 export function Page({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[clamp(68rem,calc(100%-17.5rem),88rem)] px-10 py-10 max-md:pt-16", className)}>
+    <div className={cn("mx-auto w-full max-w-[68rem] px-10 py-10 max-md:pt-16", className)}>
       {children}
     </div>
   );
