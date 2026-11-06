@@ -1,0 +1,31 @@
+{
+  "slug": "e2e-learning-roadmap",
+  "title": "E2E 학습 로드맵",
+  "topic": "e2e-topic",
+  "summary": "e2e 가져오기 확인용 임시 로드맵",
+  "stages": [
+    {
+      "title": "E2E 1단계 기초",
+      "description": "기초 단계",
+      "items": [
+        {
+          "title": "E2E 필수 항목",
+          "priority": "essential",
+          "description": "먼저 끝낼 항목",
+          "resources": [{ "title": "E2E 자료", "url": "https://example.com/e2e", "kind": "article" }],
+          "children": [
+            { "title": "E2E 하위 항목", "priority": "optional", "description": "", "resources": [], "children": [] }
+          ]
+        },
+        { "title": "E2E 권장 항목", "priority": "recommended", "description": "", "resources": [], "children": [] }
+      ]
+    },
+    {
+      "title": "E2E 2단계 심화",
+      "description": "심화 단계",
+      "items": [
+        { "title": "E2E 선택 항목", "priority": "optional", "description": "", "resources": [], "children": [] }
+      ]
+    }
+  ]
+}
