@@ -96,8 +96,65 @@ describe("image sizes (Markdown image title w=..)", () => {
     expect(plain.view.dom.querySelector<HTMLElement>("figure")?.dataset.width).toBeUndefined();
     expect(md(plain)).toBe(`![](${SRC})`);
     editor?.destroy();
-    const titled = mount(`![a](${SRC} "w=33")`);
-    expect(titled.getJSON().content?.[0]?.attrs).toMatchObject({ width: null, title: "w=33" });
-    expect(md(titled)).toBe(`![a](${SRC} "w=33")`);
+    // Out of range or not in canonical form: kept as an ordinary title.
+    const titled = mount(`![a](${SRC} "w=050")`);
+    expect(titled.getJSON().content?.[0]?.attrs).toMatchObject({ width: null, title: "w=050" });
+    expect(md(titled)).toBe(`![a](${SRC} "w=050")`);
+  });
+});
+
+describe("image corner resize", () => {
+  /** jsdom has no layout: the column is 400px and the photo its saved share of it. */
+  function layout(figure: HTMLElement) {
+    const frame = figure.querySelector<HTMLElement>(".rb-image-frame")!;
+    const rect = (width: number) => ({ width }) as DOMRect;
+    figure.getBoundingClientRect = () => rect(400);
+    frame.getBoundingClientRect = () => rect((400 * Number(figure.dataset.width ?? 100)) / 100);
+  }
+  const pointer = (target: EventTarget, type: string, clientX: number) =>
+    target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX }));
+
+  it("resizes live while dragging and saves one transaction on release", () => {
+    const e = mount(`![a](${SRC} "w=50")`);
+    const figure = e.view.dom.querySelector<HTMLElement>("figure.rb-image")!;
+    layout(figure);
+    const handle = figure.querySelector<HTMLElement>('[data-testid="image-resize-handle"]')!;
+    let changes = 0;
+    e.on("transaction", ({ transaction }) => {
+      if (transaction.docChanged) changes += 1;
+    });
+
+    pointer(handle, "pointerdown", 300);
+    // +18px at the corner → +36px wide (both sides grow): 236 / 400 = 59%.
+    pointer(window, "pointermove", 318);
+    expect(figure.dataset.width).toBe("59");
+    expect(figure.querySelector<HTMLElement>(".rb-image-frame")?.style.width).toBe("59%");
+    pointer(window, "pointermove", 307);
+    expect(figure.dataset.width).toBe("54");
+    expect(changes).toBe(0);
+    expect(figure.querySelector('[aria-pressed="true"]')).toBeNull();
+
+    pointer(window, "pointerup", 307);
+    expect(changes).toBe(1);
+    expect(md(e)).toBe(`![a](${SRC} "w=54")`);
+    // Later moves do nothing once released.
+    pointer(window, "pointermove", 500);
+    expect(figure.dataset.width).toBe("54");
+  });
+
+  it("clamps to 10–100% and lights up a preset it lands on", () => {
+    const e = mount(`![a](${SRC} "w=50")`);
+    const figure = e.view.dom.querySelector<HTMLElement>("figure.rb-image")!;
+    layout(figure);
+    const handle = figure.querySelector<HTMLElement>('[data-testid="image-resize-handle"]')!;
+
+    pointer(handle, "pointerdown", 300);
+    pointer(window, "pointermove", -500);
+    expect(figure.dataset.width).toBe("10");
+    pointer(window, "pointermove", 900);
+    expect(figure.dataset.width).toBe("100");
+    pointer(window, "pointerup", 900);
+    expect(md(e)).toBe(`![a](${SRC} "w=100")`);
+    expect(figure.querySelector('[aria-pressed="true"]')?.textContent).toBe("원본");
   });
 });
