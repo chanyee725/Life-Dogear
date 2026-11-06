@@ -65,9 +65,22 @@ function columnDepth(state: EditorState): number {
   return -1;
 }
 
-export function insertColumnsTr(state: EditorState, count: number): Transaction | null {
+/**
+ * Inserts a columns block with `count` empty columns and puts the cursor in the first.
+ * It replaces the empty paragraph the cursor is in, else goes below the cursor's block
+ * (below the top-level block inside a list or quote). Null for a bad count.
+ *
+ * The `insertColumns` command refuses inside a column. With `fromSlash` (the slash menu)
+ * any empty textblock is replaced, and inside a column the new block goes below the
+ * enclosing columns block instead.
+ */
+export function insertColumnsTr(
+  state: EditorState,
+  count: number,
+  { fromSlash = false }: { fromSlash?: boolean } = {},
+): Transaction | null {
   if (count < MIN_COLUMNS || count > MAX_COLUMNS) return null;
-  if (columnDepth(state) >= 0) return null; // no columns inside columns
+  if (!fromSlash && columnDepth(state) >= 0) return null; // no columns inside columns
   const { schema } = state;
   const columns = schema.nodes[COLUMNS].create(
     null,
@@ -84,7 +97,7 @@ export function insertColumnsTr(state: EditorState, count: number): Transaction 
   const index = $from.index(depth - 1);
   if (
     depth >= 1 &&
-    block.type.name === "paragraph" &&
+    (fromSlash ? block.isTextblock : block.type.name === "paragraph") &&
     block.content.size === 0 &&
     container.canReplaceWith(index, index + 1, columns.type)
   ) {
