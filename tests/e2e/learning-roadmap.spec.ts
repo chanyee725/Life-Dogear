@@ -4,13 +4,13 @@ import { expect, test } from "@playwright/test";
 
 // Fixture follows the roadmap JSON contract ({slug,title,topic,summary,stages[{items[{children}]}]}).
 // If the importer's own fixtures dir lands later, point FIXTURE at it instead of this copy.
-const FIXTURE = path.join(__dirname, "fixtures", "learning-roadmap.json");
+const FIXTURE = path.join(process.cwd(), "tests", "e2e", "fixtures", "learning-roadmap.json");
 const ITEM = "E2E 필수 항목";
 
 test.beforeAll(() => {
   // Same data dir the e2e web server uses (playwright.config.ts), so /roadmap sees the import.
   execFileSync("npm", ["run", "roadmap:import", "--", FIXTURE], {
-    cwd: path.join(__dirname, "..", ".."),
+    cwd: process.cwd(),
     stdio: "inherit",
     env: {
       ...process.env,
@@ -26,8 +26,8 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   test.slow();
   await page.goto("/roadmap");
 
-  const stage = (t: string) => page.locator('[data-testid^="rm-stage-"]').filter({ hasText: t });
-  const item = (t: string) => page.locator('[data-testid^="rm-item-"]').filter({ hasText: t });
+  const stage = (t: string) => page.locator('section[data-testid^="rm-stage-"]').filter({ hasText: t });
+  const item = (t: string) => page.locator('button[data-testid^="rm-item-"]').filter({ hasText: t });
 
   await expect(stage("E2E 1단계 기초")).toBeVisible();
   await expect(stage("E2E 2단계 심화")).toBeVisible();
@@ -38,7 +38,7 @@ test("/roadmap: 가져온 단계·항목 표시, 항목 클릭으로 done, 새�
   await item(ITEM).click();
   const panel = page.getByTestId("rm-item-panel");
   await expect(panel).toBeVisible();
-  await page.getByTestId("rm-status-done").click();
+  await page.getByTestId("rm-status-btn-done").click();
   await expect(panel).toHaveAttribute("data-status", "done");
 
   await page.reload();
